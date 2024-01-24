@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "483110935745",
+    "project_id": "login2-pro",
+    "storage_bucket": "login2-pro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:483110935745:android:a7208f0ee57894b8358840",
+        "android_client_info": {
+          "package_name": "com.login2Pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBATUtql4ZBTi4FfwDCD1iLAXER8ev0EsE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
