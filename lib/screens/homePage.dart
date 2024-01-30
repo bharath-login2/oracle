@@ -609,7 +609,7 @@ class _HomePageState extends State<HomePage> {
                                                             .center,
                                                         children: [
                                                           Image.asset(
-                                                            'assets/icons/check.png',
+                                                            'assets/icons/official_whatsapp.png',
                                                             width: 80,
                                                           ),
                                                           const SizedBox(
@@ -628,7 +628,7 @@ class _HomePageState extends State<HomePage> {
                                                             height: 5,
                                                           ),
                                                           const Text(
-                                                            'Choose whatsapp',
+                                                            'Choose WhatsApp',
                                                             style: TextStyle(
                                                                 fontSize:
                                                                 15,
@@ -649,7 +649,7 @@ class _HomePageState extends State<HomePage> {
                                                                   Navigator.push(
                                                                     context,
                                                                     MaterialPageRoute(
-                                                                        builder: (context) => const ChatHomeScreen()),
+                                                                        builder: (context) =>  ChatHomeScreen()),
                                                                   );
 
                                                                 },

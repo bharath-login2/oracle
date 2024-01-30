@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/playWidget.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
@@ -24,8 +25,8 @@ class CallHistoryPage extends StatefulWidget {
 
 class _CallHistoryPageState extends State<CallHistoryPage> {
   CallHistoryModel? callHistory;
-  var fromdate = DateTime.now();
-  var todate = DateTime.now();
+  String fromdate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  String todate = DateFormat('dd-MM-yyyy').format(DateTime.now());
   String assignStaff = 'Assign Staff';
   String assignStaffId = '';
   bool? result = true;
@@ -120,7 +121,11 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
       onWillPop: () async {
 
         if (mounted) {
-          Navigator.pop(context);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+                builder: (context) =>
+                    Dashboard(widget.token)),
+          );
         }
         return true;
       },
@@ -199,144 +204,126 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                               padding:
                                   const EdgeInsets.only(left: 10, right: 10),
                               child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('From Date',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          )),
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.45,
-                                        child: Center(
-                                          child: DateTimePicker(
-                                            decoration: InputDecoration(
-                                                filled: true,
-                                                //<-- SEE HERE
-                                                fillColor: Colors.white,
-                                                prefixIcon: const Icon(
-                                                  Icons.arrow_right,
-                                                  color: Colors.grey,
-                                                ),
-                                                counterText: "",
-                                                hintText: 'From Date',
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                        color: Colors
-                                                            .purple.shade100),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5))),
-                                            initialValue: fromdate.toString(),
-                                            type: DateTimePickerType.date,
-
-                                            //controller: fromDate,
-                                            firstDate: DateTime(1995),
-                                            lastDate: DateTime.now()
-                                                .add(const Duration(days: 365)),
-                                            // This will add one year from current date
-                                            validator: (value) {
-                                              return null;
-                                            },
-                                            onChanged: (value) {
-                                              if (value.isNotEmpty) {
-                                                setState(() {
-                                                  fromdate =
-                                                      DateTime.parse(value);
-                                                });
-                                              }
-                                            },
-                                            // We can also use onSaved
-                                            onSaved: (value) {
-                                              if (value!.isNotEmpty) {
-                                                fromdate =
-                                                    DateTime.parse(value);
-                                              }
-                                            },
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final selctedDatetimetemp =
+                                      await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime(
+                                            DateTime.now().year,
+                                            DateTime.now().month,
+                                            1),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      fromdate = DateFormat('dd-MM-yyyy')
+                                          .format(selctedDatetimetemp!);
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context)
+                                          .size
+                                          .width *
+                                          0.45,
+                                      height: 45,
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                          BorderRadius.circular(5),
+                                          color: Colors.white),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment
+                                            .spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                            const EdgeInsets.only(
+                                                left: 10),
+                                            child: Text(
+                                              fromdate,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight:
+                                                FontWeight.w400,
+                                                color: Colors.black,
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                              BorderRadius.circular(
+                                                  2),
+                                              color: Colors.white,
+                                            ),
+                                            child: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.grey,
+                                            ),
+                                          )
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(
-                                    width: 12,
-                                  ),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('To Date',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          )),
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.45,
-                                        child: Center(
-                                          child: DateTimePicker(
-                                            decoration: InputDecoration(
-                                                filled: true,
-                                                //<-- SEE HERE
-                                                fillColor: Colors.white,
-                                                prefixIcon: const Icon(
-                                                  Icons.arrow_right,
-                                                  color: Colors.grey,
-                                                ),
-                                                counterText: "",
-                                                hintText: 'From Date',
-                                                isDense: true,
-                                                border: OutlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                        color: Colors
-                                                            .purple.shade100),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5))),
-                                            initialValue: todate.toString(),
-                                            type: DateTimePickerType.date,
 
-                                            //controller: fromDate,
-                                            firstDate: DateTime(1995),
-                                            lastDate: DateTime.now()
-                                                .add(const Duration(days: 365)),
-                                            // This will add one year from current date
-                                            validator: (value) {
-                                              return null;
-                                            },
-                                            onChanged: (value) {
-                                              if (value.isNotEmpty) {
-                                                setState(() {
-                                                  todate =
-                                                      DateTime.parse(value);
-                                                });
-                                              }
-                                            },
-                                            // We can also use onSaved
-                                            onSaved: (value) {
-                                              if (value!.isNotEmpty) {
-                                                todate = DateTime.parse(value);
-                                              }
-                                            },
-                                          ),
-                                        ),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final toDateSelectTemp =
+                                      await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime(2000),
+                                        lastDate: DateTime(2100),
+                                      );
+                                      todate = DateFormat('dd-MM-yyyy')
+                                          .format(toDateSelectTemp!);
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context)
+                                          .size
+                                          .width *
+                                          0.45,
+                                      height: 45,
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                        BorderRadius.circular(5),
+                                        color: Colors.white,
                                       ),
-                                    ],
+                                      child: Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment
+                                            .spaceBetween,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                            const EdgeInsets.only(
+                                                left: 10),
+                                            child: Text(
+                                              todate,
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                              BorderRadius.circular(
+                                                  5),
+                                              color: Colors.white,
+                                            ),
+                                            child: const Icon(
+                                              Icons.calendar_month,
+                                              color: Colors.grey,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -349,88 +336,181 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                   const EdgeInsets.only(left: 10, right: 10),
                               child: Row(
                                 children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.45,
-                                    child: TextFormField(
-                                        onTap: () {
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  scrollable: true,
-                                                  title: const Text('Staffs'),
-                                                  content: ListView.builder(
-                                                    shrinkWrap: true,
-                                                    itemCount: callHistory!
-                                                        .data!
-                                                        .staffList!
-                                                        .length,
-                                                    itemBuilder:
-                                                        (context, ind) {
-                                                      return InkWell(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            assignStaff =
-                                                                callHistory!
-                                                                    .data!
-                                                                    .staffList![
-                                                                        ind]
-                                                                    .staffName
-                                                                    .toString();
-                                                            assignStaffId =
-                                                                callHistory!
-                                                                    .data!
-                                                                    .staffList![
-                                                                        ind]
-                                                                    .userId
-                                                                    .toString();
-                                                            Navigator.pop(
-                                                                context, true);
-                                                          });
-                                                        },
-                                                        child: SizedBox(
-                                                          height: 50,
-                                                          child: Text(
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text('Staffs'),
+                                              content: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: callHistory!
+                                                    .data!
+                                                    .staffList!
+                                                    .length,
+                                                itemBuilder:
+                                                    (context, ind) {
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        assignStaff =
                                                             callHistory!
                                                                 .data!
-                                                                .staffList![ind]
+                                                                .staffList![
+                                                            ind]
                                                                 .staffName
-                                                                .toString(),
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        18),
-                                                          ),
-                                                        ),
-                                                      );
+                                                                .toString();
+                                                        assignStaffId =
+                                                            callHistory!
+                                                                .data!
+                                                                .staffList![
+                                                            ind]
+                                                                .userId
+                                                                .toString();
+                                                        Navigator.pop(
+                                                            context, true);
+                                                      });
                                                     },
-                                                  ),
-                                                );
-                                              });
-                                        },
-                                        maxLines: 1,
-                                        readOnly: true,
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            filled: true,
-                                            //<-- SEE HERE
-                                            fillColor: Colors.white,
-                                            suffixIcon: const Icon(
-                                              Icons.arrow_drop_down_circle,
-                                              color: Colors.grey,
+                                                    child: SizedBox(
+                                                      height: 50,
+                                                      child: Text(
+                                                        callHistory!
+                                                            .data!
+                                                            .staffList![ind]
+                                                            .staffName
+                                                            .toString(),
+                                                        style:
+                                                        const TextStyle(
+                                                            fontSize:
+                                                            18),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            );
+                                          });
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context)
+                                          .size
+                                          .width *
+                                          .45,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border:
+                                        Border.all(color: Colors.white),
+                                        borderRadius:
+                                        BorderRadius.circular(4),
+                                      ),
+                                      child: Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16.0,
+                                                vertical: 12.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                              MainAxisAlignment
+                                                  .spaceBetween,
+                                              children: [
+                                                SizedBox(
+                                                    width:
+                                                    MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                        0.35,
+                                                    child: Text(
+                                                      assignStaff,
+                                                      overflow:
+                                                      TextOverflow.ellipsis,
+                                                    )),
+                                              ],
                                             ),
-                                            counterText: "",
-                                            hintText: assignStaff,
-                                            isDense: true,
-                                            border: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        Colors.purple.shade100),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        10)))),
+                                          )),
+                                    ),
                                   ),
+                                  // SizedBox(
+                                  //   width: MediaQuery.of(context).size.width *
+                                  //       0.45,
+                                  //   child: TextFormField(
+                                  //       onTap: () {
+                                  //         showDialog(
+                                  //             context: context,
+                                  //             builder: (BuildContext context) {
+                                  //               return AlertDialog(
+                                  //                 scrollable: true,
+                                  //                 title: const Text('Staffs'),
+                                  //                 content: ListView.builder(
+                                  //                   shrinkWrap: true,
+                                  //                   itemCount: callHistory!
+                                  //                       .data!
+                                  //                       .staffList!
+                                  //                       .length,
+                                  //                   itemBuilder:
+                                  //                       (context, ind) {
+                                  //                     return InkWell(
+                                  //                       onTap: () {
+                                  //                         setState(() {
+                                  //                           assignStaff =
+                                  //                               callHistory!
+                                  //                                   .data!
+                                  //                                   .staffList![
+                                  //                                       ind]
+                                  //                                   .staffName
+                                  //                                   .toString();
+                                  //                           assignStaffId =
+                                  //                               callHistory!
+                                  //                                   .data!
+                                  //                                   .staffList![
+                                  //                                       ind]
+                                  //                                   .userId
+                                  //                                   .toString();
+                                  //                           Navigator.pop(
+                                  //                               context, true);
+                                  //                         });
+                                  //                       },
+                                  //                       child: SizedBox(
+                                  //                         height: 50,
+                                  //                         child: Text(
+                                  //                           callHistory!
+                                  //                               .data!
+                                  //                               .staffList![ind]
+                                  //                               .staffName
+                                  //                               .toString(),
+                                  //                           style:
+                                  //                               const TextStyle(
+                                  //                                   fontSize:
+                                  //                                       18),
+                                  //                         ),
+                                  //                       ),
+                                  //                     );
+                                  //                   },
+                                  //                 ),
+                                  //               );
+                                  //             });
+                                  //       },
+                                  //       maxLines: 1,
+                                  //       readOnly: true,
+                                  //       keyboardType: TextInputType.text,
+                                  //       decoration: InputDecoration(
+                                  //           filled: true,
+                                  //           //<-- SEE HERE
+                                  //           fillColor: Colors.white,
+                                  //           suffixIcon: const Icon(
+                                  //             Icons.arrow_drop_down_circle,
+                                  //             color: Colors.grey,
+                                  //           ),
+                                  //           counterText: "",
+                                  //           hintText: assignStaff,
+                                  //           isDense: true,
+                                  //           border: OutlineInputBorder(
+                                  //
+                                  //               borderRadius:
+                                  //                   BorderRadius.circular(
+                                  //                       5)))),
+                                  // ),
                                   const SizedBox(
                                     width: 20,
                                   ),
@@ -640,90 +720,95 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                               ),
                             ),
                             const SizedBox(height: 10,),
-                            selectedIndex==0?SizedBox(
+                            selectedIndex==0?
+                            SizedBox(
                                   child: callHistory!.data!.callHistory!.isNotEmpty
                                       ?
-                                  ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount:
-                                          callHistory!.data!.callHistory!.length,
-                                      itemBuilder: (context, i) {
-                                        return Column(
-                                          children: [
-                                            Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    1,
-                                                decoration: const BoxDecoration(
-                                                    color: Colors.white),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(
-                                                      top: 10, bottom: 10),
-                                                  child: Center(
-                                                      child: Text(
-                                                    callHistory!.data!
-                                                        .callHistory![i].date
-                                                        .toString(),
-                                                    style: const TextStyle(
-                                                        fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
-                                                )),
-                                            ListView.builder(
-                                                shrinkWrap: true,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemCount: callHistory!
-                                                    .data!
-                                                    .callHistory![i]
-                                                    .history!
-                                                    .length,
-                                                itemBuilder: (context, ind) {
-                                                  return AudioItems(
-                                                      callHistory!.data!.callHistory![i].history![ind].direction.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].time.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].isAttended!,
-                                                      callHistory!.data!.callHistory![i].history![ind].calledTime.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].status.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].resourceURL.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].callDurationHr.toString(),
-                                                      widget.accessCallRecord,
-                                                      callHistory!.data!.callHistory![i].history![ind].clientName.toString(),
-                                                      callHistory!.data!.callHistory![i].history![ind].leadCategory.toString(),
-                                                      callHistory!
-                                                          .data!
-                                                          .callHistory![i]
-                                                          .history![ind]
-                                                          .callResult
-                                                          .toString(),
-                                                      callHistory!
-                                                          .data!
-                                                          .callHistory![i]
-                                                          .history![ind]
-                                                          .callHistoryImage
-                                                          .toString(),
-                                                      fromdate.toString(),
-                                                      todate.toString(),
-                                                    updateLeadPermission1,
-                                                    deleteLeadPermission1,
-                                                    cloudCallPermission1,
-                                                      callHistory!
-                                                          .data!
-                                                          .callHistory![i]
-                                                          .history![ind]
-                                                          .callMasterId
-                                                          .toString(),
-                                                      widget.token,
-                                                      widget.name,
-                                                      widget.userId,);
-                                                }),
-                                          ],
-                                        );
-                                      }): SizedBox(
+                                  Column(
+                                    children: [
+                                      ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount:
+                                              callHistory!.data!.callHistory!.length,
+                                          itemBuilder: (context, i) {
+                                            return Column(
+                                              children: [
+                                                Container(
+                                                    width: MediaQuery.of(context)
+                                                            .size
+                                                            .width *
+                                                        1,
+                                                    decoration: const BoxDecoration(
+                                                        color: Colors.white),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.only(
+                                                          top: 10, bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        callHistory!.data!
+                                                            .callHistory![i].date
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold),
+                                                      )),
+                                                    )),
+                                                ListView.builder(
+                                                    shrinkWrap: true,
+                                                    physics:
+                                                        const NeverScrollableScrollPhysics(),
+                                                    itemCount: callHistory!
+                                                        .data!
+                                                        .callHistory![i]
+                                                        .history!
+                                                        .length,
+                                                    itemBuilder: (context, ind) {
+                                                      return AudioItems(
+                                                          callHistory!.data!.callHistory![i].history![ind].direction.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].time.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].isAttended!,
+                                                          callHistory!.data!.callHistory![i].history![ind].calledTime.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].status.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].resourceURL.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].callDurationHr.toString(),
+                                                          widget.accessCallRecord,
+                                                          callHistory!.data!.callHistory![i].history![ind].clientName.toString(),
+                                                          callHistory!.data!.callHistory![i].history![ind].leadCategory.toString(),
+                                                          callHistory!
+                                                              .data!
+                                                              .callHistory![i]
+                                                              .history![ind]
+                                                              .callResult
+                                                              .toString(),
+                                                          callHistory!
+                                                              .data!
+                                                              .callHistory![i]
+                                                              .history![ind]
+                                                              .callHistoryImage
+                                                              .toString(),
+                                                          fromdate.toString(),
+                                                          todate.toString(),
+                                                        updateLeadPermission1,
+                                                        deleteLeadPermission1,
+                                                        cloudCallPermission1,
+                                                          callHistory!
+                                                              .data!
+                                                              .callHistory![i]
+                                                              .history![ind]
+                                                              .callMasterId
+                                                              .toString(),
+                                                          widget.token,
+                                                          widget.name,
+                                                          widget.userId,);
+                                                    }),
+                                              ],
+                                            );
+                                          }),
+                                    ],
+                                  ): SizedBox(
                                     height: MediaQuery.of(context).size.height *
                                         0.55,
                                     child: Column(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/receiptByInvoice.dart';
 import 'package:login2/screens/clients/viewInvoice.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/customerListModel.dart';
@@ -83,7 +84,7 @@ class _InvoiceListState extends State<InvoiceList> {
             onWillPop: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage(widget.token)),
+                MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
               );
               return true;
             },
@@ -115,7 +116,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            HomePage(widget.token)),
+                                            Dashboard(widget.token)),
                                   );
                                 },
                                 child: Container(

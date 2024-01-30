@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../campaignsChatScreen.dart';
 import '../chatScreen.dart';
 import '../colorConst.dart';
 
 
-Widget messageBubble(context, chatListModel) {
+Widget campaignsBubble(context, campaignsListModel) {
   return ListTile(
-    dense:true,
-    contentPadding: const EdgeInsets.only(left: 5, right: 0.0),
     tileColor: Colors.white,
     onTap: () {
       Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ChatScreen(
-              groupId: chatListModel.groupId,
+            builder: (context) => CampaignsChatScreen(
+              groupId: campaignsListModel.groupId,
             ),
           ));
     },
@@ -24,12 +23,12 @@ Widget messageBubble(context, chatListModel) {
       decoration: BoxDecoration(
           image: DecorationImage(
             fit: BoxFit.cover,
-            image: NetworkImage(chatListModel.profilePic),
+            image: NetworkImage(campaignsListModel.profilePic),
           ),
           borderRadius: BorderRadius.circular(30)),
     ),
     title: Text(
-      chatListModel.groupName,
+      campaignsListModel.campaignName,
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
@@ -37,12 +36,12 @@ Widget messageBubble(context, chatListModel) {
     ),
     subtitle: Row(
       children: [
-        chatListModel.fromMe == true
+        campaignsListModel.fromMe == true
             ? const Icon(
-                Icons.done_all,
-                size: 18,
-                color: ColorConstant.messageSeen,
-              )
+          Icons.done_all,
+          size: 18,
+          color: ColorConstant.messageSeen,
+        )
             : const SizedBox(),
         const SizedBox(
           width: 5,
@@ -50,7 +49,7 @@ Widget messageBubble(context, chatListModel) {
         SizedBox(
             width: MediaQuery.of(context).size.width * 0.3,
             child: Text(
-              chatListModel.lastMessage,
+              'last Message',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             )),
@@ -60,7 +59,7 @@ Widget messageBubble(context, chatListModel) {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          chatListModel.lastMsgTime,
+          '12.30',
           style: TextStyle(
               fontSize: 10,
               color: Colors.grey[400]),

@@ -100,6 +100,7 @@ class MessageText {
   String format;
   String url;
   String messageBody;
+  String fileName;
   String footer;
   List<Button> buttons;
 
@@ -107,6 +108,7 @@ class MessageText {
     required this.format,
     required this.url,
     required this.messageBody,
+    required this.fileName,
     required this.footer,
     required this.buttons,
   });
@@ -115,6 +117,7 @@ class MessageText {
     format: json["format"],
     url: json["url"],
     messageBody: json["messageBody"],
+    fileName: json["fileName"],
     footer: json["footer"],
     buttons: List<Button>.from(json["buttons"].map((x) => Button.fromJson(x))),
   );
@@ -123,6 +126,7 @@ class MessageText {
     "format": format,
     "url": url,
     "messageBody": messageBody,
+    "fileName": fileName,
     "footer": footer,
   };
 }

@@ -57,7 +57,8 @@ class ViewLeads extends StatefulWidget {
   State<ViewLeads> createState() => _ViewLeadsState();
 }
 
-class _ViewLeadsState extends State<ViewLeads> {
+class _ViewLeadsState extends State<ViewLeads>{
+
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
   bool? result = true;
@@ -120,6 +121,8 @@ class _ViewLeadsState extends State<ViewLeads> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    // Set up animation controller
+
     if (widget.page != null) {
       page = widget.page! - 1;
     }

@@ -162,150 +162,212 @@ class AudioItemsState extends State<AudioItems> {
   @override
   Widget build(BuildContext context) {
 
-    return Stack(
-      children: [
-        InkWell(
-          onTap: () {
-            audioPlayer.dispose();
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => LeadDetails(
-                    widget.token!,
-                    widget.editLead!,
-                    widget.deleteLead!,
-                    widget.cloudCall!,
-                    widget.masterId!,
-                    pageName: 'callHistory',
-                    fromDate: widget.fromDate,
-                    toDate: widget.toDate,
-                    name: widget.name,
-                    userId: widget.userId,
-                    recordAccessPermission: widget.accessCallRecord,
-                  )),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.only(left: 50.0),
-            child: Card(
-              margin: const EdgeInsets.all(20.0),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  color: Colors.green.shade100,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 4,
-                      blurRadius: 6,
-                      offset: const Offset(1, 1),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 25, bottom: 10),
+    return InkWell(
+        onTap: () {
+          audioPlayer.dispose();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => LeadDetails(
+                  widget.token!,
+                  widget.editLead!,
+                  widget.deleteLead!,
+                  widget.cloudCall!,
+                  widget.masterId!,
+                  pageName: 'callHistory',
+                  fromDate: widget.fromDate,
+                  toDate: widget.toDate,
+                  name: widget.name,
+                  userId: widget.userId,
+                  recordAccessPermission: widget.accessCallRecord,
+                )),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(
+              left: 10, right: 10, bottom: 10,top: 10),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 1,
+            decoration: BoxDecoration(
+              color:  Colors.white,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.grey,
+                  offset: Offset(2.0, 2.0),
+                )
+              ],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(
+                      top: 10, right: 10, left: 10),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment:
+                    MainAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const SizedBox(width: 10),
-                                widget.direction.toString() == 'Incoming Call'
+                      Row(
+                        children: [
+                          Container(
+                            constraints: const BoxConstraints(
+                              maxHeight: 60,
+                            ),
+                            child: Container(
+
+                              constraints:
+                              const BoxConstraints(
+                                minHeight: 20,
+                                minWidth: 20,
+                                maxHeight: 50,
+                                maxWidth: 50,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.white,
+                                    width: 0),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Colors.grey,
+                                      blurRadius: 5,
+                                      offset: Offset(1, 1)),
+                                ],
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+
+                              ),
+                              child: Padding(padding: const EdgeInsets.all(9),
+                                child: widget.direction.toString() == 'Incoming Call'
                                     ? const Icon(Icons.phone_callback_sharp,
-                                    color: Colors.green, size: 20)
+                                    color: Colors.green, size: 25)
                                     : widget.direction.toString() ==
                                     'Missed Call'
                                     ? const Icon(
                                   Icons.phone_missed,
                                   color: Colors.red,
-                                  size: 20,
+                                  size: 25,
                                 )
                                     : const Icon(
                                     Icons.phone_forwarded_sharp,
                                     color: Colors.blueAccent,
-                                    size: 20),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text(
-                                  widget.direction.toString(),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                )
-                              ],
+                                    size: 25),
+
+                              )
                             ),
-                            Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(5)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, top: 2, bottom: 2),
-                                child: SizedBox(
-                                    width: 76,
-                                    child: Center(
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          Column(
+                            mainAxisAlignment:
+                            MainAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    SizedBox(
+                                      width: MediaQuery.of(context).size.width * 0.38,
                                       child: Text(
-                                        widget.status,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: widget.status.toString() ==
-                                              'ANSWERED'
-                                              ? Colors.green
-                                              : Colors.red,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        widget.direction.toString(),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                    )),
+                                    ),
+
+                                    Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(5)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 5, right: 5, top: 2, bottom: 2),
+                                        child: SizedBox(
+                                            width: 76,
+                                            child: Center(
+                                              child: Text(
+                                                widget.status,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: widget.status.toString() ==
+                                                      'ANSWERED'
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            )),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(
+                                height: 3,
+                              ),
+                              Text(widget.clientName,
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight:
+                                    FontWeight.w400),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.45,
+                            child: Text(
+                              'Status: ${widget.leadStatus}',
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            child: Text(
+                              'Category: ${widget.leadType}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                        ],
                       ),
-                      const SizedBox(height: 5),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text('Client Name: ${widget.clientName}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontSize: 14)),
+                      const SizedBox(
+                        height: 5,
                       ),
-                      const SizedBox(height: 5),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text('Lead Category: ${widget.leadType}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontSize: 14)),
-                      ),
-                      const SizedBox(height: 5),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text('Status: ${widget.leadStatus}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                                fontSize: 14)),
-                      ),
-                      const SizedBox(height: 5),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text(widget.time.toString(),
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green.shade900,
-                                fontSize: 14)),
+                      Row(
+                        children: [
+                          const Icon(
+                              Icons.timer_outlined),
+                          const SizedBox(
+                            width: 5,
+                          ),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(
+                                right: 10),
+                            child: Text(
+                              widget.time.toString(),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.green),
+                            ),
+                          ),
+                        ],
                       ),
                       widget.isAttend == true && widget.accessCallRecord
                           ? Column(
@@ -337,7 +399,7 @@ class AudioItemsState extends State<AudioItems> {
                                 ),
                               ),
                               const SizedBox(
-                                width: 5,
+                                width: 10,
                               ),
                               Text(
                                 '$currentPostLabel/${widget.duration}',
@@ -345,7 +407,7 @@ class AudioItemsState extends State<AudioItems> {
                               ),
                               SizedBox(
                                 height: 25,
-                                width: 135,
+                                width: 150,
                                 child: Slider(
                                   min: 0,
                                   value: position.inMilliseconds.toDouble(),
@@ -366,84 +428,23 @@ class AudioItemsState extends State<AudioItems> {
                         ],
                       )
                           : const SizedBox(),
-
+                      const SizedBox(
+                        height: 10,
+                      )
+                      // Text(
+                      //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
+                      //     ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-        ),
-        Positioned(
-          top: 0.0,
-          bottom: 0.0,
-          left: 35.0,
-          child: Container(
-            height: double.infinity,
-            width: 1.0,
-            color: Colors.blue,
-          ),
-        ),
-        Positioned(
-          top: 30.0,
-          left: 10.0,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                constraints: const BoxConstraints(
-                  maxHeight: 60,
-                ),
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minHeight: 20,
-                    minWidth: 20,
-                    maxHeight: 50,
-                    maxWidth: 50,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 0),
-                    boxShadow: const [
-                      BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 5,
-                          offset: Offset(1, 1)),
-                    ],
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: NetworkImage(widget.imageUrl)),
-                    // image: AssetImage(
-                    //     'assets/images/img.jpeg')),
-                  ),
-                ),
-              ),
-              Container(
-                height: 30.0,
-                width: 80.0,
-                decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.grey,
-                        blurRadius: 5,
-                        offset: Offset(1, 1)),
-                  ],
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                child: Center(
-                    child: Text(
-                      widget.startTime.toString(),
-                    )),
-              ),
-            ],
-          ),
-        )
-      ],
-    );
+        ));
   }
+
+
+
 
 
 }

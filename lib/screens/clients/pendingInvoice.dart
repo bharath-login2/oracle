@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/viewInvoice.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/customerListModel.dart';
@@ -79,7 +80,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => HomePage(widget.token)),
+              builder: (context) => Dashboard(widget.token)),
         );
         return true;
       },
@@ -109,7 +110,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => HomePage(widget.token)),
+                                  builder: (context) => Dashboard(widget.token)),
                             );
                           },
                           child: Container(

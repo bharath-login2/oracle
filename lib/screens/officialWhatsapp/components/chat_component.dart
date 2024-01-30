@@ -6,7 +6,7 @@ import 'messageBubble.dart';
 
 const ChatHomeScreen homeScreen = ChatHomeScreen();
 
-Widget chatComponent(chatListModel,) {
+Widget chatComponent(chatListModel) {
 
   return StatefulBuilder(
     builder: (context,setState) {

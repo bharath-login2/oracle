@@ -1,4 +1,5 @@
 import 'package:login2/screens/authentication/login.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 
 import '../../core/common.dart';
 import '../../models/userChangePassword.dart';
@@ -25,7 +26,7 @@ class _UserChangePasswordState extends State<UserChangePassword> {
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => HomePage(widget.token)));
+            MaterialPageRoute(builder: (context) => Dashboard(widget.token)));
         return true;
       },
       child: Scaffold(
@@ -53,7 +54,7 @@ class _UserChangePasswordState extends State<UserChangePassword> {
                       InkWell(
                         onTap: (){
                           Navigator.of(context).push(
-                              MaterialPageRoute(builder: (context) => HomePage(widget.token)));
+                              MaterialPageRoute(builder: (context) => Dashboard(widget.token)));
                         },
                         child: Container(
                           height: 25,

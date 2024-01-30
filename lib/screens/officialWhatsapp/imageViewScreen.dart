@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+import '../../core/common.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
 import '../../service/service.dart';
 import 'chatScreen.dart';
@@ -30,6 +31,7 @@ class _ImageViewScreenState extends State<ImageViewScreen> {
   String? viewImage;
   String imagePath = "";
   String messageData = '';
+  TextEditingController messageController = TextEditingController();
   SendMesaageModel? sendMessageModel;
 
   @override
@@ -60,16 +62,62 @@ class _ImageViewScreenState extends State<ImageViewScreen> {
           child: Container(
             color: Colors.transparent, // Set the color to transparent
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 1,
+                            offset: const Offset(1, 1),
+                          )
+                        ],
+                        // color: Colors.white,
+                        borderRadius: BorderRadius.circular(25)),
+                    child: TextFormField(
+                      onChanged: (value) {
+
+                        setState(() {});
+                      },
+                      style: const TextStyle(
+                        color: ColorConstant.black,
+                      ),
+                      controller: messageController,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.all(12),
+                        hintStyle:
+                        const TextStyle(color: Colors.grey),
+                        hintText: 'Message',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide
+                              .none, // Set the border color to none
+                        ),
+
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
                 CircleAvatar(
                   radius: 25,
                   backgroundColor: ColorConstant.barGreen,
                   child: IconButton(
                     color: const Color.fromARGB(255, 255, 255, 255),
                     onPressed: () {
+                      if (context.mounted) {
+                        Common.showProgressDialog(
+                            context, "Loading..");
+                      }
                       sendingMessage(
-                          widget.groupId, messageData,viewImage, isImage);
+                          widget.groupId, messageController.text,viewImage, isImage);
                       viewImage = '';
                       widget.image = '';
 

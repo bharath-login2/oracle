@@ -5,13 +5,11 @@ import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/screens/clients/clientDetails.dart';
 import 'package:login2/screens/homePage.dart';
-import 'package:login2/screens/userManagement/viewUsers.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:lottie/lottie.dart';
-
 import '../../core/common.dart';
 import '../../models/clients/mainClientListModel.dart';
 import '../../service/service.dart';
-import '../leadManagement/dashboard.dart';
 import 'addClients.dart';
 import 'editClient.dart';
 
@@ -70,7 +68,7 @@ class _ClientListState extends State<ClientList> {
             onWillPop: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage(widget.token)),
+                MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
               );
               return true;
             },
@@ -102,7 +100,7 @@ class _ClientListState extends State<ClientList> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            HomePage(widget.token)),
+                                            Dashboard(widget.token)),
                                   );
                                 },
                                 child: Container(

@@ -21,7 +21,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
-import '../../models/clients/leadConvertToClientModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/addMileStoneModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
@@ -76,7 +75,6 @@ class LeadDetails extends StatefulWidget {
   int? page;
   int? pageSize;
   String? leadType;
-
   LeadDetails(
       this.token,
       this.editLead,
@@ -181,6 +179,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   bool isExpanded = false;
   List checkedItems = [];
   List checkedItemsName = [];
+  String accessCallRecordingPermission='';
 
   @override
   void initState() {
@@ -274,13 +273,27 @@ class _LeadDetailsState extends State<LeadDetails> {
           );
         }
         else if (widget.pageName == 'callHistory') {
+          widget.name=await Common.getSharedPref("name");
+          widget.userId=await Common.getSharedPref("userId");
+          accessCallRecordingPermission = await Common.getSharedPref("accessCallRecordingPermission");
+          setState(() {
+
+          });
+          if (accessCallRecordingPermission == 'true') {
+            widget.recordAccessPermission = true;
+          }
+          else{
+            widget.recordAccessPermission = false;
+          }
+
+
           Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (context) => CallHistoryPage(
                   widget.token,
-                  widget.name!,
-                  widget.userId!,
+                  widget.name.toString(),
+                  widget.userId.toString(),
                   widget.recordAccessPermission!,
                 )),
           );
@@ -402,7 +415,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         InkWell(
-                          onTap: () {
+                          onTap: () async {
                             if (widget.pageName == 'search') {
                               Navigator.push(
                                 context,
@@ -427,13 +440,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             widget.cloudCall)),
                               );
                             } else if (widget.pageName == 'callHistory') {
+                              widget.name=await Common.getSharedPref("name");
+                              widget.userId=await Common.getSharedPref("userId");
+                              accessCallRecordingPermission = await Common.getSharedPref("accessCallRecordingPermission");
+                              setState(() {
+
+                              });
+                              if (accessCallRecordingPermission == 'true') {
+                                widget.recordAccessPermission = true;
+                              }
+                              else{
+                                widget.recordAccessPermission = false;
+                              }
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => CallHistoryPage(
                                       widget.token,
-                                      widget.name!,
-                                      widget.userId!,
+                                      widget.name.toString(),
+                                      widget.userId.toString(),
                                       widget.recordAccessPermission!,
                                     )),
                               );

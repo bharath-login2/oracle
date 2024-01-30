@@ -141,11 +141,7 @@ class _AddLeadsState extends State<AddLeads> {
     }
     return WillPopScope(
         onWillPop: () async {
-          if (widget.page == 'NavigationBar') {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => HomePage(widget.token)),
-            );
-          } else if (widget.page == 'leadDetails') {
+           if (widget.page == 'leadDetails') {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -2089,7 +2085,9 @@ class _AddLeadsState extends State<AddLeads> {
                               Common.toastMessaage(
                                   'Choose next followup date',
                                   Colors.red);
-                            } else {
+                            }
+
+                            else {
                               if (context.mounted) {
                                 Common.showProgressDialog(
                                     context, "Loading..");
@@ -2288,7 +2286,8 @@ class _AddLeadsState extends State<AddLeads> {
                                 }
                               }
                             }
-                          } else {
+                          }
+                          else {
                             setState(() {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(

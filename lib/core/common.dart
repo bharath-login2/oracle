@@ -98,6 +98,9 @@ class Common {
     else if (key == 'updateStaffPasswordPermission') {
       prefs.setString(key, val);
     }
+    else if (key == 'isVisible') {
+      prefs.setString(key, val);
+    }
     else {
       await prefs.clear();
     }

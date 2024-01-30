@@ -157,7 +157,7 @@ addContactPopUp(context, nameController, numberController) {
               onPressed: () async {
                 AddContactModel? addContactModel = await HttpService.addContact(nameController.text,code,numberController.text);
                 if(addContactModel != null &&  addContactModel.status == true){
-                  Navigator.push(context,MaterialPageRoute(builder: (context) => const ChatHomeScreen(),));
+                  Navigator.push(context,MaterialPageRoute(builder: (context) =>  ChatHomeScreen(),));
                   Fluttertoast.showToast(
                     msg: addContactModel.message,
                     toastLength: Toast.LENGTH_SHORT,

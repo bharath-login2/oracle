@@ -28,6 +28,7 @@ class _LoginState extends State<Login> {
   bool obSecure = true;
   bool? result = true;
   UpdateModel? updatedata;
+  bool serverChoose=false;
 
   handleAsync() async {
     firebaseToken = await FirebaseMessaging.instance.getToken();
@@ -49,6 +50,7 @@ class _LoginState extends State<Login> {
       if (updatedata!.data!.server!.length == 1) {
         Common.saveSharedPref(
             "url", updatedata!.data!.server![0].url.toString());
+        serverChoose=true;
       }
     });
   }
@@ -101,6 +103,10 @@ class _LoginState extends State<Login> {
                               onSelected: (value) {
                                 Common.saveSharedPref(
                                     "url", value);
+                                serverChoose=true;
+                                setState(() {
+
+                                });
                               }):SizedBox(),
                         ),
                       ),
@@ -276,7 +282,13 @@ class _LoginState extends State<Login> {
                                       Common.toastMessaage(
                                           'Password cannot be empty',
                                           Colors.red);
-                                    } else {
+                                    }
+                                    else if(serverChoose==false){
+                                      Common.toastMessaage(
+                                          'Choose any one server',
+                                          Colors.red);
+                                    }
+                                      else {
                                       setState(() {
                                         _loading = true;
                                       });
@@ -290,6 +302,8 @@ class _LoginState extends State<Login> {
                                                 .userPermissionCheck(
                                                     object.data!.token);
                                         if (object1.status == true) {
+                                          Common.saveSharedPref(
+                                              "isVisible",'true');
                                           Common.saveSharedPref(
                                               "createLeadPermission",
                                               object1.data!.createLead

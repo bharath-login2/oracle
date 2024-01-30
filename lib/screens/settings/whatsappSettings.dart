@@ -129,7 +129,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
             body: WillPopScope(
               onWillPop: () async {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => HomePage(widget.token)));
+                    builder: (context) => Dashboard(widget.token)));
                 return true;
               },
               child: whatsappDetails!=null?

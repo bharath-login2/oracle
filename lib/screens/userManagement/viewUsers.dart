@@ -106,7 +106,7 @@ class _ViewUsersState extends State<ViewUsers> {
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => HomePage(widget.token)));
+            MaterialPageRoute(builder: (context) => Dashboard(widget.token)));
         return true;
       },
       child: RefreshIndicator(

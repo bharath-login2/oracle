@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/editRecipt.dart';
 import 'package:login2/screens/clients/viewReceipt.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/customerListModel.dart';
@@ -79,7 +80,7 @@ class _ReceiptListState extends State<ReceiptList> {
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => InvoiceList(widget.token)),
+              builder: (context) => Dashboard(widget.token)),
         );
         return true;
       },

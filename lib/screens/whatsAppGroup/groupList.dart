@@ -14,6 +14,8 @@ import '../../widgets/singleGroupWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../leadManagement/dashboard.dart';
+
 class GroupList extends StatefulWidget {
   String? token;
   GroupList(this.token);
@@ -63,7 +65,7 @@ class _GroupListState extends State<GroupList> {
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => HomePage(widget.token)));
+            MaterialPageRoute(builder: (context) => Dashboard(widget.token)));
         return true;
       },
       child:result == true
@@ -91,7 +93,7 @@ class _GroupListState extends State<GroupList> {
                       InkWell(
                         onTap: (){
                           Navigator.of(context).push(
-                              MaterialPageRoute(builder: (context) => HomePage(widget.token)));
+                              MaterialPageRoute(builder: (context) => Dashboard(widget.token)));
                         },
                         child: Container(
                           height: 25,

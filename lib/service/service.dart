@@ -61,6 +61,7 @@ import '../../models/userManagement/postEditSubmenuModel.dart';
 import '../../models/userManagement/postSubmenuModel.dart';
 import '../../models/userManagement/viewStaffModel.dart';
 import 'package:dio/dio.dart';
+import '../core/common.dart';
 import '../core/config.dart';
 import '../models/callLogs/callLogHistoryModel.dart';
 import '../models/callLogs/callLogUploadModel.dart';
@@ -121,6 +122,9 @@ import '../models/lead_management/uploadAudioRecoed.dart';
 import '../models/lead_management/viewLeadSubCategoryModel.dart';
 import '../models/officialWhatsapp/ChatListModel.dart';
 import '../models/officialWhatsapp/addContactModel.dart';
+import '../models/officialWhatsapp/campaignsListModel.dart';
+import '../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
+import '../models/officialWhatsapp/mediaModel.dart';
 import '../models/officialWhatsapp/officialMessageModel.dart';
 import '../models/officialWhatsapp/sendMesaageModel.dart';
 import '../models/officialWhatsapp/sendTemplateMesaageModel.dart';
@@ -2413,6 +2417,7 @@ class HttpService {
     try {
       var response = await _dio.get("${await Config.getUrl()}official_whatsapp",queryParameters: {
         "searchKey": searchKey,
+        "token": await Common.getSharedPref("token"),
       });
       if (response.statusCode == 200) {
 
@@ -2428,6 +2433,22 @@ class HttpService {
       print("Exception: $e");
     } finally {}
   }
+  static fetchCampaignsList(searchKey) async {
+    try {
+      var response = await _dio.get("${await Config.getUrl()}get_campaigns",queryParameters: {
+        "token": await Common.getSharedPref("token"),
+      });
+
+      CampaignsListModel campaignsListModel = CampaignsListModel.fromJson(response.data);
+      print('response: ');
+      print(response);
+      return campaignsListModel;
+
+      // isLoading.value = false;
+    } catch (e) {
+      print("Exception: $e");
+    } finally {}
+  }
 
   static addContact(
       contactName, contryCode, contaCtNumber,) async {
@@ -2435,6 +2456,7 @@ class HttpService {
       "contact_name": contactName,
       'country_code': contryCode,
       'contact_number': contaCtNumber,
+      "token": await Common.getSharedPref("token"),
 
     });
     try {
@@ -2459,6 +2481,7 @@ class HttpService {
     try {
       var response = await _dio.get("${await Config.getUrl()}official_whatsapp_messages", queryParameters: {
         "group_id": groupId,
+        "token": await Common.getSharedPref("token"),
       });
       if (response.statusCode == 200) {
         OfficialMessageModel officialMessageModel =
@@ -2474,10 +2497,33 @@ class HttpService {
       print("Exception: $e");
     } finally {}
   }
+  static officialMessageCampaigns(groupId) async {
+    try {
+      var response = await _dio.get("${await Config.getUrl()}get_campaigns_messages", queryParameters: {
+        "group_id": groupId,
+        "token": await Common.getSharedPref("token"),
+      });
+      if (response.statusCode == 200) {
+        CampaignsOfficialMessageModel officialMessageModel =
+        CampaignsOfficialMessageModel.fromJson(response.data);
+        return officialMessageModel;
+      } else if (response.statusCode == 500) {
+
+      } else {
+        print('Error');
+      }
+      // isLoading.value = false;
+    } catch (e) {
+      print("Exception: $e");
+    } finally {}
+  }
 
   static getTemplate() async {
     try {
       var response = await _dio.get("${await Config.getUrl()}get_official_whatsapp_templates",
+          queryParameters: {
+            "token": await Common.getSharedPref("token"),
+          }
       );
         if (response.statusCode == 200) {
 
@@ -2501,6 +2547,8 @@ class HttpService {
           "${await Config.getUrl()}get_whatsapp_template_message_data",
           queryParameters: {
             "template_id": templateId,
+            "token": await Common.getSharedPref("token"),
+
           });
 
       print("Response status code: ${response.statusCode}");
@@ -2524,9 +2572,20 @@ class HttpService {
   }
 
   static sendTemplateMessage(
-      groupId, format, templateName, language, template, fileName) async {
+      groupId, format, templateName, language, template, fileName,isFile,type) async {
 
-
+var body={
+  "group_id": groupId,
+  'format': format,
+  'template_name': templateName,
+  'language': language,
+  'template': template,
+  'fileName': fileName,
+  'type':type,
+  'is_file':isFile,
+  "token": await Common.getSharedPref("token"),
+};
+print(body);
     var formData = FormData.fromMap({
       "group_id": groupId,
       'format': format,
@@ -2534,6 +2593,9 @@ class HttpService {
       'language': language,
       'template': template,
       'fileName': fileName,
+      'type':type,
+      'is_file':isFile,
+      "token": await Common.getSharedPref("token"),
     });
 
 
@@ -2570,6 +2632,7 @@ class HttpService {
       'message_data': messageData,
       'fileName':isImage == true ?await MultipartFile.fromFile(fileName): '',
       'is_image': isImage,
+      "token": await Common.getSharedPref("token"),
     });
 
 
@@ -2596,5 +2659,50 @@ class HttpService {
       print("Exception: $e");
     } finally {}
   }
+  static sendMessageFile(
+      groupId, messageData, fileName) async {
+    var formData = FormData.fromMap({
+      "group_id": groupId,
+      'message_data': messageData,
+      'fileName':fileName,
+      "token": await Common.getSharedPref("token"),
+    });
 
+
+    try {
+      var response = await _dio
+          .post("${await Config.getUrl()}sendMessageFiles", data:formData );
+
+      print("Response status code: ${response.statusCode}");
+      print("Response data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        SendMesaageModel sendMesaageModel =
+        SendMesaageModel.fromJson(response.data);
+        return sendMesaageModel;
+      } else if (response.statusCode == 500) {
+        print('Error 500');
+        print("000000");
+      } else {
+        print('Error');
+      }
+      // isLoading.value = false;
+    } catch (e) {
+      print("Exception: $e");
+    } finally {}
+  }
+  static Future getTemplateMedia(format) async {
+    var params = {
+      "token": await Common.getSharedPref("token"),
+      "fileType":format
+    };
+    print(params);
+    try {
+      var result = await _dio.get("${await Config.getUrl()}getMediaFiles", queryParameters: params);
+      MediaModel model = MediaModel.fromJson(result.data);
+      return model;
+    } on Exception {
+      return null;
+    }
+  }
 }

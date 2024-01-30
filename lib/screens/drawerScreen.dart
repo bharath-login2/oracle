@@ -201,25 +201,25 @@ class _DraweScreenState extends State<DraweScreen> {
                                       type: AppSettingsType.notification);
                                 },
                               ),
-                              ListTile(
-                                leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/icons/facebook.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
-                                title: const Text('Facebook Settings'),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            FacebookSettings(widget.token)),
-                                  );
-                                },
-                              ),
+                              // ListTile(
+                              //   leading: SizedBox(
+                              //       width: 25,
+                              //       child: Center(
+                              //         child: Image.asset(
+                              //             'assets/icons/facebook.png',
+                              //             height: 100,
+                              //             fit: BoxFit.contain),
+                              //       )),
+                              //   title: const Text('Facebook Settings'),
+                              //   onTap: () {
+                              //     Navigator.push(
+                              //       context,
+                              //       MaterialPageRoute(
+                              //           builder: (context) =>
+                              //               FacebookSettings(widget.token)),
+                              //     );
+                              //   },
+                              // ),
                               
                               ListTile(
                                 leading: SizedBox(
