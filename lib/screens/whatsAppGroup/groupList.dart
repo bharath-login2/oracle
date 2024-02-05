@@ -151,7 +151,8 @@ class _GroupListState extends State<GroupList> {
             color: Colors.white,
             borderRadius: BorderRadius.only(topLeft: Radius.circular(50)),
           ),
-          child:contactGroup!.data!.isConfigured==true? Padding(
+          child:contactGroup!.data!.isConfigured==true
+              ? Padding(
               padding: const EdgeInsets.only(left: 8, right: 8, top: 10),
               child: configure!.data!.isExpired==false?
               SizedBox(
@@ -411,7 +412,8 @@ class _GroupListState extends State<GroupList> {
                   ],
                 ),
               )
-          ):Padding(
+          ):
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               mainAxisAlignment:

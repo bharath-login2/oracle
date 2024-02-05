@@ -10,6 +10,7 @@ import 'package:dio/dio.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -200,6 +201,7 @@ class _LeadDetailsState extends State<LeadDetails> {
         result = false;
       });
     }
+    await Common.saveSharedPref("openAppLeadId", '0');
     leadDetails =
     await HttpService.leadDetails(widget.token, widget.callMasterId);
     commonDetails = await HttpService.addLeadCommonData(widget.token);
@@ -1300,9 +1302,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                         ),
                                         InkWell(
                                           onTap: () async {
-                                            String url =
-                                                'tel:${'+${leadDetails!.data!.contactNumber1}'}';
-                                            await launch(url);
+                                            // String url =
+                                            //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
+                                            // await launch(url);
+                                            bool? res = await FlutterPhoneDirectCaller.callNumber('+${leadDetails!.data!.contactNumber1}');
                                           },
                                           child: SizedBox(
                                               height: 50,
@@ -2118,10 +2121,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     InkWell(
                                                       onTap:
                                                           () async {
-                                                        String url =
-                                                            'tel:${'+${leadDetails!.data!.contactNumber1}'}';
-                                                        await launch(
-                                                            url);
+                                                        // String url =
+                                                        //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
+                                                        // await launch(
+                                                        //     url);
+                                                            bool? res = await FlutterPhoneDirectCaller.callNumber('+${leadDetails!.data!.contactNumber1}');
                                                       },
                                                       child: SizedBox(
                                                           height: 50,

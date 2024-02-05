@@ -1,6 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:lottie/lottie.dart';
-
 import '../../core/common.dart';
 import '../../models/lead_management/cloudCallModel.dart';
 import '../../models/lead_management/deleteLeadModel.dart';
@@ -452,7 +452,7 @@ class _SearchPageState extends State<SearchPage> {
                                                             .circular(
                                                             5)),
                                                     child: const Icon(
-                                                      Icons.call,
+                                                      Icons.cloud_circle_rounded,
                                                       color: Colors
                                                           .black,
                                                     ),
@@ -474,9 +474,10 @@ class _SearchPageState extends State<SearchPage> {
                                           ),
                                           InkWell(
                                             onTap: () async {
-                                              String url = 'tel:+${search!.data!.details![i]
-                                                  .contactNumber1}';
-                                              await launch(url);
+                                              // String url = 'tel:+${search!.data!.details![i]
+                                              //     .contactNumber1}';
+                                              // await launch(url);
+                                              bool? res = await FlutterPhoneDirectCaller.callNumber('+${search!.data!.details![i].contactNumber1}');
                                             },
                                             child: SizedBox(
                                                 height: 50,
@@ -1052,7 +1053,7 @@ class _SearchPageState extends State<SearchPage> {
                                                                                 .circular(
                                                                                 5)),
                                                                         child: const Icon(
-                                                                          Icons.call,
+                                                                          Icons.cloud_circle_rounded,
                                                                           color: Colors
                                                                               .black,
                                                                         ),
@@ -1074,9 +1075,9 @@ class _SearchPageState extends State<SearchPage> {
                                                               ),
                                                               InkWell(
                                                                 onTap: () async {
-                                                                  String url = 'tel:+${search!.data!.details![i]
-                                                                      .contactNumber1}';
-                                                                  await launch(url);
+                                                                  // String url = 'tel:+${search!.data!.details![i].contactNumber1}';
+                                                                  // await launch(url);
+                                                                  bool? res = await FlutterPhoneDirectCaller.callNumber('+${search!.data!.details![i].contactNumber1}');
                                                                 },
                                                                 child: SizedBox(
                                                                     height: 50,

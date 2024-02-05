@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:system_alert_window/system_alert_window.dart';
+
 import 'common.dart';
 
 class Config {
@@ -16,6 +18,10 @@ class Config {
     }
     print(baseUrl);
     return baseUrl;
+  }
+  static requestPermission() async {
+    SystemWindowPrefMode prefMode = SystemWindowPrefMode.OVERLAY;
+    await SystemAlertWindow.requestPermissions(prefMode: prefMode);
   }
 
 }

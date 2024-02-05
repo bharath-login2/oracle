@@ -1,18 +1,25 @@
+import 'dart:developer';
+
 import 'package:call_log/call_log.dart';
-import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dialpad/flutter_dialpad.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/config.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import '../../core/common.dart';
+import '../../models/callLogUploadPermissionModel.dart';
 import '../../models/callLogs/callLogHistoryModel.dart';
 import '../../models/callLogs/callLogUploadModel.dart';
+import '../../models/callLogs/callLogUploadPermissionUpdateModel.dart';
 import '../../models/callLogs/deleteCallHistoryModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
+MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
 
 class CallLogs extends StatefulWidget {
   String? token;
@@ -26,6 +33,7 @@ class CallLogs extends StatefulWidget {
 }
 
 class _CallLogsState extends State<CallLogs> {
+
   int selectedIndex = 0;
   List<Map<String, dynamic>> history = [];
   List historyIndex = [];
@@ -35,8 +43,8 @@ class _CallLogsState extends State<CallLogs> {
   String? permissionAccess = '';
   List deleteHistoryIds = [];
   bool onLongPressHistory = false;
-  var fromdate = DateTime.now();
-  var todate = DateTime.now();
+  String fromdate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  String todate = DateFormat('dd-MM-yyyy').format(DateTime.now());
   bool isSearch = true;
   bool search = false;
   AddLeadCommonDataModel? commonDetails;
@@ -45,12 +53,17 @@ class _CallLogsState extends State<CallLogs> {
   int from =
       DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
   int to = DateTime.now().millisecondsSinceEpoch;
+  bool displayOverApps=false;
+  CallLogUploadPermissionModel? callUploadPermission;
+
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
     getSharedData();
+    getPermission();
   }
 
   getSharedData() async {
@@ -88,6 +101,15 @@ class _CallLogsState extends State<CallLogs> {
           Navigator.of(context).pop();
         }
       });
+    }
+  }
+  getPermission() async {
+    Map<String, dynamic> body2 = {
+      "token": await Common.getSharedPref("token"),
+    };
+    callUploadPermission = await HttpService.callLogUploadPermission(body2);
+    if (callUploadPermission != null) {
+      setState(() {});
     }
   }
 
@@ -156,6 +178,8 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                   Row(
                     children: [
+
+
                       history.isNotEmpty
                           ? InkWell(
                               onTap: () async {
@@ -192,21 +216,7 @@ class _CallLogsState extends State<CallLogs> {
                                   }
                                 }
                               },
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.4,
-                                height: 35,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5),
-                                    color: Colors.green),
-                                child: const Center(
-                                  child: Text("Upload",
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                          decoration: TextDecoration.none,
-                                          color: Colors.white)),
-                                ),
-                              ),
+                              child: const Icon(Icons.upload,size: 30,),
                             )
                           : const SizedBox(),
                       deleteHistoryIds.isNotEmpty
@@ -273,7 +283,113 @@ class _CallLogsState extends State<CallLogs> {
                                 Icons.delete,
                                 color: Colors.red,
                               ))
-                          : const SizedBox()
+                          : const SizedBox(),
+                      callUploadPermission!=null?
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10,right: 10),
+                        child: GestureDetector(
+                          onTap: () async {
+                            displayOverApps=await Permission.systemAlertWindow.isGranted;
+                            if(mounted){
+                              showMenu(
+                                color: Colors.white,
+                                context: context,
+                                position: const RelativeRect.fromLTRB(
+                                    1000.0, 0.0, 1000.0, 0.0),
+                                items: [
+                                   PopupMenuItem<String>(
+                                    value: '1',
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(Icons.call_received,color: Colors.red),
+                                            SizedBox(width: 5,),
+                                            Text('Incoming',),
+                                          ],
+                                        ),
+                                        callUploadPermission!.data!.incoming==true?const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
+                                      ],
+                                    ),
+                                  ),
+                                   PopupMenuItem<String>(
+                                    value: '2',
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(Icons.call_made,color: Colors.green,),
+                                            SizedBox(width: 5,),
+                                            Text('Outgoing'),
+                                          ],
+                                        ),
+                                        callUploadPermission!.data!.outgoing==true?const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
+                                      ],
+                                    ),
+                                  ),
+                                   PopupMenuItem<String>(
+                                    value: '3',
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(Icons.display_settings),
+                                            SizedBox(width: 5,),
+                                            Text('Display Over App'),
+                                          ],
+                                        ),
+                                        displayOverApps==true? const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ).then((value) async {
+                                if (value != null) {
+                                  if (value == '1') {
+                                    Map<String, dynamic> body = {
+                                      "token": await Common.getSharedPref("token"),
+                                      "type":"incoming"
+                                    };
+                                    CallLogUploadPermissionUpdateModel perm = await HttpService.callLogUploadPermissionUpdate(body);
+                                    Common.toastMessaage(perm.message, Colors.green);
+                                    getPermission();
+                                    setState(() {});
+                                  }
+                                  else if (value == '2') {
+                                    Map<String, dynamic> body = {
+                                      "token": await Common.getSharedPref("token"),
+                                      "type":"outgoing"
+                                    };
+                                    CallLogUploadPermissionUpdateModel perm = await HttpService.callLogUploadPermissionUpdate(body);
+                                    Common.toastMessaage(perm.message, Colors.green);
+                                    getPermission();
+                                    setState(() {});
+                                  }
+                                  else if (value == '3') {
+                                    if (await Permission.systemAlertWindow.isGranted) {
+                                      // Permission is already granted, show the overlay
+                                      openAppSettings();
+
+                                    } else {
+                                      // Permission has not been granted, request it
+                                      Config.requestPermission();
+                                    }
+                                  }
+                                }
+                              });
+                            }
+
+                          },
+                          child: const Icon(
+                            Icons.more_vert_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ):
+                      const SizedBox()
                     ],
                   )
                 ],
@@ -816,190 +932,132 @@ class _CallLogsState extends State<CallLogs> {
                                           padding: const EdgeInsets.only(
                                               left: 10, right: 10),
                                           child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text('From Date',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      )),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.45,
-                                                    child: Center(
-                                                      child: DateTimePicker(
-                                                        decoration:
-                                                            InputDecoration(
-                                                                contentPadding:
-                                                                    const EdgeInsets
-                                                                        .all(3),
-                                                                filled: true,
-                                                                //<-- SEE HERE
-                                                                fillColor:
-                                                                    Colors
-                                                                        .white,
-                                                                prefixIcon:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .arrow_right,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                ),
-                                                                counterText: "",
-                                                                hintText:
-                                                                    'From Date',
-                                                                isDense: true,
-                                                                border: OutlineInputBorder(
-                                                                    borderSide: BorderSide(
-                                                                        color: Colors
-                                                                            .purple
-                                                                            .shade100),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            5))),
-                                                        initialValue:
-                                                            fromdate.toString(),
-                                                        type: DateTimePickerType
-                                                            .date,
-
-                                                        //controller: fromDate,
-                                                        firstDate:
-                                                            DateTime(1995),
-                                                        lastDate: DateTime.now()
-                                                            .add(const Duration(
-                                                                days: 365)),
-                                                        // This will add one year from current date
-                                                        validator: (value) {
-                                                          return null;
-                                                        },
-                                                        onChanged: (value) {
-                                                          if (value
-                                                              .isNotEmpty) {
-                                                            setState(() {
-                                                              fromdate =
-                                                                  DateTime.parse(
-                                                                      value);
-                                                            });
-                                                          }
-                                                        },
-                                                        // We can also use onSaved
-                                                        onSaved: (value) {
-                                                          if (value!
-                                                              .isNotEmpty) {
-                                                            fromdate =
-                                                                DateTime.parse(
-                                                                    value);
-                                                          }
-                                                        },
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  final selctedDatetimetemp =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: DateTime.now(),
+                                                    firstDate: DateTime(2000),
+                                                    lastDate: DateTime.now(),
+                                                  );
+                                                  fromdate = DateFormat(
+                                                          'dd-MM-yyyy')
+                                                      .format(
+                                                          selctedDatetimetemp!);
+                                                  setState(() {});
+                                                },
+                                                child: Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.45,
+                                                  height: 45,
+                                                  decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5),
+                                                      color: Colors.white),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(left: 10),
+                                                        child: Text(
+                                                          fromdate,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            color: Colors.black,
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(
-                                                width: 12,
-                                              ),
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text('To Date',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      )),
-                                                  const SizedBox(
-                                                    height: 5,
-                                                  ),
-                                                  SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.45,
-                                                    child: Center(
-                                                      child: DateTimePicker(
+                                                      Container(
+                                                        width: 40,
+                                                        height: 40,
                                                         decoration:
-                                                            InputDecoration(
-                                                                contentPadding:
-                                                                    const EdgeInsets
-                                                                        .all(3),
-                                                                filled: true,
-                                                                //<-- SEE HERE
-                                                                fillColor:
-                                                                    Colors
-                                                                        .white,
-                                                                prefixIcon:
-                                                                    const Icon(
-                                                                  Icons
-                                                                      .arrow_right,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                ),
-                                                                counterText: "",
-                                                                hintText:
-                                                                    'From Date',
-                                                                isDense: true,
-                                                                border: OutlineInputBorder(
-                                                                    borderSide: BorderSide(
-                                                                        color: Colors
-                                                                            .purple
-                                                                            .shade100),
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            5))),
-                                                        initialValue:
-                                                            todate.toString(),
-                                                        type: DateTimePickerType
-                                                            .date,
-
-                                                        //controller: fromDate,
-                                                        firstDate:
-                                                            DateTime(1995),
-                                                        lastDate: DateTime.now()
-                                                            .add(const Duration(
-                                                                days: 365)),
-                                                        // This will add one year from current date
-                                                        validator: (value) {
-                                                          return null;
-                                                        },
-                                                        onChanged: (value) {
-                                                          if (value
-                                                              .isNotEmpty) {
-                                                            setState(() {
-                                                              todate = DateTime
-                                                                  .parse(value);
-                                                            });
-                                                          }
-                                                        },
-                                                        // We can also use onSaved
-                                                        onSaved: (value) {
-                                                          if (value!
-                                                              .isNotEmpty) {
-                                                            todate =
-                                                                DateTime.parse(
-                                                                    value);
-                                                          }
-                                                        },
-                                                      ),
-                                                    ),
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(2),
+                                                          color: Colors.white,
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.calendar_month,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      )
+                                                    ],
                                                   ),
-                                                ],
+                                                ),
+                                              ),
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  final toDateSelectTemp =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: DateTime.now(),
+                                                    firstDate: DateTime(2000),
+                                                    lastDate: DateTime(2100),
+                                                  );
+                                                  todate = DateFormat(
+                                                          'dd-MM-yyyy')
+                                                      .format(
+                                                          toDateSelectTemp!);
+                                                  setState(() {});
+                                                },
+                                                child: Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.45,
+                                                  height: 45,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(left: 10),
+                                                        child: Text(
+                                                          todate,
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        width: 40,
+                                                        height: 40,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5),
+                                                          color: Colors.white,
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.calendar_month,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -1100,10 +1158,8 @@ class _CallLogsState extends State<CallLogs> {
                                                         hintText: assignStaff,
                                                         isDense: true,
                                                         border: OutlineInputBorder(
-                                                            borderSide: BorderSide(
-                                                                color: Colors
-                                                                    .purple
-                                                                    .shade100),
+                                                            borderSide:
+                                                                BorderSide.none,
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
@@ -1515,7 +1571,76 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                 ),
               ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.green,
+          onPressed: () {
+            showGeneralDialog(
+              barrierLabel: "showGeneralDialog",
+              barrierDismissible: true,
+              barrierColor: Colors.black.withOpacity(0.6),
+              transitionDuration: const Duration(milliseconds: 400),
+              context: context,
+              pageBuilder: (context, _, __) {
+                return StatefulBuilder(
+                  builder: (context, setState) {
+                    return Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        width: double.maxFinite,
+                        height: 700,
+                        clipBehavior: Clip.antiAlias,
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Material(
+                          child: DialPad(
+                            hideSubtitle: true,
+                            makeCall: _makeCall,
+                            keyPressed: _keyPressed,
+                            enableDtmf: false,
+                            outputMask: "0000000000",
+                            backspaceButtonIconColor: Colors.black,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              transitionBuilder: (_, animation1, __, child) {
+                return SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 1),
+                    end: const Offset(0, 0),
+                  ).animate(animation1),
+                  child: child,
+                );
+              },
+            );
+          },
+          child: const Icon(
+            Icons.call,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
+}
+
+
+
+
+Future<void> _makeCall(String number) async {
+  bool? res = await FlutterPhoneDirectCaller.callNumber('+91${number}');
+
+}
+
+void _keyPressed(String number) {
+  print(number);
 }

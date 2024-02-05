@@ -3,8 +3,10 @@ import 'package:login2/screens/homePage.dart';
 import '../../core/common.dart';
 import '../../models/officialWhatsapp/ChatListModel.dart';
 import '../../models/officialWhatsapp/campaignsListModel.dart';
+import '../../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
+import '../settings/whatsappSettings.dart';
 import 'addContact.dart';
 import 'clientListScreen.dart';
 import 'colorConst.dart';
@@ -30,13 +32,22 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   ChatListModel? chatListModel;
   CampaignsListModel? campaignsListModel;
+  OfficialWhatsappConfigeModel? officialWhatsAppConfigure;
+
   String token='';
 
   @override
   void initState() {
     chats('');
     chatCampaignsList('');
+    getOfficialConfigaration();
     super.initState();
+  }
+  getOfficialConfigaration() async {
+    officialWhatsAppConfigure = await HttpService.officialWhatsAppConfigure();
+    if (officialWhatsAppConfigure != null) {
+      setState(() {});
+    }
   }
 
   @override
@@ -52,9 +63,11 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
         return true;
       },
       child: SafeArea(
-        child: DefaultTabController(
+        child: officialWhatsAppConfigure!=null?
+        DefaultTabController(
           length: 2,
-          child: Scaffold(
+          child:officialWhatsAppConfigure!.data==true?
+          Scaffold(
             key: scaffoldKey,
             floatingActionButton: FloatingActionButton(
               onPressed: () {
@@ -175,8 +188,132 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
               ),
             )
                 : const Center(child: CircularProgressIndicator())
-          ),
-        ),
+          ):
+              Scaffold(
+                body:  Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment:
+                    MainAxisAlignment
+                        .center,
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .center,
+                    children: [
+                      Container(
+                        decoration:
+                        BoxDecoration(
+                          borderRadius:
+                          BorderRadius
+                              .circular(8),
+                          color: Colors.grey,
+                        ),
+
+                        child: Padding(
+                          padding:
+                          const EdgeInsets
+                              .all(0.1),
+                          child: Card(
+                            // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
+                            shape:
+                            RoundedRectangleBorder(
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                  8),
+                            ),
+                            // Set the clip behavior of the card
+                            clipBehavior: Clip
+                                .antiAliasWithSaveLayer,
+                            // Define the child widgets of the card
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+                              children: <
+                                  Widget>[
+                                // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
+                                Image.asset(
+                                  'assets/main/packageimage.png',
+                                  height: 160,
+                                  width: double
+                                      .infinity,
+                                  fit: BoxFit
+                                      .cover,
+                                ),
+                                // Add a container with padding that contains the card's title, text, and buttons
+                                Container(
+                                  padding:
+                                  const EdgeInsets
+                                      .fromLTRB(
+                                      15,
+                                      15,
+                                      15,
+                                      0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment
+                                        .center,
+                                    children: <
+                                        Widget>[
+                                      const Text(
+                                        'Configuration Failed',
+                                        style:
+                                        TextStyle(
+                                          fontSize:
+                                          18,
+                                          color:
+                                          Colors.red,
+                                        ),
+                                      ),
+
+                                      // Add a row with two buttons spaced apart and aligned to the right side of the card
+                                      Row(
+                                        children: <
+                                            Widget>[
+                                          // Add a spacer to push the buttons to the right side of the card
+                                          const Spacer(),
+                                          // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
+
+                                          // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
+                                          TextButton(
+                                            child:
+                                            const Text(
+                                              "Settings",
+                                            ),
+                                            onPressed:
+                                                () async {
+                                              String token= await Common.getSharedPref("token");
+                                              if(mounted){
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          WhatsappSettings(
+                                                              token)),
+                                                );
+                                              }
+
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Add a small space between the card and the next widget
+                                Container(
+                                    height: 5),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+        ):const SizedBox()
       ),
     );
   }

@@ -396,6 +396,14 @@ class _LoginState extends State<Login> {
                                               "updateStaffPasswordPermission",
                                               object1.data!.updateStaffPassword
                                                   .toString());
+                                          Common.saveSharedPref(
+                                              "officialWhatsApp",
+                                              object1.data!.whatsappOfficial
+                                                  .toString());
+                                          Common.saveSharedPref(
+                                              "unofficialWhatsApp",
+                                              object1.data!.whatsappUnofficial
+                                                  .toString());
 
                                         }
 

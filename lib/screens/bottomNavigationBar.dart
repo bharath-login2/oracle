@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../screens/homePage.dart';
 import '../../screens/leadManagement/addLeads.dart';
 import '../../screens/settings/whatsappSettings.dart';
@@ -5,13 +7,20 @@ import '../../screens/userManagement/viewUsers.dart';
 import '../../screens/whatsAppGroup/groupList.dart';
 import 'package:flutter/material.dart';
 
+import 'callLogs/callLogs.dart';
 import 'officialWhatsapp/chatHomeScreen.dart';
 
 class BottomNavigation extends StatefulWidget {
   String token;
   bool? whatsappConfigaure;
+  String? phoneCallLogPermission;
+  String? name;
+  String? userId;
 
-  BottomNavigation(this.token, this.whatsappConfigaure, {super.key});
+
+
+
+  BottomNavigation(this.token, this.whatsappConfigaure,{this.phoneCallLogPermission,this.name,this.userId,super.key});
 
   @override
   _BottomNavigationState createState() => _BottomNavigationState();
@@ -56,6 +65,40 @@ class _BottomNavigationState extends State<BottomNavigation> {
               ),
             ),
           ),
+          Platform.isAndroid?Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: InkWell(
+              onTap: () {
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) =>
+                //         AddLeads(widget.token, page: 'NavigationBar'),
+                //   ),
+                // );
+                widget.phoneCallLogPermission ==
+                    'true'
+                    ? Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CallLogs(
+                          widget
+                              .token,
+                          widget.name,
+                          widget.userId)),
+                )
+                    : _dialogue(context,
+                    'Phone Call Logs');
+              },
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.175,
+                child: const Icon(
+                  Icons.call,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ):
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
@@ -67,11 +110,24 @@ class _BottomNavigationState extends State<BottomNavigation> {
                         AddLeads(widget.token, page: 'NavigationBar'),
                   ),
                 );
+                // widget.phoneCallLogPermission ==
+                //     'true'
+                //     ? Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //       builder: (context) => CallLogs(
+                //           widget
+                //               .token,
+                //           widget.name,
+                //           widget.userId)),
+                // )
+                //     : _dialogue(context,
+                //     'Phone Call Logs');
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,
                 child: const Icon(
-                  Icons.add_circle_outline,
+                  Icons.call,
                   color: Colors.white,
                 ),
               ),
@@ -289,4 +345,23 @@ class _BottomNavigationState extends State<BottomNavigation> {
       ),
     );
   }
+}
+void _dialogue(BuildContext context, title) {
+  showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text('Alert !!!'),
+          content: const Text(
+              'You have no permission to access the feature please contact the support team'),
+          actions: [
+            // The "Yes" button
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Close')),
+          ],
+        );
+      });
 }

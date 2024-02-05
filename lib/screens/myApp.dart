@@ -1,12 +1,15 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+//import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:login2/screens/splashScreen.dart';
-
+import 'package:permission_handler/permission_handler.dart';
+import 'package:system_alert_window/system_alert_window.dart';
 import '../core/common.dart';
 import '../key.dart';
 import 'leadManagement/leadDetails.dart';
+import 'officialWhatsapp/chatScreen.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -23,10 +26,12 @@ class _MyAppState extends State<MyApp> {
   bool? cloudCall;
   String? navigation;
   String? detailId;
+
   @override
   void initState() {
 
     super.initState();
+    // alertPermission();
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
@@ -36,6 +41,7 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         sts=false;
         detailId=message.data['detail_id'];
+        navigation=message.data['navigation'];
         if(message.data['edit_lead']=='true')
         {
           editLead=true;
@@ -68,12 +74,33 @@ class _MyAppState extends State<MyApp> {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: NoomiKeys.navKey,
-      home: sts==true?const SplashScreen():LeadDetails(token!,editLead!,deleteLead!,cloudCall!,detailId!,pageName: 'notification'),
+      home: sts==true?const SplashScreen():navigation=='whatsapp'?ChatScreen(groupId: detailId.toString(),):LeadDetails(token!,editLead!,deleteLead!,cloudCall!,detailId!,pageName: 'notification'),
     );
   }
+
+
 }
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Handle the background message here (if needed)
   print("onMessageOpenedApp: $message");
 
 }
+// Future alertPermission() async {
+//   SystemWindowPrefMode prefMode = SystemWindowPrefMode.OVERLAY;
+//   await SystemAlertWindow.requestPermissions(prefMode: prefMode);
+//   // log(' alert function called');
+//   // final bool? isPermited = await SystemAlertWindow.checkPermissions(
+//   //     prefMode: SystemWindowPrefMode.OVERLAY);
+//   // if (isPermited == false) {
+//   //   log(' alert window permission = false');
+//   //   final bool? res =
+//   //   await FlutterOverlayWindow.requestPermission();
+//   //   log("status: $res");
+//   //   await SystemAlertWindow.requestPermissions;
+//   // } else {
+//   //    log(' alert window permission = true');
+//   // }
+// }
+
+

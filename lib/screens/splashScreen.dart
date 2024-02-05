@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
 import '../../models/loginCheckModel.dart';
@@ -30,12 +32,62 @@ class _SplashScreenState extends State<SplashScreen> {
     buildNumber: 'Unknown',
     buildSignature: 'Unknown',
   );
+  late AppLinks _appLinks;
+
+  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
+
     handleAsync();
     getData();
+
+  }
+  //!   deeplink init function
+
+  Future<void> initDeepLinks() async {
+
+    _appLinks = AppLinks();
+
+    // Check initial link if app was in cold state (terminated)
+    final appLink = await _appLinks.getInitialAppLink();
+    if (appLink != null) {
+      print('getInitialAppLink: $appLink');
+      openAppLink(appLink);
+    }
+    else{
+      print('else condition worked');
+      String? token = await Common.getSharedPref("token");
+      if (mounted) {
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
+      }
+    }
+
+    // Handle link when app is in warm state (front or background)
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      print('onAppLink: $uri');
+      openAppLink(uri);
+    });
+  }
+  Future<void> openAppLink(Uri uri) async {
+    print('fragment: ${uri.fragment}');
+    String? token = await Common.getSharedPref("token");
+    String? leadId = await Common.getSharedPref("openAppLeadId");
+    String editLead = await Common.getSharedPref("updateLeadPermission");
+    String deleteLead = await Common.getSharedPref("deleteLeadPermission");
+    String cloudCall = await Common.getSharedPref("cloudCallPermission");
+print(leadId);
+    // _navigatorKey.currentState?.pushNamed('/form');
+    if(leadId=='0')
+      {
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => Dashboard(token),));
+      }
+    else{
+      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LeadDetails(token.toString(),editLead.toBoolean(),deleteLead.toBoolean(),cloudCall.toBoolean(),leadId.toString(),fromDate: DateTime.now().toString(),toDate: DateTime.now().toString(),pageName: 'notification',),));
+    }
+
   }
 
   handleAsync() async {
@@ -105,7 +157,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                     const SizedBox(height: 10,),
                     Text(
-                      _packageInfo.version=='Unknown'?'Connecting...':'Version ${_packageInfo.version}',
+                      _packageInfo.version=='Unknown'?' Connecting...':'Version ${_packageInfo.version}',
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 10,
@@ -181,10 +233,7 @@ class _SplashScreenState extends State<SplashScreen> {
       LoginCheckModel loginCheck =
           await HttpService.loginCheck(token, firebaseToken);
       if (loginCheck.data == true) {
-        if (mounted) {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => Dashboard(token)));
-        }
+        initDeepLinks();
       } else {
         Common.toastMessaage('Token Expired', Colors.red);
         if (mounted) {
@@ -200,5 +249,13 @@ class _SplashScreenState extends State<SplashScreen> {
             (Route<dynamic> route) => false);
       }
     }
+  }
+}
+extension on String {
+  bool toBoolean() {
+    print(this);
+    return (this.toLowerCase() == "true" || this.toLowerCase() == "1")
+        ? true
+        : false;
   }
 }

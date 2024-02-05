@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:login2/screens/leadManagement/leadBulkGroupAdd.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -1804,11 +1805,12 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                             ),
                                                             InkWell(
                                                               onTap: () async {
-                                                                String url =
-                                                                    'tel:${'+${items[index].contactNumber1}'}';
-                                                                await launchUrl(
-                                                                    Uri.parse(
-                                                                        url));
+                                                                // String url =
+                                                                //     'tel:${'+${items[index].contactNumber1}'}';
+                                                                // await launchUrl(
+                                                                //     Uri.parse(
+                                                                //         url));
+                                                                bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                                               },
                                                               child: SizedBox(
                                                                   height: 50,
@@ -1850,9 +1852,10 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                     });
                                               }
                                               else {
-                                                String url =
-                                                    'tel:+${items[index].contactNumber1}';
-                                                await launchUrl(Uri.parse(url));
+                                                // String url =
+                                                //     'tel:+${items[index].contactNumber1}';
+                                                // await launchUrl(Uri.parse(url));
+                                                bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                               }
                                             }
 
@@ -2465,8 +2468,9 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                                           ),
                                                                                           InkWell(
                                                                                             onTap: () async {
-                                                                                              String url = 'tel:+${items[index].contactNumber1}';
-                                                                                              await launchUrl(Uri.parse(url));
+                                                                                              // String url = 'tel:+${items[index].contactNumber1}';
+                                                                                              // await launchUrl(Uri.parse(url));
+                                                                                              bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                                                                             },
                                                                                             child: SizedBox(
                                                                                                 height: 50,
@@ -2497,11 +2501,12 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                                   });
                                                                             }
                                                                             else {
-                                                                              String
-                                                                              url =
-                                                                                  'tel:+${items[index].contactNumber1}';
-                                                                              await launchUrl(
-                                                                                  Uri.parse(url));
+                                                                              // String
+                                                                              // url =
+                                                                              //     'tel:+${items[index].contactNumber1}';
+                                                                              // await launchUrl(
+                                                                              //     Uri.parse(url));
+                                                                              bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                                                             }
                                                                           }
 

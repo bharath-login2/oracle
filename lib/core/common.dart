@@ -101,13 +101,27 @@ class Common {
     else if (key == 'isVisible') {
       prefs.setString(key, val);
     }
+    else if (key == 'uploadLog') {
+      prefs.setString(key, val);
+    }
+    else if (key == 'officialWhatsApp') {
+      prefs.setString(key, val);
+    }
+    else if (key == 'unofficialWhatsApp') {
+      prefs.setString(key, val);
+    }
+    else if (key == 'openAppLeadId') {
+      prefs.setString(key, val);
+    }
     else {
       await prefs.clear();
     }
   }
 
   static getSharedPref(String key) async {
+
     final prefs = await SharedPreferences.getInstance();
+    print('$key:${prefs.get(key)}');
     return prefs.get(key);
   }
 
@@ -144,4 +158,5 @@ class Common {
       }
     }
   }
+
 }

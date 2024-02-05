@@ -2,6 +2,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -2083,9 +2084,10 @@ class _AllReportState extends State<AllReport> {
                                         ),
                                         InkWell(
                                           onTap: () async {
-                                            String url =
-                                                'tel:${'+${items[index].contactNumber1}'}';
-                                            await launchUrl(Uri.parse(url));
+                                            // String url =
+                                            //     'tel:${'+${items[index].contactNumber1}'}';
+                                            // await launchUrl(Uri.parse(url));
+                                            bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                           },
                                           child: SizedBox(
                                               height: 50,
@@ -2706,9 +2708,10 @@ class _AllReportState extends State<AllReport> {
                                                                       ),
                                                                       InkWell(
                                                                         onTap: () async {
-                                                                          String url =
-                                                                              'tel:${'+${items[index].contactNumber1}'}';
-                                                                          await launchUrl(Uri.parse(url));
+                                                                          // String url =
+                                                                          //     'tel:${'+${items[index].contactNumber1}'}';
+                                                                          // await launchUrl(Uri.parse(url));
+                                                                          bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
                                                                         },
                                                                         child: SizedBox(
                                                                             height: 50,

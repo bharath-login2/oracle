@@ -59,6 +59,8 @@ class Data {
   String? renameFile;
   String? deleteFile;
   String? downloadFile;
+  String? whatsappUnofficial;
+  String? whatsappOfficial;
 
   Data(
       {this.createStaff,
@@ -96,7 +98,9 @@ class Data {
         this.openFile,
         this.renameFile,
         this.deleteFile,
-        this.downloadFile});
+        this.downloadFile,
+        this.whatsappUnofficial,
+        this.whatsappOfficial});
 
   Data.fromJson(Map<String, dynamic> json) {
     createStaff = json['create_staff'];
@@ -135,6 +139,8 @@ class Data {
     renameFile = json['rename_file'];
     deleteFile = json['delete_file'];
     downloadFile = json['download_file'];
+    whatsappUnofficial = json['whatsapp_unofficial'];
+    whatsappOfficial = json['whatsapp_official'];
   }
 
   Map<String, dynamic> toJson() {
@@ -175,6 +181,8 @@ class Data {
     data['rename_file'] = this.renameFile;
     data['delete_file'] = this.deleteFile;
     data['download_file'] = this.downloadFile;
+    data['whatsapp_unofficial'] = this.whatsappUnofficial;
+    data['whatsapp_official'] = this.whatsappOfficial;
     return data;
   }
 }

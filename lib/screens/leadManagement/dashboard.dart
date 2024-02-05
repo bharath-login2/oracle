@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
@@ -69,8 +70,7 @@ class _DashboardState extends State<Dashboard> {
   DashboardModel? userDashboard;
   var fromdate = DateTime.now();
   var todate = DateTime.now();
-  var fromdate1 =
-      DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
+  var fromdate1 = DateTime(DateTime.now().year, DateTime.now().month, 1).toString();
   var todate1 = DateTime.now();
   var outputFormat = DateFormat('dd-MM-yyyy');
   String name = '';
@@ -107,6 +107,8 @@ class _DashboardState extends State<Dashboard> {
   String sound = '';
   int notificationCount = 0;
   String? firebaseToken;
+  String officialWhatsapp = '';
+  String unOfficialWhatsapp = '';
 
   @override
   void initState() {
@@ -129,7 +131,8 @@ class _DashboardState extends State<Dashboard> {
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
     userId = await Common.getSharedPref("userId");
-    userId = await Common.getSharedPref("userId");
+    officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
+    unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
     createLeadPermission = await Common.getSharedPref("createLeadPermission");
     viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
     updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
@@ -520,20 +523,22 @@ class _DashboardState extends State<Dashboard> {
                                                   .modules![i].menuName ==
                                                   'messages') {
                                                 showDialog(
-                                                    barrierColor:
-                                                    Colors.grey.withOpacity(.5),
+                                                    barrierColor: Colors.grey
+                                                        .withOpacity(.5),
                                                     context: context,
-                                                    builder: (BuildContext context) {
+                                                    builder:
+                                                        (BuildContext context) {
                                                       return WillPopScope(
                                                         onWillPop: () async {
                                                           return true;
                                                         },
                                                         child: Material(
-                                                          type:
-                                                          MaterialType.transparency,
+                                                          type: MaterialType
+                                                              .transparency,
                                                           child: Padding(
                                                             padding:
-                                                            const EdgeInsets.only(
+                                                            const EdgeInsets
+                                                                .only(
                                                                 bottom: 50),
                                                             child: Center(
                                                               child: Container(
@@ -541,8 +546,10 @@ class _DashboardState extends State<Dashboard> {
                                                                 BoxDecoration(
                                                                   borderRadius:
                                                                   BorderRadius
-                                                                      .circular(10),
-                                                                  color: Colors.white,
+                                                                      .circular(
+                                                                      10),
+                                                                  color: Colors
+                                                                      .white,
                                                                 ),
                                                                 width: MediaQuery.of(
                                                                     context)
@@ -554,8 +561,10 @@ class _DashboardState extends State<Dashboard> {
                                                                   padding:
                                                                   const EdgeInsets
                                                                       .only(
-                                                                      left: 20,
-                                                                      right: 20),
+                                                                      left:
+                                                                      20,
+                                                                      right:
+                                                                      20),
                                                                   child: Column(
                                                                     mainAxisAlignment:
                                                                     MainAxisAlignment
@@ -569,7 +578,8 @@ class _DashboardState extends State<Dashboard> {
                                                                         width: 80,
                                                                       ),
                                                                       const SizedBox(
-                                                                        height: 10,
+                                                                        height:
+                                                                        10,
                                                                       ),
                                                                       const Text(
                                                                         'Whatsapp',
@@ -577,8 +587,7 @@ class _DashboardState extends State<Dashboard> {
                                                                             fontSize:
                                                                             18,
                                                                             fontWeight:
-                                                                            FontWeight
-                                                                                .w400),
+                                                                            FontWeight.w400),
                                                                       ),
                                                                       const SizedBox(
                                                                         height: 5,
@@ -589,91 +598,61 @@ class _DashboardState extends State<Dashboard> {
                                                                             fontSize:
                                                                             15,
                                                                             fontWeight:
-                                                                            FontWeight
-                                                                                .w400),
+                                                                            FontWeight.w400),
                                                                       ),
                                                                       const SizedBox(
-                                                                        height: 15,
+                                                                        height:
+                                                                        15,
                                                                       ),
                                                                       Row(
                                                                         mainAxisAlignment:
                                                                         MainAxisAlignment
                                                                             .spaceBetween,
                                                                         children: [
-                                                                          InkWell(
+                                                                          officialWhatsapp ==
+                                                                              'true'
+                                                                              ? InkWell(
                                                                             onTap: () {
                                                                               Navigator.push(
                                                                                 context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => const ChatHomeScreen()),
+                                                                                MaterialPageRoute(builder: (context) => ChatHomeScreen()),
                                                                               );
-
                                                                             },
-                                                                            child:
-                                                                            Container(
-                                                                              width: MediaQuery.of(context)
-                                                                                  .size
-                                                                                  .width *
-                                                                                  0.35,
+                                                                            child: Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.35,
                                                                               //  color: RandomColorModel().getColor(),
-                                                                              decoration: BoxDecoration(
-                                                                                  color: Colors
-                                                                                      .green
-                                                                                      .shade100,
-                                                                                  borderRadius:
-                                                                                  BorderRadius.circular(10)),
-                                                                              child:
-                                                                              const Padding(
-                                                                                padding:
-                                                                                EdgeInsets.all(5),
-                                                                                child:
-                                                                                Text('Official',
-                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                    textAlign: TextAlign.center),
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                               ),
                                                                             ),
-                                                                          ),
-                                                                          InkWell(
+                                                                          )
+                                                                              : const SizedBox(),
+                                                                          unOfficialWhatsapp ==
+                                                                              'true'
+                                                                              ? InkWell(
                                                                             onTap: () {
                                                                               Navigator.push(
                                                                                 context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) =>
-                                                                                        GroupList(
-                                                                                            widget.token)),
+                                                                                MaterialPageRoute(builder: (context) => GroupList(widget.token)),
                                                                               );
                                                                             },
-                                                                            child:
-                                                                            Container(
-                                                                              width: MediaQuery.of(context)
-                                                                                  .size
-                                                                                  .width *
-                                                                                  0.35,
-                                                                              decoration: BoxDecoration(
-                                                                                  color: Colors
-                                                                                      .green
-                                                                                      .shade100,
-                                                                                  borderRadius:
-                                                                                  BorderRadius.circular(10)),
-                                                                              child:
-                                                                              const Padding(
-                                                                                padding:
-                                                                                EdgeInsets.all(5),
-                                                                                child:
-                                                                                Text('Un Official',
-                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                    textAlign: TextAlign.center),
+                                                                            child: Container(
+                                                                              width: MediaQuery.of(context).size.width * 0.35,
+                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(5),
+                                                                                child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                               ),
                                                                             ),
-                                                                          ),
-
-
+                                                                          )
+                                                                              : const SizedBox()
                                                                         ],
                                                                       ),
                                                                       const SizedBox(
                                                                         height: 8,
                                                                       ),
-
                                                                     ],
                                                                   ),
                                                                 ),
@@ -1686,7 +1665,8 @@ class _DashboardState extends State<Dashboard> {
                                                     ),
                                                     itemBuilder: (context) {
                                                       return [
-                                                        PopupMenuItem<int>(
+
+                                                        Platform.isAndroid?PopupMenuItem<int>(
                                                             value: 10,
                                                             child: Row(
                                                               children: [
@@ -1704,7 +1684,12 @@ class _DashboardState extends State<Dashboard> {
                                                                 const Text(
                                                                     'Phone Call Logs'),
                                                               ],
-                                                            )),
+                                                            )):
+                                                        const PopupMenuItem<int>(
+                                                            value: 0,
+                                                          child: Text(''),
+                                                        ),
+
                                                         PopupMenuItem<int>(
                                                             value: 9,
                                                             child: Row(
@@ -5681,7 +5666,7 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 bottomNavigationBar: configure != null
                     ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured)
+                        widget.token!, configure!.data!.whatsappConfigured,phoneCallLogPermission:phoneCallLogPermission,name:name,userId:userId)
                     : const SizedBox())
             : Scaffold(
                 backgroundColor: Colors.white,
@@ -5742,6 +5727,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
+
 
   void _dialogue(BuildContext context, title) {
     showDialog(
