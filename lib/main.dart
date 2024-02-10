@@ -8,7 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/screens/myApp.dart';
 import 'package:login2/service/backgroundService.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:workmanager/workmanager.dart';
+
 MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
 void callbackDispatcher() {
   Workmanager().executeTask((dynamic task, dynamic inputData) async {
@@ -39,17 +41,22 @@ void callbackDispatcher() {
     }
   });
 }
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if(Platform.isAndroid)
-  {
+  if (Platform.isAndroid) {
     await initService();
     FlutterBackgroundService().invoke('setAsBackground');
   }
+  PermissionStatus status = await Permission.notification.request();
+  if (status.isGranted) {
+    // notification permission is granted
+  } else {
+    await Permission.notification.request();
+  }
   await Firebase.initializeApp();
-  runApp( const MyApp());
-  if(Platform.isAndroid)
-  {
+  runApp(const MyApp());
+  if (Platform.isAndroid) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'setAsBackgroundService') {
         initService();
@@ -59,5 +66,4 @@ Future<void> main() async {
     });
     Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
   }
-
 }
