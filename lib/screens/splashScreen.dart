@@ -104,6 +104,12 @@ print(leadId);
     }
 
     updatedata = await HttpService.forceUpdate();
+    setState(() {
+      if (updatedata!.data!.server!.length == 1) {
+        Common.saveSharedPref(
+            "url", updatedata!.data!.server![0].url.toString());
+      }
+    });
     final info = await PackageInfo.fromPlatform();
     setState(() {
       _packageInfo = info;

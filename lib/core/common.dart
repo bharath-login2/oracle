@@ -67,59 +67,44 @@ class Common {
       prefs.setString(key, val);
     } else if (key == 'accessCallRecordingPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'createStaffPermission') {
+    } else if (key == 'createStaffPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'updateStaffPermission') {
+    } else if (key == 'updateStaffPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'deleteStaffPermission') {
+    } else if (key == 'deleteStaffPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'viewStaffReportPermission') {
+    } else if (key == 'viewStaffReportPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'viewStaffPermission') {
+    } else if (key == 'viewStaffPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'createStaffDesignationPermission') {
+    } else if (key == 'createStaffDesignationPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'viewStaffDesignationPermission') {
+    } else if (key == 'viewStaffDesignationPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'updateStaffDesignationPermission') {
+    } else if (key == 'updateStaffDesignationPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'deleteStaffDesignationPermission') {
+    } else if (key == 'deleteStaffDesignationPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'updateStaffPasswordPermission') {
+    } else if (key == 'updateStaffPasswordPermission') {
       prefs.setString(key, val);
-    }
-    else if (key == 'isVisible') {
+    } else if (key == 'isVisible') {
       prefs.setString(key, val);
-    }
-    else if (key == 'uploadLog') {
+    } else if (key == 'uploadLog') {
       prefs.setString(key, val);
-    }
-    else if (key == 'officialWhatsApp') {
+    } else if (key == 'officialWhatsApp') {
       prefs.setString(key, val);
-    }
-    else if (key == 'unofficialWhatsApp') {
+    } else if (key == 'unofficialWhatsApp') {
       prefs.setString(key, val);
-    }
-    else if (key == 'openAppLeadId') {
+    } else if (key == 'openAppLeadId') {
       prefs.setString(key, val);
-    }
-    else {
+    }else if (key == 'navToFollowUp') {
+      prefs.setString(key, val);
+    } else {
       await prefs.clear();
     }
   }
 
   static getSharedPref(String key) async {
-
     final prefs = await SharedPreferences.getInstance();
     print('$key:${prefs.get(key)}');
     return prefs.get(key);
@@ -158,5 +143,12 @@ class Common {
       }
     }
   }
+}
 
+RegExp regex = RegExp(PatterStrings.email);
+
+class PatterStrings {
+  static const String email =
+      // r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+";
+      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
 }

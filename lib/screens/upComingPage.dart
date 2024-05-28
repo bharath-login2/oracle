@@ -1,4 +1,4 @@
-
+import 'package:login2/screens/drawerScreen.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
@@ -12,13 +12,25 @@ import 'package:flutter/material.dart';
 
 class UpComingPage extends StatefulWidget {
   String? token;
-   UpComingPage(this.token, {super.key});
+  UpComingPage(this.token, {super.key});
 
   @override
   _UpComingPageState createState() => _UpComingPageState();
 }
 
 class _UpComingPageState extends State<UpComingPage> {
+  String phoneCallLogPermission = '';
+  @override
+  void initState() {
+    init();
+    super.initState();
+  }
+
+  init() async {
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -28,8 +40,7 @@ class _UpComingPageState extends State<UpComingPage> {
           children: [
             Stack(
               children: [
-                Image.asset("assets/icons/header.png",
-                    width: size.width),
+                Image.asset("assets/icons/header.png", width: size.width),
                 Column(
                   children: [
                     const SizedBox(
@@ -38,15 +49,13 @@ class _UpComingPageState extends State<UpComingPage> {
                     Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               InkWell(
-                                onTap: () => _logout(context),
+                                onTap: () => logout(context),
                                 child: Container(
                                   width: 43,
                                   height: 43,
@@ -54,18 +63,14 @@ class _UpComingPageState extends State<UpComingPage> {
                                       boxShadow: [
                                         BoxShadow(
                                           blurRadius: 2,
-                                          color: Colors
-                                              .grey.shade800,
-                                          offset:
-                                          const Offset(0, 2.0),
+                                          color: Colors.grey.shade800,
+                                          offset: const Offset(0, 2.0),
                                         )
                                       ],
                                       shape: BoxShape.circle,
                                       color: const Color(0xFF2191ce)),
                                   child: Padding(
-                                    padding:
-                                    const EdgeInsets.all(
-                                        8.0),
+                                    padding: const EdgeInsets.all(8.0),
                                     child: Image.asset(
                                       "assets/icons/user.png",
                                     ),
@@ -76,17 +81,14 @@ class _UpComingPageState extends State<UpComingPage> {
                                 width: 15,
                               ),
                               const Column(
-                                mainAxisAlignment:
-                                MainAxisAlignment.start,
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Login it solutions',
                                     style: TextStyle(
                                         fontSize: 13,
-                                        fontWeight:
-                                        FontWeight.bold,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.white),
                                   ),
                                   SizedBox(
@@ -96,8 +98,7 @@ class _UpComingPageState extends State<UpComingPage> {
                                     'Company Admin',
                                     style: TextStyle(
                                         fontSize: 11,
-                                        fontWeight:
-                                        FontWeight.w400,
+                                        fontWeight: FontWeight.w400,
                                         color: Colors.white),
                                   ),
                                 ],
@@ -105,11 +106,9 @@ class _UpComingPageState extends State<UpComingPage> {
                             ],
                           ),
                           Padding(
-                            padding: const EdgeInsets.only(
-                                right: 20),
-                            child: Image.asset(
-                                "assets/icons/menu.png",
-                                width: 20),
+                            padding: const EdgeInsets.only(right: 20),
+                            child:
+                                Image.asset("assets/icons/menu.png", width: 20),
                           ),
                         ],
                       ),
@@ -118,19 +117,14 @@ class _UpComingPageState extends State<UpComingPage> {
                       height: 25,
                     ),
                     Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment:
-                      CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Padding(
-                          padding:
-                          const EdgeInsets.only(left: 30),
+                          padding: const EdgeInsets.only(left: 30),
                           child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.start,
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               SizedBox(
                                 width: 20,
@@ -143,21 +137,16 @@ class _UpComingPageState extends State<UpComingPage> {
                                 width: 15,
                               ),
                               const Column(
-                                mainAxisAlignment:
-                                MainAxisAlignment.start,
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
-                                    padding:
-                                    EdgeInsets.only(
-                                        top: 3),
+                                    padding: EdgeInsets.only(top: 3),
                                     child: Text(
                                       'Upcoming',
                                       style: TextStyle(
                                           fontSize: 16,
-                                          fontWeight:
-                                          FontWeight.bold,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.white),
                                     ),
                                   ),
@@ -168,8 +157,7 @@ class _UpComingPageState extends State<UpComingPage> {
                                     'Coming Soon..',
                                     style: TextStyle(
                                         fontSize: 12,
-                                        fontWeight:
-                                        FontWeight.w400,
+                                        fontWeight: FontWeight.w400,
                                         color: Colors.white),
                                   ),
                                 ],
@@ -177,7 +165,6 @@ class _UpComingPageState extends State<UpComingPage> {
                             ],
                           ),
                         ),
-
                       ],
                     ),
                     const SizedBox(
@@ -193,8 +180,6 @@ class _UpComingPageState extends State<UpComingPage> {
                             'assets/main/coming_soon.json',
                             fit: BoxFit.fill,
                           )
-
-
                         ],
                       ),
                     ),
@@ -202,7 +187,6 @@ class _UpComingPageState extends State<UpComingPage> {
                 ),
               ],
             ),
-
           ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -217,32 +201,9 @@ class _UpComingPageState extends State<UpComingPage> {
           child: Image.asset("assets/icons/menu.png",
               width: 25), //icon inside button
         ),
-        bottomNavigationBar: BottomNavigation(widget.token!,false));
+        bottomNavigationBar: BottomNavigation(widget.token!, false,
+            phoneCallLogPermission: phoneCallLogPermission));
   }
-  void _logout(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Logout?'),
-            actions: [
-              // The "Yes" button
-              TextButton(
-                  onPressed: () {
-                    Common.saveSharedPref("Logout", "success");
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const Login()),
-                            (Route<dynamic> route) => false);
-                  },
-                  child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
-            ],
-          );
-        });
-  }
+
+   
 }

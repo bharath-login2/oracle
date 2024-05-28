@@ -8,6 +8,7 @@ import 'package:flutter_dialpad/flutter_dialpad.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/config.dart';
+import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/common.dart';
@@ -19,6 +20,7 @@ import '../../models/callLogs/deleteCallHistoryModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
+
 MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
 
 class CallLogs extends StatefulWidget {
@@ -33,7 +35,6 @@ class CallLogs extends StatefulWidget {
 }
 
 class _CallLogsState extends State<CallLogs> {
-
   int selectedIndex = 0;
   List<Map<String, dynamic>> history = [];
   List historyIndex = [];
@@ -51,17 +52,15 @@ class _CallLogsState extends State<CallLogs> {
   String assignStaff = 'Assign Staff';
   String assignStaffId = '';
   int from =
-      DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+      DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
   int to = DateTime.now().millisecondsSinceEpoch;
-  bool displayOverApps=false;
+  bool displayOverApps = false;
   CallLogUploadPermissionModel? callUploadPermission;
-
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
     getSharedData();
     getPermission();
   }
@@ -103,6 +102,7 @@ class _CallLogsState extends State<CallLogs> {
       });
     }
   }
+
   getPermission() async {
     Map<String, dynamic> body2 = {
       "token": await Common.getSharedPref("token"),
@@ -114,7 +114,6 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   Iterable<CallLogEntry> _callLogEntries = <CallLogEntry>[];
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -178,8 +177,6 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                   Row(
                     children: [
-
-
                       history.isNotEmpty
                           ? InkWell(
                               onTap: () async {
@@ -187,12 +184,10 @@ class _CallLogsState extends State<CallLogs> {
                                   "token": widget.token,
                                   'log': history,
                                 };
-
                                 if (context.mounted) {
                                   Common.showProgressDialog(
                                       context, "Uploading..");
                                 }
-
                                 CallLogUploadModel object1 =
                                     await HttpService.callLogUpload(body);
                                 if (object1.data == true) {
@@ -216,7 +211,10 @@ class _CallLogsState extends State<CallLogs> {
                                   }
                                 }
                               },
-                              child: const Icon(Icons.upload,size: 30,),
+                              child: const Icon(
+                                Icons.upload,
+                                size: 30,
+                              ),
                             )
                           : const SizedBox(),
                       deleteHistoryIds.isNotEmpty
@@ -284,112 +282,155 @@ class _CallLogsState extends State<CallLogs> {
                                 color: Colors.red,
                               ))
                           : const SizedBox(),
-                      callUploadPermission!=null?
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10,right: 10),
-                        child: GestureDetector(
-                          onTap: () async {
-                            displayOverApps=await Permission.systemAlertWindow.isGranted;
-                            if(mounted){
-                              showMenu(
-                                color: Colors.white,
-                                context: context,
-                                position: const RelativeRect.fromLTRB(
-                                    1000.0, 0.0, 1000.0, 0.0),
-                                items: [
-                                   PopupMenuItem<String>(
-                                    value: '1',
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Row(
-                                          children: [
-                                            Icon(Icons.call_received,color: Colors.red),
-                                            SizedBox(width: 5,),
-                                            Text('Incoming',),
-                                          ],
+                      callUploadPermission != null
+                          ? Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 10, right: 10),
+                              child: GestureDetector(
+                                onTap: () async {
+                                  displayOverApps = await Permission
+                                      .systemAlertWindow.isGranted;
+                                  if (mounted) {
+                                    showMenu(
+                                      color: Colors.white,
+                                      context: context,
+                                      position: const RelativeRect.fromLTRB(
+                                          1000.0, 0.0, 1000.0, 0.0),
+                                      items: [
+                                        PopupMenuItem<String>(
+                                          value: '1',
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Row(
+                                                children: [
+                                                  Icon(Icons.call_received,
+                                                      color: Colors.red),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text(
+                                                    'Incoming',
+                                                  ),
+                                                ],
+                                              ),
+                                              callUploadPermission!
+                                                          .data!.incoming ==
+                                                      true
+                                                  ? const Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.green,
+                                                    )
+                                                  : const SizedBox()
+                                            ],
+                                          ),
                                         ),
-                                        callUploadPermission!.data!.incoming==true?const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
-                                      ],
-                                    ),
-                                  ),
-                                   PopupMenuItem<String>(
-                                    value: '2',
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Row(
-                                          children: [
-                                            Icon(Icons.call_made,color: Colors.green,),
-                                            SizedBox(width: 5,),
-                                            Text('Outgoing'),
-                                          ],
+                                        PopupMenuItem<String>(
+                                          value: '2',
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.call_made,
+                                                    color: Colors.green,
+                                                  ),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text('Outgoing'),
+                                                ],
+                                              ),
+                                              callUploadPermission!
+                                                          .data!.outgoing ==
+                                                      true
+                                                  ? const Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.green,
+                                                    )
+                                                  : const SizedBox()
+                                            ],
+                                          ),
                                         ),
-                                        callUploadPermission!.data!.outgoing==true?const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
-                                      ],
-                                    ),
-                                  ),
-                                   PopupMenuItem<String>(
-                                    value: '3',
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Row(
-                                          children: [
-                                            Icon(Icons.display_settings),
-                                            SizedBox(width: 5,),
-                                            Text('Display Over App'),
-                                          ],
+                                        PopupMenuItem<String>(
+                                          value: '3',
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Row(
+                                                children: [
+                                                  Icon(Icons.display_settings),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text('Display Over App'),
+                                                ],
+                                              ),
+                                              displayOverApps == true
+                                                  ? const Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.green,
+                                                    )
+                                                  : const SizedBox()
+                                            ],
+                                          ),
                                         ),
-                                        displayOverApps==true? const Icon(Icons.check_circle,color: Colors.green,):const SizedBox()
                                       ],
-                                    ),
-                                  ),
-                                ],
-                              ).then((value) async {
-                                if (value != null) {
-                                  if (value == '1') {
-                                    Map<String, dynamic> body = {
-                                      "token": await Common.getSharedPref("token"),
-                                      "type":"incoming"
-                                    };
-                                    CallLogUploadPermissionUpdateModel perm = await HttpService.callLogUploadPermissionUpdate(body);
-                                    Common.toastMessaage(perm.message, Colors.green);
-                                    getPermission();
-                                    setState(() {});
+                                    ).then((value) async {
+                                      if (value != null) {
+                                        if (value == '1') {
+                                          Map<String, dynamic> body = {
+                                            "token": await Common.getSharedPref(
+                                                "token"),
+                                            "type": "incoming"
+                                          };
+                                          CallLogUploadPermissionUpdateModel
+                                              perm = await HttpService
+                                                  .callLogUploadPermissionUpdate(
+                                                      body);
+                                          Common.toastMessaage(
+                                              perm.message, Colors.green);
+                                          getPermission();
+                                          setState(() {});
+                                        } else if (value == '2') {
+                                          Map<String, dynamic> body = {
+                                            "token": await Common.getSharedPref(
+                                                "token"),
+                                            "type": "outgoing"
+                                          };
+                                          CallLogUploadPermissionUpdateModel
+                                              perm = await HttpService
+                                                  .callLogUploadPermissionUpdate(
+                                                      body);
+                                          Common.toastMessaage(
+                                              perm.message, Colors.green);
+                                          getPermission();
+                                          setState(() {});
+                                        } else if (value == '3') {
+                                          if (await Permission
+                                              .systemAlertWindow.isGranted) {
+                                            // Permission is already granted, show the overlay
+                                            openAppSettings();
+                                          } else {
+                                            // Permission has not been granted, request it
+                                            Config.requestPermission();
+                                          }
+                                        }
+                                      }
+                                    });
                                   }
-                                  else if (value == '2') {
-                                    Map<String, dynamic> body = {
-                                      "token": await Common.getSharedPref("token"),
-                                      "type":"outgoing"
-                                    };
-                                    CallLogUploadPermissionUpdateModel perm = await HttpService.callLogUploadPermissionUpdate(body);
-                                    Common.toastMessaage(perm.message, Colors.green);
-                                    getPermission();
-                                    setState(() {});
-                                  }
-                                  else if (value == '3') {
-                                    if (await Permission.systemAlertWindow.isGranted) {
-                                      // Permission is already granted, show the overlay
-                                      openAppSettings();
-
-                                    } else {
-                                      // Permission has not been granted, request it
-                                      Config.requestPermission();
-                                    }
-                                  }
-                                }
-                              });
-                            }
-
-                          },
-                          child: const Icon(
-                            Icons.more_vert_rounded,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ):
-                      const SizedBox()
+                                },
+                                child: const Icon(
+                                  Icons.more_vert_rounded,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : const SizedBox()
                     ],
                   )
                 ],
@@ -505,7 +546,7 @@ class _CallLogsState extends State<CallLogs> {
                                   ? Column(
                                       children: [
                                         Text(
-                                          '${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(from))} - ${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(to))} (Last 30 Days)',
+                                          '${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(from))} - ${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(to))} (Last 3 Days)',
                                           style: const TextStyle(
                                             fontSize: 16,
                                           ),
@@ -529,9 +570,10 @@ class _CallLogsState extends State<CallLogs> {
                                                           onLongPress = true;
                                                           history.add({
                                                             "name": _callLogEntries
-                                                                .elementAt(
-                                                                    indexStaff)
-                                                                .name,
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .name ??
+                                                                "",
                                                             "phone_number":
                                                                 _callLogEntries
                                                                     .elementAt(
@@ -613,9 +655,10 @@ class _CallLogsState extends State<CallLogs> {
                                                           } else {
                                                             history.add({
                                                               "name": _callLogEntries
-                                                                  .elementAt(
-                                                                      indexStaff)
-                                                                  .name,
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .name ??
+                                                                  "",
                                                               "phone_number":
                                                                   _callLogEntries
                                                                       .elementAt(
@@ -759,7 +802,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                                                 children: [
                                                                                   Text(
-                                                                                    _callLogEntries.elementAt(indexStaff).name.toString(),
+                                                                                    _callLogEntries.elementAt(indexStaff).name ?? "Unknown",
                                                                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                   const SizedBox(
@@ -777,7 +820,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                     onTap: () async {
                                                                                       Common.showProgressDialog(context, "Loading..");
                                                                                       history.add({
-                                                                                        "name": _callLogEntries.elementAt(indexStaff).name,
+                                                                                        "name": _callLogEntries.elementAt(indexStaff).name ?? "",
                                                                                         "phone_number": _callLogEntries.elementAt(indexStaff).number,
                                                                                         "callTypes": _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
                                                                                         "time": '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
@@ -861,23 +904,24 @@ class _CallLogsState extends State<CallLogs> {
                                                                         Text(
                                                                           'Type  : ${_callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1)}',
                                                                         ),
-                                                                        Container(
-                                                                          decoration: BoxDecoration(
-                                                                              color: Colors.grey.shade300,
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              Padding(
-                                                                            padding: const EdgeInsets.only(
-                                                                                left: 10,
-                                                                                right: 10,
-                                                                                top: 5,
-                                                                                bottom: 5),
-                                                                            child:
-                                                                                Text(
-                                                                              '${_callLogEntries.elementAt(indexStaff).simDisplayName}',
-                                                                            ),
-                                                                          ),
-                                                                        ),
+                                                                        const SizedBox()
+                                                                        // Container(
+                                                                        //   decoration: BoxDecoration(
+                                                                        //       color: Colors.grey.shade300,
+                                                                        //       borderRadius: BorderRadius.circular(5)),
+                                                                        //   child:
+                                                                        //       Padding(
+                                                                        //     padding: const EdgeInsets.only(
+                                                                        //         left: 10,
+                                                                        //         right: 10,
+                                                                        //         top: 5,
+                                                                        //         bottom: 5),
+                                                                        //     child:
+                                                                        //         Text(
+                                                                        //       '${_callLogEntries.elementAt(indexStaff).simDisplayName}',
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
                                                                       ],
                                                                     ),
                                                                     const SizedBox(
@@ -1085,55 +1129,67 @@ class _CallLogsState extends State<CallLogs> {
                                                               scrollable: true,
                                                               title: const Text(
                                                                   'Staffs'),
-                                                              content: ListView
-                                                                  .builder(
-                                                                shrinkWrap:
-                                                                    true,
-                                                                itemCount:
-                                                                    commonDetails!
-                                                                        .data!
-                                                                        .staff!
-                                                                        .length,
-                                                                itemBuilder:
-                                                                    (context,
-                                                                        ind) {
-                                                                  return InkWell(
-                                                                    onTap: () {
-                                                                      setState(
+                                                              content: SizedBox(
+                                                                height: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .height *
+                                                                    .35,
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .7,
+                                                                child: ListView
+                                                                    .builder(
+                                                                  shrinkWrap:
+                                                                      true,
+                                                                  itemCount:
+                                                                      commonDetails!
+                                                                          .data
+                                                                          .staff
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          ind) {
+                                                                    return InkWell(
+                                                                      onTap:
                                                                           () {
-                                                                        assignStaff = commonDetails!
-                                                                            .data!
-                                                                            .staff![ind]
-                                                                            .staffName
-                                                                            .toString();
-                                                                        assignStaffId = commonDetails!
-                                                                            .data!
-                                                                            .staff![ind]
-                                                                            .staffId
-                                                                            .toString();
-                                                                        Navigator.pop(
-                                                                            context,
-                                                                            true);
-                                                                      });
-                                                                    },
-                                                                    child:
-                                                                        SizedBox(
-                                                                      height:
-                                                                          50,
+                                                                        setState(
+                                                                            () {
+                                                                          assignStaff = commonDetails!
+                                                                              .data
+                                                                              .staff[ind]
+                                                                              .staffName
+                                                                              .toString();
+                                                                          assignStaffId = commonDetails!
+                                                                              .data
+                                                                              .staff[ind]
+                                                                              .staffId
+                                                                              .toString();
+                                                                          Navigator.pop(
+                                                                              context,
+                                                                              true);
+                                                                        });
+                                                                      },
                                                                       child:
-                                                                          Text(
-                                                                        commonDetails!
-                                                                            .data!
-                                                                            .staff![ind]
-                                                                            .staffName
-                                                                            .toString(),
-                                                                        style: const TextStyle(
-                                                                            fontSize:
-                                                                                18),
+                                                                          SizedBox(
+                                                                        height:
+                                                                            50,
+                                                                        child:
+                                                                            Text(
+                                                                          commonDetails!
+                                                                              .data
+                                                                              .staff[ind]
+                                                                              .staffName
+                                                                              .toString(),
+                                                                          style:
+                                                                              const TextStyle(fontSize: 18),
+                                                                        ),
                                                                       ),
-                                                                    ),
-                                                                  );
-                                                                },
+                                                                    );
+                                                                  },
+                                                                ),
                                                               ),
                                                             );
                                                           });
@@ -1349,7 +1405,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                               CrossAxisAlignment.start,
                                                                           children: [
                                                                             Text(
-                                                                              logHistory!.data![index].name.toString(),
+                                                                              logHistory!.data![index].name.toString() == "" ? "Unknown" : logHistory!.data![index].name.toString(),
                                                                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                             ),
                                                                             const SizedBox(
@@ -1412,23 +1468,24 @@ class _CallLogsState extends State<CallLogs> {
                                                                         Text(
                                                                           'Type  : ${logHistory!.data![index].callType}',
                                                                         ),
-                                                                        Container(
-                                                                          decoration: BoxDecoration(
-                                                                              color: Colors.grey.shade300,
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              const Padding(
-                                                                            padding: EdgeInsets.only(
-                                                                                left: 10,
-                                                                                right: 10,
-                                                                                top: 5,
-                                                                                bottom: 5),
-                                                                            child:
-                                                                                Text(
-                                                                              'SIM 1',
-                                                                            ),
-                                                                          ),
-                                                                        ),
+                                                                        const SizedBox()
+                                                                        // Container(
+                                                                        //   decoration: BoxDecoration(
+                                                                        //       color: Colors.grey.shade300,
+                                                                        //       borderRadius: BorderRadius.circular(5)),
+                                                                        //   child:
+                                                                        //       Padding(
+                                                                        //     padding: const EdgeInsets.only(
+                                                                        //         left: 10,
+                                                                        //         right: 10,
+                                                                        //         top: 5,
+                                                                        //         bottom: 5),
+                                                                        //     child:
+                                                                        //         Text(
+                                                                        //       "${logHistory!.data![index].simName}",
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
                                                                       ],
                                                                     ),
                                                                     const SizedBox(
@@ -1633,12 +1690,8 @@ class _CallLogsState extends State<CallLogs> {
   }
 }
 
-
-
-
 Future<void> _makeCall(String number) async {
   bool? res = await FlutterPhoneDirectCaller.callNumber('+91${number}');
-
 }
 
 void _keyPressed(String number) {

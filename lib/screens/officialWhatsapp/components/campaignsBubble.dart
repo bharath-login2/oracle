@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
 import '../campaignsChatScreen.dart';
-import '../chatScreen.dart';
 import '../colorConst.dart';
 
 
@@ -48,7 +46,7 @@ Widget campaignsBubble(context, campaignsListModel) {
         ),
         SizedBox(
             width: MediaQuery.of(context).size.width * 0.3,
-            child: Text(
+            child: const Text(
               'last Message',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

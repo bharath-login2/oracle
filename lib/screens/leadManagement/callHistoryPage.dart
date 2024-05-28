@@ -73,11 +73,6 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
     super.initState();
     getData();
   }
-  @override
-
-
-
-
   getData() async {
     if (search == false) {
       assignStaff = widget.name;

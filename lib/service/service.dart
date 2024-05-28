@@ -1,13 +1,48 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
+import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
+import 'package:login2/models/lead_management/staff_dashboard_model.dart';
+import 'package:login2/models/product_mannagement/delete_category.dart';
+import 'package:login2/models/product_mannagement/delete_product.dart';
+import 'package:login2/models/product_mannagement/delete_subcategory.dart';
+import 'package:login2/models/product_mannagement/post_category_model.dart';
+import 'package:login2/models/product_mannagement/post_product.dart';
+import 'package:login2/models/product_mannagement/post_subcategory.dart';
+import 'package:login2/models/product_mannagement/product_categories.dart';
+import 'package:login2/models/product_mannagement/product_list_model.dart';
+import 'package:login2/models/product_mannagement/products_by_id_model.dart';
+import 'package:login2/models/product_mannagement/sub_categories.dart';
+import 'package:login2/models/product_mannagement/update_product.dart';
+import 'package:login2/models/product_mannagement/update_subcategory.dart';
+import 'package:login2/models/renewal/add_customer_model.dart';
+import 'package:login2/models/renewal/bulk_remind.dart';
+import 'package:login2/models/renewal/delete_renewal.dart';
+import 'package:login2/models/renewal/edit_renewal.dart';
+import 'package:login2/models/renewal/hidden_list.dart';
+import 'package:login2/models/renewal/hide_model.dart';
+import 'package:login2/models/renewal/payment_report.dart';
+import 'package:login2/models/renewal/post_reminder.dart';
+import 'package:login2/models/renewal/post_renew_details.dart';
+import 'package:login2/models/renewal/post_renewal.dart';
+import 'package:login2/models/renewal/reminder_history_model.dart';
+import 'package:login2/models/renewal/renewal_dashboard_model.dart';
+import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/models/renewal/renewal_list.dart';
+import 'package:login2/models/renewal/rivert_client.dart';
+import 'package:login2/models/staff_report/staff_call_details_model.dart';
+import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
+import 'package:login2/screens/clients/addInvoice.dart';
+import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/commonsettingsModel.dart';
 import '../../models/contactGroup/addContactGroupModel.dart';
@@ -165,7 +200,7 @@ class HttpService {
 
   // static String get baseUrl => Platform.isIOS
   //     ? "https://account.login2.in/index.php/Mobile_app_api_ios_v3/"
-  //     : "https://account.login2.in/app/index.php/Mobile_app_api_v4/";
+  //     : "${await Config.getUrl()}";
 
   static Future configure(token) async {
     var params = {
@@ -175,9 +210,7 @@ class HttpService {
       var result = await _dio.get(
           "${await Config.getUrl()}check_package_expired",
           queryParameters: params);
-      if (kDebugMode) {
-        print(result);
-      }
+      if (kDebugMode) {}
       CommonConfigureModel model = CommonConfigureModel.fromJson(result.data);
       return model;
     } on Exception {
@@ -189,9 +222,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}getClientName",
           queryParameters: body);
-      if (kDebugMode) {
-        print(result);
-      }
+      if (kDebugMode) {}
       BackgroundModel model = BackgroundModel.fromJson(result.data);
       return model;
     } on Exception {
@@ -202,9 +233,7 @@ class HttpService {
   static Future forceUpdate() async {
     try {
       var result = await _dio.get("https://account.login2.in/serverAuth.php");
-      if (kDebugMode) {
-        print(result);
-      }
+      if (kDebugMode) {}
       UpdateModel model = UpdateModel.fromJson(result.data);
       return model;
     } on Exception {
@@ -242,7 +271,6 @@ class HttpService {
 
   static Future loginCheck(token, firebaseToken) async {
     var params = {"token": token, "firebaseId": firebaseToken};
-    print(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}if_token_expired",
           queryParameters: params);
@@ -271,6 +299,7 @@ class HttpService {
 /* Lead Management  Starts Here..*/
   static Future leadDashboard(
       token, fromDate, toDate, fromDate1, toDate1) async {
+        print(await Common.getSharedPref("token"));
     var params = {
       "token": token,
       "fromDate": fromDate,
@@ -322,7 +351,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}staff_dashboard",
           queryParameters: params);
-      LeadDashboardModel model = LeadDashboardModel.fromJson(result.data);
+      StaffDashboardModel model = StaffDashboardModel.fromJson(result.data);
       return model;
     } on Exception {
       return null;
@@ -406,7 +435,6 @@ class HttpService {
       "leadType": leadType,
       "branchId": branchId
     };
-    print(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}view_lead_report",
           queryParameters: params);
@@ -445,7 +473,6 @@ class HttpService {
 
   static Future addLeadCommonData(token, {branchId}) async {
     var params = {"token": token, "branchId": branchId};
-    print(params);
 
     try {
       var result = await _dio.get(
@@ -475,7 +502,10 @@ class HttpService {
       callResultId,
       nextFollowupDate,
       descriptions,
-      code) async {
+      code,
+      checked,
+      timeBefore
+      ) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -491,7 +521,9 @@ class HttpService {
       'remarks': remark,
       'priority': priorityId,
       'country_code': code,
-      "additionalFields": jsonEncode(descriptions)
+      "additionalFields": jsonEncode(descriptions),
+      "reminder": checked,
+      "time_before": timeBefore,
     });
 
     try {
@@ -722,7 +754,6 @@ class HttpService {
       callMasterId,
       callResponseId,
       reasonId) async {
-    print(callResponseId);
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -797,10 +828,8 @@ class HttpService {
       "additionalFields": jsonEncode(descriptions)
     });
     try {
-      //print('cgf');
       var result = await _dio.post("${await Config.getUrl()}edit_lead_data",
           data: formData);
-      //print(result);
 
       EditLeadModel model = EditLeadModel.fromJson(result.data);
       return model;
@@ -828,7 +857,6 @@ class HttpService {
   }
 
   static Future followupDetails(token, callDetailsId) async {
-    print(callDetailsId);
     var formData = FormData.fromMap({
       "token": token,
       "call_details_id": callDetailsId,
@@ -1892,8 +1920,10 @@ class HttpService {
       if (kDebugMode) {
         print(result);
       }
-      CallLogUploadModel model = CallLogUploadModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        CallLogUploadModel model = CallLogUploadModel.fromJson(result.data);
+        return model;
+      }
     } on Exception {
       return null;
     }
@@ -1910,7 +1940,9 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}get_phone_call_log",
           queryParameters: params);
       CallLogHistoryModel model = CallLogHistoryModel.fromJson(result.data);
+      if(result.statusCode ==200){
       return model;
+      }
     } on Exception {
       return null;
     }
@@ -2032,8 +2064,10 @@ class HttpService {
       if (kDebugMode) {
         print(result);
       }
-      AddInvoiceModel model = AddInvoiceModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        AddInvoiceModel model = AddInvoiceModel.fromJson(result.data);
+        return model;
+      }
     } on Exception {
       return null;
     }
@@ -2406,6 +2440,7 @@ class HttpService {
     try {
       var result =
           await _dio.post("${await Config.getUrl()}getBranch", data: formData);
+      // ${await Config.getUrl()}getBranch
       BranchListModel model = BranchListModel.fromJson(result.data);
       return model;
     } on Exception {
@@ -2473,7 +2508,7 @@ class HttpService {
           queryParameters: params);
       CallResultResonModel model = CallResultResonModel.fromJson(result.data);
       return model;
-    } on Exception {
+    } on Exception {  
       return null;
     }
   }
@@ -2590,12 +2625,11 @@ class HttpService {
       } else {}
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
   static officialMessage(groupId) async {
-    print(groupId);
     try {
       var response = await _dio.get(
           "${await Config.getUrl()}official_whatsapp_messages",
@@ -2604,21 +2638,20 @@ class HttpService {
             "token": await Common.getSharedPref("token"),
           });
       if (response.statusCode == 200) {
+        print(response.data);
         OfficialMessageModel officialMessageModel =
             OfficialMessageModel.fromJson(response.data);
         return officialMessageModel;
       } else if (response.statusCode == 500) {
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
-    } catch (e) {
-      print("Exception: $e");
-    } finally {}
+    } 
+    catch(e) {
+      log(e.toString());
+    }
   }
 
   static officialMessageCampaigns(groupId) async {
-    print(groupId);
     try {
       var response = await _dio.get(
           "${await Config.getUrl()}get_campaigns_messages",
@@ -2636,7 +2669,7 @@ class HttpService {
       }
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2653,13 +2686,10 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
       // isLoading.value = false;
-    } catch (e) {
-      print("Exception: $e");
     } finally {}
   }
 
   static getTemplateContent(templateId) async {
-    print('Template Id ----------------- $templateId');
     try {
       var response = await _dio.get(
           "${await Config.getUrl()}get_whatsapp_template_message_data",
@@ -2668,23 +2698,13 @@ class HttpService {
             "token": await Common.getSharedPref("token"),
           });
 
-      print("Response status code: ${response.statusCode}");
-      print("Response data: ${response.data}");
-
       if (response.statusCode == 200) {
-        print("Success");
         TemplateContentModel templateContentMoel =
             TemplateContentModel.fromJson(response.data);
         return templateContentMoel;
       } else if (response.statusCode == 500) {
-        print('Error 500');
-        print("000000");
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
-    } catch (e) {
-      print("Exception: $e");
     } finally {}
   }
 
@@ -2701,7 +2721,6 @@ class HttpService {
       'is_file': isFile,
       "token": await Common.getSharedPref("token"),
     };
-    print(body);
     var formData = FormData.fromMap({
       "group_id": groupId,
       'format': format,
@@ -2728,14 +2747,10 @@ class HttpService {
             SendTemplateMesaageModel.fromJson(response.data);
         return sendTemplateMesaageModel;
       } else if (response.statusCode == 500) {
-        print('Error 500');
-        print("000000");
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2854,15 +2869,18 @@ class HttpService {
       return null;
     }
   }
+
   static Future officialWhatsAppConfigure() async {
     var params = {
       "token": await Common.getSharedPref("token"),
     };
     print(params);
     try {
-      var result = await _dio.get("${await Config.getUrl()}official_whatsapp_config",
+      var result = await _dio.get(
+          "${await Config.getUrl()}official_whatsapp_config",
           queryParameters: params);
-      OfficialWhatsappConfigeModel model = OfficialWhatsappConfigeModel.fromJson(result.data);
+      OfficialWhatsappConfigeModel model =
+          OfficialWhatsappConfigeModel.fromJson(result.data);
       return model;
     } on Exception {
       return null;
@@ -2871,7 +2889,7 @@ class HttpService {
   /*  Complaints Ansar */
 
   static Future<GetModel?> getComplaintDetails() async {
-   // log(await Common.getSharedPref("token"));
+    // log(await Common.getSharedPref("token"));
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref("token"),
     });
@@ -2893,18 +2911,18 @@ class HttpService {
   }
 
   static Future<PostModel?> postComplaint(
-      List type,
-      String compBy,
-      String custName,
-      String custPhone,
-      String custEmail,
-      String date,
-      String description,
-      // List compAgainst,
-      remark,
-      String status,
-      List nature,
-      ) async {
+    List type,
+    String compBy,
+    String custName,
+    String custPhone,
+    String custEmail,
+    String date,
+    String description,
+    // List compAgainst,
+    remark,
+    String status,
+    List nature,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref("token"),
       "complaint_type": jsonEncode(type),
@@ -3023,7 +3041,7 @@ class HttpService {
 
       if (response.statusCode == 200) {
         PostRemarkModel postRemarkModel =
-        PostRemarkModel.fromJson(response.data);
+            PostRemarkModel.fromJson(response.data);
         return postRemarkModel;
       } else if (response.statusCode == 401) {
         return null;
@@ -3091,7 +3109,7 @@ class HttpService {
           .post("${await Config.getUrl()}updateComplaint", data: formData);
       if (response.statusCode == 200) {
         UpdateComplaintModel complaintUpdateModel =
-        UpdateComplaintModel.fromJson(response.data);
+            UpdateComplaintModel.fromJson(response.data);
         return complaintUpdateModel;
       } else if (response.statusCode == 401) {
         return null;
@@ -3102,19 +3120,824 @@ class HttpService {
       return null;
     }
   }
-  static Future addInvoiceCheck(token,code, phone) async {
+
+  ////// complaints ends  ///////
+
+  static Future addInvoiceCheck(token, code, phone) async {
     var formData = FormData.fromMap({
       "billing_country_code": code,
       "billing_contact_no": phone,
-      "token":token
+      "token": token
     });
     try {
-      var result = await _dio.post("${await Config.getUrl()}isInvoiceExists", data: formData);
-      AddInvoiceCheckModel model =
-      AddInvoiceCheckModel.fromJson(result.data);
+      var result = await _dio.post("${await Config.getUrl()}isInvoiceExists",
+          data: formData);
+      print(result);
+      AddInvoiceCheckModel model = AddInvoiceCheckModel.fromJson(result.data);
       return model;
     } on Exception {
       return null;
     }
   }
+
+  ///// Staff Dashboard //////
+
+  static Future<UserDashboardModel?> getStaffDashboard(
+      String userId, String type) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "type": type,
+      "user_id": userId
+    };
+    try {
+      final response = await _dio.get(
+          "${await Config.getUrl()}/view_staff_dashboard",
+          queryParameters: params);
+
+      if (response.statusCode == 200) {
+        UserDashboardModel? userDashboardModel =
+            UserDashboardModel.fromJson(response.data);
+        return userDashboardModel;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<StaffCalldetailsModel?> getStaffCallDetails(
+      String userId, String fDate, String tDate) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "from_date": fDate,
+      "to_date": tDate,
+      "user_id": userId
+    };
+    try {
+      final response = await _dio.get(
+          "${await Config.getUrl()}/view_staff_call_details",
+          queryParameters: params);
+
+      if (response.statusCode == 200) {
+        StaffCalldetailsModel? staffCalldetailsModel =
+            StaffCalldetailsModel.fromJson(response.data);
+        return staffCalldetailsModel;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  //// Renewal Management ////
+
+  static Future renewalDashboard() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}renewalDashboard",
+          data: formData);
+      if (result.statusCode == 200) {
+        RenewalDashboardModel response =
+            RenewalDashboardModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future getRenewalDetails() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getRenewalAddingDetails",
+          data: formData);
+      if (result.statusCode == 200) {
+        RenewalDetailslModel response =
+            RenewalDetailslModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postRenewal(
+      renewalProducts,
+      clientId,
+      cost,
+      templateId,
+      startDate,
+      endDate,
+      remarks,
+      branchId,
+      isPaid,
+      actualCost,
+      createInvoice) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_product": jsonEncode(renewalProducts),
+      "client_id": clientId,
+      "cost": cost,
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "remarks": remarks,
+      "branch_id": branchId ?? "",
+      "is_paid": isPaid,
+      "actual_cost": actualCost,
+      "create_invoice": createInvoice
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postexistingCustomerRenewal",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postCustomer(
+      isPaid,
+      branchId,
+      countryCode,
+      contactNo,
+      whatsappCountryCode,
+      whatsappContactNo,
+      clientName,
+      address1,
+      address2,
+      address3,
+      postOffice,
+      pincode,
+      gstNum,
+      remarks,
+      products,
+      startDate,
+      endDate,
+      cost,
+      email,
+      actualCost,
+      createInvoice,
+      templateId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "is_paid": isPaid,
+      "branch_id": branchId ?? "",
+      "country_code": countryCode,
+      "contact_no": contactNo,
+      "whatsapp_country_code": whatsappCountryCode,
+      "whatsapp_contact_no": whatsappContactNo,
+      "client_name": clientName,
+      "address": address1,
+      "address2": address2,
+      "address3": address3,
+      "post_office": postOffice,
+      "pincode": pincode,
+      "gst_num": gstNum,
+      "remarks": remarks,
+      "renewal_product": jsonEncode(products),
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "cost": cost,
+      "email_id ": email,
+      "actual_cost": actualCost,
+      "create_invoice": createInvoice
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postNewCustomerRenewal",
+          data: formData);
+      if (result.statusCode == 200) {
+        AddCustomerModel response = AddCustomerModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future renewalList(page, pageSize, clientId, fromDate, toDate,
+      daysToExpire, String searchKey, searchMonth, String expireIn) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "page": page,
+      "page_size": pageSize,
+      "client_id": clientId,
+      "from_date": fromDate ?? "",
+      "to_date": toDate ?? "",
+      "days_to_expire": daysToExpire,
+      "search_key": searchKey,
+      "search_month": searchMonth,
+      "expiry_in_days": expireIn
+    });
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}getAllRenewalReports", data: formData);
+      if (result.statusCode == 200) {
+        RenewalListModel response = RenewalListModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future editRenewal(
+      renewalProducts,
+      clientId,
+      cost,
+      templateId,
+      startDate,
+      endDate,
+      remarks,
+      branchId,
+      String recordId,
+      isPaid,
+      invoiceId,
+      actualCost,
+      createInvoice) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_product": jsonEncode(renewalProducts),
+      "client_id": clientId,
+      "cost": cost,
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "remarks": remarks,
+      "branch_id": branchId,
+      "record_id": recordId,
+      "is_paid": isPaid,
+      "invoice_id": invoiceId,
+      "actual_cost": actualCost,
+      "create_invoice": createInvoice
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}updateRenewalCustomer",
+          data: formData);
+      if (result.statusCode == 200) {
+        EditRenewalModel response = EditRenewalModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future hideRenewal(String recordId) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "record_id": recordId});
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}hideRenewalCustomer", data: formData);
+      if (result.statusCode == 200) {
+        HideModel response = HideModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  // static Future deleteType(String rowId) async {
+  //   var formData = FormData.fromMap(
+  //       {"token": await Common.getSharedPref('token'), "row_id": rowId});
+  //   try {
+  //     var result =
+  //         await _dio.post("${await Config.getUrl()}deleteType", data: formData);
+  //     if (result.statusCode == 200) {
+  //       HideModel response = HideModel.fromJson(result.data);
+  //       return response;
+  //     }
+  //   } on Exception {
+  //     return null;
+  //   }
+  // }
+
+  // static Future updateType(String rowId, String type, String cost,
+  //     String noOfDays, String remindMe) async {
+  //   var formData = FormData.fromMap({
+  //     "token": await Common.getSharedPref('token'),
+  //     "row_id": rowId,
+  //     "type_name": type,
+  //     "total_cost": cost,
+  //     "no_of_days": noOfDays,
+  //     "remind_before_days": remindMe
+  //   });
+  //   try {
+  //     var result =
+  //         await _dio.post("${await Config.getUrl()}updateType", data: formData);
+  //     if (result.statusCode == 200) {
+  //       PostTypeModel response = PostTypeModel.fromJson(result.data);
+  //       return response;
+  //     }
+  //   } on Exception {
+  //     return null;
+  //   }
+  // }
+
+  static Future hiddenList(
+      page, pageSize, clientId, fromDate, toDate, daysToExpire) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "page": page,
+      "page_size": pageSize,
+      "client_id": clientId,
+      "from_date": fromDate ?? "",
+      "to_date": toDate ?? "",
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getRenewalHidden",
+          data: formData);
+      if (result.statusCode == 200) {
+        HiddenListModel response = HiddenListModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future paymentReport(
+      page, pageSize, clientId, fromDate, toDate, daysToExpire) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "page": page,
+      "page_size": pageSize,
+      "client_id": clientId,
+      "from_date": fromDate ?? "",
+      "to_date": toDate ?? "",
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getRenewalPaymentReport",
+          data: formData);
+      if (result.statusCode == 200) {
+        PaymentReportModel response = PaymentReportModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postRenewDetails(branchId, recordId, startDate, endDate, cost,
+      remarks, addInvoice, products, clientId, isPaid, createInvoice) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "branch_id": branchId ?? "",
+      "record_id": recordId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "cost": cost,
+      "remarks": remarks,
+      "add_invoice": addInvoice,
+      "client_id": clientId,
+      "is_paid": isPaid,
+      "create_invoice": createInvoice
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostRenewDetailsModel response =
+            PostRenewDetailsModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future rivertRenewal(String recordId) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "record_id": recordId});
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}revertRenewalClient", data: formData);
+      if (result.statusCode == 200) {
+        RivertModel response = RivertModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future deleteRenewalClient(String recordId) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "record_id": recordId});
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}deleteRenewalClient", data: formData);
+      if (result.statusCode == 200) {
+        DeleteRenewalModel response = DeleteRenewalModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future viewHistory(String id) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_id": id,
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getRenewalReminderHistory",
+          data: formData);
+      if (result.statusCode == 200) {
+        ReminderHistoryModel response =
+            ReminderHistoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future isCustomerExists(String id, String phoneNumber) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "customer_id": id,
+      "phone_number": "91$phoneNumber"
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}isCustomerExists",
+          data: formData);
+      if (result.statusCode == 200) {
+        IsCustomerExistModel response =
+            IsCustomerExistModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future getRenewalReminderMessage(String renId, String medium) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_id": renId,
+      "medium": medium == "Official" ? "official" : "unofficial"
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getRenewalReminderMessage",
+          data: formData);
+      if (result.statusCode == 200) {
+        RenewalTemplateModel response =
+            RenewalTemplateModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postReminder(String renId, String contactNumber, templateType,
+      templateName, templateId, medium, customerId, messageContent) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "row_id": renId,
+      "contact_no": contactNumber,
+      "template_type": templateType,
+      "template_name": templateName,
+      "template_id": templateId,
+      "medium": medium == "Official" ? "official" : "unofficial",
+      "customer_id": customerId,
+      "message_content": messageContent
+    });
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}sendRenewalReminder", data: formData);
+      if (result.statusCode == 200) {
+        PostReminderModel response = PostReminderModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future bulkReminder(List recordId, String medium) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_id": jsonEncode(recordId),
+      "medium": medium == "Official" ? "official" : "unofficial"
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}sendBulkReminder",
+          data: formData);
+      if (result.statusCode == 200) {
+        BulkRemindModel response = BulkRemindModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  /// product mannagement ///
+
+  static Future getProductCategory() async {
+    var formData =
+        FormData.fromMap({"token": await Common.getSharedPref('token')});
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getProductCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        ProductCategoriesModel response =
+            ProductCategoriesModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future getProductSubCategory(String id) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "category_id": id});
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getProductSubCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        SubCategoriesModel response = SubCategoriesModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future getProductLists(String subId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "sub_category_id": subId
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getProductLists",
+          data: formData);
+      if (result.statusCode == 200) {
+        ProductListModel response = ProductListModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postProducts(
+    String contentId,
+    String categoryId,
+    String subCategoryId,
+    String productName,
+    String productCode,
+    String productMrp,
+    String noOfDays,
+    String remindBefore,
+    String sellingPrice,
+    String taxPercent,
+    String totalAmount,
+    String description,
+    productImage,
+  ) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "content_id": contentId,
+      "category_id": categoryId,
+      "sub_category_id": subCategoryId,
+      "product_name": productName,
+      "product_code": productCode,
+      "product_mrp": productMrp,
+      "no_of_days": noOfDays,
+      "remind_before": remindBefore,
+      "selling_price": sellingPrice,
+      "tax_percent": taxPercent,
+      "total_amount": totalAmount,
+      "description": description,
+      "product_image":
+          productImage == null ? "" : await MultipartFile.fromFile(productImage)
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}postProduct",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostProductModel response = PostProductModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future getProductById(String id) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "row_id": id});
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getProductById",
+          data: formData);
+      if (result.statusCode == 200) {
+        ProdectsByIdModel response = ProdectsByIdModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future updateProduct(
+      String contentId,
+      String categoryId,
+      String subCategoryId,
+      String productName,
+      String productCode,
+      String productMrp,
+      String noOfDays,
+      String remindBefore,
+      String sellingPrice,
+      String taxPercent,
+      String totalAmount,
+      String description,
+      productImage,
+      String productId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "content_id": contentId,
+      "category_id": categoryId,
+      "sub_category_id": subCategoryId,
+      "product_name": productName,
+      "product_code": productCode,
+      "product_mrp": productMrp,
+      "no_of_days": noOfDays,
+      "remind_before": remindBefore,
+      "selling_price": sellingPrice,
+      "tax_percent": taxPercent,
+      "total_amount": totalAmount,
+      "description": description,
+      "product_image": productImage == null
+          ? ""
+          : await MultipartFile.fromFile(productImage.toString()),
+      "row_id": productId
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}updateProduct",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostProductModel response = PostProductModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future deleteProduct(String id) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "row_id": id});
+    try {
+      var result = await _dio.post("${await Config.getUrl()}deleteProduct",
+          data: formData);
+      if (result.statusCode == 200) {
+        DeleteProductModel response = DeleteProductModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postProductCategory(String categoryName) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "category_name": categoryName
+    });
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}postProductCategory", data: formData);
+      if (result.statusCode == 200) {
+        PostProductCategoryModel response =
+            PostProductCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future updateProductCategory(String categoryName, String rowId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "category_name": categoryName,
+      "row_id": rowId
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}updateProductCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        UpdateProductCategoryModel response =
+            UpdateProductCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future deleteProductCategory(String rowId) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "row_id": rowId});
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}deleteProductCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        DeleteProductCategoryModel response =
+            DeleteProductCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future postProductSubCategory(
+      String categoryId, String subCategory) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "category_id": categoryId,
+      "sub_category": subCategory
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postProductSubCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostProductSubCategoryModel response =
+            PostProductSubCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future updateProductSubCategory(
+      String subCategory, String rowId, String catId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "category_id": catId,
+      "sub_category": subCategory,
+      "row_id": rowId
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}updateProductSubCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        UpdateProductSubCategoryModel response =
+            UpdateProductSubCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  static Future deleteProductSubCategory(String rowId) async {
+    var formData = FormData.fromMap(
+        {"token": await Common.getSharedPref('token'), "row_id": rowId});
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}deleteProductSubCategory",
+          data: formData);
+      if (result.statusCode == 200) {
+        DeleteProductSubCategoryModel response =
+            DeleteProductSubCategoryModel.fromJson(result.data);
+        return response;
+      }
+    } on Exception {
+      return null;
+    }
+  }
+
+  /// product mannagement ///
 }

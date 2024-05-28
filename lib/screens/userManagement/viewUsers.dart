@@ -49,6 +49,8 @@ class _ViewUsersState extends State<ViewUsers> {
   String? updateStaffDesignationPermission;
   String? deleteStaffDesignationPermission;
   String? updateStaffPasswordPermission;
+    String phoneCallLogPermission = '';
+
 
 
   @override
@@ -72,6 +74,8 @@ class _ViewUsersState extends State<ViewUsers> {
     updateStaffDesignationPermission = await Common.getSharedPref("updateStaffDesignationPermission");
     deleteStaffDesignationPermission = await Common.getSharedPref("deleteStaffDesignationPermission");
     updateStaffPasswordPermission = await Common.getSharedPref("updateStaffPasswordPermission");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -143,7 +147,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                 Row(
                                   children: [
                                     InkWell(
-                                      onTap: () => _logout(context),
+                                      onTap: () => logout(context),
                                       child: Container(
                                         width: 43,
                                         height: 43,
@@ -1092,7 +1096,7 @@ class _ViewUsersState extends State<ViewUsers> {
                   "assets/icons/menu.png",
                   width: 25), //icon inside button
             ),
-            bottomNavigationBar: configure!=null?BottomNavigation(widget.token!,configure!.data!.whatsappConfigured):const SizedBox()
+            bottomNavigationBar: configure!=null?BottomNavigation(widget.token!,configure!.data!.whatsappConfigured,phoneCallLogPermission: phoneCallLogPermission):const SizedBox()
 
         )
             : Scaffold(
@@ -1224,32 +1228,6 @@ class _ViewUsersState extends State<ViewUsers> {
         });
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Logout?'),
-            actions: [
-              // The "Yes" button
-              TextButton(
-                  onPressed: () {
-                    Common.saveSharedPref("Logout", "success");
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const Login()),
-                            (Route<dynamic> route) => false);
-                  },
-                  child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
-            ],
-          );
-        });
-  }
   void _upgrade(BuildContext context) {
     showDialog(
         context: context,

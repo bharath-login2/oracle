@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 //import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:login2/screens/splashScreen.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:system_alert_window/system_alert_window.dart';
 import '../core/common.dart';
 import '../key.dart';
 import 'leadManagement/leadDetails.dart';
@@ -19,7 +17,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool sts=true;
+  bool sts = true;
   String? token;
   bool? editLead;
   bool? deleteLead;
@@ -29,62 +27,57 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
-
     super.initState();
     // alertPermission();
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    });
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {});
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       token = await Common.getSharedPref("token");
       setState(() {
-        sts=false;
-        detailId=message.data['detail_id'];
-        navigation=message.data['navigation'];
-        if(message.data['edit_lead']=='true')
-        {
-          editLead=true;
+        sts = false;
+        detailId = message.data['detail_id'];
+        navigation = message.data['navigation'];
+        if (message.data['edit_lead'] == 'true') {
+          editLead = true;
+        } else {
+          editLead = false;
         }
-        else{
-          editLead=false;
+        if (message.data['delete_lead'] == 'true') {
+          deleteLead = true;
+        } else {
+          deleteLead = false;
         }
-        if(message.data['delete_lead']=='true')
-        {
-          deleteLead=true;
-        }
-        else{
-          deleteLead=false;
-        }
-        if(message.data['cloud_call']=='true')
-        {
-          cloudCall=true;
-        }
-        else{
-          cloudCall=false;
+        if (message.data['cloud_call'] == 'true') {
+          cloudCall = true;
+        } else {
+          cloudCall = false;
         }
       });
-
-
     });
-
   }
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: NoomiKeys.navKey,
-      home: sts==true?const SplashScreen():navigation=='whatsapp'?ChatScreen(groupId: detailId.toString(),):LeadDetails(token!,editLead!,deleteLead!,cloudCall!,detailId!,pageName: 'notification'),
+      home: navigation == 'whatsapp'
+          ? ChatScreen(
+              groupId: detailId.toString(),
+            )
+          : sts == true
+              ? const SplashScreen()
+              : LeadDetails(
+                  token!, editLead!, deleteLead!, cloudCall!, detailId!,
+                  pageName: 'notification'),
     );
   }
-
-
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Handle the background message here (if needed)
   print("onMessageOpenedApp: $message");
-
 }
 // Future alertPermission() async {
 //   SystemWindowPrefMode prefMode = SystemWindowPrefMode.OVERLAY;
@@ -102,5 +95,3 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 //   //    log(' alert window permission = true');
 //   // }
 // }
-
-

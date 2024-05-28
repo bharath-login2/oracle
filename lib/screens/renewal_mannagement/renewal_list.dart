@@ -1,0 +1,2267 @@
+// ignore_for_file: must_be_immutable, use_build_context_synchronously
+
+import 'package:date_time_picker/date_time_picker.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/models/clients/branchListModel.dart';
+import 'package:login2/models/renewal/bulk_remind.dart';
+import 'package:login2/models/renewal/hide_model.dart';
+import 'package:login2/models/renewal/post_reminder.dart';
+import 'package:login2/models/renewal/post_renew_details.dart';
+import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/models/renewal/renewal_list.dart';
+import 'package:login2/screens/clients/addInvoice.dart';
+import 'package:login2/screens/clients/clientDetails.dart';
+import 'package:login2/screens/renewal_mannagement/edit_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
+import 'package:login2/screens/renewal_mannagement/view_history.dart';
+import 'package:login2/service/service.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:shimmer/shimmer.dart';
+
+class RenewalList extends StatefulWidget {
+  String title;
+  String searchKey;
+  String searchMonth;
+  int renewed;
+  RenewalList(
+      {super.key,
+      required this.title,
+      required this.renewed,
+      required this.searchKey,
+      required this.searchMonth});
+
+  @override
+  State<RenewalList> createState() => _RenewalListState();
+}
+
+class _RenewalListState extends State<RenewalList> {
+  final formKey = GlobalKey<FormState>();
+  TextEditingController startDate = TextEditingController();
+  TextEditingController endDate = TextEditingController();
+  TextEditingController projectCost = TextEditingController();
+  TextEditingController remarks = TextEditingController();
+  TextEditingController customer = TextEditingController();
+  TextEditingController recieverName = TextEditingController();
+  TextEditingController contactNumber = TextEditingController();
+  TextEditingController expireIn = TextEditingController();
+
+  RenewalListModel? listResponse;
+  HideModel? hideResponse;
+  PostRenewDetailsModel? postRenewal;
+  String clientId = "";
+  bool isLoading = true;
+  int page = 1;
+  int pageSize = 20;
+  String daysToExpire = "";
+  List filteredNames = [];
+  List selectedIds = [];
+  List selectedNames = [];
+  String selectedMedium = "select medium";
+  RenewalDetailslModel? detailsResponse;
+  RenewalTemplateModel? template;
+  PostReminderModel? postReminderRes;
+  BulkRemindModel? bulkResponse;
+  List products = [];
+  List filteredProducts = [];
+  String renClientId = "";
+  List productName = [];
+  double productCost = 0;
+  List items = [];
+  String fromDate = "";
+  String toDate = "";
+  bool createInvoice = false;
+  bool isPaid = false;
+  bool isAllSelected = false;
+  String multiBranch = "true";
+  dynamic branchId;
+  BranchListModel? branchList;
+  DateTime? selectedValue;
+  final ItemScrollController itemScrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
+
+  void filterCustomers(
+    String query,
+  ) {
+    filteredNames = detailsResponse!.data.customers
+        .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  getDetails() async {
+    detailsResponse = await HttpService.getRenewalDetails();
+    if (detailsResponse != null) {
+      filteredNames = detailsResponse!.data.customers;
+      filteredProducts = detailsResponse!.data.renewalProducts;
+    }
+  }
+
+  hide(id) async {
+    hideResponse = await HttpService.hideRenewal(id);
+    if (hideResponse != null && hideResponse!.status == true) {
+      Common.toastMessaage(hideResponse!.message, Colors.green);
+    } else {
+      Common.toastMessaage(hideResponse!.message, Colors.red);
+    }
+  }
+
+  void filterProducts(
+    String query,
+  ) {
+    filteredProducts = detailsResponse!.data.renewalProducts
+        .where((map) =>
+            map.productName.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
+  postRenewDetails(id) async {
+    postRenewal = await HttpService.postRenewDetails(
+        branchId,
+        id,
+        startDate.text,
+        endDate.text,
+        projectCost.text,
+        remarks.text,
+        createInvoice,
+        products,
+        renClientId,
+        isPaid,
+        createInvoice);
+    if (postRenewal != null && postRenewal!.status == true) {
+      String token = await Common.getSharedPref('token');
+      Common.toastMessaage(postRenewal!.message, Colors.green);
+      if (postRenewal!.data.isRedirect == false) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RenewalDashboard(),
+            ));
+      } else {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddInvoice(token, postRenewal!.data.customerId.toString()),
+            ));
+      }
+    } else {
+      Common.toastMessaage(postRenewal!.message, Colors.red);
+    }
+  }
+
+  getBranch() async {
+    multiBranch = await Common.getSharedPref("multiBranch");
+    String token = await Common.getSharedPref("token");
+    branchList = await HttpService.getBranchList(token);
+    if (branchList != null) {}
+  }
+
+  getRenewalReminderMessage(String renewalId, String contactId) async {
+    template =
+        await HttpService.getRenewalReminderMessage(renewalId, selectedMedium);
+    if (template != null) {
+      setState(() {
+        Navigator.pop(context);
+        reminderBottomSheet(renewalId, contactId);
+      });
+    }
+  }
+
+  postReminder(String renewalId, String contactNumber) async {
+    postReminderRes = await HttpService.postReminder(
+        renewalId,
+        contactNumber,
+        template!.data.templateType,
+        template!.data.templateName,
+        template!.data.templateId,
+        template!.data.medium,
+        template!.data.customerId,
+        template!.data.message);
+    if (postReminderRes != null) {
+      Common.toastMessaage(postReminderRes!.message, Colors.green);
+    } else {
+      Common.toastMessaage(postReminderRes!.message, Colors.red);
+    }
+  }
+
+  postBulkReminder() async {
+    Common.showProgressDialog(context, "Loading..");
+    bulkResponse = await HttpService.bulkReminder(selectedIds, selectedMedium);
+    if (bulkResponse != null) {
+      Common.toastMessaage(bulkResponse!.message, Colors.green);
+    } else {
+      Common.toastMessaage(bulkResponse!.message, Colors.red);
+    }
+    Navigator.pop(context);
+    setState(() {
+      selectedIds.clear();
+      selectedNames.clear();
+    });
+  }
+
+  getList() async {
+    listResponse = await HttpService.renewalList(
+        page,
+        pageSize,
+        clientId,
+        fromDate,
+        toDate,
+        daysToExpire,
+        widget.searchKey,
+        widget.searchMonth,
+        expireIn.text);
+    if (listResponse != null && listResponse!.status == true) {
+      // items = listResponse!.data.lists;
+      items.addAll(listResponse!.data.lists);
+      page++;
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    setState(() {
+      isLoading = true;
+    });
+    getList();
+    getDetails();
+    getBranch();
+    itemPositionsListener.itemPositions.addListener(_onLoadMore);
+    super.initState();
+  }
+
+  void _onLoadMore() {
+    if (items.length + 20 == page * pageSize &&
+        itemPositionsListener.itemPositions.value.last.index ==
+            items.length - 1) {
+      getList();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvoked: ((didPop) async {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RenewalDashboard(),
+            ));
+      }),
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade300,
+        appBar: PreferredSize(
+          preferredSize:
+              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+          child: Container(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        selectedIds.isEmpty
+                            ? InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RenewalDashboard(),
+                                      ));
+                                },
+                                child: Container(
+                                  height: 25,
+                                  width: 25,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.white),
+                                      shape: BoxShape.circle),
+                                  child: const Icon(
+                                    Icons.arrow_back_ios_outlined,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              )
+                            : Checkbox(
+                                fillColor: const MaterialStatePropertyAll(
+                                    Colors.white),
+                                checkColor: Colors.blue,
+                                value: isAllSelected,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isAllSelected = value!;
+                                    if (isAllSelected == true) {
+                                      for (int i = 0; i < items.length; i++) {
+                                     if (items[i].isRenewed ==
+                                                  false)   {if (selectedIds.contains(items[i].id)) {
+                                        } else {
+                                          selectedIds.add(items[i].id);
+                                          selectedNames
+                                              .add(items[i].clientName);
+                                        }}
+                                      }
+                                    } else {
+                                      selectedNames.clear();
+                                      selectedIds.clear();
+                                    }
+                                  });
+                                }),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text(
+                          selectedIds.isEmpty
+                              ? widget.title
+                              : "Tap to select all",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 18),
+                        ),
+                      ],
+                    ),
+                    selectedIds.isEmpty
+                        ? InkWell(
+                            onTap: () {
+                              filtration(context);
+                            },
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  color: const Color(0xFFd5f5f4),
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: Center(
+                                  child: Image.asset("assets/icons/filter.png",
+                                      width: 20)),
+                            ),
+                          )
+                        : InkWell(
+                            onTap: () {
+                              selectMediumDialog(0, true);
+                            },
+                            child: Container(
+                              height: 35,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.teal),
+                              child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Image.asset(
+                                      "assets/icons/whatsapp_white.png")),
+                            ),
+                          )
+                  ]),
+            ),
+          ),
+        ),
+        body: RefreshIndicator(
+            onRefresh: (() async {
+              getList();
+            }),
+            child: isLoading == true
+                ? buildLoaderListItem()
+                : items.isNotEmpty
+                    ? SafeArea(
+                        child: listResponse == null
+                            ? const Center(
+                                child: Text("Something Went Wrong"),
+                              )
+                            : Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: ScrollablePositionedList.builder(
+                                  shrinkWrap: true,
+                                  itemScrollController: itemScrollController,
+                                  itemPositionsListener: itemPositionsListener,
+                                  itemCount: items.length +
+                                      (items.length + 20 == page * pageSize
+                                          ? 1
+                                          : 0),
+                                  initialScrollIndex: 0,
+                                  itemBuilder: (context, index) {
+                                    if (index == items.length) {
+                                      return buildLoaderListItem();
+                                    } else {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8.0, top: 8.0),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            if (items[index].isRenewed ==
+                                                false) {
+                                              setState(() {
+                                                if (selectedIds.isNotEmpty) {
+                                                  if (selectedIds.contains(
+                                                      items[index].id)) {
+                                                    selectedIds.remove(
+                                                        items[index].id);
+                                                    selectedNames.remove(
+                                                        items[index]
+                                                            .clientName);
+                                                  } else {
+                                                    selectedIds
+                                                        .add(items[index].id);
+                                                    selectedNames.add(
+                                                        items[index]
+                                                            .clientName);
+                                                  }
+                                                }
+                                              });
+                                              if ((items.length - widget.renewed )==
+                                                  selectedIds.length) {
+                                                isAllSelected = true;
+                                              } else {
+                                                isAllSelected = false;
+                                              }
+                                            }
+                                          },
+                                          onLongPress: () {
+                                            setState(() {
+                                              if (items[index].isRenewed ==
+                                                  false) {
+                                                if (selectedIds.contains(
+                                                    items[index].id)) {
+                                                  selectedIds
+                                                      .remove(items[index].id);
+                                                  selectedNames.remove(
+                                                      items[index].clientName);
+                                                } else {
+                                                  selectedIds
+                                                      .add(items[index].id);
+                                                  selectedNames.add(
+                                                      items[index].clientName);
+                                                }
+                                              }
+                                            });
+                                          },
+                                          child: Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                .9,
+                                            decoration: BoxDecoration(
+                                                color: selectedIds.contains(
+                                                        items[index].id)
+                                                    ? Colors.blueGrey
+                                                    : Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(16.0),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          GestureDetector(
+                                                            onTap: () async {
+                                                              if (selectedIds
+                                                                  .isEmpty) {
+                                                                String token =
+                                                                    await Common
+                                                                        .getSharedPref(
+                                                                            "token");
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder: (context) => ClientDetails(
+                                                                          token,
+                                                                          items[index]
+                                                                              .clientId),
+                                                                    ));
+                                                              }
+                                                            },
+                                                            child: Row(
+                                                              children: [
+                                                                const Icon(
+                                                                  Icons.person,
+                                                                  size: 18,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      .55,
+                                                                  child: Text(
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    " ${items[index].clientName}",
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                            14),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          Row(
+                                                            children: [
+                                                              const Icon(
+                                                                Icons.phone,
+                                                                size: 18,
+                                                              ),
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .55,
+                                                                child: Text(
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  " ${items[index].contactNo}",
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          14),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          Row(
+                                                            children: [
+                                                              const Icon(
+                                                                Icons
+                                                                    .calendar_month,
+                                                                size: 18,
+                                                              ),
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .55,
+                                                                child: Text(
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  " ${items[index].startDate} To ${items[index].endDate}",
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          14),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          Row(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              const Icon(
+                                                                Icons
+                                                                    .shopping_basket,
+                                                                size: 18,
+                                                              ),
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .55,
+                                                                child: Text(
+                                                                  " ${items[index].products}",
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          14),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          Row(
+                                                            children: [
+                                                              const Icon(
+                                                                Icons
+                                                                    .currency_rupee,
+                                                                size: 18,
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                              Text(
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                " ${items[index].cost}/-",
+                                                                style: const TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize:
+                                                                        18),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 10,
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          Container(
+                                                            color: items[index]
+                                                                        .isRenewed ==
+                                                                    false
+                                                                ? Colors.red
+                                                                : Colors.teal,
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      vertical:
+                                                                          4.0,
+                                                                      horizontal:
+                                                                          8.0),
+                                                              child: Text(
+                                                                items[index].isRenewed ==
+                                                                        true
+                                                                    ? "Renewed"
+                                                                    : "Not Renewed",
+                                                                style: const TextStyle(
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 10,
+                                                          ),
+                                                          Container(
+                                                            color:
+                                                                Colors.yellow,
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      vertical:
+                                                                          4.0,
+                                                                      horizontal:
+                                                                          8.0),
+                                                              child: Text(
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                "${items[index].remainingDays}",
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            ),
+                                                          )
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                  Visibility(
+                                                    visible:
+                                                        selectedIds.isEmpty,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        Visibility(
+                                                          visible: items[index]
+                                                                  .isRenewed ==
+                                                              false,
+                                                          child: InkWell(
+                                                            onTap: () async {
+                                                              selectMediumDialog(
+                                                                  index, false);
+
+                                                              // setState(() {});
+                                                            },
+                                                            child: Container(
+                                                              height: 40,
+                                                              decoration: BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
+                                                                  color: Colors
+                                                                      .teal),
+                                                              child: Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          8.0),
+                                                                  child: Image
+                                                                      .asset(
+                                                                          "assets/icons/whatsapp_white.png")),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        Visibility(
+                                                          visible: items[index]
+                                                                  .isRenewed ==
+                                                              false,
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              products = items[
+                                                                      index]
+                                                                  .productId;
+                                                              productName
+                                                                  .clear();
+                                                              for (int i = 0;
+                                                                  i <
+                                                                      items[index]
+                                                                          .productId
+                                                                          .length;
+                                                                  i++) {
+                                                                productName.add(
+                                                                    items[index]
+                                                                        .productId[
+                                                                            i]
+                                                                        .prdName);
+                                                              }
+                                                              setState(() {});
+                                                              startDate.clear();
+                                                              endDate.clear();
+                                                              projectCost
+                                                                  .clear();
+                                                              remarks.clear();
+                                                              renClientId =
+                                                                  items[index]
+                                                                      .clientId;
+                                                              renewalBottomSheet(
+                                                                  items[index]
+                                                                      .id,
+                                                                  "Renew Details",
+                                                                  items[index]
+                                                                      .noOfDays,
+                                                                  items[index]
+                                                                      .cost);
+                                                            },
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
+                                                                  color: Colors
+                                                                      .green),
+                                                              child:
+                                                                  const Padding(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            8.0),
+                                                                child: Icon(
+                                                                    Icons
+                                                                        .restart_alt,
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        InkWell(
+                                                          onTap: () {
+                                                            Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            EditRenewalScreen(
+                                                                              callback: (() {
+                                                                                getList();
+                                                                              }),
+                                                                              id: items[index].id,
+                                                                              custId: items[index].clientId,
+                                                                              custName: items[index].clientName,
+                                                                              products: items[index].productId,
+
+                                                                              startDate: items[index].startDate,
+                                                                              endDate: items[index].endDate,
+                                                                              projectCost: items[index].cost,
+                                                                              remindMe: items[index].templateName,
+                                                                              remark: items[index].remarks,
+                                                                              isPaid: "",
+                                                                              templateId: items[index].templateId,
+                                                                              //  items[
+                                                                              //         index]
+                                                                              //     .isPaid,
+                                                                              invoiceId: items[index].invoiceId,
+                                                                              // branch: items[index]
+                                                                              // .,
+                                                                            )));
+                                                          },
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            2),
+                                                                color: Colors
+                                                                    .blueAccent),
+                                                            child:
+                                                                const Padding(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Icon(
+                                                                  Icons.edit,
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        InkWell(
+                                                          onTap: () {
+                                                            showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (BuildContext
+                                                                        context) {
+                                                                  return AlertDialog(
+                                                                    scrollable:
+                                                                        true,
+                                                                    title: const Text(
+                                                                        'Please Confirm'),
+                                                                    content:
+                                                                        const Text(
+                                                                            'Are you sure to Hide?'),
+                                                                    actions: [
+                                                                      // The "Yes" button
+                                                                      TextButton(
+                                                                          onPressed:
+                                                                              () async {
+                                                                            Navigator.pop(context);
+                                                                            await hide(items[index].id);
+                                                                            page =
+                                                                                1;
+                                                                            items.clear();
+                                                                            getList();
+                                                                          },
+                                                                          child:
+                                                                              const Text('Yes')),
+                                                                      TextButton(
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child:
+                                                                              const Text('No'))
+                                                                    ],
+                                                                  );
+                                                                });
+                                                          },
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            2),
+                                                                color: Colors
+                                                                    .grey),
+                                                            child:
+                                                                const Padding(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Icon(
+                                                                  Icons
+                                                                      .visibility_off,
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 10,
+                                                        ),
+                                                        InkWell(
+                                                          onTap: () {
+                                                            Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewHistory(
+                                                                    id: items[
+                                                                            index]
+                                                                        .id,
+                                                                    title: items[
+                                                                            index]
+                                                                        .clientName,
+                                                                  ),
+                                                                ));
+                                                          },
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            2),
+                                                                color: Colors
+                                                                    .blueGrey),
+                                                            child:
+                                                                const Padding(
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Icon(
+                                                                  Icons.history,
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ))
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                                height: 150,
+                                width: 150,
+                                child: Image.asset(
+                                    "assets/icons/nodatafound.png")),
+                            const Text("No Renewals")
+                          ],
+                        ),
+                      )),
+      ),
+    );
+  }
+
+  Future<dynamic> filtration(BuildContext context) {
+    return showModalBottomSheet(
+        isScrollControlled: true,
+        context: context,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Container(
+                  width: double.maxFinite,
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Material(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Filtration',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('From Date',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      )),
+                                  const SizedBox(
+                                    height: 5,
+                                  ),
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.43,
+                                    child: Center(
+                                      child: DateTimePicker(
+                                        decoration: InputDecoration(
+                                            filled: true,
+                                            //<-- SEE HERE
+                                            fillColor: Colors.white,
+                                            prefixIcon: const Icon(
+                                              Icons.arrow_right,
+                                              color: Colors.grey,
+                                            ),
+                                            counterText: "",
+                                            hintText: 'From Date',
+                                            isDense: true,
+                                            border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.purple.shade100),
+                                                borderRadius:
+                                                    BorderRadius.circular(5))),
+                                        initialValue: fromDate.toString(),
+                                        type: DateTimePickerType.date,
+
+                                        //controller: fromDate,
+                                        firstDate: DateTime(1995),
+                                        lastDate: DateTime.now()
+                                            .add(const Duration(days: 365)),
+                                        // This will add one year from current date
+                                        validator: (value) {
+                                          return null;
+                                        },
+                                        onChanged: (value) {
+                                          if (value.isNotEmpty) {
+                                            setState(() {
+                                              String formattedDate = DateFormat(
+                                                      'dd-MM-yyyy')
+                                                  .format(
+                                                      DateTime.parse(value));
+                                              fromDate = formattedDate;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                width: 12,
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('To Date',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      )),
+                                  const SizedBox(
+                                    height: 5,
+                                  ),
+                                  SizedBox(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.43,
+                                    child: Center(
+                                      child: DateTimePicker(
+                                        decoration: InputDecoration(
+                                            filled: true,
+                                            //<-- SEE HERE
+                                            fillColor: Colors.white,
+                                            prefixIcon: const Icon(
+                                              Icons.arrow_right,
+                                              color: Colors.grey,
+                                            ),
+                                            counterText: "",
+                                            hintText: 'From Date',
+                                            isDense: true,
+                                            border: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color:
+                                                        Colors.purple.shade100),
+                                                borderRadius:
+                                                    BorderRadius.circular(5))),
+                                        initialValue: toDate.toString(),
+                                        type: DateTimePickerType.date,
+
+                                        //controller: fromDate,
+                                        firstDate: DateTime(1995),
+                                        lastDate: DateTime.now()
+                                            .add(const Duration(days: 365)),
+                                        // This will add one year from current date
+                                        validator: (value) {
+                                          return null;
+                                        },
+                                        onChanged: (value) {
+                                          if (value.isNotEmpty) {
+                                            setState(() {
+                                              String formattedDate = DateFormat(
+                                                      'dd-MM-yyyy')
+                                                  .format(
+                                                      DateTime.parse(value));
+                                              toDate = formattedDate;
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20.0),
+                          TextFormField(
+                            controller: customer,
+                            readOnly: true,
+                            onTap: (() {
+                              dropDialog(context, "Customers");
+                            }),
+                            decoration: const InputDecoration(
+                              labelText: 'Customer',
+                              prefixIcon:
+                                  Icon(Icons.person, color: Colors.black),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                              ),
+                              labelStyle: TextStyle(color: Colors.black),
+                            ),
+                          ),
+                          const SizedBox(height: 20.0),
+                          TextFormField(
+                            keyboardType: TextInputType.number,
+                            controller: expireIn,
+                            decoration: const InputDecoration(
+                              labelText: 'Expiry in Days',
+                              prefixIcon: Icon(Icons.calendar_today,
+                                  color: Colors.black),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.black),
+                              ),
+                              labelStyle: TextStyle(color: Colors.black),
+                            ),
+                          ),
+                          const SizedBox(height: 30.0),
+                          Container(
+                            height: 40,
+                            width: double.maxFinite,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF3375e0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(8)),
+                            ),
+                            child: RawMaterialButton(
+                              onPressed: () {
+                                items.clear();
+                                page = 1;
+                                getList();
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Continue",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        });
+  }
+
+  Future<dynamic> dropDialog(BuildContext context, String title) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Builder(builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+                scrollable: true,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * .6,
+                      height: 40,
+                      child: TextFormField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.only(left: 8),
+                          labelStyle: TextStyle(
+                            color: Colors.grey,
+                          ),
+                          labelText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                        ),
+                        onChanged: ((value) {
+                          if (title == "Customers") {
+                            setState(() {
+                              filterCustomers(value);
+                            });
+                          } else {
+                            setState(() {
+                              filterProducts(value);
+                            });
+                          }
+                        }),
+                      ),
+                    )
+                  ],
+                ),
+                content: SizedBox(
+                  height: MediaQuery.of(context).size.height * .4,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: title == "Customers"
+                        ? filteredNames.length
+                        : filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        onTap: () async {
+                          if (title == "Customers") {
+                            customer.text = filteredNames[index].name;
+                            clientId = filteredNames[index].id;
+                          } else {
+                            if (productName.contains(
+                                filteredProducts[index].productName)) {
+                            } else {
+                              products.add(ProductId(
+                                prdId: filteredProducts[index].id,
+                                prdCost: filteredProducts[index].totalAmount,
+                                prdQty: "1",
+                                prdName: filteredProducts[index].productName,
+                              ));
+                              productName
+                                  .add(filteredProducts[index].productName);
+                            }
+                            productCost = 0;
+
+                            for (int i = 0; i < products.length; i++) {
+                              productCost += double.parse(products[i].prdCost);
+                            }
+                            projectCost.text = (productCost).toString();
+                          }
+                          Navigator.pop(context);
+                          setState(() {});
+                          filterCustomers("");
+                          filterProducts("");
+                        },
+                        title: SizedBox(
+                          width: 200,
+                          child: Text(
+                            title == "Customers"
+                                ? filteredNames[index].name.toString()
+                                : filteredProducts[index]
+                                    .productName
+                                    .toString(),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ));
+          });
+        });
+      },
+    );
+  }
+
+  renewalBottomSheet(String id, String title, duration, String cost) {
+    projectCost.text = cost;
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: SingleChildScrollView(
+              child: Form(
+                  key: formKey,
+                  child: Container(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 20,
+                            fontStyle: FontStyle.normal,
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        multiBranch == 'true'
+                            ? DropdownButtonFormField(
+                                value: branchId,
+                                onChanged: (value) async {
+                                  setState(() {
+                                    branchId = value.toString();
+                                  });
+                                },
+                                items: branchList!.data!.map((data) {
+                                  return DropdownMenuItem<String>(
+                                    value: data.branchId.toString(),
+                                    child: Text(
+                                      data.branchName.toString(),
+                                    ),
+                                  );
+                                }).toList(),
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    // Custom border
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  labelText: 'Select Branch',
+                                  prefixIcon: const Icon(
+                                      Icons.arrow_drop_down_circle_outlined,
+                                      color: Colors.grey),
+                                  labelStyle:
+                                      const TextStyle(color: Colors.grey),
+                                ),
+                              )
+                            : const SizedBox(),
+                        const SizedBox(height: 10.0),
+                        GestureDetector(
+                          onTap: () {
+                            dropDialog(context, "Products");
+                          },
+                          child: Container(
+                            width: MediaQuery.of(context).size.width * 1,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              border: Border.all(),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: products.isEmpty
+                                ? const Row(
+                                    children: [
+                                      SizedBox(width: 10),
+                                      Icon(
+                                        Icons.shopping_cart,
+                                        color: Colors.grey,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Products *',
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.grey),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      const SizedBox(width: 10),
+                                      const Icon(
+                                        Icons.shopping_cart,
+                                        color: Colors.grey,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      SizedBox(
+                                        height: 45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .75,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: productName.length,
+                                          itemBuilder: (context, i) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 5, right: 5),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    height: 45,
+                                                    decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors.grey,
+                                                            width: 0),
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            const BorderRadius
+                                                                .only(
+                                                                topLeft: Radius
+                                                                    .circular(
+                                                                        6),
+                                                                bottomLeft: Radius
+                                                                    .circular(
+                                                                        6))),
+                                                    child: Center(
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(10),
+                                                            child: Text(
+                                                              productName[i],
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return AlertDialog(
+                                                              title: const Text(
+                                                                  'Please Confirm'),
+                                                              content: const Text(
+                                                                  'Are you sure to Remove this Number?'),
+                                                              actions: [
+                                                                // The "Yes" button
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      productName
+                                                                          .remove(
+                                                                              productName[i]);
+                                                                      products
+                                                                          .removeAt(
+                                                                              i);
+                                                                      productCost =
+                                                                          0;
+
+                                                                      for (int ind =
+                                                                              0;
+                                                                          ind <
+                                                                              products.length;
+                                                                          ind++) {
+                                                                        productCost +=
+                                                                            double.parse(products[ind].prdCost);
+                                                                      }
+                                                                      projectCost
+                                                                              .text =
+                                                                          (productCost)
+                                                                              .toString();
+                                                                      setState(
+                                                                          () {});
+
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop();
+                                                                    },
+                                                                    child: const Text(
+                                                                        'Yes')),
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop();
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                            'No'))
+                                                              ],
+                                                            );
+                                                          });
+                                                    },
+                                                    child: Container(
+                                                      height: 45,
+                                                      width: 40,
+                                                      decoration: BoxDecoration(
+                                                          border: Border.all(
+                                                              color:
+                                                                  Colors.grey,
+                                                              width: 0),
+                                                          color: Colors
+                                                              .grey.shade100,
+                                                          borderRadius:
+                                                              const BorderRadius
+                                                                  .only(
+                                                                  topRight: Radius
+                                                                      .circular(
+                                                                          6),
+                                                                  bottomRight:
+                                                                      Radius.circular(
+                                                                          6))),
+                                                      child: const Icon(
+                                                        Icons.close,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        TextFormField(
+                          controller: startDate,
+                          readOnly: true,
+                          onTap: () async {
+                            selectedValue = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            setState(() {
+                              startDate.text = DateFormat('dd-MM-yyyy')
+                                  .format(selectedValue!);
+                              final endValue = selectedValue!
+                                  .add(Duration(days: int.parse(duration)));
+                              endDate.text =
+                                  DateFormat('dd-MM-yyyy').format(endValue);
+                            });
+                          },
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please Select Start Date";
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Start Date',
+                              prefixIcon: Icon(Icons.calendar_month,
+                                  color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          onTap: () async {
+                            DateTime? selectedEndDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2100),
+                            );
+                            endDate.text = DateFormat('dd-MM-yyyy')
+                                .format(selectedEndDate!);
+                          },
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please Select End Date";
+                            }
+                            return null;
+                          },
+                          readOnly: true,
+                          controller: endDate,
+                          decoration: const InputDecoration(
+                              labelText: 'End Date',
+                              prefixIcon: Icon(Icons.calendar_month,
+                                  color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          controller: projectCost,
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please Enter Project Cost";
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Project Cost',
+                              prefixIcon: Icon(Icons.currency_rupee,
+                                  color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          controller: remarks,
+                          decoration: const InputDecoration(
+                              labelText: 'Remarks',
+                              prefixIcon:
+                                  Icon(Icons.notifications, color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                                fillColor: createInvoice == true
+                                    ? const MaterialStatePropertyAll(
+                                        Colors.blue)
+                                    : const MaterialStatePropertyAll(
+                                        Colors.white),
+                                checkColor: Colors.white,
+                                value: createInvoice,
+                                onChanged: (value) {
+                                  setState(() {
+                                    createInvoice = value!;
+                                  });
+                                }),
+                            const Text("Create Invoice")
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                                fillColor: isPaid == true
+                                    ? const MaterialStatePropertyAll(
+                                        Colors.blue)
+                                    : const MaterialStatePropertyAll(
+                                        Colors.white),
+                                checkColor: Colors.white,
+                                value: isPaid,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isPaid = value!;
+                                    if (isPaid == true) {
+                                      createInvoice = value;
+                                    }
+                                  });
+                                }),
+                            const Text("Paid")
+                          ],
+                        ),
+                        const SizedBox(height: 20.0),
+                        Container(
+                          height: 40,
+                          width: double.maxFinite,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3375e0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: RawMaterialButton(
+                            onPressed: () async {
+                              if (formKey.currentState!.validate()) {
+                                Navigator.pop(context);
+                                await postRenewDetails(id);
+                                page = 1;
+                                items.clear();
+                                getList();
+                              }
+                            },
+                            child: const Text("Renew",
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        )
+                      ],
+                    ),
+                  )),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  reminderBottomSheet(String id, String contactNo) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: SingleChildScrollView(
+              child: Form(
+                  key: formKey,
+                  child: Container(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          "Send Reminder",
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 20,
+                            fontStyle: FontStyle.normal,
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          readOnly: true,
+                          controller: recieverName,
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please EnterName";
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Name',
+                              prefixIcon:
+                                  Icon(Icons.person, color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextFormField(
+                          readOnly: true,
+                          controller: contactNumber,
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please Enter Contact Number";
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Contact No',
+                              prefixIcon: Icon(Icons.phone, color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(
+                              top: 10.0, left: 4.0, bottom: 4.0),
+                          child: Text("Reminder Message"),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                              border: Border.all(),
+                              borderRadius: BorderRadius.circular(5)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(template!.data.message),
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        Container(
+                          height: 40,
+                          width: double.maxFinite,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3375e0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: RawMaterialButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await postReminder(id, contactNo);
+                            },
+                            child: const Text("Send Reminder",
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        )
+                      ],
+                    ),
+                  )),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  bulkReminderSheet() {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      "Send Reminder To",
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 20,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 10.0),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: selectedNames.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            height: 40,
+                            width: double.maxFinite,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(8)),
+                            ),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * .7,
+                                    child: Text(
+                                      selectedNames[index],
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedIds
+                                              .remove(selectedIds[index]);
+                                          selectedNames
+                                              .remove(selectedNames[index]);
+                                        });
+                                      },
+                                      child: const Icon(Icons.close))
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20.0),
+                    Container(
+                      height: 40,
+                      width: double.maxFinite,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF3375e0),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                      child: RawMaterialButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          postBulkReminder();
+                        },
+                        child: const Text("Send Reminder",
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  selectMediumDialog(int index, isBulk) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: StatefulBuilder(builder: (context, setState) {
+              return Column(
+                children: [
+                  const Text(
+                    "Select Medium",
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(top: 25, bottom: 10, left: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          selectedMedium,
+                          style: const TextStyle(
+                              fontSize: 20, fontStyle: FontStyle.normal),
+                        ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.arrow_drop_down),
+                          iconColor: Colors.black,
+                          color: Colors.white,
+                          onSelected: (value) {
+                            if (value == "1") {
+                              selectedMedium = "Official";
+                            } else {
+                              selectedMedium = "Un Official";
+                            }
+                            setState(() {});
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              const PopupMenuItem<String>(
+                                value: '1',
+                                child: Text('Official'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: '2',
+                                child: Text('Un Official'),
+                              ),
+                            ];
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(color: Colors.black),
+                  )),
+              ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                  onPressed: () {
+                    if (selectedMedium != "select medium") {
+                      Navigator.pop(context);
+                      if (isBulk == false) {
+                        Common.showProgressDialog(context, "Loading..");
+                        getRenewalReminderMessage(
+                            items[index].id, items[index].contactNo);
+                        recieverName.text = items[index].clientName;
+                        contactNumber.text = items[index].contactNo;
+                      } else {
+                        bulkReminderSheet();
+                      }
+                    } else {}
+                  },
+                  child: const Text(
+                    "Done",
+                    style: TextStyle(color: Colors.white),
+                  )),
+            ],
+          );
+        });
+  }
+}
+
+Widget buildLoaderListItem() {
+  return Shimmer.fromColors(
+      enabled: true,
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            const SizedBox(
+              height: 10,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8.0),
+                  Container(
+                    width: double.infinity,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 96.0,
+                    height: 72.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.0),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: 100.0,
+                          height: 10.0,
+                          color: Colors.white,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8.0),
+                  Container(
+                    width: double.infinity,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 96.0,
+                    height: 72.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.0),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 200,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: 100.0,
+                          height: 10.0,
+                          color: Colors.white,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 200,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8.0),
+                  Container(
+                    width: double.infinity,
+                    height: 12.0,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 96.0,
+                    height: 72.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.0),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: 100.0,
+                          height: 10.0,
+                          color: Colors.white,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ));
+}

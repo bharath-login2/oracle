@@ -137,6 +137,13 @@ class _StaffLeadDetailsState extends State<StaffLeadDetails> {
     getData();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    audioCreateController.audioRecord.dispose();
+    audioCreateController.audioPlayer.dispose();
+  }
+
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||

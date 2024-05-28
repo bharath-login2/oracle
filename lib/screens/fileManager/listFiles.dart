@@ -35,9 +35,14 @@ class ListFiles extends StatefulWidget {
 class _ListFilesState extends State<ListFiles> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     listFolderList(widget.token, widget.folderName);
+  }
+  @override
+  void dispose() {
+    super.dispose();
+    audioCreateController.audioRecord.dispose();
+    audioCreateController.audioPlayer.dispose();
   }
 
   FileManagerModel? listFolder;
@@ -73,6 +78,7 @@ class _ListFilesState extends State<ListFiles> {
       setState(() {});
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {

@@ -12,6 +12,8 @@ class ColorConstant {
 
   static const greenChat = Color(0xFFe0fec5);
 
+  static const greenChatlight = Color.fromARGB(255, 206, 221, 193);
+
   static const messagePop = Color(0xFF2eb943);
 
   static const messageSeen = Color(0xFF00a9e1);

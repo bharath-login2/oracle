@@ -1,11 +1,16 @@
+// ignore_for_file: must_be_immutable, library_private_types_in_public_api
+
 import 'dart:async';
 import 'dart:io';
 import 'package:app_settings/app_settings.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:login2/main.dart';
 import 'package:login2/screens/leadManagement/webview.dart';
-import 'package:login2/screens/settings/facebookSettings.dart';
+import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:system_alert_window/system_alert_window.dart';
+import 'package:workmanager/workmanager.dart';
 import '../../core/common.dart';
 import '../../models/commonsettingsModel.dart';
 import '../../screens/authentication/login.dart';
@@ -31,7 +36,8 @@ class _DraweScreenState extends State<DraweScreen> {
   bool? result1 = true;
   CommonSettingsModel? commmon;
   String name = '';
-  String role = '';bool _isVisible = true;
+  String role = '';
+  bool isVisible = true;
   final List<Color> _textColors = [
     Colors.red,
     Colors.green,
@@ -39,7 +45,7 @@ class _DraweScreenState extends State<DraweScreen> {
     Colors.orange,
     Colors.purple,
   ];
-   int _currentColorIndex = 0;
+  int _currentColorIndex = 0;
   PackageInfo _packageInfo = PackageInfo(
     appName: 'Unknown',
     packageName: 'Unknown',
@@ -48,22 +54,21 @@ class _DraweScreenState extends State<DraweScreen> {
     buildSignature: 'Unknown',
   );
   UpdateModel? updatedata;
+  final MethodChannel _channel =
+      const MethodChannel('onreBootInitFunctionChannel');
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
       setState(() {
-
         _currentColorIndex = (_currentColorIndex + 1) % _textColors.length;
       });
     });
   }
 
   getData() async {
-    //
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
 
@@ -231,7 +236,7 @@ class _DraweScreenState extends State<DraweScreen> {
                                           fit: BoxFit.contain),
                                     )),
                                 title: const Text('Logout'),
-                                onTap: () => _logout(context),
+                                onTap: () => logout(context),
                               ),
                             ],
                           ),
@@ -240,27 +245,48 @@ class _DraweScreenState extends State<DraweScreen> {
                             alignment: FractionalOffset.bottomCenter,
                             child: Column(
                               children: [
-                                updatedata!=null?Padding(
-                                  padding: const EdgeInsets.only(left: 20,right: 20),
-                                  child:  updatedata!.data!.currentVersion==_packageInfo.version?Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'New Version Available',
-                                        style: TextStyle(
-                                          fontSize:16,
-                                           color: _isVisible ? _textColors[_currentColorIndex] : Colors.transparent, // Text color when visible
-                                        ),
-                                      ),
-                                       InkWell(
-                                          onTap: (){
-                                            _launchURL(Platform.isIOS?'https://apps.apple.com/us/app/login2/id6450980527':'https://play.google.com/store/apps/details?id=com.login2');
-                                            },
-                                          child: const Icon(Icons.download_for_offline,size: 30,)),
-                                    ],
-                                  ):const SizedBox()
-                                ):const SizedBox(),
-                                const SizedBox(height: 10,),
+                                updatedata != null
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 20, right: 20),
+                                        child:
+                                            updatedata!.data!.currentVersion ==
+                                                    _packageInfo.version
+                                                ? Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        'New Version Available',
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          color: isVisible
+                                                              ? _textColors[
+                                                                  _currentColorIndex]
+                                                              : Colors
+                                                                  .transparent, // Text color when visible
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                          onTap: () {
+                                                            _launchURL(Platform
+                                                                    .isIOS
+                                                                ? 'https://apps.apple.com/us/app/login2/id6450980527'
+                                                                : 'https://play.google.com/store/apps/details?id=com.login2');
+                                                          },
+                                                          child: const Icon(
+                                                            Icons
+                                                                .download_for_offline,
+                                                            size: 30,
+                                                          )),
+                                                    ],
+                                                  )
+                                                : const SizedBox())
+                                    : const SizedBox(),
+                                const SizedBox(
+                                  height: 10,
+                                ),
                                 Divider(
                                   color: Colors.grey.shade300,
                                   thickness: 1.0,
@@ -323,33 +349,46 @@ class _DraweScreenState extends State<DraweScreen> {
     );
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Logout?'),
-            actions: [
-              // The "Yes" button
-              TextButton(
-                  onPressed: () {
-                    Common.saveSharedPref("Logout", "success");
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const Login()),
-                        (Route<dynamic> route) => false);
-                  },
-                  child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
-            ],
-          );
-        });
-  }
   _launchURL(String url) async {
     launchUrl(Uri.parse(url));
   }
+}
+
+const MethodChannel _channel = MethodChannel('onreBootInitFunctionChannel');
+
+void logout(BuildContext context) {
+  showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text('Please Confirm'),
+          content: const Text('Are you sure to Logout?'),
+          actions: [
+            // The "Yes" button
+            TextButton(
+                onPressed: () {
+                  Common.saveSharedPref("Logout", "success");
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const Login()),
+                      (Route<dynamic> route) => false);
+                  if (Platform.isAndroid) {
+                    _channel.setMethodCallHandler((call) async {
+                      if (call.method == 'setAsBackgroundService') {
+                        initService();
+                        FlutterBackgroundService().invoke('setAsBackground');
+                      }
+                    });
+                    Workmanager()
+                        .initialize(callbackDispatcher, isInDebugMode: true);
+                  }
+                },
+                child: const Text('Yes')),
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('No'))
+          ],
+        );
+      });
 }

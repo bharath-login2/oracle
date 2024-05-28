@@ -1,8 +1,15 @@
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
 import 'package:login2/screens/authentication/forgotPasswordPhoneNumber.dart';
+import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
+import 'package:workmanager/workmanager.dart';
 import '../../core/common.dart';
 import '../../models/loginModel.dart';
 import '../../models/updateModel.dart';
@@ -28,7 +35,9 @@ class _LoginState extends State<Login> {
   bool obSecure = true;
   bool? result = true;
   UpdateModel? updatedata;
-  bool serverChoose=false;
+  bool serverChoose = false;
+  final MethodChannel _channel =
+      const MethodChannel('onreBootInitFunctionChannel');
 
   handleAsync() async {
     firebaseToken = await FirebaseMessaging.instance.getToken();
@@ -50,7 +59,7 @@ class _LoginState extends State<Login> {
       if (updatedata!.data!.server!.length == 1) {
         Common.saveSharedPref(
             "url", updatedata!.data!.server![0].url.toString());
-        serverChoose=true;
+        serverChoose = true;
       }
     });
   }
@@ -83,36 +92,34 @@ class _LoginState extends State<Login> {
                   child: Column(
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(top: 50,right: 20),
-                        child:  Align(
-
+                        margin: const EdgeInsets.only(top: 50, right: 20),
+                        child: Align(
                           alignment: Alignment.topRight,
                           child: updatedata!.data!.server!.length > 1
-                              ?  PopupMenuButton(
-                              child: const Icon(Icons.miscellaneous_services),
-                              itemBuilder: (context) {
-                                return updatedata!.data!.server!
-                                    .map((data) {
-                                  return PopupMenuItem<String>(
-                                    value: data.url,
-                                    child: Text(
-                                        data.name.toString()),
-                                  );
-                                }).toList();
-                              },
-                              onSelected: (value) {
-                                Common.saveSharedPref(
-                                    "url", value);
-                                serverChoose=true;
-                                setState(() {
-
-                                });
-                              }):SizedBox(),
+                              ? PopupMenuButton(
+                                  child:
+                                      const Icon(Icons.miscellaneous_services),
+                                  itemBuilder: (context) {
+                                    return updatedata!.data!.server!
+                                        .map((data) {
+                                      return PopupMenuItem<String>(
+                                        value: data.url,
+                                        child: Text(data.name.toString()),
+                                      );
+                                    }).toList();
+                                  },
+                                  onSelected: (value) {
+                                    Common.saveSharedPref("url", value);
+                                    serverChoose = true;
+                                    setState(() {});
+                                  })
+                              : SizedBox(),
                         ),
                       ),
-                      const SizedBox(height: 50,),
+                      const SizedBox(
+                        height: 50,
+                      ),
                       SizedBox(
-
                           width: MediaQuery.of(context).size.width * 0.8,
                           child: Center(
                             child: Lottie.asset(
@@ -282,13 +289,10 @@ class _LoginState extends State<Login> {
                                       Common.toastMessaage(
                                           'Password cannot be empty',
                                           Colors.red);
-                                    }
-                                    else if(serverChoose==false){
+                                    } else if (serverChoose == false) {
                                       Common.toastMessaage(
-                                          'Choose any one server',
-                                          Colors.red);
-                                    }
-                                      else {
+                                          'Choose any one server', Colors.red);
+                                    } else {
                                       setState(() {
                                         _loading = true;
                                       });
@@ -303,7 +307,7 @@ class _LoginState extends State<Login> {
                                                     object.data!.token);
                                         if (object1.status == true) {
                                           Common.saveSharedPref(
-                                              "isVisible",'true');
+                                              "isVisible", 'true');
                                           Common.saveSharedPref(
                                               "createLeadPermission",
                                               object1.data!.createLead
@@ -378,7 +382,8 @@ class _LoginState extends State<Login> {
                                                   .toString());
                                           Common.saveSharedPref(
                                               "createStaffDesignationPermission",
-                                              object1.data!.createStaffDesignation
+                                              object1
+                                                  .data!.createStaffDesignation
                                                   .toString());
                                           Common.saveSharedPref(
                                               "viewStaffDesignationPermission",
@@ -386,11 +391,13 @@ class _LoginState extends State<Login> {
                                                   .toString());
                                           Common.saveSharedPref(
                                               "updateStaffDesignationPermission",
-                                              object1.data!.updateStaffDesignation
+                                              object1
+                                                  .data!.updateStaffDesignation
                                                   .toString());
                                           Common.saveSharedPref(
                                               "deleteStaffDesignationPermission",
-                                              object1.data!.deleteStaffDesignation
+                                              object1
+                                                  .data!.deleteStaffDesignation
                                                   .toString());
                                           Common.saveSharedPref(
                                               "updateStaffPasswordPermission",
@@ -404,7 +411,6 @@ class _LoginState extends State<Login> {
                                               "unofficialWhatsApp",
                                               object1.data!.whatsappUnofficial
                                                   .toString());
-
                                         }
 
                                         Common.saveSharedPref(
@@ -466,6 +472,18 @@ class _LoginState extends State<Login> {
                                         ),
                                       );
                                     });
+                                  }
+                                  if (Platform.isAndroid) {
+                                    _channel.setMethodCallHandler((call) async {
+                                      if (call.method ==
+                                          'setAsBackgroundService') {
+                                        initService();
+                                        FlutterBackgroundService()
+                                            .invoke('setAsBackground');
+                                      }
+                                    });
+                                    Workmanager().initialize(callbackDispatcher,
+                                        isInDebugMode: true);
                                   }
                                 },
                                 child: Container(

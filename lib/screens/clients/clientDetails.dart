@@ -207,7 +207,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
-                                                      mainClientDetail!.data!.name
+                                                      mainClientDetail!.data.name
                                                           .toString(),
                                                       style: const TextStyle(
                                                           fontSize: 16,
@@ -219,7 +219,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                     ),
                                                     Text(
                                                       mainClientDetail!
-                                                          .data!.contactNo
+                                                          .data.contactNo
                                                           .toString(),
                                                       style: const TextStyle(
                                                           fontSize: 15,
@@ -236,6 +236,22 @@ class _ClientDetailsState extends State<ClientDetails> {
                                             Row(
                                               children: [
                                                 const Icon(
+                                                    Icons.email_outlined),
+                                                const SizedBox(
+                                                  width: 15,
+                                                ),
+                                                SizedBox(
+                                                  width: MediaQuery.of(context).size.width*0.6,
+                                                  child: Text(
+                                                    mainClientDetail!.data.emailId
+                                                        .toString(),overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                const Icon(
                                                     Icons.location_on_outlined),
                                                 const SizedBox(
                                                   width: 15,
@@ -243,7 +259,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                 SizedBox(
                                                   width: MediaQuery.of(context).size.width*0.6,
                                                   child: Text(
-                                                    mainClientDetail!.data!.address
+                                                    mainClientDetail!.data.address
                                                         .toString(),overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
@@ -259,7 +275,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                 SizedBox(
                                                   width: MediaQuery.of(context).size.width*0.6,
                                                   child: Text(
-                                                    'GST:${mainClientDetail!.data!.gstNum}',
+                                                    'GST:${mainClientDetail!.data.gstNum}',
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
@@ -276,7 +292,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                 SizedBox(
                                                   width: MediaQuery.of(context).size.width*0.6,
                                                   child: Text(
-                                                    'Pincode:${mainClientDetail!.data!.pincode}',
+                                                    'Pincode:${mainClientDetail!.data.pincode}',
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
@@ -468,7 +484,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                mainClientDetail!.data!.invoice!.isNotEmpty?InkWell(
+                                mainClientDetail!.data.invoice.isNotEmpty?InkWell(
                                   onTap: () async {
                                     setState(() {
                                       selectedIndex = 1;
@@ -509,7 +525,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                 const SizedBox(
                                   width: 10,
                                 ),
-                                mainClientDetail!.data!.receipts!.isNotEmpty?
+                                mainClientDetail!.data.receipts.isNotEmpty?
                                 InkWell(
                                   onTap: () async {
                                     setState(() {
@@ -553,13 +569,13 @@ class _ClientDetailsState extends State<ClientDetails> {
                         ),
                         selectedIndex == 1
                             ? Container(
-                              child: mainClientDetail!.data!.invoice!.isNotEmpty?
+                              child: mainClientDetail!.data.invoice.isNotEmpty?
                               Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: ListView.builder(
                                   physics: const NeverScrollableScrollPhysics(),
                                   shrinkWrap: true,
-                                  itemCount: mainClientDetail!.data!.invoice!.length,
+                                  itemCount: mainClientDetail!.data.invoice.length,
                                   itemBuilder: (context, index) {
                                     return Padding(
                                       padding: const EdgeInsets.only(bottom: 10),
@@ -569,8 +585,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                                             context,
                                             MaterialPageRoute(builder: (context) => ReceiptByInvoice(widget.token,
                                                 mainClientDetail!
-                                                    .data!
-                                                    .invoice![index]
+                                                    .data
+                                                    .invoice[index]
                                                     .invid.toString())),
                                           );
                                         },
@@ -599,7 +615,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                       width: MediaQuery.of(context).size.width *
                                                           0.6,
                                                       child:
-                                                       Text( "Invoice No : ${mainClientDetail!.data!.invoice![index].invoiceNumber}",
+                                                       Text( "Invoice No : ${mainClientDetail!.data.invoice[index].invoiceNumber}",
                                                           overflow: TextOverflow.ellipsis,
                                                           style: const TextStyle(
                                                             fontSize: 16,
@@ -610,7 +626,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                       decoration: BoxDecoration(
                                                           borderRadius:
                                                           BorderRadius.circular(2),
-                                                          color:  mainClientDetail!.data!.invoice![index].status.toString()=='Paid'?const Color(0xffe6fbec):const Color(0xfffcbcbc)),
+                                                          color:  mainClientDetail!.data.invoice[index].status.toString()=='Paid'?const Color(0xffe6fbec):const Color(0xfffcbcbc)),
                                                       child:  Center(
                                                         child: Padding(
                                                           padding: const EdgeInsets.only(
@@ -618,9 +634,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                               right: 12,
                                                               top: 6,
                                                               bottom: 6),
-                                                          child: Text(mainClientDetail!.data!.invoice![index].status.toString(),
+                                                          child: Text(mainClientDetail!.data.invoice[index].status.toString(),
                                                               style:  TextStyle(
-                                                                color: mainClientDetail!.data!.invoice![index].status.toString()=='Paid'?Colors.green:Colors.red,
+                                                                color: mainClientDetail!.data.invoice[index].status.toString()=='Paid'?Colors.green:Colors.red,
                                                                 fontSize: 14,
                                                                 fontWeight: FontWeight.w600,
                                                               )),
@@ -639,7 +655,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                   child:  SizedBox(
                                                     width: MediaQuery.of(context).size.width * 0.41,
                                                     child:  Text(
-                                                      "Total Amount : ₹ ${mainClientDetail!.data!.invoice![index].totalAmount}",
+                                                      "Total Amount : ₹ ${mainClientDetail!.data.invoice[index].totalAmount}",
                                                       overflow: TextOverflow.ellipsis,
                                                       style: const TextStyle(
                                                         fontSize: 14,
@@ -657,7 +673,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                   child:  SizedBox(
                                                     width: MediaQuery.of(context).size.width * 0.41,
                                                     child:  Text(
-                                                      "Paid Amount : ₹ ${mainClientDetail!.data!.invoice![index].paidAmount}",
+                                                      "Paid Amount : ₹ ${mainClientDetail!.data.invoice[index].paidAmount}",
                                                       overflow: TextOverflow.ellipsis,
                                                       style: const TextStyle(
                                                         fontSize: 14,
@@ -675,7 +691,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                   child:  SizedBox(
                                                     width: MediaQuery.of(context).size.width * 0.41,
                                                     child:  Text(
-                                                      "Balance Amount : ₹ ${mainClientDetail!.data!.invoice![index].balanceAmount}",
+                                                      "Balance Amount : ₹ ${mainClientDetail!.data.invoice[index].balanceAmount}",
                                                       overflow: TextOverflow.ellipsis,
                                                       style: const TextStyle(
                                                         color: Colors.red,
@@ -694,7 +710,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                   child:  SizedBox(
                                                     width: MediaQuery.of(context).size.width * 0.41,
                                                     child:  Text(
-                                                      "Pay Mode : ${mainClientDetail!.data!.invoice![index].paymentMethod}",
+                                                      "Pay Mode : ${mainClientDetail!.data.invoice[index].paymentMethod}",
                                                       overflow: TextOverflow.ellipsis,
                                                       style: const TextStyle(
                                                         fontSize: 14,
@@ -730,7 +746,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                 const SizedBox(
                                                                   width: 8,
                                                                 ),
-                                                                Text(mainClientDetail!.data!.invoice![index].invoiceDate.toString(),
+                                                                Text(mainClientDetail!.data.invoice[index].invoiceDate.toString(),
                                                                     maxLines: 2,
                                                                     overflow:
                                                                     TextOverflow.ellipsis,
@@ -753,7 +769,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                 .push(
                                                               context,
                                                               MaterialPageRoute(
-                                                                  builder: (context) => ViewInvoice(widget.token,  mainClientDetail!.data!.invoice![index].invid.toString(),widget.clientId, mainClientDetail!.data!.invoice![index].invoiceNumber.toString())),
+                                                                  builder: (context) => ViewInvoice(widget.token,  mainClientDetail!.data.invoice[index].invid.toString(),widget.clientId, mainClientDetail!.data.invoice[index].invoiceNumber.toString())),
                                                             );
                                                           },
                                                           child:
@@ -783,12 +799,12 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                         const SizedBox(
                                                           width: 10,
                                                         ),
-                                                        mainClientDetail!.data!.invoice![index].isPaid==false?InkWell(
+                                                        mainClientDetail!.data.invoice[index].isPaid==false?InkWell(
                                                           onTap:(){
                                                             Navigator.push(
                                                               context,
                                                               MaterialPageRoute(
-                                                                  builder: (context) => ReceiptAdd(widget.token,widget.clientId,mainClientDetail!.data!.invoice![index].invid.toString())),
+                                                                  builder: (context) => ReceiptAdd(widget.token,widget.clientId,mainClientDetail!.data.invoice[index].invid.toString())),
                                                             );
                                                           },
                                                           child: Container(
@@ -812,7 +828,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                             Navigator.push(
                                                               context,
                                                               MaterialPageRoute(
-                                                                  builder: (context) => EditInvoice(widget.token,mainClientDetail!.data!.invoice![index].invid.toString(),widget.clientId)),
+                                                                  builder: (context) => EditInvoice(widget.token,mainClientDetail!.data.invoice[index].invid.toString(),widget.clientId)),
                                                             );
                                                           },
                                                           child: Container(
@@ -849,7 +865,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                           onPressed: () async {
                                                                             Common.showProgressDialog(
                                                                                 context, "Loading..");
-                                                                            DeleteInvoiceModel deleteInvoice=await HttpService.deleteInvoice(widget.token,mainClientDetail!.data!.invoice![index].invid);
+                                                                            DeleteInvoiceModel deleteInvoice=await HttpService.deleteInvoice(widget.token,mainClientDetail!.data.invoice[index].invid);
                                                                             if (deleteInvoice.data ==
                                                                                 true) {
                                                                               Common.toastMessaage(
@@ -943,13 +959,13 @@ class _ClientDetailsState extends State<ClientDetails> {
                                   const SizedBox(
                                     height: 10,
                                   ),
-                                  mainClientDetail!.data!.receipts!.isNotEmpty?
+                                  mainClientDetail!.data.receipts.isNotEmpty?
                                   Padding(
                                     padding: const EdgeInsets.only(left: 12,right: 12,top: 12,bottom: 12),
                                     child: ListView.builder(
                                       physics: const NeverScrollableScrollPhysics(),
                                       shrinkWrap: true,
-                                      itemCount: mainClientDetail!.data!.receipts!.length,
+                                      itemCount: mainClientDetail!.data.receipts.length,
                                       itemBuilder: (context, index) {
                                         return Padding(
                                           padding: const EdgeInsets.only(bottom: 10),
@@ -978,7 +994,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                         width: MediaQuery.of(context).size.width *
                                                             0.6,
                                                         child:
-                                                        Text( "Receipt No : ${mainClientDetail!.data!.receipts![index].receiptNumber.toString()}",
+                                                        Text( "Receipt No : ${mainClientDetail!.data.receipts[index].receiptNumber.toString()}",
                                                             overflow: TextOverflow.ellipsis,
                                                             style: const TextStyle(
                                                               fontSize: 16,
@@ -997,7 +1013,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                 right: 12,
                                                                 top: 6,
                                                                 bottom: 6),
-                                                            child: Text(mainClientDetail!.data!.receipts![index].paidAmount.toString(),
+                                                            child: Text(mainClientDetail!.data.receipts[index].paidAmount.toString(),
                                                                 style: const TextStyle(
                                                                   color: Colors.green,
                                                                   fontSize: 14,
@@ -1017,7 +1033,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                     child:  SizedBox(
                                                       width: MediaQuery.of(context).size.width * 0.41,
                                                       child:  Text(
-                                                        "Invoice No : ${mainClientDetail!.data!.receipts![index].invoiceNumber.toString()}",
+                                                        "Invoice No : ${mainClientDetail!.data.receipts[index].invoiceNumber.toString()}",
                                                         overflow: TextOverflow.ellipsis,
                                                         style: const TextStyle(
                                                           fontSize: 14,
@@ -1047,7 +1063,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                             .width *
                                                             0.7,
                                                         child:  Text(
-                                                            "Collected by : ${mainClientDetail!.data!.receipts![index].collectedBy.toString()} ",
+                                                            "Collected by : ${mainClientDetail!.data.receipts[index].collectedBy.toString()} ",
                                                             maxLines: 1,
                                                             overflow:
                                                             TextOverflow.ellipsis,
@@ -1083,7 +1099,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                   const SizedBox(
                                                                     width: 8,
                                                                   ),
-                                                                  Text(mainClientDetail!.data!.receipts![index].receiptDate.toString(),
+                                                                  Text(mainClientDetail!.data.receipts[index].receiptDate.toString(),
                                                                       maxLines: 2,
                                                                       overflow:
                                                                       TextOverflow.ellipsis,
@@ -1106,7 +1122,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                   .push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder: (context) => ViewReceipt(widget.token, mainClientDetail!.data!.receipts![index].receiptId.toString(),widget.clientId,mainClientDetail!.data!.receipts![index].receiptNumber.toString())),
+                                                                    builder: (context) => ViewReceipt(widget.token, mainClientDetail!.data.receipts[index].receiptId.toString(),widget.clientId,mainClientDetail!.data.receipts[index].receiptNumber.toString())),
                                                               );
                                                             },
                                                             child: Container(
@@ -1129,7 +1145,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder: (context) => EditReceipt(widget.token,mainClientDetail!.data!.receipts![index].receiptId.toString())),
+                                                                    builder: (context) => EditReceipt(widget.token,mainClientDetail!.data.receipts[index].receiptId.toString())),
                                                               );
                                                             },
                                                             child: Container(
@@ -1166,7 +1182,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             onPressed: () async {
                                                                               Common.showProgressDialog(
                                                                                   context, "Loading..");
-                                                                              ReceiptDeleteModel deleteReceipt=await HttpService.deleteReceipt(widget.token,mainClientDetail!.data!.receipts![index].receiptId.toString());
+                                                                              ReceiptDeleteModel deleteReceipt=await HttpService.deleteReceipt(widget.token,mainClientDetail!.data.receipts[index].receiptId.toString());
                                                                               if (deleteReceipt.data ==
                                                                                   true) {
                                                                                 Common.toastMessaage(
@@ -1227,12 +1243,12 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                           const SizedBox(
                                                             width: 10,
                                                           ),
-                                                          mainClientDetail!.data!.receipts![index].uploadedFile!=''?InkWell(
+                                                          mainClientDetail!.data.receipts[index].uploadedFile!=''?InkWell(
                                                             onTap: () {
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder: (context) => WebViewPage('image',mainClientDetail!.data!.receipts![index].uploadedFile.toString())),
+                                                                    builder: (context) => WebViewPage('image',mainClientDetail!.data.receipts[index].uploadedFile.toString())),
                                                               );
                                                             },
                                                             child: Container(
@@ -1290,17 +1306,17 @@ class _ClientDetailsState extends State<ClientDetails> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        mainClientDetail!.data!.invoice!.isNotEmpty? Row(
+                        mainClientDetail!.data.invoice.isNotEmpty? Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(
                                 width:MediaQuery.of(context).size.width *0.5,
                                 child: const Text('Total Invoice Amount ',style: TextStyle(color: Colors.black,fontSize: 15,fontWeight: FontWeight.bold),)),
-                            Text(': ${mainClientDetail!.data!.totalInvoiceAmount}',style: const TextStyle(color: Colors.black,fontSize: 15,fontWeight: FontWeight.bold),),
+                            Text(': ${mainClientDetail!.data.totalInvoiceAmount}',style: const TextStyle(color: Colors.black,fontSize: 15,fontWeight: FontWeight.bold),),
                           ],
                         ):const SizedBox(),
-                        mainClientDetail!.data!.receipts!.isNotEmpty?
+                        mainClientDetail!.data.receipts.isNotEmpty?
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1308,7 +1324,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                             SizedBox(
                                 width:MediaQuery.of(context).size.width *0.5,
                                 child: const Text('Total Paid Amount ',style: TextStyle(color: Colors.green,fontSize: 15,fontWeight: FontWeight.bold),)),
-                            Text(': ${mainClientDetail!.data!.totalReceiptAmount}',style: const TextStyle(color: Colors.green,fontSize: 15,fontWeight: FontWeight.bold),),
+                            Text(': ${mainClientDetail!.data.totalReceiptAmount}',style: const TextStyle(color: Colors.green,fontSize: 15,fontWeight: FontWeight.bold),),
                           ],
                         ):const SizedBox()
 

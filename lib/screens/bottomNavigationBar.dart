@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:login2/core/common.dart';
+import 'package:login2/screens/leadManagement/callHistoryPage.dart';
+
 import '../../screens/homePage.dart';
 import '../../screens/leadManagement/addLeads.dart';
 import '../../screens/settings/whatsappSettings.dart';
@@ -13,14 +16,15 @@ import 'officialWhatsapp/chatHomeScreen.dart';
 class BottomNavigation extends StatefulWidget {
   String token;
   bool? whatsappConfigaure;
-  String? phoneCallLogPermission;
+  String phoneCallLogPermission;
   String? name;
   String? userId;
 
-
-
-
-  BottomNavigation(this.token, this.whatsappConfigaure,{this.phoneCallLogPermission,this.name,this.userId,super.key});
+  BottomNavigation(this.token, this.whatsappConfigaure,
+      {required this.phoneCallLogPermission,
+      this.name,
+      this.userId,
+      super.key});
 
   @override
   _BottomNavigationState createState() => _BottomNavigationState();
@@ -65,74 +69,89 @@ class _BottomNavigationState extends State<BottomNavigation> {
               ),
             ),
           ),
-          Platform.isAndroid?Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: InkWell(
-              onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) =>
-                //         AddLeads(widget.token, page: 'NavigationBar'),
-                //   ),
-                // );
-                widget.phoneCallLogPermission ==
-                    'true'
-                    ? Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CallLogs(
-                          widget
-                              .token,
-                          widget.name,
-                          widget.userId)),
-                )
-                    : _dialogue(context,
-                    'Phone Call Logs');
-              },
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.175,
-                child: const Icon(
-                  Icons.call,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ):
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        AddLeads(widget.token, page: 'NavigationBar'),
+          Platform.isAndroid
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: InkWell(
+                    onTap: () async {
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) =>
+                      //         AddLeads(widget.token, page: 'NavigationBar'),
+                      //   ),
+                      // );
+                      if (Platform.isAndroid) {
+                        widget.phoneCallLogPermission == 'true'
+                            ? Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => CallLogs(widget.token,
+                                        widget.name, widget.userId)),
+                              )
+                            : _dialogue(context, 'Phone Call Logs');
+                      } else if (Platform.isIOS) {
+                        String accessCallRecordingPermission =
+                            await Common.getSharedPref(
+                                "accessCallRecordingPermission");
+                        String userId = await Common.getSharedPref("userId");
+                        String name = await Common.getSharedPref("name");
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => CallHistoryPage(
+                                  widget.token,
+                                  name,
+                                  userId,
+                                  accessCallRecordingPermission == "true"
+                                      ? true
+                                      : false)),
+                        );
+                      }
+                    },
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.175,
+                      child: const Icon(
+                        Icons.call,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                );
-                // widget.phoneCallLogPermission ==
-                //     'true'
-                //     ? Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //       builder: (context) => CallLogs(
-                //           widget
-                //               .token,
-                //           widget.name,
-                //           widget.userId)),
-                // )
-                //     : _dialogue(context,
-                //     'Phone Call Logs');
-              },
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.175,
-                child: const Icon(
-                  Icons.call,
-                  color: Colors.white,
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              AddLeads(widget.token, page: 'NavigationBar'),
+                        ),
+                      );
+                      // widget.phoneCallLogPermission ==
+                      //     'true'
+                      //     ? Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //       builder: (context) => CallLogs(
+                      //           widget
+                      //               .token,
+                      //           widget.name,
+                      //           widget.userId)),
+                      // )
+                      //     : _dialogue(context,
+                      //     'Phone Call Logs');
+                    },
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.175,
+                      child: const Icon(
+                        Icons.call,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.2,
           ),
@@ -141,8 +160,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
             child: InkWell(
               onTap: () {
                 showDialog(
-                    barrierColor:
-                    Colors.grey.withOpacity(.5),
+                    barrierColor: Colors.grey.withOpacity(.5),
                     context: context,
                     builder: (BuildContext context) {
                       return WillPopScope(
@@ -150,40 +168,24 @@ class _BottomNavigationState extends State<BottomNavigation> {
                           return true;
                         },
                         child: Material(
-                          type:
-                          MaterialType.transparency,
+                          type: MaterialType.transparency,
                           child: Padding(
-                            padding:
-                            const EdgeInsets.only(
-                                bottom: 50),
+                            padding: const EdgeInsets.only(bottom: 50),
                             child: Center(
                               child: Container(
-                                decoration:
-                                BoxDecoration(
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
                                   color: Colors.white,
                                 ),
-                                width: MediaQuery.of(
-                                    context)
-                                    .size
-                                    .width *
-                                    0.9,
+                                width: MediaQuery.of(context).size.width * 0.9,
                                 height: 250,
                                 child: Padding(
-                                  padding:
-                                  const EdgeInsets
-                                      .only(
-                                      left: 20,
-                                      right: 20),
+                                  padding: const EdgeInsets.only(
+                                      left: 20, right: 20),
                                   child: Column(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .center,
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Image.asset(
                                         'assets/icons/official_whatsapp.png',
@@ -195,11 +197,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
                                       const Text(
                                         'Whatsapp',
                                         style: TextStyle(
-                                            fontSize:
-                                            18,
-                                            fontWeight:
-                                            FontWeight
-                                                .w400),
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w400),
                                       ),
                                       const SizedBox(
                                         height: 5,
@@ -207,50 +206,44 @@ class _BottomNavigationState extends State<BottomNavigation> {
                                       const Text(
                                         'Choose WhatsApp',
                                         style: TextStyle(
-                                            fontSize:
-                                            15,
-                                            fontWeight:
-                                            FontWeight
-                                                .w400),
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w400),
                                       ),
                                       const SizedBox(
                                         height: 15,
                                       ),
                                       Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           InkWell(
                                             onTap: () {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                    builder: (context) => const ChatHomeScreen()),
+                                                    builder: (context) =>
+                                                        const ChatHomeScreen()),
                                               );
-
                                             },
-                                            child:
-                                            Container(
+                                            child: Container(
                                               width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
+                                                      .size
+                                                      .width *
                                                   0.35,
                                               //  color: RandomColorModel().getColor(),
                                               decoration: BoxDecoration(
-                                                  color: Colors
-                                                      .green
-                                                      .shade100,
+                                                  color: Colors.green.shade100,
                                                   borderRadius:
-                                                  BorderRadius.circular(10)),
-                                              child:
-                                              const Padding(
-                                                padding:
-                                                EdgeInsets.all(5),
-                                                child:
-                                                Text('Official',
-                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                    textAlign: TextAlign.center),
+                                                      BorderRadius.circular(
+                                                          10)),
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(5),
+                                                child: Text('Official',
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.black),
+                                                    textAlign:
+                                                        TextAlign.center),
                                               ),
                                             ),
                                           ),
@@ -258,49 +251,48 @@ class _BottomNavigationState extends State<BottomNavigation> {
                                             onTap: () {
                                               widget.whatsappConfigaure == true
                                                   ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => GroupList(widget.token),
-                                                ),
-                                              )
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            GroupList(
+                                                                widget.token),
+                                                      ),
+                                                    )
                                                   : Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => WhatsappSettings(widget.token),
-                                                ),
-                                              );
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            WhatsappSettings(
+                                                                widget.token),
+                                                      ),
+                                                    );
                                             },
-                                            child:
-                                            Container(
+                                            child: Container(
                                               width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
+                                                      .size
+                                                      .width *
                                                   0.35,
                                               decoration: BoxDecoration(
-                                                  color: Colors
-                                                      .green
-                                                      .shade100,
+                                                  color: Colors.green.shade100,
                                                   borderRadius:
-                                                  BorderRadius.circular(10)),
-                                              child:
-                                              const Padding(
-                                                padding:
-                                                EdgeInsets.all(5),
-                                                child:
-                                                Text('Un Official',
-                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                    textAlign: TextAlign.center),
+                                                      BorderRadius.circular(
+                                                          10)),
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(5),
+                                                child: Text('Un Official',
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.black),
+                                                    textAlign:
+                                                        TextAlign.center),
                                               ),
                                             ),
                                           ),
-
-
                                         ],
                                       ),
                                       const SizedBox(
                                         height: 8,
                                       ),
-
                                     ],
                                   ),
                                 ),
@@ -346,6 +338,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
     );
   }
 }
+
 void _dialogue(BuildContext context, title) {
   showDialog(
       context: context,

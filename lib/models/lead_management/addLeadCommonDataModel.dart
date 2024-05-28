@@ -1,327 +1,301 @@
+// To parse this JSON data, do
+//
+//     final addLeadCommonDataModel = addLeadCommonDataModelFromJson(jsonString);
+
+import 'dart:convert';
+
+AddLeadCommonDataModel addLeadCommonDataModelFromJson(String str) => AddLeadCommonDataModel.fromJson(json.decode(str));
+
+String addLeadCommonDataModelToJson(AddLeadCommonDataModel data) => json.encode(data.toJson());
+
 class AddLeadCommonDataModel {
-  Data? data;
-  bool? status;
-  String? message;
+    Data data;
+    bool status;
+    String message;
 
-  AddLeadCommonDataModel({this.data, this.status, this.message});
+    AddLeadCommonDataModel({
+        required this.data,
+        required this.status,
+        required this.message,
+    });
 
-  AddLeadCommonDataModel.fromJson(Map<String, dynamic> json) {
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    status = json['status'];
-    message = json['message'];
-  }
+    factory AddLeadCommonDataModel.fromJson(Map<String, dynamic> json) => AddLeadCommonDataModel(
+        data: Data.fromJson(json["data"]),
+        status: json["status"],
+        message: json["message"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    data['status'] = status;
-    data['message'] = message;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "data": data.toJson(),
+        "status": status,
+        "message": message,
+    };
 }
 
 class Data {
-  List<LeadCategory>? leadCategory;
-  List<CallResult>? callResult;
-  List<CallResultNew>? callResultNew;
-  List<Branch>? branch;
-  List<Staff>? staff;
-  List<TransferStaffs>? transferStaffs;
-  List<Priority>? priority;
-  List<CallResponseStatus>? callResponseStatus;
-  List<String>? callResponse;
-  List<AdditionalFields>? additionalFields;
-  String? countryCode;
-  bool? customerAddPermission;
-  bool? customerAddInvoicePermission;
+    List<LeadCategory> leadCategory;
+    List<CallResult> callResult;
+    List<CallResultNew> callResultNew;
+    List<Branch> branch;
+    List<Staff> staff;
+    List<TransferStaff> transferStaffs;
+    List<Priority> priority;
+    List<CallResponseStatus> callResponseStatus;
+    List<String> callResponse;
+    List<LeadSource> leadSource;
+    List<AdditionalField> additionalFields;
+    String countryCode;
+    bool customerAddPermission;
+    bool customerAddInvoicePermission;
 
-  Data(
-      {this.leadCategory,
-        this.callResult,
-        this.callResultNew,
-        this.branch,
-        this.staff,
-        this.transferStaffs,
-        this.priority,
-        this.callResponseStatus,
-        this.callResponse,
-        this.additionalFields,
-        this.countryCode,
-        this.customerAddPermission,
-        this.customerAddInvoicePermission});
+    Data({
+        required this.leadCategory,
+        required this.callResult,
+        required this.callResultNew,
+        required this.branch,
+        required this.staff,
+        required this.transferStaffs,
+        required this.priority,
+        required this.callResponseStatus,
+        required this.callResponse,
+        required this.leadSource,
+        required this.additionalFields,
+        required this.countryCode,
+        required this.customerAddPermission,
+        required this.customerAddInvoicePermission,
+    });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    if (json['lead_category'] != null) {
-      leadCategory = <LeadCategory>[];
-      json['lead_category'].forEach((v) {
-        leadCategory!.add(LeadCategory.fromJson(v));
-      });
-    }
-    if (json['call_result'] != null) {
-      callResult = <CallResult>[];
-      json['call_result'].forEach((v) {
-        callResult!.add(CallResult.fromJson(v));
-      });
-    }
-    if (json['call_result_new'] != null) {
-      callResultNew = <CallResultNew>[];
-      json['call_result_new'].forEach((v) {
-        callResultNew!.add(CallResultNew.fromJson(v));
-      });
-    }
-    if (json['branch'] != null) {
-      branch = <Branch>[];
-      json['branch'].forEach((v) {
-        branch!.add(Branch.fromJson(v));
-      });
-    }
-    if (json['staff'] != null) {
-      staff = <Staff>[];
-      json['staff'].forEach((v) {
-        staff!.add(Staff.fromJson(v));
-      });
-    }
-    if (json['transfer_staffs'] != null) {
-      transferStaffs = <TransferStaffs>[];
-      json['transfer_staffs'].forEach((v) {
-        transferStaffs!.add(TransferStaffs.fromJson(v));
-      });
-    }
-    if (json['priority'] != null) {
-      priority = <Priority>[];
-      json['priority'].forEach((v) {
-        priority!.add(Priority.fromJson(v));
-      });
-    }
-    if (json['call_response_status'] != null) {
-      callResponseStatus = <CallResponseStatus>[];
-      json['call_response_status'].forEach((v) {
-        callResponseStatus!.add(CallResponseStatus.fromJson(v));
-      });
-    }
-    callResponse = json['call_response'].cast<String>();
-    if (json['additionalFields'] != null) {
-      additionalFields = <AdditionalFields>[];
-      json['additionalFields'].forEach((v) {
-        additionalFields!.add(AdditionalFields.fromJson(v));
-      });
-    }
-    countryCode = json['country_code'];
-    customerAddPermission = json['customerAddPermission'];
-    customerAddInvoicePermission = json['customerAddInvoicePermission'];
-  }
+    factory Data.fromJson(Map<String, dynamic> json) => Data(
+        leadCategory: List<LeadCategory>.from(json["lead_category"].map((x) => LeadCategory.fromJson(x))),
+        callResult: List<CallResult>.from(json["call_result"].map((x) => CallResult.fromJson(x))),
+        callResultNew: List<CallResultNew>.from(json["call_result_new"].map((x) => CallResultNew.fromJson(x))),
+        branch: List<Branch>.from(json["branch"].map((x) => Branch.fromJson(x))),
+        staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
+        transferStaffs: List<TransferStaff>.from(json["transfer_staffs"].map((x) => TransferStaff.fromJson(x))),
+        priority: List<Priority>.from(json["priority"].map((x) => Priority.fromJson(x))),
+        callResponseStatus: List<CallResponseStatus>.from(json["call_response_status"].map((x) => CallResponseStatus.fromJson(x))),
+        callResponse: List<String>.from(json["call_response"].map((x) => x)),
+        leadSource: List<LeadSource>.from(json["lead_source"].map((x) => LeadSource.fromJson(x))),
+        additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
+        countryCode: json["country_code"],
+        customerAddPermission: json["customerAddPermission"],
+        customerAddInvoicePermission: json["customerAddInvoicePermission"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (leadCategory != null) {
-      data['lead_category'] =
-          leadCategory!.map((v) => v.toJson()).toList();
-    }
-    if (callResult != null) {
-      data['call_result'] = callResult!.map((v) => v.toJson()).toList();
-    }
-    if (callResultNew != null) {
-      data['call_result_new'] =
-          callResultNew!.map((v) => v.toJson()).toList();
-    }
-    if (branch != null) {
-      data['branch'] = branch!.map((v) => v.toJson()).toList();
-    }
-    if (staff != null) {
-      data['staff'] = staff!.map((v) => v.toJson()).toList();
-    }
-    if (transferStaffs != null) {
-      data['transfer_staffs'] =
-          transferStaffs!.map((v) => v.toJson()).toList();
-    }
-    if (priority != null) {
-      data['priority'] = priority!.map((v) => v.toJson()).toList();
-    }
-    if (callResponseStatus != null) {
-      data['call_response_status'] =
-          callResponseStatus!.map((v) => v.toJson()).toList();
-    }
-    data['call_response'] = callResponse;
-    if (additionalFields != null) {
-      data['additionalFields'] =
-          additionalFields!.map((v) => v.toJson()).toList();
-    }
-    data['country_code'] = countryCode;
-    data['customerAddPermission'] = customerAddPermission;
-    data['customerAddInvoicePermission'] = customerAddInvoicePermission;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "lead_category": List<dynamic>.from(leadCategory.map((x) => x.toJson())),
+        "call_result": List<dynamic>.from(callResult.map((x) => x.toJson())),
+        "call_result_new": List<dynamic>.from(callResultNew.map((x) => x.toJson())),
+        "branch": List<dynamic>.from(branch.map((x) => x.toJson())),
+        "staff": List<dynamic>.from(staff.map((x) => x.toJson())),
+        "transfer_staffs": List<dynamic>.from(transferStaffs.map((x) => x.toJson())),
+        "priority": List<dynamic>.from(priority.map((x) => x.toJson())),
+        "call_response_status": List<dynamic>.from(callResponseStatus.map((x) => x.toJson())),
+        "call_response": List<dynamic>.from(callResponse.map((x) => x)),
+        "lead_source": List<dynamic>.from(leadSource.map((x) => x.toJson())),
+        "additionalFields": List<dynamic>.from(additionalFields.map((x) => x.toJson())),
+        "country_code": countryCode,
+        "customerAddPermission": customerAddPermission,
+        "customerAddInvoicePermission": customerAddInvoicePermission,
+    };
 }
 
-class LeadCategory {
-  String? leadCategoryId;
-  String? leadCategory;
+class AdditionalField {
+    String id;
+    String fieldName;
 
-  LeadCategory({this.leadCategoryId, this.leadCategory});
+    AdditionalField({
+        required this.id,
+        required this.fieldName,
+    });
 
-  LeadCategory.fromJson(Map<String, dynamic> json) {
-    leadCategoryId = json['lead_category_id'];
-    leadCategory = json['lead_category'];
-  }
+    factory AdditionalField.fromJson(Map<String, dynamic> json) => AdditionalField(
+        id: json["id"],
+        fieldName: json["field_name"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['lead_category_id'] = leadCategoryId;
-    data['lead_category'] = leadCategory;
-    return data;
-  }
-}
-
-class CallResult {
-  String? callResultId;
-  String? callResult;
-
-  CallResult({this.callResultId, this.callResult});
-
-  CallResult.fromJson(Map<String, dynamic> json) {
-    callResultId = json['call_result_id'];
-    callResult = json['call_result'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['call_result_id'] = callResultId;
-    data['call_result'] = callResult;
-    return data;
-  }
-}
-
-class CallResultNew {
-  String? callResultIdNew;
-  String? callResultNew;
-
-  CallResultNew({this.callResultIdNew, this.callResultNew});
-
-  CallResultNew.fromJson(Map<String, dynamic> json) {
-    callResultIdNew = json['call_result_id_new'];
-    callResultNew = json['call_result_new'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['call_result_id_new'] = callResultIdNew;
-    data['call_result_new'] = callResultNew;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "field_name": fieldName,
+    };
 }
 
 class Branch {
-  String? branchId;
-  String? branchName;
+    String branchId;
+    String branchName;
 
-  Branch({this.branchId, this.branchName});
+    Branch({
+        required this.branchId,
+        required this.branchName,
+    });
 
-  Branch.fromJson(Map<String, dynamic> json) {
-    branchId = json['branch_id'];
-    branchName = json['branch_name'];
-  }
+    factory Branch.fromJson(Map<String, dynamic> json) => Branch(
+        branchId: json["branch_id"],
+        branchName: json["branch_name"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['branch_id'] = branchId;
-    data['branch_name'] = branchName;
-    return data;
-  }
-}
-
-class Staff {
-  String? staffId;
-  String? staffName;
-
-  Staff({this.staffId, this.staffName});
-
-  Staff.fromJson(Map<String, dynamic> json) {
-    staffId = json['staff_id'];
-    staffName = json['staff_name'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['staff_id'] = staffId;
-    data['staff_name'] = staffName;
-    return data;
-  }
-}
-
-class TransferStaffs {
-  String? tranStaffId;
-  String? tranStaffName;
-
-  TransferStaffs({this.tranStaffId, this.tranStaffName});
-
-  TransferStaffs.fromJson(Map<String, dynamic> json) {
-    tranStaffId = json['tran_staff_id'];
-    tranStaffName = json['tran_staff_name'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['tran_staff_id'] = tranStaffId;
-    data['tran_staff_name'] = tranStaffName;
-    return data;
-  }
-}
-
-class Priority {
-  String? priorityId;
-  String? priority;
-
-  Priority({this.priorityId, this.priority});
-
-  Priority.fromJson(Map<String, dynamic> json) {
-    priorityId = json['priority_id'];
-    priority = json['priority'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['priority_id'] = priorityId;
-    data['priority'] = priority;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "branch_id": branchId,
+        "branch_name": branchName,
+    };
 }
 
 class CallResponseStatus {
-  String? callResponseId;
-  String? callResponse;
+    String callResponseId;
+    String callResponse;
 
-  CallResponseStatus({this.callResponseId, this.callResponse});
+    CallResponseStatus({
+        required this.callResponseId,
+        required this.callResponse,
+    });
 
-  CallResponseStatus.fromJson(Map<String, dynamic> json) {
-    callResponseId = json['call_response_id'];
-    callResponse = json['call_response'];
-  }
+    factory CallResponseStatus.fromJson(Map<String, dynamic> json) => CallResponseStatus(
+        callResponseId: json["call_response_id"],
+        callResponse: json["call_response"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['call_response_id'] = callResponseId;
-    data['call_response'] = callResponse;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "call_response_id": callResponseId,
+        "call_response": callResponse,
+    };
 }
 
-class AdditionalFields {
-  String? id;
-  String? fieldName;
+class CallResult {
+    String callResultId;
+    String callResult;
 
-  AdditionalFields({this.id, this.fieldName});
+    CallResult({
+        required this.callResultId,
+        required this.callResult,
+    });
 
-  AdditionalFields.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    fieldName = json['field_name'];
-  }
+    factory CallResult.fromJson(Map<String, dynamic> json) => CallResult(
+        callResultId: json["call_result_id"],
+        callResult: json["call_result"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['field_name'] = fieldName;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "call_result_id": callResultId,
+        "call_result": callResult,
+    };
+}
+
+class CallResultNew {
+    String callResultIdNew;
+    String callResultNew;
+
+    CallResultNew({
+        required this.callResultIdNew,
+        required this.callResultNew,
+    });
+
+    factory CallResultNew.fromJson(Map<String, dynamic> json) => CallResultNew(
+        callResultIdNew: json["call_result_id_new"],
+        callResultNew: json["call_result_new"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "call_result_id_new": callResultIdNew,
+        "call_result_new": callResultNew,
+    };
+}
+
+class LeadCategory {
+    String leadCategoryId;
+    String leadCategory;
+
+    LeadCategory({
+        required this.leadCategoryId,
+        required this.leadCategory,
+    });
+
+    factory LeadCategory.fromJson(Map<String, dynamic> json) => LeadCategory(
+        leadCategoryId: json["lead_category_id"],
+        leadCategory: json["lead_category"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "lead_category_id": leadCategoryId,
+        "lead_category": leadCategory,
+    };
+}
+
+class LeadSource {
+    String leadSourceId;
+    String leadSource;
+
+    LeadSource({
+        required this.leadSourceId,
+        required this.leadSource,
+    });
+
+    factory LeadSource.fromJson(Map<String, dynamic> json) => LeadSource(
+        leadSourceId: json["lead_source_id"],
+        leadSource: json["lead_source"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "lead_source_id": leadSourceId,
+        "lead_source": leadSource,
+    };
+}
+
+class Priority {
+    String priorityId;
+    String priority;
+
+    Priority({
+        required this.priorityId,
+        required this.priority,
+    });
+
+    factory Priority.fromJson(Map<String, dynamic> json) => Priority(
+        priorityId: json["priority_id"],
+        priority: json["priority"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "priority_id": priorityId,
+        "priority": priority,
+    };
+}
+
+class Staff {
+    String staffId;
+    String staffName;
+
+    Staff({
+        required this.staffId,
+        required this.staffName,
+    });
+
+    factory Staff.fromJson(Map<String, dynamic> json) => Staff(
+        staffId: json["staff_id"],
+        staffName: json["staff_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "staff_id": staffId,
+        "staff_name": staffName,
+    };
+}
+
+class TransferStaff {
+    String tranStaffId;
+    String tranStaffName;
+
+    TransferStaff({
+        required this.tranStaffId,
+        required this.tranStaffName,
+    });
+
+    factory TransferStaff.fromJson(Map<String, dynamic> json) => TransferStaff(
+        tranStaffId: json["tran_staff_id"],
+        tranStaffName: json["tran_staff_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "tran_staff_id": tranStaffId,
+        "tran_staff_name": tranStaffName,
+    };
 }

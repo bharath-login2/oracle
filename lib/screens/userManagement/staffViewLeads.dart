@@ -100,6 +100,8 @@ class _StaffViewLeadsState extends State<StaffViewLeads> {
   String statusWiseId = '';
   String statusCatId = '';
   String type = '';
+    String phoneCallLogPermission = '';
+
 
   @override
   void initState() {
@@ -190,6 +192,8 @@ class _StaffViewLeadsState extends State<StaffViewLeads> {
         isLoading = false;
       });
     } else {}
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
   }
 
   @override
@@ -1900,7 +1904,7 @@ class _StaffViewLeadsState extends State<StaffViewLeads> {
                 ),
                 bottomNavigationBar: configure != null
                     ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured)
+                        widget.token!, configure!.data!.whatsappConfigured,phoneCallLogPermission: phoneCallLogPermission,)
                     : const SizedBox())
             : Scaffold(
                 backgroundColor: Colors.white,

@@ -3,7 +3,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:record/record.dart';
 
-
 class AudioRecordController extends GetxController {
   late Record audioRecord;
   late AudioPlayer audioPlayer;
@@ -21,6 +20,7 @@ class AudioRecordController extends GetxController {
   void onClose() {
     audioRecord.dispose();
     audioPlayer.dispose();
+    audioPlayer = AudioPlayer();
     super.onClose();
   }
 
@@ -35,7 +35,8 @@ class AudioRecordController extends GetxController {
       // print("error");
     }
   }
-  RxInt totalDuration =0.obs;
+
+  RxInt totalDuration = 0.obs;
 
   Future<void> stopRecording() async {
     try {
@@ -45,16 +46,13 @@ class AudioRecordController extends GetxController {
       stopTimer();
       int minutesElapsed = minutes.value * 60;
       totalDuration.value = minutesElapsed + seconds.value;
-
-
     } catch (e) {
-        print("error $e");
+      print("error $e");
     }
   }
 
   Future<void> playRcording() async {
     try {
-
       Source urlSourse = UrlSource(audioPath.value);
 
       await audioPlayer.play(urlSourse);
@@ -62,13 +60,13 @@ class AudioRecordController extends GetxController {
       audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
         if (state == PlayerState.completed) {
           stopTimer();
+          resetTimer();
         }
       });
     } catch (e) {
       // print("error");
     }
   }
-
 
   var minutes = 0.obs;
   var seconds = 0.obs;
@@ -105,9 +103,7 @@ class AudioRecordController extends GetxController {
 
   Future<void> playVoice(url) async {
     try {
-
       Source urlSourse = UrlSource(url);
-
       await audioPlayer.play(urlSourse);
       startTimer();
       audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
@@ -123,8 +119,4 @@ class AudioRecordController extends GetxController {
   Future<void> stopAudio() async {
     await audioPlayer.stop();
   }
-
-
-
-
 }

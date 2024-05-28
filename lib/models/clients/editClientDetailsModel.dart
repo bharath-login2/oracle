@@ -1,118 +1,125 @@
+// To parse this JSON data, do
+//
+//     final editClientDetailsModel = editClientDetailsModelFromJson(jsonString);
+
+import 'dart:convert';
+
+EditClientDetailsModel editClientDetailsModelFromJson(String str) => EditClientDetailsModel.fromJson(json.decode(str));
+
+String editClientDetailsModelToJson(EditClientDetailsModel data) => json.encode(data.toJson());
+
 class EditClientDetailsModel {
-  Data? data;
-  bool? status;
-  String? message;
+    Data data;
+    bool status;
+    String message;
 
-  EditClientDetailsModel({this.data, this.status, this.message});
+    EditClientDetailsModel({
+        required this.data,
+        required this.status,
+        required this.message,
+    });
 
-  EditClientDetailsModel.fromJson(Map<String, dynamic> json) {
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    status = json['status'];
-    message = json['message'];
-  }
+    factory EditClientDetailsModel.fromJson(Map<String, dynamic> json) => EditClientDetailsModel(
+        data: Data.fromJson(json["data"]),
+        status: json["status"],
+        message: json["message"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    data['status'] = status;
-    data['message'] = message;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "data": data.toJson(),
+        "status": status,
+        "message": message,
+    };
 }
 
 class Data {
-  String? id;
-  String? name;
-  String? countryCode;
-  String? contactNo;
-  String? address1;
-  String? address2;
-  String? address3;
-  String? pincode;
-  String? gstNum;
-  String? remarks;
-  String? postOffice;
-  String? branchId;
-  List<AdditionalFields>? additionalFields;
+    String id;
+    String name;
+    String emailId;
+    String countryCode;
+    String contactNo;
+    String address1;
+    String address2;
+    String address3;
+    String pincode;
+    String gstNum;
+    String remarks;
+    String postOffice;
+    String branchId;
+    List<AdditionalField> additionalFields;
 
-  Data(
-      {this.id,
-        this.name,
-        this.countryCode,
-        this.contactNo,
-        this.address1,
-        this.address2,
-        this.address3,
-        this.pincode,
-        this.gstNum,
-        this.remarks,
-        this.postOffice,
-        this.branchId,
-        this.additionalFields});
+    Data({
+        required this.id,
+        required this.name,
+        required this.emailId,
+        required this.countryCode,
+        required this.contactNo,
+        required this.address1,
+        required this.address2,
+        required this.address3,
+        required this.pincode,
+        required this.gstNum,
+        required this.remarks,
+        required this.postOffice,
+        required this.branchId,
+        required this.additionalFields,
+    });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    countryCode = json['country_code'];
-    contactNo = json['contact_no'];
-    address1 = json['address1'];
-    address2 = json['address2'];
-    address3 = json['address3'];
-    pincode = json['pincode'];
-    gstNum = json['gst_num'];
-    remarks = json['remarks'];
-    postOffice = json['post_office'];
-    branchId = json['branch_id'];
-    if (json['additional_fields'] != null) {
-      additionalFields = <AdditionalFields>[];
-      json['additional_fields'].forEach((v) {
-        additionalFields!.add(AdditionalFields.fromJson(v));
-      });
-    }
-  }
+    factory Data.fromJson(Map<String, dynamic> json) => Data(
+        id: json["id"],
+        name: json["name"],
+        emailId: json["email_id"],
+        countryCode: json["country_code"],
+        contactNo: json["contact_no"],
+        address1: json["address1"],
+        address2: json["address2"],
+        address3: json["address3"],
+        pincode: json["pincode"],
+        gstNum: json["gst_num"],
+        remarks: json["remarks"],
+        postOffice: json["post_office"],
+        branchId: json["branch_id"],
+        additionalFields: List<AdditionalField>.from(json["additional_fields"].map((x) => AdditionalField.fromJson(x))),
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['name'] = name;
-    data['country_code'] = countryCode;
-    data['contact_no'] = contactNo;
-    data['address1'] = address1;
-    data['address2'] = address2;
-    data['address3'] = address3;
-    data['pincode'] = pincode;
-    data['gst_num'] = gstNum;
-    data['remarks'] = remarks;
-    data['post_office'] = postOffice;
-    data['branch_id'] = branchId;
-    if (additionalFields != null) {
-      data['additional_fields'] =
-          additionalFields!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "email_id": emailId,
+        "country_code": countryCode,
+        "contact_no": contactNo,
+        "address1": address1,
+        "address2": address2,
+        "address3": address3,
+        "pincode": pincode,
+        "gst_num": gstNum,
+        "remarks": remarks,
+        "post_office": postOffice,
+        "branch_id": branchId,
+        "additional_fields": List<dynamic>.from(additionalFields.map((x) => x.toJson())),
+    };
 }
 
-class AdditionalFields {
-  String? fieldId;
-  String? fieldName;
-  String? fieldValue;
+class AdditionalField {
+    String fieldId;
+    String fieldName;
+    String fieldValue;
 
-  AdditionalFields({this.fieldId, this.fieldName, this.fieldValue});
+    AdditionalField({
+        required this.fieldId,
+        required this.fieldName,
+        required this.fieldValue,
+    });
 
-  AdditionalFields.fromJson(Map<String, dynamic> json) {
-    fieldId = json['field_id'];
-    fieldName = json['field_name'];
-    fieldValue = json['field_value'];
-  }
+    factory AdditionalField.fromJson(Map<String, dynamic> json) => AdditionalField(
+        fieldId: json["field_id"],
+        fieldName: json["field_name"],
+        fieldValue: json["field_value"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['field_id'] = fieldId;
-    data['field_name'] = fieldName;
-    data['field_value'] = fieldValue;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "field_id": fieldId,
+        "field_name": fieldName,
+        "field_value": fieldValue,
+    };
 }

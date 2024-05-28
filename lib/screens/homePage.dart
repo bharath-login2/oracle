@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/screens/clients/clientList.dart';
@@ -7,6 +8,8 @@ import 'package:login2/screens/clients/pendingInvoice.dart';
 import 'package:login2/screens/clients/receiptList.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/product_mannagement/categories.dart';
+import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
@@ -53,6 +56,8 @@ class _HomePageState extends State<HomePage> {
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
+    String phoneCallLogPermission = '';
+
 
   @override
   void initState() {
@@ -74,6 +79,8 @@ class _HomePageState extends State<HomePage> {
     role = await Common.getSharedPref("role");
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
 
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
@@ -154,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               InkWell(
-                                onTap: () => _logout(context),
+                                onTap: () => logout(context),
                                 child: Container(
                                   width: 43,
                                   height: 43,
@@ -545,7 +552,6 @@ class _HomePageState extends State<HomePage> {
                                             } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'messages') {
-
                                               showDialog(
                                                   barrierColor: Colors.grey
                                                       .withOpacity(.5),
@@ -639,7 +645,7 @@ class _HomePageState extends State<HomePage> {
                                                                                 onTap: () {
                                                                                   Navigator.push(
                                                                                     context,
-                                                                                    MaterialPageRoute(builder: (context) => ChatHomeScreen()),
+                                                                                    MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
                                                                                   );
                                                                                 },
                                                                                 child: Container(
@@ -1112,12 +1118,31 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                     );
                                                   });
-                                            }
-                                            else if (userDashboard!.data!
-                                                .modules![i].menuName ==
+                                            } else if (userDashboard!.data!
+                                                    .modules![i].menuName ==
                                                 'complaints') {
-                                              Navigator.push(context, MaterialPageRoute(builder: (context)=> const ComplaintListScreen()));
-                                            }else {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const ComplaintListScreen()));
+                                            } else if (userDashboard!.data!
+                                                    .modules![i].menuName ==
+                                                'renewal') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const RenewalDashboard()));
+                                            } else if (userDashboard!.data!
+                                                    .modules![i].menuName ==
+                                                'products') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const ProductCategories()));
+                                            } else {
                                               _dialogue(context,
                                                   'Access ${userDashboard!.data!.modules![i].categoryName}');
                                             }
@@ -1126,9 +1151,15 @@ class _HomePageState extends State<HomePage> {
                                         child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            child: Image.network(userDashboard!
-                                                .data!.modules![i].image
-                                                .toString())),
+                                            child: CachedNetworkImage(
+                                              fit: BoxFit.fill,
+                                              imageUrl: userDashboard!
+                                                  .data!.modules![i].image
+                                                  .toString(),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
+                                            )),
                                       ),
                                     );
                                   },
@@ -1160,7 +1191,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 bottomNavigationBar: configure != null
                     ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured)
+                        widget.token!, configure!.data!.whatsappConfigured,phoneCallLogPermission: phoneCallLogPermission)
                     : const SizedBox())
             : Scaffold(
                 backgroundColor: Colors.white,
@@ -1190,7 +1221,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       InkWell(
                         onTap: () {
-                          getData();
+                          getData(); 
                         },
                         child: SizedBox(
                           width: 120,
@@ -1222,32 +1253,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Logout?'),
-            actions: [
-              // The "Yes" button
-              TextButton(
-                  onPressed: () {
-                    Common.saveSharedPref("Logout", "success");
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const Login()),
-                        (Route<dynamic> route) => false);
-                  },
-                  child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
-            ],
-          );
-        });
-  }
 
   void _dialogue(BuildContext context, title) {
     showDialog(

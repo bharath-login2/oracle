@@ -14,7 +14,6 @@ import 'package:login2/screens/clients/clientList.dart';
 import 'package:login2/screens/clients/receiptList.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:lottie/lottie.dart';
-import 'package:screenshot/screenshot.dart';
 import '../../core/common.dart';
 import '../../models/clients/addInvoiceCheckModel.dart';
 import '../../models/clients/addInvoiceModel.dart';
@@ -23,7 +22,6 @@ import '../../models/clients/postalCodeModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
 import 'invoiceList.dart';
-import 'package:pdf/widgets.dart' as pw;
 
 class AddInvoice extends StatefulWidget {
   String token;
@@ -112,7 +110,7 @@ class _AddInvoiceState extends State<AddInvoice> {
         connectivityResult == ConnectivityResult.wifi) {
       setState(() {
         result = true;
-      });
+      }); 
     } else {
       setState(() {
         result = false;

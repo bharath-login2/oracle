@@ -119,7 +119,6 @@ class _UserChangePasswordState extends State<UserChangePassword> {
                                            widget.token);
                                         if(object.data==true)
                                           {
-
                                             Common.saveSharedPref("Logout", "success");
                                             Navigator.of(context).pushAndRemoveUntil(
                                                 MaterialPageRoute(builder: (context) => const Login()),

@@ -271,26 +271,26 @@ class _EditFollowupState extends State<EditFollowup> {
                                       content: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount: commonDetails!
-                                            .data!.callResult!.length,
+                                            .data.callResult.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () {
                                               setState(() {
                                                 callResultVal.text =
                                                     commonDetails!
-                                                        .data!
-                                                        .callResult![ind]
+                                                        .data
+                                                        .callResult[ind]
                                                         .callResult
                                                         .toString();
                                                 callResult = commonDetails!
-                                                    .data!
-                                                    .callResult![ind]
+                                                    .data
+                                                    .callResult[ind]
                                                     .callResult
                                                     .toString();
 
                                                 callResultId = commonDetails!
-                                                    .data!
-                                                    .callResult![ind]
+                                                    .data
+                                                    .callResult[ind]
                                                     .callResultId
                                                     .toString();
                                                 callResultReasonList();
@@ -303,8 +303,8 @@ class _EditFollowupState extends State<EditFollowup> {
                                             child: SizedBox(
                                               height: 50,
                                               child: Text(
-                                                commonDetails!.data!
-                                                    .callResult![ind].callResult
+                                                commonDetails!.data
+                                                    .callResult[ind].callResult
                                                     .toString(),
                                                 style: const TextStyle(
                                                     fontSize: 18),
@@ -465,26 +465,26 @@ class _EditFollowupState extends State<EditFollowup> {
                                       content: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount: commonDetails!
-                                            .data!.callResponseStatus!.length,
+                                            .data.callResponseStatus.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () {
                                               setState(() {
                                                 callResponseVal.text =
                                                     commonDetails!
-                                                        .data!
-                                                        .callResponseStatus![ind]
+                                                        .data
+                                                        .callResponseStatus[ind]
                                                         .callResponse
                                                         .toString();
                                                 callResponse = commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
+                                                    .data
+                                                    .callResponseStatus[ind]
                                                     .callResponse
                                                     .toString();
 
                                                 callResponseId = commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
+                                                    .data
+                                                    .callResponseStatus[ind]
                                                     .callResponseId
                                                     .toString();
                                                 Navigator.pop(context, true);
@@ -494,8 +494,8 @@ class _EditFollowupState extends State<EditFollowup> {
                                               height: 50,
                                               child: Text(
                                                 commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
+                                                    .data
+                                                    .callResponseStatus[ind]
                                                     .callResponse
                                                     .toString(),
                                                 style: const TextStyle(
@@ -570,36 +570,36 @@ class _EditFollowupState extends State<EditFollowup> {
                                       content: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount: commonDetails!
-                                            .data!.leadCategory!.length,
+                                            .data.leadCategory.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () async {
                                               leadSubTypeList =
                                                   await HttpService.leadSubType(
                                                       commonDetails!
-                                                          .data!
-                                                          .leadCategory![ind]
+                                                          .data
+                                                          .leadCategory[ind]
                                                           .leadCategoryId
                                                           .toString());
 
                                               setState(() {
                                                 leadTypeVal.text =
                                                     commonDetails!
-                                                        .data!
-                                                        .leadCategory![ind]
+                                                        .data
+                                                        .leadCategory[ind]
                                                         .leadCategory
                                                         .toString();
                                                 leadSubType =
                                                     'Lead Sub Category';
                                                 leadSubTypeId = '';
                                                 leadType = commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategory
                                                     .toString();
                                                 leadTypeId = commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategoryId
                                                     .toString();
                                                 Navigator.pop(context, true);
@@ -609,8 +609,8 @@ class _EditFollowupState extends State<EditFollowup> {
                                               height: 50,
                                               child: Text(
                                                 commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategory
                                                     .toString(),
                                                 style: const TextStyle(

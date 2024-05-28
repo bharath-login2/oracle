@@ -1,188 +1,186 @@
+// To parse this JSON data, do
+//
+//     final mainClientDetailsModel = mainClientDetailsModelFromJson(jsonString);
+
+import 'package:meta/meta.dart';
+import 'dart:convert';
+
+MainClientDetailsModel mainClientDetailsModelFromJson(String str) => MainClientDetailsModel.fromJson(json.decode(str));
+
+String mainClientDetailsModelToJson(MainClientDetailsModel data) => json.encode(data.toJson());
+
 class MainClientDetailsModel {
-  bool? status;
-  String? message;
-  Data? data;
+    bool status;
+    String message;
+    Data data;
 
-  MainClientDetailsModel({this.status, this.message, this.data});
+    MainClientDetailsModel({
+        required this.status,
+        required this.message,
+        required this.data,
+    });
 
-  MainClientDetailsModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    message = json['message'];
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
-  }
+    factory MainClientDetailsModel.fromJson(Map<String, dynamic> json) => MainClientDetailsModel(
+        status: json["status"],
+        message: json["message"],
+        data: Data.fromJson(json["data"]),
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['status'] = status;
-    data['message'] = message;
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "status": status,
+        "message": message,
+        "data": data.toJson(),
+    };
 }
 
 class Data {
-  String? id;
-  String? name;
-  String? contactNo;
-  String? address;
-  String? pincode;
-  String? gstNum;
-  String? postOffice;
-  String? totalInvoiceAmount;
-  String? totalReceiptAmount;
-  List<Invoice>? invoice;
-  List<Receipts>? receipts;
+    String id;
+    String name;
+    String emailId;
+    String contactNo;
+    String address;
+    String pincode;
+    String gstNum;
+    String postOffice;
+    String totalInvoiceAmount;
+    String totalReceiptAmount;
+    List<Invoice> invoice;
+    List<Receipt> receipts;
 
-  Data(
-      {this.id,
-        this.name,
-        this.contactNo,
-        this.address,
-        this.pincode,
-        this.gstNum,
-        this.postOffice,
-        this.totalInvoiceAmount,
-        this.totalReceiptAmount,
-        this.invoice,
-        this.receipts});
+    Data({
+        required this.id,
+        required this.name,
+        required this.emailId,
+        required this.contactNo,
+        required this.address,
+        required this.pincode,
+        required this.gstNum,
+        required this.postOffice,
+        required this.totalInvoiceAmount,
+        required this.totalReceiptAmount,
+        required this.invoice,
+        required this.receipts,
+    });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    name = json['name'];
-    contactNo = json['contact_no'];
-    address = json['address'];
-    pincode = json['pincode'];
-    gstNum = json['gst_num'];
-    postOffice = json['post_office'];
-    totalInvoiceAmount = json['total_invoice_amount'];
-    totalReceiptAmount = json['total_receipt_amount'];
-    if (json['invoice'] != null) {
-      invoice = <Invoice>[];
-      json['invoice'].forEach((v) {
-        invoice!.add(Invoice.fromJson(v));
-      });
-    }
-    if (json['receipts'] != null) {
-      receipts = <Receipts>[];
-      json['receipts'].forEach((v) {
-        receipts!.add(Receipts.fromJson(v));
-      });
-    }
-  }
+    factory Data.fromJson(Map<String, dynamic> json) => Data(
+        id: json["id"],
+        name: json["name"],
+        emailId: json["email_id"],
+        contactNo: json["contact_no"],
+        address: json["address"],
+        pincode: json["pincode"],
+        gstNum: json["gst_num"],
+        postOffice: json["post_office"],
+        totalInvoiceAmount: json["total_invoice_amount"],
+        totalReceiptAmount: json["total_receipt_amount"],
+        invoice: List<Invoice>.from(json["invoice"].map((x) => Invoice.fromJson(x))),
+        receipts: List<Receipt>.from(json["receipts"].map((x) => Receipt.fromJson(x))),
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['name'] = name;
-    data['contact_no'] = contactNo;
-    data['address'] = address;
-    data['pincode'] = pincode;
-    data['gst_num'] = gstNum;
-    data['post_office'] = postOffice;
-    data['total_invoice_amount'] = totalInvoiceAmount;
-    data['total_receipt_amount'] = totalReceiptAmount;
-    if (invoice != null) {
-      data['invoice'] = invoice!.map((v) => v.toJson()).toList();
-    }
-    if (receipts != null) {
-      data['receipts'] = receipts!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "email_id": emailId,
+        "contact_no": contactNo,
+        "address": address,
+        "pincode": pincode,
+        "gst_num": gstNum,
+        "post_office": postOffice,
+        "total_invoice_amount": totalInvoiceAmount,
+        "total_receipt_amount": totalReceiptAmount,
+        "invoice": List<dynamic>.from(invoice.map((x) => x.toJson())),
+        "receipts": List<dynamic>.from(receipts.map((x) => x.toJson())),
+    };
 }
 
 class Invoice {
-  String? invid;
-  String? invoiceNumber;
-  String? invoiceDate;
-  String? status;
-  String? totalAmount;
-  String? paidAmount;
-  String? balanceAmount;
-  String? paymentMethod;
-  bool? isPaid;
+    String invid;
+    String invoiceNumber;
+    String invoiceDate;
+    String status;
+    String totalAmount;
+    String paidAmount;
+    String balanceAmount;
+    String paymentMethod;
+    bool isPaid;
 
-  Invoice(
-      {this.invid,
-        this.invoiceNumber,
-        this.invoiceDate,
-        this.status,
-        this.totalAmount,
-        this.paidAmount,
-        this.balanceAmount,
-        this.paymentMethod,
-        this.isPaid});
+    Invoice({
+        required this.invid,
+        required this.invoiceNumber,
+        required this.invoiceDate,
+        required this.status,
+        required this.totalAmount,
+        required this.paidAmount,
+        required this.balanceAmount,
+        required this.paymentMethod,
+        required this.isPaid,
+    });
 
-  Invoice.fromJson(Map<String, dynamic> json) {
-    invid = json['invid'];
-    invoiceNumber = json['invoiceNumber'];
-    invoiceDate = json['invoiceDate'];
-    status = json['status'];
-    totalAmount = json['totalAmount'];
-    paidAmount = json['paidAmount'];
-    balanceAmount = json['balanceAmount'];
-    paymentMethod = json['paymentMethod'];
-    isPaid = json['isPaid'];
-  }
+    factory Invoice.fromJson(Map<String, dynamic> json) => Invoice(
+        invid: json["invid"],
+        invoiceNumber: json["invoiceNumber"],
+        invoiceDate: json["invoiceDate"],
+        status: json["status"],
+        totalAmount: json["totalAmount"],
+        paidAmount: json["paidAmount"],
+        balanceAmount: json["balanceAmount"],
+        paymentMethod: json["paymentMethod"],
+        isPaid: json["isPaid"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['invid'] = invid;
-    data['invoiceNumber'] = invoiceNumber;
-    data['invoiceDate'] = invoiceDate;
-    data['status'] = status;
-    data['totalAmount'] = totalAmount;
-    data['paidAmount'] = paidAmount;
-    data['balanceAmount'] = balanceAmount;
-    data['paymentMethod'] = paymentMethod;
-    data['isPaid'] = isPaid;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "invid": invid,
+        "invoiceNumber": invoiceNumber,
+        "invoiceDate": invoiceDate,
+        "status": status,
+        "totalAmount": totalAmount,
+        "paidAmount": paidAmount,
+        "balanceAmount": balanceAmount,
+        "paymentMethod": paymentMethod,
+        "isPaid": isPaid,
+    };
 }
 
-class Receipts {
-  String? receiptId;
-  String? receiptNumber;
-  String? invoiceNumber;
-  String? receiptDate;
-  String? paidAmount;
-  String? paymentMethod;
-  String? collectedBy;
-  String? uploadedFile;
+class Receipt {
+    String receiptId;
+    String receiptNumber;
+    String invoiceNumber;
+    String receiptDate;
+    String paidAmount;
+    String paymentMethod;
+    String collectedBy;
+    String uploadedFile;
 
-  Receipts(
-      {this.receiptId,
-        this.receiptNumber,
-        this.invoiceNumber,
-        this.receiptDate,
-        this.paidAmount,
-        this.paymentMethod,
-        this.collectedBy,
-        this.uploadedFile});
+    Receipt({
+        required this.receiptId,
+        required this.receiptNumber,
+        required this.invoiceNumber,
+        required this.receiptDate,
+        required this.paidAmount,
+        required this.paymentMethod,
+        required this.collectedBy,
+        required this.uploadedFile,
+    });
 
-  Receipts.fromJson(Map<String, dynamic> json) {
-    receiptId = json['receiptId'];
-    receiptNumber = json['receiptNumber'];
-    invoiceNumber = json['invoiceNumber'];
-    receiptDate = json['receiptDate'];
-    paidAmount = json['paidAmount'];
-    paymentMethod = json['paymentMethod'];
-    collectedBy = json['collectedBy'];
-    uploadedFile = json['uploaded_file'];
-  }
+    factory Receipt.fromJson(Map<String, dynamic> json) => Receipt(
+        receiptId: json["receiptId"],
+        receiptNumber: json["receiptNumber"],
+        invoiceNumber: json["invoiceNumber"],
+        receiptDate: json["receiptDate"],
+        paidAmount: json["paidAmount"],
+        paymentMethod: json["paymentMethod"],
+        collectedBy: json["collectedBy"],
+        uploadedFile: json["uploaded_file"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['receiptId'] = receiptId;
-    data['receiptNumber'] = receiptNumber;
-    data['invoiceNumber'] = invoiceNumber;
-    data['receiptDate'] = receiptDate;
-    data['paidAmount'] = paidAmount;
-    data['paymentMethod'] = paymentMethod;
-    data['collectedBy'] = collectedBy;
-    data['uploaded_file'] = uploadedFile;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "receiptId": receiptId,
+        "receiptNumber": receiptNumber,
+        "invoiceNumber": invoiceNumber,
+        "receiptDate": receiptDate,
+        "paidAmount": paidAmount,
+        "paymentMethod": paymentMethod,
+        "collectedBy": collectedBy,
+        "uploaded_file": uploadedFile,
+    };
 }

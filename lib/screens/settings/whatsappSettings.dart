@@ -38,6 +38,8 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
   bool? result1 = true;
   String name = '';
   String role = '';
+  String phoneCallLogPermission = '';
+
   WhatsappSettingsModel? whatsappDetails;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late Timer _timer;
@@ -52,6 +54,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
     // TODO: implement initState
     super.initState();
     getData();
+    
   }
   void _updateTimer(Timer timer) {
     final currentTime = DateTime.now();
@@ -106,6 +109,8 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
       phoneNumberId.text = whatsappDetails!.data!.official!.phoneNumberId.toString();
       accountId.text = whatsappDetails!.data!.official!.accountId.toString();
       permanentToken.text = whatsappDetails!.data!.official!.permanentToken.toString();
+      phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
       timeExpired=false;
       if(timeExpired==false && timeExpiredLoad==true)
         {
@@ -155,7 +160,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
                                   Row(
                                     children: [
                                       InkWell(
-                                        onTap: () => _logout(context),
+                                        onTap: () => logout(context),
                                         child: Container(
                                           width: 43,
                                           height: 43,
@@ -1326,7 +1331,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
                     width: 25), //icon inside button
               ),
             ),
-            bottomNavigationBar: BottomNavigation(widget.token!, false))
+            bottomNavigationBar: BottomNavigation(widget.token!, false,phoneCallLogPermission: phoneCallLogPermission,))
         : Scaffold(
             backgroundColor: Colors.white,
             body: SizedBox(
@@ -1384,32 +1389,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
             ));
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Logout?'),
-            actions: [
-              // The "Yes" button
-              TextButton(
-                  onPressed: () {
-                    Common.saveSharedPref("Logout", "success");
-                    Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const Login()),
-                        (Route<dynamic> route) => false);
-                  },
-                  child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
-            ],
-          );
-        });
-  }
+   
   Uint8List convertBase64Image(String base64String) {
     return const Base64Decoder().convert(base64String.split(',').last);
   }

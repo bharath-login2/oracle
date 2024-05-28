@@ -292,6 +292,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                   size: 16,
                                 ),
                               ),
+                              
                             ),
                             const SizedBox(
                               width: 25,
@@ -390,21 +391,21 @@ class _AddFollowupState extends State<AddFollowup> {
                                         content: ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: commonDetails!
-                                              .data!.callResultNew!.length,
+                                              .data.callResultNew.length,
                                           itemBuilder: (context, ind) {
                                             return InkWell(
                                               onTap: () {
                                                 setState(() {
 
                                                   callResult = commonDetails!
-                                                      .data!
-                                                      .callResultNew![ind]
+                                                      .data
+                                                      .callResultNew[ind]
                                                       .callResultNew
                                                       .toString();
 
                                                   callResultId = commonDetails!
-                                                      .data!
-                                                      .callResultNew![ind]
+                                                      .data
+                                                      .callResultNew[ind]
                                                       .callResultIdNew
                                                       .toString();
                                                   callResultReasonList();
@@ -419,8 +420,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                 height: 50,
                                                 child: Text(
                                                   commonDetails!
-                                                      .data!
-                                                      .callResultNew![ind]
+                                                      .data
+                                                      .callResultNew[ind]
                                                       .callResultNew
                                                       .toString(),
                                                   style: const TextStyle(
@@ -518,7 +519,7 @@ class _AddFollowupState extends State<AddFollowup> {
                             ):
                             const SizedBox(),
                             if (callResultId == '4' &&
-                                commonDetails!.data!.customerAddPermission ==
+                                commonDetails!.data.customerAddPermission ==
                                     true)
                               CheckboxListTile(
                                   title: const Text('Add  Client'),
@@ -719,7 +720,7 @@ class _AddFollowupState extends State<AddFollowup> {
                             //         width: 230,
                             //         child: CheckboxListTile(
                             //           title: const Text(
-                            //             "Remind Me Before",
+                            //             "Remind Template",
                             //             style: TextStyle(
                             //                 fontSize: 13, color: Colors.black),
                             //           ),
@@ -854,21 +855,21 @@ class _AddFollowupState extends State<AddFollowup> {
                                         content: ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: commonDetails!
-                                              .data!.callResponseStatus!.length,
+                                              .data.callResponseStatus.length,
                                           itemBuilder: (context, ind) {
                                             return InkWell(
                                               onTap: () {
                                                 setState(() {
                                                   callResponse = commonDetails!
-                                                      .data!
-                                                      .callResponseStatus![ind]
+                                                      .data
+                                                      .callResponseStatus[ind]
                                                       .callResponse
                                                       .toString();
 
                                                   callResponseId =
                                                       commonDetails!
-                                                          .data!
-                                                          .callResponseStatus![
+                                                          .data
+                                                          .callResponseStatus[
                                                               ind]
                                                           .callResponseId
                                                           .toString();
@@ -879,8 +880,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                 height: 50,
                                                 child: Text(
                                                   commonDetails!
-                                                      .data!
-                                                      .callResponseStatus![ind]
+                                                      .data
+                                                      .callResponseStatus[ind]
                                                       .callResponse
                                                       .toString(),
                                                   style: const TextStyle(
@@ -1016,7 +1017,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                       child: ListView.builder(
                                         scrollDirection: Axis.horizontal,
                                         itemCount: commonDetails!
-                                            .data!.priority!.length,
+                                            .data.priority.length,
                                         itemBuilder: (context, i) {
                                           return Padding(
                                             padding: const EdgeInsets.only(right: 30),
@@ -1029,14 +1030,14 @@ class _AddFollowupState extends State<AddFollowup> {
                                                     child: Radio(
                                                       activeColor:int.parse(priorityId)==1?Colors.grey: int.parse(priorityId)==2?Colors.green: int.parse(priorityId)==3?Colors.red:Colors.purple ,
                                                         value: int.parse(commonDetails!
-                                                            .data!.priority![i].priorityId.toString()),
+                                                            .data.priority[i].priorityId.toString()),
                                                         groupValue: int.parse(priorityId),
                                                         onChanged: (int? value) {
                                                           changeRadioValue(value);
                                                         }),
                                                   ),
                                                   Text(commonDetails!
-                                                      .data!.priority![i].priority.toString()),
+                                                      .data.priority[i].priority.toString()),
                                                 ],
                                               ),
                                             ),
@@ -1112,15 +1113,15 @@ class _AddFollowupState extends State<AddFollowup> {
                                               content: ListView.builder(
                                                 shrinkWrap: true,
                                                 itemCount: commonDetails!
-                                                    .data!.leadCategory!.length,
+                                                    .data.leadCategory.length,
                                                 itemBuilder: (context, ind) {
                                                   return InkWell(
                                                     onTap: () async {
                                                       leadSubTypeList =
                                                           await HttpService.leadSubType(
                                                               commonDetails!
-                                                                  .data!
-                                                                  .leadCategory![
+                                                                  .data
+                                                                  .leadCategory[
                                                                       ind]
                                                                   .leadCategoryId
                                                                   .toString());
@@ -1130,15 +1131,15 @@ class _AddFollowupState extends State<AddFollowup> {
                                                         leadSubTypeId = '';
                                                         leadType =
                                                             commonDetails!
-                                                                .data!
-                                                                .leadCategory![
+                                                                .data
+                                                                .leadCategory[
                                                                     ind]
                                                                 .leadCategory
                                                                 .toString();
                                                         leadTypeId =
                                                             commonDetails!
-                                                                .data!
-                                                                .leadCategory![
+                                                                .data
+                                                                .leadCategory[
                                                                     ind]
                                                                 .leadCategoryId
                                                                 .toString();
@@ -1150,8 +1151,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       height: 50,
                                                       child: Text(
                                                         commonDetails!
-                                                            .data!
-                                                            .leadCategory![ind]
+                                                            .data
+                                                            .leadCategory[ind]
                                                             .leadCategory
                                                             .toString(),
                                                         style: const TextStyle(
@@ -1296,7 +1297,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
                                       itemCount: commonDetails!
-                                          .data!.callResponse!.length,
+                                          .data.callResponse.length,
                                       itemBuilder: (context, i) {
                                         return Padding(
                                           padding: const EdgeInsets.only(
@@ -1305,7 +1306,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                             onTap: () {
                                               setState(() {
                                                 remarks.text = commonDetails!
-                                                    .data!.callResponse![i]
+                                                    .data.callResponse[i]
                                                     .toString();
                                               });
                                             },
@@ -1328,8 +1329,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                         const EdgeInsets.only(
                                                             left: 8, right: 8),
                                                     child: Text(
-                                                      commonDetails!.data!
-                                                          .callResponse![i]
+                                                      commonDetails!.data
+                                                          .callResponse[i]
                                                           .toString(),
                                                       style: const TextStyle(
                                                         color:
@@ -1452,7 +1453,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                               Text(object1.message.toString(),style: const TextStyle(fontSize: 15,fontWeight: FontWeight.w400),),
                                                               const SizedBox(height: 15,),
                                                               Row(
-                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                                                 children: [
                                                                   InkWell(
                                                                     onTap:(){
@@ -1531,46 +1532,45 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                       ),
                                                                     ),
                                                                   ),
-
-
-                                                                  object1.data != '' &&
-                                                                      commonDetails!.data!
+                                                                  Visibility(
+                                                                    visible: object1.data != '' &&
+                                                                      commonDetails!.data
                                                                           .customerAddPermission ==
                                                                           true &&
-                                                                      commonDetails!.data!
+                                                                      commonDetails!.data
                                                                           .customerAddInvoicePermission ==
-                                                                          true?
-                                                                  InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                AddInvoice(widget.token!,
-                                                                                    object1.data!)),
-                                                                      );
-                                                                    },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(Icons.currency_rupee,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Invoice',style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
+                                                                          true,
+                                                                    child: InkWell(
+                                                                      onTap:(){
+                                                                        Navigator.push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) =>
+                                                                                  AddInvoice(widget.token!,
+                                                                                      object1.data!)),
+                                                                        );
+                                                                      },
+                                                                      child: Container(
+                                                                        width: MediaQuery.of(context).size.width * 0.25,
+                                                                        decoration: BoxDecoration(
+                                                                            color: Colors.green.shade100,
+                                                                            borderRadius: BorderRadius.circular(10)
+                                                                        ),
+                                                                        child: const Padding(
+                                                                          padding: EdgeInsets.all(5),
+                                                                          child: Column(
+                                                                            mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                            children: [
+                                                                              Icon(Icons.currency_rupee,size: 15,),
+                                                                              SizedBox(height: 5,),
+                                                                              Text('Invoice',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                                  textAlign: TextAlign.center),
+                                                                            ],
+                                                                          ),
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                  ):
-                                                                  const SizedBox()
+                                                                  )
                                                                 ],
                                                               ),
                                                             ],

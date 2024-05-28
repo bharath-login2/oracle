@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:login2/screens/leadManagement/leadBulkGroupAdd.dart';
 import 'package:lottie/lottie.dart';
@@ -58,14 +59,13 @@ class ViewLeads extends StatefulWidget {
   State<ViewLeads> createState() => _ViewLeadsState();
 }
 
-class _ViewLeadsState extends State<ViewLeads>{
-
+class _ViewLeadsState extends State<ViewLeads> {
   ViewLeadsModel? viewLeads;
   AddLeadCommonDataModel? commonDetails;
   bool? result = true;
   bool? result1 = true;
-  var fromdate = DateTime.now();
-  var todate = DateTime.now();
+  DateTime? fromdate;
+  DateTime? todate;
   var outputFormat = DateFormat('dd-MM-yyyy');
   dynamic category;
   dynamic status;
@@ -75,6 +75,7 @@ class _ViewLeadsState extends State<ViewLeads>{
   bool? isCalled = true;
   List selectedIUsers = [];
   List selectedUserNumbers = [];
+  bool searchField = false;
   final List<Color> _colors = [
     Colors.black,
     Colors.teal,
@@ -117,6 +118,7 @@ class _ViewLeadsState extends State<ViewLeads>{
   String? branch;
   String roleId = '';
   String multiBranch = '';
+  String phoneCallLogPermission = '';
 
   @override
   void initState() {
@@ -131,12 +133,28 @@ class _ViewLeadsState extends State<ViewLeads>{
       pageSize = widget.pageSize!;
     }
     //print(widget.fromDate.toString());
-    fromdate = DateTime.parse(widget.fromDate.toString());
-    todate = DateTime.parse(widget.toDate.toString());
+    // fromdate = DateTime.parse(widget.fromDate.toString());
+    // todate = DateTime.parse(widget.toDate.toString());
     status = widget.status;
     category = widget.category;
     staff = widget.staff;
-    if (isCalled == false) isCalled = widget.isCalled!;
+    if (isCalled == false) {
+      isCalled = widget.isCalled!;
+    }
+    if (widget.pageName == "Followup Leads") {
+      isCalled = false;
+    }
+    if (widget.pageName == "Closed Leads" ||
+        widget.pageName == "Total Called" ||
+        widget.pageName == "Rejected Leads") {
+      if (statusWise == 'yes') {
+        fromdate = DateTime.parse(widget.fromDate.toString());
+        todate = DateTime.now();
+      } else {
+        fromdate = DateTime.now();
+        todate = DateTime.now();
+      }
+    }
     getData('desc', true);
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
@@ -186,17 +204,18 @@ class _ViewLeadsState extends State<ViewLeads>{
             sort,
             page,
             pageSize,
-            isFirst,branch);
+            isFirst,
+            branch);
         if (viewLeads != null) {
-          fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
-          todate = DateTime.parse(viewLeads!.data!.todate.toString());
+          // fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
+          // todate = DateTime.parse(viewLeads!.data!.todate.toString());
           setState(() {});
         }
       } else {
         viewLeads = await HttpService.viewLeads(
             widget.token,
-            fromdate,
-            todate,
+            fromdate ?? "",
+            todate ?? "",
             category,
             status,
             staff,
@@ -206,14 +225,14 @@ class _ViewLeadsState extends State<ViewLeads>{
             page,
             pageSize,
             isFirst,
-            widget.leadType,branch);
+            widget.leadType,
+            branch);
       }
       if (viewLeads != null) {
-        fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
-        todate = DateTime.parse(viewLeads!.data!.todate.toString());
+        //  if()   {fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());}
+        //   if()  { todate = DateTime.parse(viewLeads!.data!.todate.toString());}
         setState(() {});
       }
-
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (commonDetails != null) {
         setState(() {});
@@ -227,6 +246,8 @@ class _ViewLeadsState extends State<ViewLeads>{
     } else {
       // Handle error
     }
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
   }
 
   @override
@@ -263,8 +284,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               InkWell(
                                 onTap: () {
@@ -291,11 +312,37 @@ class _ViewLeadsState extends State<ViewLeads>{
                               const SizedBox(
                                 width: 25,
                               ),
-                              Text(
-                                widget.pageName.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                              ),
+                              searchField == true
+                                  ? TextFormField(
+                                      onChanged: (value) {
+                                        // viewLeads = viewLeads!.data!.
+                                        //     .where((viewLeads) => viewLeads
+                                        //         .toLowerCase()
+                                        //         .contains(value.toLowerCase()))
+                                        //     .toList();
+                                      },
+                                      decoration: const InputDecoration(
+                                        contentPadding: EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        labelText: 'search',
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        prefixIcon: Icon(Icons.person,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey),
+                                      ),
+                                    )
+                                  : Text(
+                                      widget.pageName.toString(),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 18),
+                                    ),
                             ],
                           ),
                           Row(
@@ -324,6 +371,17 @@ class _ViewLeadsState extends State<ViewLeads>{
                               //     Icons.swap_calls,
                               //     color: Colors.white,
                               //   ),
+                              // ),
+                              // Visibility(
+                              //   visible: selectedIUsers.isEmpty,
+                              //   child: GestureDetector(
+                              //       onTap: () {
+                              //         searchField = !searchField;
+                              //       },
+                              //       child: const Icon(
+                              //         Icons.search_outlined,
+                              //         color: Colors.white,
+                              //       )),
                               // ),
                               selectedIUsers.isNotEmpty
                                   ? Row(
@@ -385,8 +443,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                   value:
                                                                       transferStaff,
                                                                   items: commonDetails!
-                                                                      .data!
-                                                                      .transferStaffs!
+                                                                      .data
+                                                                      .transferStaffs
                                                                       .map(
                                                                           (data) {
                                                                     return DropdownMenuItem(
@@ -420,6 +478,7 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                         ),
                                                         actions: [
                                                           // The "Yes" button
+
                                                           TextButton(
                                                               onPressed:
                                                                   () async {
@@ -713,22 +772,59 @@ class _ViewLeadsState extends State<ViewLeads>{
                             padding: const EdgeInsets.only(
                                 left: 15, right: 10, top: 15),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Date from ',
-                                    style: TextStyle(fontSize: 16)),
-                                Text(outputFormat.format(fromdate),
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                                const Text(' to ',
-                                    style: TextStyle(fontSize: 16)),
-                                Text(outputFormat.format(todate),
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(
-                                  width: 15,
+                                Column(
+                                  children: [
+                                    fromdate == null || todate == null
+                                        ? const SizedBox()
+                                        : Row(
+                                            children: [
+                                              const Text('Date from ',
+                                                  style:
+                                                      TextStyle(fontSize: 16)),
+                                              const SizedBox(
+                                                width: 5,
+                                              ),
+                                              Text(
+                                                  outputFormat
+                                                      .format(fromdate!),
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              const SizedBox(
+                                                width: 5,
+                                              ),
+                                              const Text(' to ',
+                                                  style:
+                                                      TextStyle(fontSize: 16)),
+                                              const SizedBox(
+                                                width: 5,
+                                              ),
+                                              Text(outputFormat.format(todate!),
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              const SizedBox(
+                                                width: 5,
+                                              ),
+                                            ],
+                                          ),
+                                    const SizedBox(
+                                      height: 5,
+                                    ),
+                                    Text(
+                                        'Total Leads : ${viewLeads!.data!.totalLeads}',
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold)),
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
+                                  ],
                                 ),
                                 InkWell(
                                   onTap: () {
@@ -961,93 +1057,6 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                         const SizedBox(
                                                           height: 13,
                                                         ),
-                                                        multiBranch=='true'&& roleId=='2'?
-                                                        Padding(
-                                                          padding: const EdgeInsets.only(bottom: 13),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                            crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                            children: [
-                                                              const Text(
-                                                                  'Branch',
-                                                                  style:
-                                                                  TextStyle(
-                                                                    fontSize:
-                                                                    15,
-                                                                    fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
-                                                                  )),
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              SizedBox(
-                                                                width: MediaQuery.of(context).size.width *
-                                                                    0.9,
-                                                                child: FormField<
-                                                                    String>(
-                                                                  builder: (FormFieldState<
-                                                                      String>
-                                                                  state) {
-                                                                    return Container(
-                                                                      width: MediaQuery.of(context)
-                                                                          .size
-                                                                          .width *
-                                                                          0.9,
-                                                                      decoration: BoxDecoration(
-                                                                          border: Border.all(
-                                                                              color: Colors
-                                                                                  .grey.shade900,
-                                                                              width:
-                                                                              0),
-                                                                          color: Colors
-                                                                              .white,
-                                                                          borderRadius: const BorderRadius
-                                                                              .all(
-                                                                              Radius.circular(5))),
-                                                                      child:
-                                                                      DropdownButtonHideUnderline(
-                                                                        child: DropdownButton<
-                                                                            String>(
-                                                                          isExpanded:
-                                                                          true,
-                                                                          hint:
-                                                                          const Padding(
-                                                                            padding:
-                                                                            EdgeInsets.only(left: 20),
-                                                                            child:
-                                                                            Text('Branch'),
-                                                                          ),
-                                                                          value: branch,
-                                                                          items:commonDetails!.data!.branch!.map((data) {
-                                                                            return DropdownMenuItem(
-                                                                              value: data.branchId.toString(),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(left: 20),
-                                                                                child: Text(data.branchName.toString()),
-                                                                              ),
-                                                                            );
-                                                                          }).toList(),
-                                                                          onChanged:
-                                                                              (newValue1) {
-                                                                            setState(() {
-                                                                              branch = newValue1;
-                                                                            });
-                                                                          },
-                                                                        ),
-                                                                      ),
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ):
-                                                        const SizedBox(),
                                                         Row(
                                                           children: [
                                                             Column(
@@ -1108,8 +1117,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                           value:
                                                                               category,
                                                                           items: commonDetails!
-                                                                              .data!
-                                                                              .leadCategory!
+                                                                              .data
+                                                                              .leadCategory
                                                                               .map((data) {
                                                                             return DropdownMenuItem(
                                                                               value: data.leadCategoryId.toString(),
@@ -1193,8 +1202,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                           value:
                                                                               status,
                                                                           items: commonDetails!
-                                                                              .data!
-                                                                              .callResult!
+                                                                              .data
+                                                                              .callResult
                                                                               .map((data) {
                                                                             return DropdownMenuItem(
                                                                               value: data.callResultId.toString(),
@@ -1282,8 +1291,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                           value:
                                                                               staff,
                                                                           items: commonDetails!
-                                                                              .data!
-                                                                              .staff!
+                                                                              .data
+                                                                              .staff
                                                                               .map((data) {
                                                                             return DropdownMenuItem(
                                                                               value: data.staffId.toString(),
@@ -1367,8 +1376,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                           value:
                                                                               priority,
                                                                           items: commonDetails!
-                                                                              .data!
-                                                                              .priority!
+                                                                              .data
+                                                                              .priority
                                                                               .map((data) {
                                                                             return DropdownMenuItem(
                                                                               value: data.priorityId.toString(),
@@ -1422,7 +1431,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                 items.clear();
                                                                 page = 1;
                                                                 pageSize = 20;
-                                                                getData('desc', true);
+                                                                getData('desc',
+                                                                    true);
                                                                 Navigator.of(
                                                                         context,
                                                                         rootNavigator:
@@ -1481,15 +1491,6 @@ class _ViewLeadsState extends State<ViewLeads>{
                                 )
                               ],
                             ),
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Text('Total Leads : ${viewLeads!.data!.totalLeads}',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          const SizedBox(
-                            height: 10,
                           ),
                           viewLeads!.data!.details!.isNotEmpty
                               ? Expanded(
@@ -1643,62 +1644,78 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                   );
                                                 });
                                           } else {
-                                            if(viewLeads!.data!.callPermission==false) {
+                                            if (viewLeads!
+                                                    .data!.callPermission ==
+                                                false) {
                                               showDialog(
                                                   context: context,
                                                   builder: (BuildContext ctx) {
                                                     return AlertDialog(
-                                                      title: const Text('Alert !!!'),
-                                                      content:  Text(
-                                                          viewLeads!.data!.warningMessage.toString()),
+                                                      title: const Text(
+                                                          'Alert !!!'),
+                                                      content: Text(viewLeads!
+                                                          .data!.warningMessage
+                                                          .toString()),
                                                       actions: [
                                                         // The "Yes" button
                                                         TextButton(
                                                             onPressed: () {
-                                                              Navigator.of(context).pop();
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
                                                             },
-                                                            child: const Text('Close')),
+                                                            child: const Text(
+                                                                'Close')),
                                                         TextButton(
                                                             onPressed: () {
                                                               Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
                                                                     builder: (context) => LeadDetails(
-                                                                        widget.token!,
-                                                                        widget.editLead,
-                                                                        widget.deleteLead,
-                                                                        widget.cloudCall,
-                                                                        viewLeads!.data!.callLeadId.toString(),
+                                                                        widget
+                                                                            .token!,
+                                                                        widget
+                                                                            .editLead,
+                                                                        widget
+                                                                            .deleteLead,
+                                                                        widget
+                                                                            .cloudCall,
+                                                                        viewLeads!
+                                                                            .data!
+                                                                            .callLeadId
+                                                                            .toString(),
                                                                         pageName: widget
                                                                             .pageName,
-                                                                        status:
-                                                                        widget.status,
-                                                                        staff:
-                                                                        widget.staff,
+                                                                        status: widget
+                                                                            .status,
+                                                                        staff: widget
+                                                                            .staff,
                                                                         isCalled: widget
                                                                             .isCalled,
                                                                         fromDate: widget
                                                                             .fromDate,
-                                                                        toDate:
-                                                                        widget.toDate,
-                                                                        category: widget
-                                                                            .category,
+                                                                        toDate: widget
+                                                                            .toDate,
+                                                                        category:
+                                                                            widget
+                                                                                .category,
                                                                         scrollToIndex:
-                                                                        index,
-                                                                        page: page,
-                                                                        pageSize: page *
-                                                                            pageSize,
-                                                                        leadType: widget
-                                                                            .leadType)),
+                                                                            index,
+                                                                        page:
+                                                                            page,
+                                                                        pageSize:
+                                                                            page *
+                                                                                pageSize,
+                                                                        leadType:
+                                                                            widget.leadType)),
                                                               );
                                                             },
-                                                            child: const Text('followup')),
+                                                            child: const Text(
+                                                                'followup')),
                                                       ],
                                                     );
                                                   });
-
-                                            }
-                                            else{
+                                            } else {
                                               if (widget.cloudCall == true) {
                                                 showDialog(
                                                     context: context,
@@ -1710,27 +1727,28 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                             'Choose Call Type'),
                                                         content: Column(
                                                           mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
+                                                              MainAxisAlignment
+                                                                  .start,
                                                           crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
+                                                              CrossAxisAlignment
+                                                                  .start,
                                                           children: [
                                                             InkWell(
                                                               onTap: () async {
                                                                 Common.showProgressDialog(
                                                                     context,
                                                                     "Loading..");
-                                                                CloudCallModel object1 =
-                                                                await HttpService.addCloudCall(
-                                                                    widget
-                                                                        .token,
-                                                                    items[index]
-                                                                        .callMasterId,
-                                                                    items[index]
-                                                                        .contactNumber1);
+                                                                CloudCallModel
+                                                                    object1 =
+                                                                    await HttpService.addCloudCall(
+                                                                        widget
+                                                                            .token,
+                                                                        items[index]
+                                                                            .callMasterId,
+                                                                        items[index]
+                                                                            .contactNumber1);
                                                                 if (object1
-                                                                    .data ==
+                                                                        .data ==
                                                                     true) {
                                                                   if (context
                                                                       .mounted) {
@@ -1758,7 +1776,8 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                   Common.toastMessaage(
                                                                       object1
                                                                           .message,
-                                                                      Colors.red);
+                                                                      Colors
+                                                                          .red);
                                                                   if (context
                                                                       .mounted) {
                                                                     Navigator.pop(
@@ -1771,16 +1790,17 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                 child: Row(
                                                                   children: [
                                                                     Container(
-                                                                      height: 30,
+                                                                      height:
+                                                                          30,
                                                                       width: 30,
                                                                       decoration: BoxDecoration(
                                                                           color: Colors
                                                                               .grey
                                                                               .shade300,
                                                                           borderRadius:
-                                                                          BorderRadius.circular(5)),
+                                                                              BorderRadius.circular(5)),
                                                                       child:
-                                                                      const Icon(
+                                                                          const Icon(
                                                                         Icons
                                                                             .cloud_circle_rounded,
                                                                         color: Colors
@@ -1794,7 +1814,7 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                       'Cloud Call',
                                                                       style: TextStyle(
                                                                           fontSize:
-                                                                          18),
+                                                                              18),
                                                                     ),
                                                                   ],
                                                                 ),
@@ -1810,7 +1830,9 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                 // await launchUrl(
                                                                 //     Uri.parse(
                                                                 //         url));
-                                                                bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
+                                                                bool? res = await FlutterPhoneDirectCaller
+                                                                    .callNumber(
+                                                                        '+${items[index].contactNumber1}');
                                                               },
                                                               child: SizedBox(
                                                                   height: 50,
@@ -1818,30 +1840,30 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                     children: [
                                                                       Container(
                                                                         height:
-                                                                        30,
-                                                                        width: 30,
+                                                                            30,
+                                                                        width:
+                                                                            30,
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .grey
-                                                                                .shade300,
-                                                                            borderRadius:
-                                                                            BorderRadius.circular(5)),
+                                                                            color:
+                                                                                Colors.grey.shade300,
+                                                                            borderRadius: BorderRadius.circular(5)),
                                                                         child:
-                                                                        const Icon(
+                                                                            const Icon(
                                                                           Icons
                                                                               .call,
-                                                                          color: Colors
-                                                                              .black,
+                                                                          color:
+                                                                              Colors.black,
                                                                         ),
                                                                       ),
                                                                       const SizedBox(
-                                                                        width: 20,
+                                                                        width:
+                                                                            20,
                                                                       ),
                                                                       const Text(
                                                                         'Phone Call',
                                                                         style: TextStyle(
                                                                             fontSize:
-                                                                            18),
+                                                                                18),
                                                                       ),
                                                                     ],
                                                                   )),
@@ -1850,16 +1872,16 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                         ),
                                                       );
                                                     });
-                                              }
-                                              else {
+                                              } else {
                                                 // String url =
                                                 //     'tel:+${items[index].contactNumber1}';
                                                 // await launchUrl(Uri.parse(url));
-                                                bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
+                                                bool? res =
+                                                    await FlutterPhoneDirectCaller
+                                                        .callNumber(
+                                                            '+${items[index].contactNumber1}');
                                               }
                                             }
-
-
                                           }
                                           return null;
                                         },
@@ -2339,87 +2361,59 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                   InkWell(
                                                                     onTap:
                                                                         () async {
-                                                                          if(viewLeads!.data!.callPermission==false) {
-                                                                            showDialog(
-                                                                                context: context,
-                                                                                builder: (BuildContext ctx) {
-                                                                                  return AlertDialog(
-                                                                                    title: const Text('Alert !!!'),
-                                                                                    content:  Text(
-                                                                                        viewLeads!.data!.warningMessage.toString()),
-                                                                                    actions: [
-                                                                                      // The "Yes" button
-                                                                                      TextButton(
-                                                                                          onPressed: () {
-                                                                                            Navigator.of(context).pop();
-                                                                                          },
-                                                                                          child: const Text('Close')),
-                                                                                      TextButton(
-                                                                                          onPressed: () {
-                                                                                            Navigator.push(
-                                                                                              context,
-                                                                                              MaterialPageRoute(
-                                                                                                  builder: (context) => LeadDetails(
-                                                                                                      widget.token!,
-                                                                                                      widget.editLead,
-                                                                                                      widget.deleteLead,
-                                                                                                      widget.cloudCall,
-                                                                                                      viewLeads!.data!.callLeadId.toString(),
-                                                                                                      pageName: widget
-                                                                                                          .pageName,
-                                                                                                      status:
-                                                                                                      widget.status,
-                                                                                                      staff:
-                                                                                                      widget.staff,
-                                                                                                      isCalled: widget
-                                                                                                          .isCalled,
-                                                                                                      fromDate: widget
-                                                                                                          .fromDate,
-                                                                                                      toDate:
-                                                                                                      widget.toDate,
-                                                                                                      category: widget
-                                                                                                          .category,
-                                                                                                      scrollToIndex:
-                                                                                                      index,
-                                                                                                      page: page,
-                                                                                                      pageSize: page *
-                                                                                                          pageSize,
-                                                                                                      leadType: widget
-                                                                                                          .leadType)),
-                                                                                            );
-                                                                                          },
-                                                                                          child: const Text('followup')),
-                                                                                    ],
-                                                                                  );
-                                                                                });
-
-                                                                          }
-                                                                          else{
-                                                                            if (widget
-                                                                                .cloudCall ==
-                                                                                true) {
-                                                                              showDialog(
-                                                                                  context:
-                                                                                  context,
-                                                                                  builder:
-                                                                                      (BuildContext context) {
-                                                                                    return AlertDialog(
-                                                                                      scrollable: true,
-                                                                                      title: const Text('Choose Call Type'),
-                                                                                      content: Column(
-                                                                                        mainAxisAlignment: MainAxisAlignment.start,
-                                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                        children: [
-                                                                                          InkWell(
-                                                                                            onTap: () async {
-                                                                                              Common.showProgressDialog(context, "Loading..");
-                                                                                              CloudCallModel object1 = await HttpService.addCloudCall(widget.token, items[index].callMasterId.toString(), items[index].contactNumber1);
-                                                                                              if (object1.data == true) {
-                                                                                                if (context.mounted) {
-                                                                                                  Navigator.push(
-                                                                                                    context,
-                                                                                                    MaterialPageRoute(
-                                                                                                        builder: (context) => ViewLeads(
+                                                                      if (viewLeads!
+                                                                              .data!
+                                                                              .callPermission ==
+                                                                          false) {
+                                                                        showDialog(
+                                                                            context:
+                                                                                context,
+                                                                            builder:
+                                                                                (BuildContext ctx) {
+                                                                              return AlertDialog(
+                                                                                title: const Text('Alert !!!'),
+                                                                                content: Text(viewLeads!.data!.warningMessage.toString()),
+                                                                                actions: [
+                                                                                  // The "Yes" button
+                                                                                  TextButton(
+                                                                                      onPressed: () {
+                                                                                        Navigator.of(context).pop();
+                                                                                      },
+                                                                                      child: const Text('Close')),
+                                                                                  TextButton(
+                                                                                      onPressed: () {
+                                                                                        Navigator.push(
+                                                                                          context,
+                                                                                          MaterialPageRoute(builder: (context) => LeadDetails(widget.token!, widget.editLead, widget.deleteLead, widget.cloudCall, viewLeads!.data!.callLeadId.toString(), pageName: widget.pageName, status: widget.status, staff: widget.staff, isCalled: widget.isCalled, fromDate: widget.fromDate, toDate: widget.toDate, category: widget.category, scrollToIndex: index, page: page, pageSize: page * pageSize, leadType: widget.leadType)),
+                                                                                        );
+                                                                                      },
+                                                                                      child: const Text('followup')),
+                                                                                ],
+                                                                              );
+                                                                            });
+                                                                      } else {
+                                                                        if (widget.cloudCall ==
+                                                                            true) {
+                                                                          showDialog(
+                                                                              context: context,
+                                                                              builder: (BuildContext context) {
+                                                                                return AlertDialog(
+                                                                                  scrollable: true,
+                                                                                  title: const Text('Choose Call Type'),
+                                                                                  content: Column(
+                                                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                    children: [
+                                                                                      InkWell(
+                                                                                        onTap: () async {
+                                                                                          Common.showProgressDialog(context, "Loading..");
+                                                                                          CloudCallModel object1 = await HttpService.addCloudCall(widget.token, items[index].callMasterId.toString(), items[index].contactNumber1);
+                                                                                          if (object1.data == true) {
+                                                                                            if (context.mounted) {
+                                                                                              Navigator.push(
+                                                                                                context,
+                                                                                                MaterialPageRoute(
+                                                                                                    builder: (context) => ViewLeads(
                                                                                                           widget.token!,
                                                                                                           widget.editLead,
                                                                                                           widget.deleteLead,
@@ -2432,84 +2426,84 @@ class _ViewLeadsState extends State<ViewLeads>{
                                                                                                           toDate: widget.toDate,
                                                                                                           category: widget.category,
                                                                                                         )),
-                                                                                                  );
-                                                                                                }
-                                                                                              } else {
-                                                                                                Common.toastMessaage(object1.message, Colors.red);
-                                                                                                if (context.mounted) Navigator.pop(context);
-                                                                                              }
-                                                                                            },
-                                                                                            child: SizedBox(
-                                                                                              height: 50,
-                                                                                              child: Row(
-                                                                                                children: [
-                                                                                                  Container(
-                                                                                                    height: 30,
-                                                                                                    width: 30,
-                                                                                                    decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                                    child: const Icon(
-                                                                                                      Icons.cloud_circle_rounded,
-                                                                                                      color: Colors.black,
-                                                                                                    ),
-                                                                                                  ),
-                                                                                                  const SizedBox(
-                                                                                                    width: 20,
-                                                                                                  ),
-                                                                                                  const Text(
-                                                                                                    'Cloud Call',
-                                                                                                    style: TextStyle(fontSize: 18),
-                                                                                                  ),
-                                                                                                ],
+                                                                                              );
+                                                                                            }
+                                                                                          } else {
+                                                                                            Common.toastMessaage(object1.message, Colors.red);
+                                                                                            if (context.mounted) Navigator.pop(context);
+                                                                                          }
+                                                                                        },
+                                                                                        child: SizedBox(
+                                                                                          height: 50,
+                                                                                          child: Row(
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                height: 30,
+                                                                                                width: 30,
+                                                                                                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
+                                                                                                child: const Icon(
+                                                                                                  Icons.cloud_circle_rounded,
+                                                                                                  color: Colors.black,
+                                                                                                ),
                                                                                               ),
-                                                                                            ),
+                                                                                              const SizedBox(
+                                                                                                width: 20,
+                                                                                              ),
+                                                                                              const Text(
+                                                                                                'Cloud Call',
+                                                                                                style: TextStyle(fontSize: 18),
+                                                                                              ),
+                                                                                            ],
                                                                                           ),
-                                                                                          const SizedBox(
-                                                                                            height: 10,
-                                                                                          ),
-                                                                                          InkWell(
-                                                                                            onTap: () async {
-                                                                                              // String url = 'tel:+${items[index].contactNumber1}';
-                                                                                              // await launchUrl(Uri.parse(url));
-                                                                                              bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
-                                                                                            },
-                                                                                            child: SizedBox(
-                                                                                                height: 50,
-                                                                                                child: Row(
-                                                                                                  children: [
-                                                                                                    Container(
-                                                                                                      height: 30,
-                                                                                                      width: 30,
-                                                                                                      decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                                      child: const Icon(
-                                                                                                        Icons.call,
-                                                                                                        color: Colors.black,
-                                                                                                      ),
-                                                                                                    ),
-                                                                                                    const SizedBox(
-                                                                                                      width: 20,
-                                                                                                    ),
-                                                                                                    const Text(
-                                                                                                      'Phone Call',
-                                                                                                      style: TextStyle(fontSize: 18),
-                                                                                                    ),
-                                                                                                  ],
-                                                                                                )),
-                                                                                          ),
-                                                                                        ],
+                                                                                        ),
                                                                                       ),
-                                                                                    );
-                                                                                  });
-                                                                            }
-                                                                            else {
-                                                                              // String
-                                                                              // url =
-                                                                              //     'tel:+${items[index].contactNumber1}';
-                                                                              // await launchUrl(
-                                                                              //     Uri.parse(url));
-                                                                              bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
-                                                                            }
-                                                                          }
-
+                                                                                      const SizedBox(
+                                                                                        height: 10,
+                                                                                      ),
+                                                                                      InkWell(
+                                                                                        onTap: () async {
+                                                                                          // String url = 'tel:+${items[index].contactNumber1}';
+                                                                                          // await launchUrl(Uri.parse(url));
+                                                                                          bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
+                                                                                        },
+                                                                                        child: SizedBox(
+                                                                                            height: 50,
+                                                                                            child: Row(
+                                                                                              children: [
+                                                                                                Container(
+                                                                                                  height: 30,
+                                                                                                  width: 30,
+                                                                                                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
+                                                                                                  child: const Icon(
+                                                                                                    Icons.call,
+                                                                                                    color: Colors.black,
+                                                                                                  ),
+                                                                                                ),
+                                                                                                const SizedBox(
+                                                                                                  width: 20,
+                                                                                                ),
+                                                                                                const Text(
+                                                                                                  'Phone Call',
+                                                                                                  style: TextStyle(fontSize: 18),
+                                                                                                ),
+                                                                                              ],
+                                                                                            )),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                );
+                                                                              });
+                                                                        } else {
+                                                                          // String
+                                                                          // url =
+                                                                          //     'tel:+${items[index].contactNumber1}';
+                                                                          // await launchUrl(
+                                                                          //     Uri.parse(url));
+                                                                          bool?
+                                                                              res =
+                                                                              await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
+                                                                        }
+                                                                      }
                                                                     },
                                                                     child:
                                                                         Container(
@@ -2656,7 +2650,10 @@ class _ViewLeadsState extends State<ViewLeads>{
                 ),
                 bottomNavigationBar: configure != null
                     ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured)
+                        widget.token!,
+                        configure!.data!.whatsappConfigured,
+                        phoneCallLogPermission: phoneCallLogPermission,
+                      )
                     : const SizedBox())
             : Scaffold(
                 backgroundColor: Colors.white,
