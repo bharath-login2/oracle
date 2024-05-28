@@ -62,10 +62,8 @@ class _DraweScreenState extends State<DraweScreen> {
     super.initState();
     getData();
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      setState(() {
         _currentColorIndex = (_currentColorIndex + 1) % _textColors.length;
       });
-    });
   }
 
   getData() async {
