@@ -52,7 +52,7 @@ class _CallLogsState extends State<CallLogs> {
   String assignStaff = 'Assign Staff';
   String assignStaffId = '';
   int from =
-      DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+      DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
   int to = DateTime.now().millisecondsSinceEpoch;
   bool displayOverApps = false;
   CallLogUploadPermissionModel? callUploadPermission;
@@ -546,7 +546,7 @@ class _CallLogsState extends State<CallLogs> {
                                   ? Column(
                                       children: [
                                         Text(
-                                          '${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(from))} - ${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(to))} (Last 30 Days)',
+                                          '${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(from))} - ${DateFormat('dd-M-yyyy').format(DateTime.fromMillisecondsSinceEpoch(to))} (Last 3 Days)',
                                           style: const TextStyle(
                                             fontSize: 16,
                                           ),
@@ -570,9 +570,10 @@ class _CallLogsState extends State<CallLogs> {
                                                           onLongPress = true;
                                                           history.add({
                                                             "name": _callLogEntries
-                                                                .elementAt(
-                                                                    indexStaff)
-                                                                .name,
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .name ??
+                                                                "",
                                                             "phone_number":
                                                                 _callLogEntries
                                                                     .elementAt(
@@ -654,9 +655,10 @@ class _CallLogsState extends State<CallLogs> {
                                                           } else {
                                                             history.add({
                                                               "name": _callLogEntries
-                                                                  .elementAt(
-                                                                      indexStaff)
-                                                                  .name,
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .name ??
+                                                                  "",
                                                               "phone_number":
                                                                   _callLogEntries
                                                                       .elementAt(
@@ -800,7 +802,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                                                 children: [
                                                                                   Text(
-                                                                                    _callLogEntries.elementAt(indexStaff).name.toString(),
+                                                                                    _callLogEntries.elementAt(indexStaff).name ?? "Unknown",
                                                                                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                   const SizedBox(
@@ -818,7 +820,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                     onTap: () async {
                                                                                       Common.showProgressDialog(context, "Loading..");
                                                                                       history.add({
-                                                                                        "name": _callLogEntries.elementAt(indexStaff).name,
+                                                                                        "name": _callLogEntries.elementAt(indexStaff).name ?? "",
                                                                                         "phone_number": _callLogEntries.elementAt(indexStaff).number,
                                                                                         "callTypes": _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
                                                                                         "time": '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
@@ -902,23 +904,24 @@ class _CallLogsState extends State<CallLogs> {
                                                                         Text(
                                                                           'Type  : ${_callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1)}',
                                                                         ),
-                                                                        Container(
-                                                                          decoration: BoxDecoration(
-                                                                              color: Colors.grey.shade300,
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              Padding(
-                                                                            padding: const EdgeInsets.only(
-                                                                                left: 10,
-                                                                                right: 10,
-                                                                                top: 5,
-                                                                                bottom: 5),
-                                                                            child:
-                                                                                Text(
-                                                                              '${_callLogEntries.elementAt(indexStaff).simDisplayName}',
-                                                                            ),
-                                                                          ),
-                                                                        ),
+                                                                        const SizedBox()
+                                                                        // Container(
+                                                                        //   decoration: BoxDecoration(
+                                                                        //       color: Colors.grey.shade300,
+                                                                        //       borderRadius: BorderRadius.circular(5)),
+                                                                        //   child:
+                                                                        //       Padding(
+                                                                        //     padding: const EdgeInsets.only(
+                                                                        //         left: 10,
+                                                                        //         right: 10,
+                                                                        //         top: 5,
+                                                                        //         bottom: 5),
+                                                                        //     child:
+                                                                        //         Text(
+                                                                        //       '${_callLogEntries.elementAt(indexStaff).simDisplayName}',
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
                                                                       ],
                                                                     ),
                                                                     const SizedBox(
@@ -1127,8 +1130,16 @@ class _CallLogsState extends State<CallLogs> {
                                                               title: const Text(
                                                                   'Staffs'),
                                                               content: SizedBox(
-                                                                height: MediaQuery.of(context).size.height*.35,
-                                                                width: MediaQuery.of(context).size.width *.7,
+                                                                height: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .height *
+                                                                    .35,
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .7,
                                                                 child: ListView
                                                                     .builder(
                                                                   shrinkWrap:
@@ -1142,7 +1153,8 @@ class _CallLogsState extends State<CallLogs> {
                                                                       (context,
                                                                           ind) {
                                                                     return InkWell(
-                                                                      onTap: () {
+                                                                      onTap:
+                                                                          () {
                                                                         setState(
                                                                             () {
                                                                           assignStaff = commonDetails!
@@ -1171,9 +1183,8 @@ class _CallLogsState extends State<CallLogs> {
                                                                               .staff[ind]
                                                                               .staffName
                                                                               .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize:
-                                                                                  18),
+                                                                          style:
+                                                                              const TextStyle(fontSize: 18),
                                                                         ),
                                                                       ),
                                                                     );
@@ -1394,7 +1405,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                               CrossAxisAlignment.start,
                                                                           children: [
                                                                             Text(
-                                                                              logHistory!.data![index].name.toString(),
+                                                                              logHistory!.data![index].name.toString() == "" ? "Unknown" : logHistory!.data![index].name.toString(),
                                                                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                             ),
                                                                             const SizedBox(
@@ -1457,23 +1468,24 @@ class _CallLogsState extends State<CallLogs> {
                                                                         Text(
                                                                           'Type  : ${logHistory!.data![index].callType}',
                                                                         ),
-                                                                        Container(
-                                                                          decoration: BoxDecoration(
-                                                                              color: Colors.grey.shade300,
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              Padding(
-                                                                            padding: const EdgeInsets.only(
-                                                                                left: 10,
-                                                                                right: 10,
-                                                                                top: 5,
-                                                                                bottom: 5),
-                                                                            child:
-                                                                                Text(
-                                                                              "${logHistory!.data![index].simName}",
-                                                                            ),
-                                                                          ),
-                                                                        ),
+                                                                        const SizedBox()
+                                                                        // Container(
+                                                                        //   decoration: BoxDecoration(
+                                                                        //       color: Colors.grey.shade300,
+                                                                        //       borderRadius: BorderRadius.circular(5)),
+                                                                        //   child:
+                                                                        //       Padding(
+                                                                        //     padding: const EdgeInsets.only(
+                                                                        //         left: 10,
+                                                                        //         right: 10,
+                                                                        //         top: 5,
+                                                                        //         bottom: 5),
+                                                                        //     child:
+                                                                        //         Text(
+                                                                        //       "${logHistory!.data![index].simName}",
+                                                                        //     ),
+                                                                        //   ),
+                                                                        // ),
                                                                       ],
                                                                     ),
                                                                     const SizedBox(

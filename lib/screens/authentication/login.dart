@@ -76,6 +76,7 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Scaffold(
+      backgroundColor: Colors.white,
         body: updatedata != null
             ? SingleChildScrollView(
                 child: Container(
