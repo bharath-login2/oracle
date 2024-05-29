@@ -141,7 +141,7 @@ class _LeadNotificationPageState extends State<LeadNotificationPage> {
                                             widget.deleteLead,
                                             widget.cloudCall,leadNotification!.data![i].leadMasterId.toString(),
                                             pageName: 'LeadNotification',)),
-                                  );
+                                  ).then(getData());
                                 }
 
                               },

@@ -63,7 +63,7 @@ class _AllReportState extends State<AllReport> {
   AddLeadCommonDataModel? commonDetails;
   bool? result = true;
   bool? result1 = true;
-  var fromdate = DateTime.now() ;
+  var fromdate = DateTime.now();
   var todate = DateTime.now();
   var outputFormat = DateFormat('dd-MM-yyyy');
   bool? isCalled = true;
@@ -502,7 +502,12 @@ class _AllReportState extends State<AllReport> {
                                                                       toDate: todate
                                                                           .toString(),
                                                                     )),
-                                                      );
+                                                      ).then((r) {
+                                                        items.clear();
+                                                        page = 1;
+                                                        getData();
+                                                      
+                                                      });
                                                     },
                                                     child:
                                                         const Text('followup')),
@@ -679,7 +684,12 @@ class _AllReportState extends State<AllReport> {
                                                   fromDate: fromdate.toString(),
                                                   toDate: todate.toString(),
                                                 )),
-                                      );
+                                      ).then((r) {
+                                        items.clear();
+                                        page = 1;
+                                        getData();
+                                        
+                                      });
                                     },
                                     child: Padding(
                                       padding: const EdgeInsets.only(
@@ -1136,7 +1146,18 @@ class _AllReportState extends State<AllReport> {
                                                                                             fromDate: fromdate.toString(),
                                                                                             toDate: todate.toString(),
                                                                                           )),
-                                                                                );
+                                                                                ).then((r) {
+                                                                                  items.clear();
+                                                                                  page = 1;
+                                                                                  getData();
+                                                                                  itemPositionsListener.itemPositions.addListener(() {
+                                                                                    if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
+                                                                                      if (items.length < viewLeads!.data!.totalLeads!) {
+                                                                                        getData();
+                                                                                      }
+                                                                                    }
+                                                                                  });
+                                                                                });
                                                                               },
                                                                               child: const Text('followup')),
                                                                         ],

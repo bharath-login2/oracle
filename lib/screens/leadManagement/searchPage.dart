@@ -364,7 +364,7 @@ class _SearchPageState extends State<SearchPage> {
                                                     pageName: 'search',
                                                     searchKey: searchkey.text,
                                                   )),
-                                            );
+                                            ).then(getData(resultFoundSts));
                                           },
                                           child: const Text('followup')),
                                     ],
@@ -540,7 +540,7 @@ class _SearchPageState extends State<SearchPage> {
                                     pageName: 'search',
                                     searchKey: searchkey.text,
                                   )),
-                            );
+                            ).then(getData(resultFoundSts));
                           },
                           child:Padding(
                             padding: const EdgeInsets.only(
@@ -965,7 +965,7 @@ class _SearchPageState extends State<SearchPage> {
                                                                         pageName: 'search',
                                                                         searchKey: searchkey.text,
                                                                       )),
-                                                                );
+                                                                ).then(getData(resultFoundSts));
                                                               },
                                                               child: const Text('followup')),
                                                         ],
