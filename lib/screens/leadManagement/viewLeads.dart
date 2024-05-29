@@ -147,13 +147,13 @@ class _ViewLeadsState extends State<ViewLeads> {
     if (widget.pageName == "Closed Leads" ||
         widget.pageName == "Total Called" ||
         widget.pageName == "Rejected Leads") {
-      if (statusWise == 'yes') {
+      // if (statusWise == 'yes') {
         fromdate = DateTime.parse(widget.fromDate.toString());
         todate = DateTime.now();
-      } else {
-        fromdate = DateTime.now();
-        todate = DateTime.now();
-      }
+      // } else {
+      //   fromdate = DateTime.now();
+      //   todate = DateTime.now();
+      // }
     }
     getData('desc', true);
     itemPositionsListener.itemPositions.addListener(() {
