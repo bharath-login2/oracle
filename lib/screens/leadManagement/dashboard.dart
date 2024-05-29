@@ -259,6 +259,66 @@ class _DashboardState extends State<Dashboard> {
     Colors.green,
   ];
 
+  getStaffwise() async {
+    setState(() {
+      moreloading = true;
+    });
+    staffWise = await HttpService.leadDashboard1(
+        widget.token, fromdate, todate, fromdate1, todate1);
+    setState(() {
+      data.clear();
+      for (int i = 0; i < staffWise!.data!.categoryGraph!.length; i++) {
+        data.addAll({
+          staffWise!.data!.categoryGraph![i].categoryName.toString():
+              staffWise!.data!.categoryGraph![i].categoryCount!.toDouble(),
+        });
+      }
+      catNew = 0;
+      catPending = 0;
+      catFollowup = 0;
+      catRejected = 0;
+      catClosed = 0;
+      stfNew = 0;
+      stfPending = 0;
+      stfFollowup = 0;
+      stfRejected = 0;
+      stfClosed = 0;
+      for (int i = 0; i < staffWise!.data!.categoryLeads!.length; i++) {
+        catNew = int.parse(catNew.toString()) +
+            int.parse(staffWise!.data!.categoryLeads![i].newCount.toString());
+        catPending = int.parse(catPending.toString()) +
+            int.parse(
+                staffWise!.data!.categoryLeads![i].pendingCount.toString());
+        catFollowup = int.parse(catFollowup.toString()) +
+            int.parse(
+                staffWise!.data!.categoryLeads![i].followupCount.toString());
+        catRejected = int.parse(catRejected.toString()) +
+            int.parse(
+                staffWise!.data!.categoryLeads![i].rejectedCount.toString());
+        catClosed = int.parse(catClosed.toString()) +
+            int.parse(
+                staffWise!.data!.categoryLeads![i].confirmedCount.toString());
+      }
+      for (int i = 0; i < staffWise!.data!.staffLeads!.length; i++) {
+        stfNew = int.parse(stfNew.toString()) +
+            int.parse(staffWise!.data!.staffLeads![i].newCount.toString());
+        stfPending = int.parse(stfPending.toString()) +
+            int.parse(staffWise!.data!.staffLeads![i].pendingCount.toString());
+        stfFollowup = int.parse(stfFollowup.toString()) +
+            int.parse(staffWise!.data!.staffLeads![i].followupCount.toString());
+        stfRejected = int.parse(stfRejected.toString()) +
+            int.parse(staffWise!.data!.staffLeads![i].rejectedCount.toString());
+        stfClosed = int.parse(stfClosed.toString()) +
+            int.parse(
+                staffWise!.data!.staffLeads![i].confirmedCount.toString());
+      }
+    });
+    setState(() {
+      moreloading = false;
+      loadmore = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -1249,7 +1309,16 @@ class _DashboardState extends State<Dashboard> {
                                                                       AddLeads(
                                                                           widget
                                                                               .token)),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'Add Leads');
                                                     },
@@ -2040,7 +2109,17 @@ class _DashboardState extends State<Dashboard> {
                                                                                     fromDate: fromdate.toString(),
                                                                                     toDate: todate.toString(),
                                                                                   )),
-                                                                        )
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
                                                                       : _dialogue(
                                                                           context,
                                                                           'View Leads');
@@ -2071,7 +2150,17 @@ class _DashboardState extends State<Dashboard> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                               builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Missed Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: '1')),
-                                                                        )
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
                                                                       : _dialogue(
                                                                           context,
                                                                           'View Leads');
@@ -2088,7 +2177,17 @@ class _DashboardState extends State<Dashboard> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                               builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transfer Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: '2')),
-                                                                        )
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
                                                                       : _dialogue(
                                                                           context,
                                                                           'View Leads');
@@ -2164,7 +2263,16 @@ class _DashboardState extends State<Dashboard> {
                                                                             status:
                                                                                 '1',
                                                                           )),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -2461,7 +2569,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'New Leads', fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: todate.toString(), status: '1', staff: object1.data!.staffLeads![i].staffId)),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -2545,7 +2658,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'New Leads', fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: todate.toString(), status: '1', category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -2629,7 +2747,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'New Leads', leadType: "1", fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day - 1).toString(), status: '1', staff: object1.data!.missedLeads![i].missedstaffId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -2743,7 +2866,16 @@ class _DashboardState extends State<Dashboard> {
                                                                           .toString(),
                                                                       status:
                                                                           '2')),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -3042,7 +3174,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                       Navigator.push(
                                                                                                                         context,
                                                                                                                         MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Followup Leads', fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: todate.toString(), status: '2', staff: object1.data!.staffLeads![i].staffId.toString())),
-                                                                                                                      );
+                                                                                                                      ).then((r) {
+                                                                                                                        getData(widget.token, fromdate, todate);
+                                                                                                                        if (loadmore == true) {
+                                                                                                                          getStaffwise();
+                                                                                                                        }
+                                                                                                                      });
                                                                                                                     },
                                                                                                                     child: LinearPercentIndicator(
                                                                                                                       width: MediaQuery.of(context).size.width * 0.82,
@@ -3126,7 +3263,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                       Navigator.push(
                                                                                                                         context,
                                                                                                                         MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Followup Leads', fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: todate.toString(), status: '2', category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                      );
+                                                                                                                      ).then((r) {
+                                                                                                                        getData(widget.token, fromdate, todate);
+                                                                                                                        if (loadmore == true) {
+                                                                                                                          getStaffwise();
+                                                                                                                        }
+                                                                                                                      });
                                                                                                                     },
                                                                                                                     child: LinearPercentIndicator(
                                                                                                                       width: MediaQuery.of(context).size.width * 0.82,
@@ -3210,7 +3352,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                       Navigator.push(
                                                                                                                         context,
                                                                                                                         MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, leadType: "1", pageName: 'Followup Leads', fromDate: DateTime(DateTime.now().year, DateTime.now().month - 3, DateTime.now().day).toString(), toDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day - 1).toString(), status: '2', staff: object1.data!.missedLeads![i].missedstaffId.toString())),
-                                                                                                                      );
+                                                                                                                      ).then((r) {
+                                                                                                                        getData(widget.token, fromdate, todate);
+                                                                                                                        if (loadmore == true) {
+                                                                                                                          getStaffwise();
+                                                                                                                        }
+                                                                                                                      });
                                                                                                                     },
                                                                                                                     child: LinearPercentIndicator(
                                                                                                                       width: MediaQuery.of(context).size.width * 0.82,
@@ -3324,7 +3471,16 @@ class _DashboardState extends State<Dashboard> {
                                                                           .toString(),
                                                                       status:
                                                                           '4')),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -3621,7 +3777,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Closed Leads', fromDate: fromdate.toString(), toDate: todate.toString(), status: '4', staff: object1.data!.staffLeads![i].staffId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -3704,7 +3865,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Closed Leads', fromDate: fromdate.toString(), toDate: todate.toString(), status: '4', category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -3813,7 +3979,16 @@ class _DashboardState extends State<Dashboard> {
                                                                           .toString(),
                                                                       status:
                                                                           '-1')),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -4110,7 +4285,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '-1', staff: object1.data!.staffLeads![i].staffId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -4194,7 +4374,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '-1', category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -4278,7 +4463,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, deleteLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: object1.data!.statusLeads![i].statusId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -4388,7 +4578,16 @@ class _DashboardState extends State<Dashboard> {
                                                                             leadType:
                                                                                 "2",
                                                                           )),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -4685,7 +4884,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transfered Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", staff: object1.data!.staffLeads![i].staffId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -4768,7 +4972,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transfered Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -4874,7 +5083,16 @@ class _DashboardState extends State<Dashboard> {
                                                                             leadType:
                                                                                 "1",
                                                                           )),
-                                                            )
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
                                                           : _dialogue(context,
                                                               'View Leads');
                                                     },
@@ -5172,7 +5390,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Missed Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: '1', staff: object1.data!.staffLeads![i].staffId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -5256,7 +5479,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Missed Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: '1', category: object1.data!.categoryLeads![i].categoryId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -5340,7 +5568,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                     Navigator.push(
                                                                                                                       context,
                                                                                                                       MaterialPageRoute(builder: (context) => ViewLeads(widget.token, deleteLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Missed Leads', fromDate: fromdate.toString(), leadType: "1", toDate: todate.toString(), status: object1.data!.statusLeads![i].statusId.toString())),
-                                                                                                                    );
+                                                                                                                    ).then((r) {
+                                                                                                                      getData(widget.token, fromdate, todate);
+                                                                                                                      if (loadmore == true) {
+                                                                                                                        getStaffwise();
+                                                                                                                      }
+                                                                                                                    });
                                                                                                                   },
                                                                                                                   child: LinearPercentIndicator(
                                                                                                                     width: MediaQuery.of(context).size.width * 0.82,
@@ -5436,143 +5669,7 @@ class _DashboardState extends State<Dashboard> {
                                               const EdgeInsets.only(bottom: 16),
                                           child: InkWell(
                                             onTap: () async {
-                                              setState(() {
-                                                moreloading = true;
-                                              });
-                                              staffWise = await HttpService
-                                                  .leadDashboard1(
-                                                      widget.token,
-                                                      fromdate,
-                                                      todate,
-                                                      fromdate1,
-                                                      todate1);
-                                              setState(() {
-                                                moreloading = false;
-                                                loadmore = true;
-                                                data.clear();
-                                                for (int i = 0;
-                                                    i <
-                                                        staffWise!
-                                                            .data!
-                                                            .categoryGraph!
-                                                            .length;
-                                                    i++) {
-                                                  data.addAll({
-                                                    staffWise!
-                                                            .data!
-                                                            .categoryGraph![i]
-                                                            .categoryName
-                                                            .toString():
-                                                        staffWise!
-                                                            .data!
-                                                            .categoryGraph![i]
-                                                            .categoryCount!
-                                                            .toDouble(),
-                                                  });
-                                                }
-                                                catNew = 0;
-                                                catPending = 0;
-                                                catFollowup = 0;
-                                                catRejected = 0;
-                                                catClosed = 0;
-                                                stfNew = 0;
-                                                stfPending = 0;
-                                                stfFollowup = 0;
-                                                stfRejected = 0;
-                                                stfClosed = 0;
-                                                for (int i = 0;
-                                                    i <
-                                                        staffWise!
-                                                            .data!
-                                                            .categoryLeads!
-                                                            .length;
-                                                    i++) {
-                                                  catNew = int.parse(
-                                                          catNew.toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .categoryLeads![i]
-                                                          .newCount
-                                                          .toString());
-                                                  catPending = int.parse(
-                                                          catPending
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .categoryLeads![i]
-                                                          .pendingCount
-                                                          .toString());
-                                                  catFollowup = int.parse(
-                                                          catFollowup
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .categoryLeads![i]
-                                                          .followupCount
-                                                          .toString());
-                                                  catRejected = int.parse(
-                                                          catRejected
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .categoryLeads![i]
-                                                          .rejectedCount
-                                                          .toString());
-                                                  catClosed = int.parse(
-                                                          catClosed
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .categoryLeads![i]
-                                                          .confirmedCount
-                                                          .toString());
-                                                }
-                                                for (int i = 0;
-                                                    i <
-                                                        staffWise!.data!
-                                                            .staffLeads!.length;
-                                                    i++) {
-                                                  stfNew = int.parse(
-                                                          stfNew.toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .staffLeads![i]
-                                                          .newCount
-                                                          .toString());
-                                                  stfPending = int.parse(
-                                                          stfPending
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .staffLeads![i]
-                                                          .pendingCount
-                                                          .toString());
-                                                  stfFollowup = int.parse(
-                                                          stfFollowup
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .staffLeads![i]
-                                                          .followupCount
-                                                          .toString());
-                                                  stfRejected = int.parse(
-                                                          stfRejected
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .staffLeads![i]
-                                                          .rejectedCount
-                                                          .toString());
-                                                  stfClosed = int.parse(
-                                                          stfClosed
-                                                              .toString()) +
-                                                      int.parse(staffWise!
-                                                          .data!
-                                                          .staffLeads![i]
-                                                          .confirmedCount
-                                                          .toString());
-                                                }
-                                              });
+                                              getStaffwise();
                                             },
                                             child: Container(
                                                 height: 32,
@@ -6178,7 +6275,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                     fromDate: fromdate1.toString(),
                                                                                                     toDate: todate1.toString(),
                                                                                                   )),
-                                                                                        )
+                                                                                        ).then((r) {
+                                                                                          getData(widget.token, fromdate, todate);
+                                                                                          if (loadmore == true) {
+                                                                                            getStaffwise();
+                                                                                          }
+                                                                                        })
                                                                                       : _dialogue(context, 'View Leads');
                                                                                 },
                                                                                 child: Padding(
@@ -6209,7 +6311,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                     fromDate: fromdate1.toString(),
                                                                                                     toDate: todate1.toString(),
                                                                                                   )),
-                                                                                        )
+                                                                                        ).then((r) {
+                                                                                          getData(widget.token, fromdate, todate);
+                                                                                          if (loadmore == true) {
+                                                                                            getStaffwise();
+                                                                                          }
+                                                                                        })
                                                                                       : _dialogue(context, 'View Leads');
                                                                                 },
                                                                                 child: Padding(
@@ -6240,7 +6347,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                     fromDate: fromdate1.toString(),
                                                                                                     toDate: todate1.toString(),
                                                                                                   )),
-                                                                                        )
+                                                                                        ).then((r) {
+                                                                                          getData(widget.token, fromdate, todate);
+                                                                                          if (loadmore == true) {
+                                                                                            getStaffwise();
+                                                                                          }
+                                                                                        })
                                                                                       : _dialogue(context, 'View Leads');
                                                                                 },
                                                                                 child: Padding(
@@ -6271,7 +6383,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                     fromDate: fromdate1.toString(),
                                                                                                     toDate: todate1.toString(),
                                                                                                   )),
-                                                                                        )
+                                                                                        ).then((r) {
+                                                                                          getData(widget.token, fromdate, todate);
+                                                                                          if (loadmore == true) {
+                                                                                            getStaffwise();
+                                                                                          }
+                                                                                        })
                                                                                       : _dialogue(context, 'View Leads');
                                                                                 },
                                                                                 child: Padding(
@@ -6302,7 +6419,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                     fromDate: fromdate1.toString(),
                                                                                                     toDate: todate1.toString(),
                                                                                                   )),
-                                                                                        )
+                                                                                        ).then((r) {
+                                                                                          getData(widget.token, fromdate, todate);
+                                                                                          if (loadmore == true) {
+                                                                                            getStaffwise();
+                                                                                          }
+                                                                                        })
                                                                                       : _dialogue(context, 'View Leads');
                                                                                 },
                                                                                 child: Padding(
@@ -6346,7 +6468,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                   // fromDate: fromdate1.toString(),
                                                                                                   // toDate: todate1.toString(),
                                                                                                 )),
-                                                                                      )
+                                                                                      ).then((r) {
+                                                                                        getData(widget.token, fromdate, todate);
+                                                                                        if (loadmore == true) {
+                                                                                          getStaffwise();
+                                                                                        }
+                                                                                      })
                                                                                     : _dialogue(context, 'View Leads');
                                                                               },
                                                                               child: Padding(
@@ -6377,7 +6504,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                   fromDate: fromdate1.toString(),
                                                                                                   toDate: todate1.toString(),
                                                                                                 )),
-                                                                                      )
+                                                                                      ).then((r) {
+                                                                                        getData(widget.token, fromdate, todate);
+                                                                                        if (loadmore == true) {
+                                                                                          getStaffwise();
+                                                                                        }
+                                                                                      })
                                                                                     : _dialogue(context, 'View Leads');
                                                                               },
                                                                               child: Padding(
@@ -6408,7 +6540,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                   fromDate: fromdate1.toString(),
                                                                                                   toDate: todate1.toString(),
                                                                                                 )),
-                                                                                      )
+                                                                                      ).then((r) {
+                                                                                        getData(widget.token, fromdate, todate);
+                                                                                        if (loadmore == true) {
+                                                                                          getStaffwise();
+                                                                                        }
+                                                                                      })
                                                                                     : _dialogue(context, 'View Leads');
                                                                               },
                                                                               child: Padding(
@@ -6439,7 +6576,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                   fromDate: fromdate1.toString(),
                                                                                                   toDate: todate1.toString(),
                                                                                                 )),
-                                                                                      )
+                                                                                      ).then((r) {
+                                                                                        getData(widget.token, fromdate, todate);
+                                                                                        if (loadmore == true) {
+                                                                                          getStaffwise();
+                                                                                        }
+                                                                                      })
                                                                                     : _dialogue(context, 'View Leads');
                                                                               },
                                                                               child: Padding(
@@ -6470,7 +6612,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                                   fromDate: fromdate1.toString(),
                                                                                                   toDate: todate1.toString(),
                                                                                                 )),
-                                                                                      )
+                                                                                      ).then((r) {
+                                                                                        getData(widget.token, fromdate, todate);
+                                                                                        if (loadmore == true) {
+                                                                                          getStaffwise();
+                                                                                        }
+                                                                                      })
                                                                                     : _dialogue(context, 'View Leads');
                                                                               },
                                                                               child: Padding(
@@ -6925,7 +7072,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                               fromDate: fromdate1.toString(),
                                                                                               toDate: todate1.toString(),
                                                                                             )),
-                                                                                  )
+                                                                                  ).then((r) {
+                                                                                    getData(widget.token, fromdate, todate);
+                                                                                    if (loadmore == true) {
+                                                                                      getStaffwise();
+                                                                                    }
+                                                                                  })
                                                                                 : _dialogue(context, 'View Leads');
                                                                           },
                                                                           child:
@@ -6963,7 +7115,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                               fromDate: fromdate1.toString(),
                                                                                               toDate: todate1.toString(),
                                                                                             )),
-                                                                                  )
+                                                                                  ).then((r) {
+                                                                                    getData(widget.token, fromdate, todate);
+                                                                                    if (loadmore == true) {
+                                                                                      getStaffwise();
+                                                                                    }
+                                                                                  })
                                                                                 : _dialogue(context, 'View Leads');
                                                                           },
                                                                           child:
@@ -7001,7 +7158,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                               fromDate: fromdate1.toString(),
                                                                                               toDate: todate1.toString(),
                                                                                             )),
-                                                                                  )
+                                                                                  ).then((r) {
+                                                                                    getData(widget.token, fromdate, todate);
+                                                                                    if (loadmore == true) {
+                                                                                      getStaffwise();
+                                                                                    }
+                                                                                  })
                                                                                 : _dialogue(context, 'View Leads');
                                                                           },
                                                                           child:
@@ -7039,7 +7201,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                               fromDate: fromdate1.toString(),
                                                                                               toDate: todate1.toString(),
                                                                                             )),
-                                                                                  )
+                                                                                  ).then((r) {
+                                                                                    getData(widget.token, fromdate, todate);
+                                                                                    if (loadmore == true) {
+                                                                                      getStaffwise();
+                                                                                    }
+                                                                                  })
                                                                                 : _dialogue(context, 'View Leads');
                                                                           },
                                                                           child:
@@ -7077,7 +7244,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                               fromDate: fromdate1.toString(),
                                                                                               toDate: todate1.toString(),
                                                                                             )),
-                                                                                  )
+                                                                                  ).then((r) {
+                                                                                    getData(widget.token, fromdate, todate);
+                                                                                    if (loadmore == true) {
+                                                                                      getStaffwise();
+                                                                                    }
+                                                                                  })
                                                                                 : _dialogue(context, 'View Leads');
                                                                           },
                                                                           child:
@@ -7138,7 +7310,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                             fromDate: fromdate1.toString(),
                                                                                             toDate: todate1.toString(),
                                                                                           )),
-                                                                                )
+                                                                                ).then((r) {
+                                                                                  getData(widget.token, fromdate, todate);
+                                                                                  if (loadmore == true) {
+                                                                                    getStaffwise();
+                                                                                  }
+                                                                                })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
                                                                         child:
@@ -7183,7 +7360,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                             fromDate: fromdate1.toString(),
                                                                                             toDate: todate1.toString(),
                                                                                           )),
-                                                                                )
+                                                                                ).then((r) {
+                                                                                  getData(widget.token, fromdate, todate);
+                                                                                  if (loadmore == true) {
+                                                                                    getStaffwise();
+                                                                                  }
+                                                                                })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
                                                                         child:
@@ -7228,7 +7410,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                             fromDate: fromdate1.toString(),
                                                                                             toDate: todate1.toString(),
                                                                                           )),
-                                                                                )
+                                                                                ).then((r) {
+                                                                                  getData(widget.token, fromdate, todate);
+                                                                                  if (loadmore == true) {
+                                                                                    getStaffwise();
+                                                                                  }
+                                                                                })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
                                                                         child:
@@ -7275,7 +7462,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                             fromDate: fromdate1.toString(),
                                                                                             toDate: todate1.toString(),
                                                                                           )),
-                                                                                )
+                                                                                ).then((r) {
+                                                                                  getData(widget.token, fromdate, todate);
+                                                                                  if (loadmore == true) {
+                                                                                    getStaffwise();
+                                                                                  }
+                                                                                })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
                                                                         child:
@@ -7322,7 +7514,12 @@ class _DashboardState extends State<Dashboard> {
                                                                                             fromDate: fromdate1.toString(),
                                                                                             toDate: todate1.toString(),
                                                                                           )),
-                                                                                )
+                                                                                ).then((r) {
+                                                                                  getData(widget.token, fromdate, todate);
+                                                                                  if (loadmore == true) {
+                                                                                    getStaffwise();
+                                                                                  }
+                                                                                })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
                                                                         child:
@@ -7827,7 +8024,8 @@ class _DashboardState extends State<Dashboard> {
 
   void _configureSelectNotificationSubject(RemoteMessage message) {
     selectNotificationStream.stream.listen((String? payload) async {
-      await Navigator.of(context).push(MaterialPageRoute<void>(
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(
         builder: (BuildContext context) => LeadDetails(
             widget.token!,
             toBoolean(message.data['edit_lead']),
@@ -7835,7 +8033,11 @@ class _DashboardState extends State<Dashboard> {
             toBoolean(message.data['cloud_call']),
             message.data['detail_id'],
             pageName: 'Dashboard'),
-      ));
+      ))
+          .then((r) {
+        getData(widget.token, fromdate, todate);
+        if (loadmore == true) {}
+      });
     });
   }
 

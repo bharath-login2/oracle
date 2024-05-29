@@ -150,11 +150,11 @@ class _AddLeadsState extends State<AddLeads> {
         ? Scaffold(
             backgroundColor: Colors.white,
             appBar: PreferredSize(
-              preferredSize: Size.fromHeight(
-                  MediaQuery.of(context).size.height * 0.08),
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
               child: Container(
-                padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top),
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                       colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
@@ -220,8 +220,7 @@ class _AddLeadsState extends State<AddLeads> {
                           ),
                           const Text(
                             'Add Leads',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 18),
+                            style: TextStyle(color: Colors.white, fontSize: 18),
                           ),
                         ],
                       ),
@@ -248,19 +247,15 @@ class _AddLeadsState extends State<AddLeads> {
                                             setState(() {
                                               branch = value.toString();
                                             });
-                                            commonDetails =
-                                                await HttpService
-                                                    .addLeadCommonData(
-                                                        widget.token,
-                                                        branchId: branch);
+                                            commonDetails = await HttpService
+                                                .addLeadCommonData(widget.token,
+                                                    branchId: branch);
                                             setState(() {});
                                           },
-                                          items: commonDetails!
-                                              .data.branch
+                                          items: commonDetails!.data.branch
                                               .map((data) {
                                             return DropdownMenuItem<String>(
-                                              value:
-                                                  data.branchId.toString(),
+                                              value: data.branchId.toString(),
                                               child: Text(
                                                 data.branchName.toString(),
                                               ),
@@ -290,7 +285,7 @@ class _AddLeadsState extends State<AddLeads> {
                                     : const SizedBox(
                                         height: 20,
                                       ),
-    
+
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10, top: 15),
@@ -307,11 +302,11 @@ class _AddLeadsState extends State<AddLeads> {
                                               color: Colors.grey),
                                           border: OutlineInputBorder(),
                                           focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey),
+                                            borderSide:
+                                                BorderSide(color: Colors.grey),
                                           ),
-                                          labelStyle: TextStyle(
-                                              color: Colors.grey)),
+                                          labelStyle:
+                                              TextStyle(color: Colors.grey)),
                                     ),
                                   ),
                                 ),
@@ -328,11 +323,8 @@ class _AddLeadsState extends State<AddLeads> {
                                       controller: contactNo,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                          contentPadding:
-                                              const EdgeInsets.only(
-                                                  left: 10,
-                                                  top: 2,
-                                                  bottom: 2),
+                                          contentPadding: const EdgeInsets.only(
+                                              left: 10, top: 2, bottom: 2),
                                           labelText: 'Contact Number *',
                                           fillColor: Colors.white,
                                           filled: true,
@@ -343,11 +335,9 @@ class _AddLeadsState extends State<AddLeads> {
                                                 searchAutofocus: false,
                                                 showPhoneCode: true,
                                                 // optional. Shows phone code before the country name.
-                                                onSelect:
-                                                    (Country country) {
+                                                onSelect: (Country country) {
                                                   setState(() {
-                                                    code =
-                                                        country.phoneCode;
+                                                    code = country.phoneCode;
                                                   });
                                                   // flag = country.flagEmoji;
                                                   // print(countryPickerController.code.value);
@@ -356,27 +346,25 @@ class _AddLeadsState extends State<AddLeads> {
                                               );
                                             },
                                             child: Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
-                                                      left: 5),
+                                              padding: const EdgeInsets.only(
+                                                  left: 5),
                                               child: SizedBox(
                                                 // color: Colors.blue,
                                                 width: 70,
                                                 // width: MediaQuery.of(context).size.width/3.5,
                                                 child: Row(children: [
                                                   Text("+$code"),
-                                                  const Icon(Icons
-                                                      .arrow_drop_down),
+                                                  const Icon(
+                                                      Icons.arrow_drop_down),
                                                 ]),
                                               ),
                                             ),
                                           ),
-                                          border:
-                                              const OutlineInputBorder(),
+                                          border: const OutlineInputBorder(),
                                           focusedBorder:
                                               const OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey),
+                                            borderSide:
+                                                BorderSide(color: Colors.grey),
                                           ),
                                           labelStyle: const TextStyle(
                                               color: Colors.grey)),
@@ -386,17 +374,16 @@ class _AddLeadsState extends State<AddLeads> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-    
+
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
                                   child: Row(
                                     children: [
                                       SizedBox(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.45,
                                         child: TextFormField(
                                           controller: assignStaffVal,
                                           onTap: () {
@@ -424,12 +411,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   .transferStaffs
                                                                   .length,
                                                           itemBuilder:
-                                                              (context,
-                                                                  ind) {
+                                                              (context, ind) {
                                                             return InkWell(
                                                               onTap: () {
-                                                                setState(
-                                                                    () {
+                                                                setState(() {
                                                                   assignStaff = commonDetails!
                                                                       .data
                                                                       .transferStaffs[
@@ -447,8 +432,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                       true);
                                                                 });
                                                               },
-                                                              child:
-                                                                  SizedBox(
+                                                              child: SizedBox(
                                                                 height: 50,
                                                                 child: Text(
                                                                   commonDetails!
@@ -477,14 +461,12 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   true);
                                                             });
                                                           },
-                                                          child:
-                                                              const SizedBox(
+                                                          child: const SizedBox(
                                                             height: 50,
                                                             child: Text(
                                                               'Un Assigned',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      18),
+                                                                  fontSize: 18),
                                                             ),
                                                           ),
                                                         ),
@@ -496,19 +478,15 @@ class _AddLeadsState extends State<AddLeads> {
                                           maxLines: 1,
                                           readOnly: true,
                                           decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.only(
-                                                      left: 10,
-                                                      top: 2,
-                                                      bottom: 2),
+                                              contentPadding: EdgeInsets.only(
+                                                  left: 10, top: 2, bottom: 2),
                                               labelText: 'Assign Staff',
                                               fillColor: Colors.white,
                                               filled: true,
                                               prefixIcon: Icon(Icons.person,
                                                   color: Colors.grey),
                                               border: OutlineInputBorder(),
-                                              focusedBorder:
-                                                  OutlineInputBorder(
+                                              focusedBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     color: Colors.grey),
                                               ),
@@ -520,20 +498,15 @@ class _AddLeadsState extends State<AddLeads> {
                                         width: 15,
                                       ),
                                       SizedBox(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.45,
                                         child: TextFormField(
                                           controller: cost,
-                                          keyboardType:
-                                              TextInputType.number,
+                                          keyboardType: TextInputType.number,
                                           decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.only(
-                                                      left: 10,
-                                                      top: 2,
-                                                      bottom: 2),
+                                              contentPadding: EdgeInsets.only(
+                                                  left: 10, top: 2, bottom: 2),
                                               labelText: 'Cost',
                                               fillColor: Colors.white,
                                               filled: true,
@@ -541,8 +514,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                   Icons.currency_rupee,
                                                   color: Colors.grey),
                                               border: OutlineInputBorder(),
-                                              focusedBorder:
-                                                  OutlineInputBorder(
+                                              focusedBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     color: Colors.grey),
                                               ),
@@ -553,11 +525,11 @@ class _AddLeadsState extends State<AddLeads> {
                                     ],
                                   ),
                                 ),
-    
+
                                 const SizedBox(
                                   height: 15,
                                 ),
-    
+
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -569,25 +541,23 @@ class _AddLeadsState extends State<AddLeads> {
                                           builder: (BuildContext context) {
                                             return AlertDialog(
                                               scrollable: true,
-                                              title: const Text(
-                                                  'Lead Category'),
+                                              title:
+                                                  const Text('Lead Category'),
                                               content: ListView.builder(
                                                 shrinkWrap: true,
                                                 itemCount: commonDetails!
-                                                    .data
-                                                    .leadCategory
-                                                    .length,
-                                                itemBuilder:
-                                                    (context, ind) {
+                                                    .data.leadCategory.length,
+                                                itemBuilder: (context, ind) {
                                                   return InkWell(
                                                     onTap: () async {
-                                                      leadSubTypeList = await HttpService
-                                                          .leadSubType(commonDetails!
-                                                              .data
-                                                              .leadCategory[
-                                                                  ind]
-                                                              .leadCategoryId
-                                                              .toString());
+                                                      leadSubTypeList =
+                                                          await HttpService.leadSubType(
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategoryId
+                                                                  .toString());
                                                       setState(() {
                                                         leadSubType =
                                                             'Lead Sub Category';
@@ -615,14 +585,11 @@ class _AddLeadsState extends State<AddLeads> {
                                                       child: Text(
                                                         commonDetails!
                                                             .data
-                                                            .leadCategory[
-                                                                ind]
+                                                            .leadCategory[ind]
                                                             .leadCategory
                                                             .toString(),
-                                                        style:
-                                                            const TextStyle(
-                                                                fontSize:
-                                                                    18),
+                                                        style: const TextStyle(
+                                                            fontSize: 18),
                                                       ),
                                                     ),
                                                   );
@@ -645,8 +612,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             color: Colors.grey),
                                         border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
                                             TextStyle(color: Colors.grey)),
@@ -659,9 +626,7 @@ class _AddLeadsState extends State<AddLeads> {
                                         leadSubTypeList!.data!.isNotEmpty
                                     ? Padding(
                                         padding: const EdgeInsets.only(
-                                            bottom: 20,
-                                            left: 10,
-                                            right: 10),
+                                            bottom: 20, left: 10, right: 10),
                                         child: TextFormField(
                                           controller: leadSubTypeVal,
                                           onTap: () {
@@ -673,27 +638,28 @@ class _AddLeadsState extends State<AddLeads> {
                                                     scrollable: true,
                                                     title: const Text(
                                                         'Lead Sub Category'),
-                                                    content:
-                                                        ListView.builder(
+                                                    content: ListView.builder(
                                                       shrinkWrap: true,
                                                       itemCount:
                                                           leadSubTypeList!
                                                               .data!.length,
-                                                      itemBuilder: (context,
-                                                          subIndex) {
+                                                      itemBuilder:
+                                                          (context, subIndex) {
                                                         return InkWell(
                                                           onTap: () {
                                                             setState(() {
-                                                              leadSubType = leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategory
-                                                                  .toString();
-                                                              leadSubTypeId = leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategoryId
-                                                                  .toString();
+                                                              leadSubType =
+                                                                  leadSubTypeList!
+                                                                      .data![
+                                                                          subIndex]
+                                                                      .leadSubCategory
+                                                                      .toString();
+                                                              leadSubTypeId =
+                                                                  leadSubTypeList!
+                                                                      .data![
+                                                                          subIndex]
+                                                                      .leadSubCategoryId
+                                                                      .toString();
                                                               Navigator.pop(
                                                                   context,
                                                                   true);
@@ -707,9 +673,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                                       subIndex]
                                                                   .leadSubCategory
                                                                   .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize:
-                                                                      18),
+                                                              style:
+                                                                  const TextStyle(
+                                                                      fontSize:
+                                                                          18),
                                                             ),
                                                           ),
                                                         );
@@ -721,13 +688,9 @@ class _AddLeadsState extends State<AddLeads> {
                                           maxLines: 1,
                                           readOnly: true,
                                           decoration: const InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.only(
-                                                      left: 10,
-                                                      top: 2,
-                                                      bottom: 2),
-                                              labelText:
-                                                  'Lead Sub Category',
+                                              contentPadding: EdgeInsets.only(
+                                                  left: 10, top: 2, bottom: 2),
+                                              labelText: 'Lead Sub Category',
                                               fillColor: Colors.white,
                                               filled: true,
                                               prefixIcon: Icon(
@@ -735,8 +698,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                       .arrow_drop_down_circle_outlined,
                                                   color: Colors.grey),
                                               border: OutlineInputBorder(),
-                                              focusedBorder:
-                                                  OutlineInputBorder(
+                                              focusedBorder: OutlineInputBorder(
                                                 borderSide: BorderSide(
                                                     color: Colors.grey),
                                               ),
@@ -745,7 +707,7 @@ class _AddLeadsState extends State<AddLeads> {
                                         ),
                                       )
                                     : const SizedBox(),
-    
+
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -762,23 +724,20 @@ class _AddLeadsState extends State<AddLeads> {
                                                 shrinkWrap: true,
                                                 itemCount: commonDetails!
                                                     .data.priority.length,
-                                                itemBuilder:
-                                                    (context, ind) {
+                                                itemBuilder: (context, ind) {
                                                   return InkWell(
                                                     onTap: () {
                                                       setState(() {
                                                         priority =
                                                             commonDetails!
                                                                 .data
-                                                                .priority[
-                                                                    ind]
+                                                                .priority[ind]
                                                                 .priority
                                                                 .toString();
                                                         priorityId =
                                                             commonDetails!
                                                                 .data
-                                                                .priority[
-                                                                    ind]
+                                                                .priority[ind]
                                                                 .priorityId
                                                                 .toString();
                                                         Navigator.pop(
@@ -793,10 +752,8 @@ class _AddLeadsState extends State<AddLeads> {
                                                             .priority[ind]
                                                             .priority
                                                             .toString(),
-                                                        style:
-                                                            const TextStyle(
-                                                                fontSize:
-                                                                    18),
+                                                        style: const TextStyle(
+                                                            fontSize: 18),
                                                       ),
                                                     ),
                                                   );
@@ -819,8 +776,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             color: Colors.grey),
                                         border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
                                             TextStyle(color: Colors.grey)),
@@ -844,8 +801,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             color: Colors.grey),
                                         border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
                                             TextStyle(color: Colors.grey)),
@@ -868,8 +825,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             color: Colors.grey),
                                         border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
                                             TextStyle(color: Colors.grey)),
@@ -891,16 +848,19 @@ class _AddLeadsState extends State<AddLeads> {
                                               scrollable: true,
                                               title: const Text('Status'),
                                               content: SizedBox(
-                                                width: MediaQuery.of(context).size.width *.6,
-                                                height: MediaQuery.of(context).size.height *.35,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .6,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .35,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!
-                                                      .data
-                                                      .callResult
-                                                      .length,
-                                                  itemBuilder:
-                                                      (context, ind) {
+                                                      .data.callResult.length,
+                                                  itemBuilder: (context, ind) {
                                                     return InkWell(
                                                       onTap: () {
                                                         setState(() {
@@ -932,14 +892,12 @@ class _AddLeadsState extends State<AddLeads> {
                                                         child: Text(
                                                           commonDetails!
                                                               .data
-                                                              .callResult[
-                                                                  ind]
+                                                              .callResult[ind]
                                                               .callResult
                                                               .toString(),
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      18),
+                                                                  fontSize: 18),
                                                         ),
                                                       ),
                                                     );
@@ -963,8 +921,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             color: Colors.grey),
                                         border: OutlineInputBorder(),
                                         focusedBorder: OutlineInputBorder(
-                                          borderSide: BorderSide(
-                                              color: Colors.grey),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
                                             TextStyle(color: Colors.grey)),
@@ -997,67 +955,49 @@ class _AddLeadsState extends State<AddLeads> {
                                                       context: context,
                                                       initialDate:
                                                           DateTime.now(),
-                                                      firstDate:
-                                                          DateTime.now(),
-                                                      lastDate:
-                                                          DateTime(2100))
+                                                      firstDate: DateTime.now(),
+                                                      lastDate: DateTime(2100))
                                                   .then((selectedDate) {
                                                 if (selectedDate != null) {
                                                   showTimePicker(
                                                           context: context,
                                                           initialTime:
-                                                              TimeOfDay
-                                                                  .now())
+                                                              TimeOfDay.now())
                                                       .then((selectedTime) {
                                                     String newDate =
-                                                        selectedDate
-                                                            .toString();
-                                                    newDate =
-                                                        newDate.substring(
-                                                            0,
-                                                            newDate.indexOf(
-                                                                " "));
-                                                    String
-                                                        convertedNewDate =
-                                                        getYmdFromDmy(
-                                                            newDate);
-                                                    if (selectedTime !=
-                                                        null) {
-                                                      nextFollowupDate1
-                                                              .text =
+                                                        selectedDate.toString();
+                                                    newDate = newDate.substring(
+                                                        0,
+                                                        newDate.indexOf(" "));
+                                                    String convertedNewDate =
+                                                        getYmdFromDmy(newDate);
+                                                    if (selectedTime != null) {
+                                                      nextFollowupDate1.text =
                                                           "$convertedNewDate ${selectedTime.format(context)}";
                                                     } else {}
                                                   });
                                                 }
                                               });
                                             },
-                                            decoration:
-                                                const InputDecoration(
-                                                    contentPadding:
-                                                        EdgeInsets.only(
-                                                            left: 10,
-                                                            top: 2,
-                                                            bottom: 2),
-                                                    labelText:
-                                                        'Next Followup Date',
-                                                    fillColor: Colors.white,
-                                                    filled: true,
-                                                    prefixIcon: Icon(
-                                                        Icons
-                                                            .calendar_month_sharp,
-                                                        color: Colors.grey),
-                                                    border:
-                                                        OutlineInputBorder(),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderSide:
-                                                          BorderSide(
-                                                              color: Colors
-                                                                  .grey),
-                                                    ),
-                                                    labelStyle: TextStyle(
-                                                        color:
-                                                            Colors.grey)),
+                                            decoration: const InputDecoration(
+                                                contentPadding: EdgeInsets.only(
+                                                    left: 10,
+                                                    top: 2,
+                                                    bottom: 2),
+                                                labelText: 'Next Followup Date',
+                                                fillColor: Colors.white,
+                                                filled: true,
+                                                prefixIcon: Icon(
+                                                    Icons.calendar_month_sharp,
+                                                    color: Colors.grey),
+                                                border: OutlineInputBorder(),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey),
+                                                ),
+                                                labelStyle: TextStyle(
+                                                    color: Colors.grey)),
                                           ),
                                         ),
                                       ),
@@ -1067,11 +1007,9 @@ class _AddLeadsState extends State<AddLeads> {
                                           width: 90,
                                           child: Container(
                                             width: 80,
-                                            foregroundDecoration:
-                                                BoxDecoration(
+                                            foregroundDecoration: BoxDecoration(
                                               borderRadius:
-                                                  BorderRadius.circular(
-                                                      5.0),
+                                                  BorderRadius.circular(5.0),
                                               border: Border.all(
                                                 color: Colors.blueGrey,
                                                 width: 2.0,
@@ -1082,19 +1020,16 @@ class _AddLeadsState extends State<AddLeads> {
                                                 Expanded(
                                                   flex: 1,
                                                   child: TextFormField(
-                                                    textAlign:
-                                                        TextAlign.center,
-                                                    decoration:
-                                                        InputDecoration(
+                                                    textAlign: TextAlign.center,
+                                                    decoration: InputDecoration(
                                                       contentPadding:
-                                                          const EdgeInsets
-                                                              .all(8.0),
+                                                          const EdgeInsets.all(
+                                                              8.0),
                                                       border:
                                                           OutlineInputBorder(
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(
-                                                                    5.0),
+                                                                .circular(5.0),
                                                       ),
                                                     ),
                                                     controller: timeBefore,
@@ -1120,16 +1055,14 @@ class _AddLeadsState extends State<AddLeads> {
                                                         decoration:
                                                             const BoxDecoration(
                                                           border: Border(
-                                                            bottom:
-                                                                BorderSide(
+                                                            bottom: BorderSide(
                                                               width: 0.5,
                                                             ),
                                                           ),
                                                         ),
                                                         child: InkWell(
                                                           child: const Icon(
-                                                            Icons
-                                                                .arrow_drop_up,
+                                                            Icons.arrow_drop_up,
                                                             size: 18.0,
                                                           ),
                                                           onTap: () {
@@ -1139,8 +1072,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                         .text);
                                                             setState(() {
                                                               currentValue++;
-                                                              timeBefore
-                                                                      .text =
+                                                              timeBefore.text =
                                                                   (currentValue)
                                                                       .toString(); // incrementing value
                                                             });
@@ -1149,8 +1081,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                       ),
                                                       InkWell(
                                                         child: const Icon(
-                                                          Icons
-                                                              .arrow_drop_down,
+                                                          Icons.arrow_drop_down,
                                                           size: 18.0,
                                                         ),
                                                         onTap: () {
@@ -1182,11 +1113,10 @@ class _AddLeadsState extends State<AddLeads> {
                                           onTap: toggleTextFieldVisibility,
                                           child: Padding(
                                             padding: const EdgeInsets.only(
-                                                right: 15,left: 5),
+                                                right: 15, left: 5),
                                             child: SizedBox(
                                               width: 10,
-                                              child: Icon(
-                                                  Icons.notifications,
+                                              child: Icon(Icons.notifications,
                                                   color: checked == false
                                                       ? Colors.green
                                                       : Colors.red),
@@ -1211,7 +1141,7 @@ class _AddLeadsState extends State<AddLeads> {
                                     },
                                     itemCount: commonDetails!
                                         .data.additionalFields.length),
-    
+
                                 // Padding(
                                 //   padding: const EdgeInsets.only(
                                 //       left: 20, right: 20, top: 10),
@@ -2197,15 +2127,10 @@ class _AddLeadsState extends State<AddLeads> {
                                 // ),
                                 InkWell(
                                   onTap: () async {
-                                    if (globalKey.currentState!
-                                        .validate()) {
+                                    if (globalKey.currentState!.validate()) {
                                       globalKey.currentState!.save();
-                                      descriptions.removeWhere((item) => [
-                                            "",
-                                            null,
-                                            false,
-                                            0
-                                          ].contains(item));
+                                      descriptions.removeWhere((item) =>
+                                          ["", null, false, 0].contains(item));
                                       final connectivityResult =
                                           await (Connectivity()
                                               .checkConnectivity());
@@ -2218,8 +2143,7 @@ class _AddLeadsState extends State<AddLeads> {
                                             branch == null) {
                                           Common.toastMessaage(
                                               'Choose Branch', Colors.red);
-                                        } else if (clientName
-                                            .text.isEmpty) {
+                                        } else if (clientName.text.isEmpty) {
                                           Common.toastMessaage(
                                               'Customer Name cannot be empty',
                                               Colors.red);
@@ -2241,8 +2165,7 @@ class _AddLeadsState extends State<AddLeads> {
                                               'Status cannot be empty',
                                               Colors.red);
                                         } else if (callResultId == '2' &&
-                                            nextFollowupDate1
-                                                .text.isEmpty) {
+                                            nextFollowupDate1.text.isEmpty) {
                                           Common.toastMessaage(
                                               'Choose next followup date',
                                               Colors.red);
@@ -2252,8 +2175,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                 context, "Loading..");
                                           }
                                           CheckLeadPhoneNumberModel
-                                              checkLeadPhone =
-                                              await HttpService
+                                              checkLeadPhone = await HttpService
                                                   .checkLeadPhoneNumber(
                                                       widget.token,
                                                       contactNo.text,
@@ -2263,14 +2185,12 @@ class _AddLeadsState extends State<AddLeads> {
                                               Navigator.pop(context);
                                               showDialog(
                                                   context: context,
-                                                  builder:
-                                                      (BuildContext ctx) {
+                                                  builder: (BuildContext ctx) {
                                                     return AlertDialog(
                                                       title: const Text(
                                                           'Alert !!!'),
                                                       content: Text(
-                                                          checkLeadPhone
-                                                              .message
+                                                          checkLeadPhone.message
                                                               .toString()),
                                                       actions: [
                                                         // The "Yes" button
@@ -2292,8 +2212,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                                     "Loading..");
                                                               }
                                                               AddLeadModel object = await HttpService.addLeads(
-                                                                  widget
-                                                                      .token,
+                                                                  widget.token,
                                                                   branch,
                                                                   clientName
                                                                       .text,
@@ -2304,18 +2223,15 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   assignStaffId,
                                                                   cost.text,
                                                                   priorityId,
-                                                                  address
-                                                                      .text,
-                                                                  remark
-                                                                      .text,
+                                                                  address.text,
+                                                                  remark.text,
                                                                   callResultId,
                                                                   nextFollowupDate1
                                                                       .text,
                                                                   descriptions,
                                                                   code,
                                                                   checked,
-                                                                  timeBefore
-                                                                  );
+                                                                  timeBefore);
                                                               if (object
                                                                       .status ==
                                                                   true) {
@@ -2324,44 +2240,53 @@ class _AddLeadsState extends State<AddLeads> {
                                                                         .message,
                                                                     Colors
                                                                         .green);
-                                                                if (widget
-                                                                        .page ==
-                                                                    'leadDetails') {
-                                                                  if (context
-                                                                      .mounted) {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => LeadDetails(
-                                                                                widget.token!,
-                                                                                widget.editLead!,
-                                                                                widget.deleteLead!,
-                                                                                widget.cloudCall!,
-                                                                                widget.leadMasterId!,
-                                                                                pageName: widget.page,
-                                                                                fromDate: widget.fromDate,
-                                                                                toDate: widget.toDate,
-                                                                              )),
-                                                                    );
-                                                                  }
-                                                                } else {
-                                                                  if (context
-                                                                      .mounted) {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => Dashboard(widget.token)),
-                                                                    );
-                                                                  }
+
+                                                                if (context
+                                                                    .mounted) {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  Navigator.pop(
+                                                                      context);
                                                                 }
+                                                                // if (widget
+                                                                //         .page ==
+                                                                //     'leadDetails') {
+                                                                //   if (context
+                                                                //       .mounted) {
+                                                                //     Navigator
+                                                                //         .push(
+                                                                //       context,
+                                                                //       MaterialPageRoute(
+                                                                //           builder: (context) =>
+                                                                //               LeadDetails(
+                                                                //                 widget.token!,
+                                                                //                 widget.editLead!,
+                                                                //                 widget.deleteLead!,
+                                                                //                 widget.cloudCall!,
+                                                                //                 widget.leadMasterId!,
+                                                                //                 pageName: widget.page,
+                                                                //                 fromDate: widget.fromDate,
+                                                                //                 toDate: widget.toDate,
+                                                                //               )),
+                                                                //     );
+                                                                //   }
+                                                                // } else {
+                                                                //   if (context
+                                                                //       .mounted) {
+                                                                //     Navigator
+                                                                //         .push(
+                                                                //       context,
+                                                                //       MaterialPageRoute(
+                                                                //           builder: (context) =>
+                                                                //               Dashboard(widget.token)),
+                                                                //     );
+                                                                //   }
+                                                                // }
                                                               } else {
                                                                 Common.toastMessaage(
                                                                     object
                                                                         .message,
-                                                                    Colors
-                                                                        .red);
+                                                                    Colors.red);
                                                                 if (context
                                                                     .mounted) {
                                                                   Navigator.pop(
@@ -2382,7 +2307,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                     branch,
                                                     clientName.text,
                                                     leadTypeId,
-                                                    leadSubTypeId, 
+                                                    leadSubTypeId,
                                                     contactNo.text,
                                                     assignStaffId,
                                                     cost.text,
@@ -2394,57 +2319,17 @@ class _AddLeadsState extends State<AddLeads> {
                                                     descriptions,
                                                     code,
                                                     checked,
-                                                    timeBefore.text
-                                                    );
+                                                    timeBefore.text);
                                             if (object.status == true) {
                                               Common.toastMessaage(
-                                                  object.message,
-                                                  Colors.green);
-                                              if (widget.page ==
-                                                  'leadDetails') {
-                                                if (context.mounted) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder:
-                                                            (context) =>
-                                                                LeadDetails(
-                                                                  widget
-                                                                      .token!,
-                                                                  widget
-                                                                      .editLead!,
-                                                                  widget
-                                                                      .deleteLead!,
-                                                                  widget
-                                                                      .cloudCall!,
-                                                                  widget
-                                                                      .leadMasterId!,
-                                                                  pageName:
-                                                                      widget
-                                                                          .page,
-                                                                  fromDate:
-                                                                      widget
-                                                                          .fromDate,
-                                                                  toDate: widget
-                                                                      .toDate,
-                                                                )),
-                                                  );
-                                                }
-                                              } else {
-                                                if (context.mounted) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            Dashboard(widget
-                                                                .token)),
-                                                  );
-                                                }
+                                                  object.message, Colors.green);
+                                              if (context.mounted) {
+                                                Navigator.pop(context);
+                                                Navigator.pop(context);
                                               }
                                             } else {
                                               Common.toastMessaage(
-                                                  object.message,
-                                                  Colors.red);
+                                                  object.message, Colors.red);
                                               if (context.mounted) {
                                                 Navigator.pop(context);
                                               }
@@ -2458,8 +2343,7 @@ class _AddLeadsState extends State<AddLeads> {
                                             const SnackBar(
                                               content: Text(
                                                   'No Network Found..Try Again Later..'),
-                                              backgroundColor:
-                                                  Colors.redAccent,
+                                              backgroundColor: Colors.redAccent,
                                               elevation: 10,
                                               behavior:
                                                   SnackBarBehavior.floating,
@@ -2471,14 +2355,12 @@ class _AddLeadsState extends State<AddLeads> {
                                     }
                                   },
                                   child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width *
-                                            0.45,
+                                    width: MediaQuery.of(context).size.width *
+                                        0.45,
                                     height: 40,
                                     decoration: BoxDecoration(
                                       color: Colors.black,
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Center(
                                       child: Text('Submit',
@@ -2510,11 +2392,9 @@ class _AddLeadsState extends State<AddLeads> {
                                     padding: const EdgeInsets.all(0.1),
                                     child: Card(
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      clipBehavior:
-                                          Clip.antiAliasWithSaveLayer,
+                                      clipBehavior: Clip.antiAliasWithSaveLayer,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -2526,9 +2406,8 @@ class _AddLeadsState extends State<AddLeads> {
                                             fit: BoxFit.cover,
                                           ),
                                           Container(
-                                            padding:
-                                                const EdgeInsets.fromLTRB(
-                                                    15, 15, 15, 0),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                15, 15, 15, 0),
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.center,
@@ -2590,8 +2469,7 @@ class _AddLeadsState extends State<AddLeads> {
                   ),
                   const Text(
                     'No Network Found !',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -2667,8 +2545,7 @@ class _AddLeadsState extends State<AddLeads> {
                 descriptions.add("");
                 descriptions[index] = {
                   "id": commonDetails!.data.additionalFields[index].id,
-                  "name":
-                      commonDetails!.data.additionalFields[index].fieldName,
+                  "name": commonDetails!.data.additionalFields[index].fieldName,
                   "value": val
                 };
               },
