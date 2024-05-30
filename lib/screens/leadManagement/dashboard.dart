@@ -422,7 +422,13 @@ class _DashboardState extends State<Dashboard> {
                                                           createLeadCategory1,
                                                           updateLeadCategory1,
                                                           deleteLeadCategory1)),
-                                            );
+                                            ).then((r) {
+                                              getData(widget.token, fromdate,
+                                                  todate);
+                                              if (loadmore == true) {
+                                                getStaffwise();
+                                              }
+                                            });
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.only(
@@ -1400,7 +1406,17 @@ class _DashboardState extends State<Dashboard> {
                                                                               deleteLeadPermission1,
                                                                               cloudCallPermission1,
                                                                               '')),
-                                                                    );
+                                                                    ).then((r) {
+                                                                      getData(
+                                                                          widget
+                                                                              .token,
+                                                                          fromdate,
+                                                                          todate);
+                                                                      if (loadmore ==
+                                                                          true) {
+                                                                        getStaffwise();
+                                                                      }
+                                                                    });
                                                                   },
                                                                   child: Container(
                                                                       width: 50,
@@ -1468,7 +1484,17 @@ class _DashboardState extends State<Dashboard> {
                                                                           deleteLeadPermission1,
                                                                           cloudCallPermission1,
                                                                           '')),
-                                                                );
+                                                                ).then((r) {
+                                                                  getData(
+                                                                      widget
+                                                                          .token,
+                                                                      fromdate,
+                                                                      todate);
+                                                                  if (loadmore ==
+                                                                      true) {
+                                                                    getStaffwise();
+                                                                  }
+                                                                });
                                                               },
                                                               child: Container(
                                                                   width: 110,
@@ -2224,7 +2250,17 @@ class _DashboardState extends State<Dashboard> {
                                                                           context,
                                                                           MaterialPageRoute(
                                                                               builder: (context) => CallLogs(widget.token, name, userId)),
-                                                                        )
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
                                                                       : _dialogue(
                                                                           context,
                                                                           'Phone Call Logs');
@@ -5694,7 +5730,7 @@ class _DashboardState extends State<Dashboard> {
                                                                 5))),
                                                 child: Text(
                                                   moreloading == true
-                                                      ? " loading... "
+                                                      ? " Loading... "
                                                       : "Show more",
                                                   style: const TextStyle(
                                                       color: Colors.white),

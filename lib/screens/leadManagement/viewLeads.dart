@@ -251,6 +251,8 @@ class _ViewLeadsState extends State<ViewLeads> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
+        items.clear();
+        page = 1;
         getData('desc', true);
         return;
       },

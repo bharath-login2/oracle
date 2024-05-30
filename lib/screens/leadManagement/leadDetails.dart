@@ -2374,7 +2374,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   cloudCall: widget.cloudCall,
                                                 ),
                                               ),
-                                            ).then(getData());
+                                            ).then((r){getData();});
                                           },
                                           child: Container(
                                             width: 30,
