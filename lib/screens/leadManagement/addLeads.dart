@@ -2247,6 +2247,8 @@ class _AddLeadsState extends State<AddLeads> {
                                                                       context);
                                                                   Navigator.pop(
                                                                       context);
+                                                                  Navigator.pop(
+                                                                      context);
                                                                 }
                                                                 // if (widget
                                                                 //         .page ==
