@@ -87,6 +87,7 @@ class _EditInvoiceState extends State<EditInvoice> {
       isTextFieldVisible = !isTextFieldVisible;
     });
   }
+
   void headerToggle() {
     setState(() {
       header = !header;
@@ -135,9 +136,11 @@ class _EditInvoiceState extends State<EditInvoice> {
       if (billingPinCode.text != '') {
         billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
       }
-      if(invoiceEditDetails!.data!.billingAddress!.billingCountryCode.toString()!='')
-      {
-        code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode.toString();
+      if (invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+              .toString() !=
+          '') {
+        code = invoiceEditDetails!.data!.billingAddress!.billingCountryCode
+            .toString();
       }
 
       shippingName.text =
@@ -196,7 +199,7 @@ class _EditInvoiceState extends State<EditInvoice> {
             invoiceEditDetails!.data!.totalInvoiceAmount.toString());
         remarks.text = invoiceEditDetails!.data!.remarks.toString();
       }
-      isPaying=invoiceEditDetails!.data!.invoicePaymentStatus!;
+      isPaying = invoiceEditDetails!.data!.invoicePaymentStatus!;
 
       setState(() {});
     }
@@ -277,218 +280,244 @@ class _EditInvoiceState extends State<EditInvoice> {
                   ? SingleChildScrollView(
                       child: Column(
                         children: [
-                          header==false?const SizedBox(
-                            height: 10,
-                          ):const SizedBox(),
+                          header == false
+                              ? const SizedBox(
+                                  height: 10,
+                                )
+                              : const SizedBox(),
                           invDetails!.data!.companyDetails!.isNotEmpty
                               ? Column(
-                            children: [
-                              InkWell(
-                                onTap: headerToggle,
-                                child: Visibility(
-                                  visible: header,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 10),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Container(
-                                            color: Colors.white,
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                                .3,
-                                            child: Center(
-                                              child: Image.network(
-                                                invDetails!
-                                                    .data!
-                                                    .companyDetails![0]
-                                                    .companyLogo
-                                                    .toString(),
-                                                width: 100,
-                                              ),
-                                            )),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            const Text(
-                                              'Registration Number',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyRegNo
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                            const SizedBox(
-                                              height: 5,
-                                            ),
-                                            const Text(
-                                              'Contact Number',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyContactNo
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              InkWell(
-                                onTap: headerToggle,
-                                child: Visibility(
-                                  visible: headerContent,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 10),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                      children: [
-                                        Column(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                                color: Colors.white,
-                                                width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                    .3,
-                                                child: Center(
-                                                  child: Image.network(
+                                  children: [
+                                    InkWell(
+                                      onTap: headerToggle,
+                                      child: Visibility(
+                                        visible: header,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 10, right: 10),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                  color: Colors.white,
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      .3,
+                                                  child: Center(
+                                                    child: Image.network(
+                                                      invDetails!
+                                                          .data!
+                                                          .companyDetails![0]
+                                                          .companyLogo
+                                                          .toString(),
+                                                      width: 100,
+                                                    ),
+                                                  )),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  const Text(
+                                                    'Registration Number',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  Text(
                                                     invDetails!
                                                         .data!
                                                         .companyDetails![0]
-                                                        .companyLogo
+                                                        .companyRegNo
                                                         .toString(),
-                                                    width: 150,
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
                                                   ),
-                                                )),
-                                            const Text(
-                                              'Address',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
-                                                      .companyAddress
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                )),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyEmail
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                          ],
+                                                  const SizedBox(
+                                                    height: 5,
+                                                  ),
+                                                  const Text(
+                                                    'Contact Number',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  Text(
+                                                    invDetails!
+                                                        .data!
+                                                        .companyDetails![0]
+                                                        .companyContactNo
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                ],
+                                              )
+                                            ],
+                                          ),
                                         ),
-                                        Column(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                          children: [
-                                            const Text(
-                                              'Registration Number',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyRegNo
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                            const SizedBox(
-                                              height: 5,
-                                            ),
-                                            const Text(
-                                              'Contact Number',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyContactNo
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                            const SizedBox(
-                                              height: 5,
-                                            ),
-                                            const Text(
-                                              'Pin code',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey),
-                                            ),
-                                            Text(
-                                              invDetails!.data!.companyDetails![0]
-                                                  .companyPincode
-                                                  .toString(),
-                                              style:
-                                              const TextStyle(fontSize: 14),
-                                            ),
-                                            const SizedBox(
-                                              height: 5,
-                                            ),
-                                          ],
-                                        )
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
+                                    InkWell(
+                                      onTap: headerToggle,
+                                      child: Visibility(
+                                        visible: headerContent,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 10, right: 10),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Container(
+                                                      color: Colors.white,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              .3,
+                                                      child: Center(
+                                                        child: Image.network(
+                                                          invDetails!
+                                                              .data!
+                                                              .companyDetails![
+                                                                  0]
+                                                              .companyLogo
+                                                              .toString(),
+                                                          width: 150,
+                                                        ),
+                                                      )),
+                                                  const Text(
+                                                    'Address',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  SizedBox(
+                                                      width: 200,
+                                                      child: Text(
+                                                        invDetails!
+                                                            .data!
+                                                            .companyDetails![0]
+                                                            .companyAddress
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 14),
+                                                      )),
+                                                  Text(
+                                                    invDetails!
+                                                        .data!
+                                                        .companyDetails![0]
+                                                        .companyEmail
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                ],
+                                              ),
+                                              Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  const Text(
+                                                    'Registration Number',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  Text(
+                                                    invDetails!
+                                                        .data!
+                                                        .companyDetails![0]
+                                                        .companyRegNo
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 5,
+                                                  ),
+                                                  const Text(
+                                                    'Contact Number',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  Text(
+                                                    invDetails!
+                                                        .data!
+                                                        .companyDetails![0]
+                                                        .companyContactNo
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 5,
+                                                  ),
+                                                  const Text(
+                                                    'Pin code',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.grey),
+                                                  ),
+                                                  Text(
+                                                    invDetails!
+                                                        .data!
+                                                        .companyDetails![0]
+                                                        .companyPincode
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 5,
+                                                  ),
+                                                ],
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
                               : const SizedBox(),
-                          header==false? const SizedBox(
-                            height: 5,
-                          ):const SizedBox(),
+                          header == false
+                              ? const SizedBox(
+                                  height: 5,
+                                )
+                              : const SizedBox(),
                           const Divider(),
                           Padding(
                             padding: const EdgeInsets.only(left: 10, right: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                 Column(
+                                Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -627,9 +656,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                           controller:
                                                               billingPhone,
                                                           decoration:
-                                                               InputDecoration(
+                                                              InputDecoration(
                                                                   contentPadding:
-                                                                      const EdgeInsets.only(
+                                                                      const EdgeInsets
+                                                                          .only(
                                                                           left:
                                                                               10,
                                                                           top:
@@ -642,16 +672,24 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                       Colors
                                                                           .white,
                                                                   filled: true,
-                                                                  prefix: GestureDetector(
+                                                                  prefix:
+                                                                      GestureDetector(
                                                                     onTap: () {
                                                                       showCountryPicker(
-                                                                        context: context,
-                                                                        searchAutofocus: false,
-                                                                        showPhoneCode: true,
+                                                                        context:
+                                                                            context,
+                                                                        searchAutofocus:
+                                                                            false,
+                                                                        showPhoneCode:
+                                                                            true,
                                                                         // optional. Shows phone code before the country name.
-                                                                        onSelect: (Country country) {
-                                                                          setState(() {
-                                                                            code = country.phoneCode;
+                                                                        onSelect:
+                                                                            (Country
+                                                                                country) {
+                                                                          setState(
+                                                                              () {
+                                                                            code =
+                                                                                country.phoneCode;
                                                                           });
 
                                                                           // flag = country.flagEmoji;
@@ -660,14 +698,16 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                         },
                                                                       );
                                                                     },
-                                                                    child: SizedBox(
+                                                                    child:
+                                                                        SizedBox(
                                                                       // color: Colors.blue,
                                                                       width: 70,
                                                                       // width: MediaQuery.of(context).size.width/3.5,
-                                                                      child: Row(children: [
-                                                                        Text("+$code"),
-                                                                        const Icon(Icons.arrow_drop_down),
-                                                                      ]),
+                                                                      child: Row(
+                                                                          children: [
+                                                                            Text("+$code"),
+                                                                            const Icon(Icons.arrow_drop_down),
+                                                                          ]),
                                                                     ),
                                                                   ),
                                                                   border:
@@ -801,26 +841,30 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             title:
                                                                                 const Text('Post Office'),
                                                                             content: billingPostal!.postOffice != null
-                                                                                ? ListView.builder(
-                                                                                    shrinkWrap: true,
-                                                                                    itemCount: billingPostal!.postOffice!.length,
-                                                                                    itemBuilder: (context, ind) {
-                                                                                      return InkWell(
-                                                                                        onTap: () {
-                                                                                          setState(() {
-                                                                                            billingPostOffice.text = billingPostal!.postOffice![ind].name.toString();
-                                                                                            Navigator.pop(context, true);
-                                                                                          });
-                                                                                        },
-                                                                                        child: SizedBox(
-                                                                                          height: 50,
-                                                                                          child: Text(
-                                                                                            billingPostal!.postOffice![ind].name.toString(),
-                                                                                            style: const TextStyle(fontSize: 18),
+                                                                                ? SizedBox(
+                                                                                    height: MediaQuery.of(context).size.height * .32,
+                                                                                    width: MediaQuery.of(context).size.height * .8,
+                                                                                    child: ListView.builder(
+                                                                                      shrinkWrap: true,
+                                                                                      itemCount: billingPostal!.postOffice!.length,
+                                                                                      itemBuilder: (context, ind) {
+                                                                                        return InkWell(
+                                                                                          onTap: () {
+                                                                                            setState(() {
+                                                                                              billingPostOffice.text = billingPostal!.postOffice![ind].name.toString();
+                                                                                              Navigator.pop(context, true);
+                                                                                            });
+                                                                                          },
+                                                                                          child: SizedBox(
+                                                                                            height: 50,
+                                                                                            child: Text(
+                                                                                              billingPostal!.postOffice![ind].name.toString(),
+                                                                                              style: const TextStyle(fontSize: 18),
+                                                                                            ),
                                                                                           ),
-                                                                                        ),
-                                                                                      );
-                                                                                    },
+                                                                                        );
+                                                                                      },
+                                                                                    ),
                                                                                   )
                                                                                 : const Text('No Post Office Found'));
                                                                       });
@@ -865,12 +909,14 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                           height: 10,
                                                         ),
                                                         Row(
-                                                          mainAxisAlignment: MainAxisAlignment.center,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
                                                           children: [
                                                             GestureDetector(
                                                               onTap: () {
                                                                 Navigator.of(
-                                                                    context)
+                                                                        context)
                                                                     .pop();
                                                               },
                                                               child: Container(
@@ -878,29 +924,29 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                       color: Colors
                                                                           .white,
                                                                       borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                          5)),
+                                                                          BorderRadius.circular(
+                                                                              5)),
                                                                   child:
-                                                                  const Padding(
-                                                                    padding: EdgeInsets
-                                                                        .only(
+                                                                      const Padding(
+                                                                    padding: EdgeInsets.only(
                                                                         top: 10,
                                                                         bottom:
-                                                                        10,
+                                                                            10,
                                                                         left:
-                                                                        30,
+                                                                            30,
                                                                         right:
-                                                                        30),
+                                                                            30),
                                                                     child: Text(
                                                                       'Cancel',
                                                                       style: TextStyle(
-                                                                          color: Colors
-                                                                              .black),
+                                                                          color:
+                                                                              Colors.black),
                                                                     ),
                                                                   )),
                                                             ),
-                                                            const SizedBox(width: 10,),
+                                                            const SizedBox(
+                                                              width: 10,
+                                                            ),
                                                             GestureDetector(
                                                               onTap: () {
                                                                 Navigator.of(
@@ -912,25 +958,23 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                       color: Colors
                                                                           .green,
                                                                       borderRadius:
-                                                                          BorderRadius
-                                                                              .circular(
-                                                                                  5)),
+                                                                          BorderRadius.circular(
+                                                                              5)),
                                                                   child:
                                                                       const Padding(
-                                                                    padding: EdgeInsets
-                                                                        .only(
-                                                                            top: 10,
-                                                                            bottom:
-                                                                                10,
-                                                                            left:
-                                                                                30,
-                                                                            right:
-                                                                                30),
+                                                                    padding: EdgeInsets.only(
+                                                                        top: 10,
+                                                                        bottom:
+                                                                            10,
+                                                                        left:
+                                                                            30,
+                                                                        right:
+                                                                            30),
                                                                     child: Text(
                                                                       'Add',
                                                                       style: TextStyle(
-                                                                          color: Colors
-                                                                              .white),
+                                                                          color:
+                                                                              Colors.white),
                                                                     ),
                                                                   )),
                                                             ),
@@ -1390,35 +1434,38 @@ class _EditInvoiceState extends State<EditInvoice> {
                           ),
                           Column(
                             children: [
-                               Padding(
-                                 padding: const EdgeInsets.only(left: 10,right: 10),
-                                 child: Row(
-                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                   children: [
-                                     const Text('Invoice Number :',
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Invoice Number :',
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500,
                                         )),
-                                     Text(invoiceNumber.text,
-                                         style: const TextStyle(
-                                           fontSize: 15,
-                                           fontWeight: FontWeight.w500,
-                                         )),
-                                   ],
-                                 ),
-                               ),
-
+                                    Text(invoiceNumber.text,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                  ],
+                                ),
+                              ),
                               Padding(
-                                padding: const EdgeInsets.only(left: 10,right: 10),
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 10),
                                 child: Row(
-                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text('Invoice Date : ',
-                                       style: TextStyle(
-                                         fontSize: 15,
-                                         fontWeight: FontWeight.w500,
-                                       )),
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
                                     SizedBox(
                                       width: 100,
                                       height: 50,
@@ -1444,8 +1491,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           onChanged: (value) {
                                             if (value.isNotEmpty) {
                                               setState(() {
-                                                fromdate = DateTime.parse(value);
-
+                                                fromdate =
+                                                    DateTime.parse(value);
                                               });
                                             }
                                           },
@@ -1680,7 +1727,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                   Row(
                                                     children: [
                                                       SizedBox(
-                                                        width: MediaQuery.of(context).size.width *
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
                                                             0.31,
                                                         child: TextFormField(
                                                           onChanged: (value) {
@@ -1688,9 +1738,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               value = '0';
                                                             }
                                                             productTaxAmount
-                                                                .text = (double.parse(
-                                                                        value) *
-                                                                double.parse(
+                                                                .text = (double
+                                                                        .parse(
+                                                                            value) *
+                                                                    double.parse(
                                                                         productTaxPercent
                                                                             .text) /
                                                                     100)
@@ -1700,7 +1751,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             value) +
                                                                         double.parse(productTaxAmount
                                                                             .text)) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         productQty
                                                                             .text))
                                                                 .toString();
@@ -1751,7 +1802,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                         width: 10,
                                                       ),
                                                       SizedBox(
-                                                        width: MediaQuery.of(context).size.width *
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
                                                             0.30,
                                                         child: TextFormField(
                                                           onChanged: (value) {
@@ -1763,7 +1817,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             .text) +
                                                                         double.parse(productTaxAmount
                                                                             .text)) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         value))
                                                                 .toString();
                                                             setState(() {});
@@ -1818,7 +1872,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                   Row(
                                                     children: [
                                                       SizedBox(
-                                                        width: MediaQuery.of(context).size.width *
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
                                                             0.30,
                                                         child: TextFormField(
                                                           onChanged: (value) {
@@ -1829,7 +1886,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                 .text = (double.parse(
                                                                         productRate
                                                                             .text) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         value) /
                                                                     100)
                                                                 .toString();
@@ -1838,7 +1895,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                             .text) +
                                                                         double.parse(productTaxAmount
                                                                             .text)) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         productQty
                                                                             .text))
                                                                 .toString();
@@ -1889,7 +1946,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                         width: 10,
                                                       ),
                                                       SizedBox(
-                                                        width: MediaQuery.of(context).size.width *
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
                                                             0.31,
                                                         child: TextFormField(
                                                           controller:
@@ -1984,12 +2044,13 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                     height: 10,
                                                   ),
                                                   Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
                                                     children: [
                                                       GestureDetector(
                                                         onTap: () {
-                                                          Navigator.of(
-                                                              context)
+                                                          Navigator.of(context)
                                                               .pop();
                                                         },
                                                         child: Container(
@@ -1997,20 +2058,19 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                 color: Colors
                                                                     .white,
                                                                 borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                    5)),
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            5)),
                                                             child:
-                                                            const Padding(
+                                                                const Padding(
                                                               padding: EdgeInsets
                                                                   .only(
-                                                                  top: 10,
-                                                                  bottom:
-                                                                  10,
-                                                                  left:
-                                                                  30,
-                                                                  right:
-                                                                  30),
+                                                                      top: 10,
+                                                                      bottom:
+                                                                          10,
+                                                                      left: 30,
+                                                                      right:
+                                                                          30),
                                                               child: Text(
                                                                 'Cancel',
                                                                 style: TextStyle(
@@ -2019,7 +2079,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                               ),
                                                             )),
                                                       ),
-                                                      const SizedBox(width: 10,),
+                                                      const SizedBox(
+                                                        width: 10,
+                                                      ),
                                                       GestureDetector(
                                                         onTap: () {
                                                           if (productRate
@@ -2057,9 +2119,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                   productDescription
                                                                       .text,
                                                               "product_rate":
-                                                                  productRate.text,
+                                                                  productRate
+                                                                      .text,
                                                               "quantity":
-                                                                  productQty.text,
+                                                                  productQty
+                                                                      .text,
                                                               "tax_percent":
                                                                   productTaxPercent
                                                                       .text,
@@ -2075,11 +2139,13 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                 double.parse(
                                                                     productTotalAmount
                                                                         .text);
-                                                            totalTaxAmount =
-                                                                totalTaxAmount +
-                                                                    double.parse(
+                                                            totalTaxAmount = totalTaxAmount +
+                                                                double.parse(
                                                                         productTaxAmount
-                                                                            .text)*double.parse(productQty.text);
+                                                                            .text) *
+                                                                    double.parse(
+                                                                        productQty
+                                                                            .text);
                                                             allTotal = subTotal +
                                                                 double.parse(shippingCharge
                                                                             .text ==
@@ -2106,25 +2172,30 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                 .clear();
                                                             productTotalAmount
                                                                 .clear();
-                                                            Navigator.of(context)
+                                                            Navigator.of(
+                                                                    context)
                                                                 .pop();
                                                             setState(() {});
                                                           }
                                                         },
                                                         child: Container(
                                                             decoration: BoxDecoration(
-                                                                color: Colors.green,
+                                                                color: Colors
+                                                                    .green,
                                                                 borderRadius:
                                                                     BorderRadius
                                                                         .circular(
                                                                             5)),
-                                                            child: const Padding(
-                                                              padding:
-                                                                  EdgeInsets.only(
+                                                            child:
+                                                                const Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
                                                                       top: 10,
-                                                                      bottom: 10,
+                                                                      bottom:
+                                                                          10,
                                                                       left: 25,
-                                                                      right: 25),
+                                                                      right:
+                                                                          25),
                                                               child: Text(
                                                                 'Add',
                                                                 style: TextStyle(
@@ -2390,8 +2461,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                     );
                                                 totalTaxAmount = totalTaxAmount -
                                                     double.parse(products[index]
-                                                        ['total_tax_amount'])*double.parse(products[index]
-                                                    ['quantity']);
+                                                            [
+                                                            'total_tax_amount']) *
+                                                        double.parse(
+                                                            products[index]
+                                                                ['quantity']);
 
                                                 allTotal = subTotal +
                                                     double.parse(shippingCharge
@@ -2542,11 +2616,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           0.3,
                                       height: 35,
                                       child: TextFormField(
-                                        onTap: (){
-                                          if(discount.text=='0.00')
-                                            {
-                                              discount.clear();
-                                            }
+                                        onTap: () {
+                                          if (discount.text == '0.00') {
+                                            discount.clear();
+                                          }
                                         },
                                         onChanged: (value) {
                                           if (products.isNotEmpty) {
@@ -2580,7 +2653,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                             filled: true,
                                             border: const OutlineInputBorder(
                                               // width: 0.0 produces a thin "hairline" border
-                                              borderRadius: BorderRadius.all(Radius.circular(5)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(5)),
                                               borderSide: BorderSide.none,
                                             ),
                                             focusedBorder: OutlineInputBorder(
@@ -2611,9 +2685,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                           0.3,
                                       height: 35,
                                       child: TextFormField(
-                                        onTap: (){
-                                          if(shippingCharge.text=='0.00')
-                                          {
+                                        onTap: () {
+                                          if (shippingCharge.text == '0.00') {
                                             shippingCharge.clear();
                                           }
                                         },
@@ -2649,7 +2722,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                             filled: true,
                                             border: const OutlineInputBorder(
                                               // width: 0.0 produces a thin "hairline" border
-                                              borderRadius: BorderRadius.all(Radius.circular(5)),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(5)),
                                               borderSide: BorderSide.none,
                                             ),
                                             focusedBorder: OutlineInputBorder(
@@ -2667,7 +2741,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 height: 10,
                               ),
                               const Divider(),
-                              const SizedBox(height: 5,),
+                              const SizedBox(
+                                height: 5,
+                              ),
                               Padding(
                                 padding: const EdgeInsets.only(right: 10),
                                 child: Row(
@@ -2695,7 +2771,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 5,),
+                              const SizedBox(
+                                height: 5,
+                              ),
                               const Divider(),
                             ],
                           ),
@@ -2703,7 +2781,7 @@ class _EditInvoiceState extends State<EditInvoice> {
                             height: 10,
                           ),
                           Padding(
-                            padding: const EdgeInsets.only(left: 10,right: 10),
+                            padding: const EdgeInsets.only(left: 10, right: 10),
                             child: InkWell(
                               onTap: toggleTextFieldVisibility,
                               child: Row(
@@ -2711,7 +2789,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   const Text('Add Remark'),
-                                  Icon(isTextFieldVisible==false?Icons.keyboard_arrow_down:Icons.keyboard_arrow_up)
+                                  Icon(isTextFieldVisible == false
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_up)
                                 ],
                               ),
                             ),
@@ -2732,7 +2812,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       border: OutlineInputBorder()),
                                 ),
                               ),
-                            ),),
+                            ),
+                          ),
 
                           const SizedBox(
                             height: 20,
@@ -2766,16 +2847,19 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       'billing_contact_no': billingPhone.text,
                                       'billing_gst': billingGstNo.text,
                                       "billing_pincode": billingPinCode.text,
-                                      "billing_post_office": billingPostOffice.text,
+                                      "billing_post_office":
+                                          billingPostOffice.text,
                                       'shipping_name': shippingName.text,
                                       'shipping_address': shippingAddress.text,
                                       'shipping_contact_no': shippingPhone.text,
                                       'shipping_gst': shippingGstNo.text,
                                       "shipping_pincode": shippingPinCode.text,
-                                      "shipping_post_office": shippingPostOffice.text,
-                                      "receipt_id":invoiceEditDetails!.data!.receiptId,
+                                      "shipping_post_office":
+                                          shippingPostOffice.text,
+                                      "receipt_id":
+                                          invoiceEditDetails!.data!.receiptId,
                                       "token": widget.token,
-                                      "invoice_id":widget.invoiceId,
+                                      "invoice_id": widget.invoiceId,
                                       'product_details': jsonEncode(products),
                                     });
 
@@ -2788,10 +2872,11 @@ class _EditInvoiceState extends State<EditInvoice> {
                                     if (inv.data == true) {
                                       Common.toastMessaage(
                                           inv.message, Colors.green);
-                                      if(mounted){
+                                      if (mounted) {
                                         showDialog(
                                             barrierDismissible: false,
-                                            barrierColor: Colors.white.withOpacity(.2),
+                                            barrierColor:
+                                                Colors.white.withOpacity(.2),
                                             context: context,
                                             builder: (BuildContext context) {
                                               return WillPopScope(
@@ -2799,58 +2884,119 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                   return false;
                                                 },
                                                 child: Material(
-                                                  type: MaterialType.transparency,
+                                                  type:
+                                                      MaterialType.transparency,
                                                   child: Padding(
-                                                    padding: const EdgeInsets.only(bottom: 50),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 50),
                                                     child: Center(
                                                       child: Container(
-                                                        decoration: BoxDecoration(
-                                                          borderRadius: BorderRadius.circular(10),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
                                                           color: Colors.white,
                                                         ),
-                                                         width: MediaQuery.of(context).size.width * 0.9,
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            0.9,
                                                         height: 300,
                                                         child: Padding(
-                                                          padding: const EdgeInsets.only(left: 20, right: 20),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 20,
+                                                                  right: 20),
                                                           child: Column(
-                                                            mainAxisAlignment: MainAxisAlignment.center,
-                                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .center,
                                                             children: [
                                                               Image.asset(
                                                                 'assets/icons/check.png',
                                                                 width: 80,
                                                               ),
-                                                              const SizedBox(height: 10,),
-                                                              const Text('Success',style: TextStyle(fontSize: 18,fontWeight: FontWeight.w400),),
-                                                              const SizedBox(height: 5,),
-                                                              Text(inv.message.toString(),style: const TextStyle(fontSize: 15,fontWeight: FontWeight.w400),),
-                                                              const SizedBox(height: 15,),
+                                                              const SizedBox(
+                                                                height: 10,
+                                                              ),
+                                                              const Text(
+                                                                'Success',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        18,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 5,
+                                                              ),
+                                                              Text(
+                                                                inv.message
+                                                                    .toString(),
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                        15,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 15,
+                                                              ),
                                                               Row(
-                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
                                                                 children: [
                                                                   InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.of(context).push(
+                                                                    onTap: () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
                                                                         MaterialPageRoute(
                                                                             builder: (context) =>
                                                                                 Dashboard(widget.token)),
                                                                       );
                                                                     },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
+                                                                    child:
+                                                                        Container(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.25,
                                                                       //  color: RandomColorModel().getColor(),
                                                                       decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(10)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
-                                                                            Icon(Icons.dashboard,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Dashboard',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                            Icon(
+                                                                              Icons.dashboard,
+                                                                              size: 15,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text('Dashboard',
+                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
                                                                         ),
@@ -2858,27 +3004,45 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     ),
                                                                   ),
                                                                   InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.of(context).push(
+                                                                    onTap: () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
                                                                         MaterialPageRoute(
                                                                             builder: (context) =>
                                                                                 InvoiceList(widget.token)),
                                                                       );
                                                                     },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
+                                                                    child:
+                                                                        Container(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.25,
                                                                       decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(10)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
-                                                                            Icon(Icons.list_alt,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Invoice',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                            Icon(
+                                                                              Icons.list_alt,
+                                                                              size: 15,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text('Invoice',
+                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
                                                                         ),
@@ -2886,27 +3050,47 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     ),
                                                                   ),
                                                                   InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.of(context).push(
+                                                                    onTap: () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
                                                                         MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                ReceiptAdd(widget.token,widget.clientId,widget.invoiceId)),
+                                                                            builder: (context) => ReceiptAdd(
+                                                                                widget.token,
+                                                                                widget.clientId,
+                                                                                widget.invoiceId)),
                                                                       );
                                                                     },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
+                                                                    child:
+                                                                        Container(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.25,
                                                                       decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(10)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
-                                                                            Icon(Icons.currency_rupee,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Receipt',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                            Icon(
+                                                                              Icons.currency_rupee,
+                                                                              size: 15,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text('Receipt',
+                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
                                                                         ),
@@ -2915,33 +3099,55 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                   ),
                                                                 ],
                                                               ),
-                                                              const SizedBox(height: 8,),
+                                                              const SizedBox(
+                                                                height: 8,
+                                                              ),
                                                               Row(
-                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
                                                                 children: [
                                                                   InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.of(context).push(
+                                                                    onTap: () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
                                                                         MaterialPageRoute(
                                                                             builder: (context) =>
                                                                                 HomePage(widget.token)),
                                                                       );
                                                                     },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
+                                                                    child:
+                                                                        Container(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.25,
                                                                       //  color: RandomColorModel().getColor(),
                                                                       decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(10)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
-                                                                            Icon(Icons.home,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Home',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                            Icon(
+                                                                              Icons.home,
+                                                                              size: 15,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text('Home',
+                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
                                                                         ),
@@ -2949,27 +3155,45 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     ),
                                                                   ),
                                                                   InkWell(
-                                                                    onTap:(){
-                                                                      Navigator.of(context).push(
+                                                                    onTap: () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
                                                                         MaterialPageRoute(
                                                                             builder: (context) =>
                                                                                 ClientList(widget.token)),
                                                                       );
                                                                     },
-                                                                    child: Container(
-                                                                      width: MediaQuery.of(context).size.width * 0.25,
+                                                                    child:
+                                                                        Container(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          0.25,
                                                                       decoration: BoxDecoration(
-                                                                          color: Colors.green.shade100,
-                                                                          borderRadius: BorderRadius.circular(10)
-                                                                      ),
-                                                                      child: const Padding(
-                                                                        padding: EdgeInsets.all(5),
-                                                                        child: Column(
-                                                                          mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                          color: Colors
+                                                                              .green
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(10)),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(5),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
-                                                                            Icon(Icons.person,size: 15,),
-                                                                            SizedBox(height: 5,),
-                                                                            Text('Clients',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                            Icon(
+                                                                              Icons.person,
+                                                                              size: 15,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Text('Clients',
+                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
                                                                         ),
@@ -2977,19 +3201,38 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                     ),
                                                                   ),
                                                                   Container(
-                                                                    width: MediaQuery.of(context).size.width * 0.25,
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
                                                                     decoration: BoxDecoration(
-                                                                        color: Colors.green.shade100,
-                                                                        borderRadius: BorderRadius.circular(10)
-                                                                    ),
-                                                                    child: const Padding(
-                                                                      padding: EdgeInsets.all(5),
-                                                                      child: Column(
-                                                                        mainAxisAlignment:MainAxisAlignment.spaceEvenly,
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
                                                                         children: [
-                                                                          Icon(Icons.details,size: 15,),
-                                                                          SizedBox(height: 5,),
-                                                                          Text('Others',style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                          Icon(
+                                                                            Icons.details,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Others',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
                                                                               textAlign: TextAlign.center),
                                                                         ],
                                                                       ),
@@ -3126,8 +3369,8 @@ class _EditInvoiceState extends State<EditInvoice> {
   void calculateTaxAmt() {
     setState(() {
       productTaxAmount.text = (double.parse(productRate.text) *
-          double.parse(productQty.text) *
-          double.parse(productTaxPercent.text) /
+              double.parse(productQty.text) *
+              double.parse(productTaxPercent.text) /
               100)
           .toString();
       if (productTaxAmount.text.isNotEmpty) {

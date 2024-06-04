@@ -82,7 +82,6 @@ class _AddInvoiceState extends State<AddInvoice> {
   var code = '91';
   String? templateImage;
 
-
   void toggleTextFieldVisibility() {
     setState(() {
       isTextFieldVisible = !isTextFieldVisible;
@@ -95,7 +94,6 @@ class _AddInvoiceState extends State<AddInvoice> {
       headerContent = !headerContent;
     });
   }
-
 
   @override
   void initState() {
@@ -110,7 +108,7 @@ class _AddInvoiceState extends State<AddInvoice> {
         connectivityResult == ConnectivityResult.wifi) {
       setState(() {
         result = true;
-      }); 
+      });
     } else {
       setState(() {
         result = false;
@@ -132,8 +130,8 @@ class _AddInvoiceState extends State<AddInvoice> {
           invDetails!.data!.billingAddress!.billingPincode.toString();
       billingPostOffice.text =
           invDetails!.data!.billingAddress!.billingPostOffice.toString();
-      if(invDetails!.data!.billingAddress!.billingCountryCode.toString()!='')
-      {
+      if (invDetails!.data!.billingAddress!.billingCountryCode.toString() !=
+          '') {
         code = invDetails!.data!.billingAddress!.billingCountryCode.toString();
       }
       if (billingPinCode.text != '') {
@@ -617,9 +615,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                           controller:
                                                               billingPhone,
                                                           decoration:
-                                                               InputDecoration(
+                                                              InputDecoration(
                                                                   contentPadding:
-                                                                      const EdgeInsets.only(
+                                                                      const EdgeInsets
+                                                                          .only(
                                                                           left:
                                                                               10,
                                                                           top:
@@ -632,16 +631,24 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                       Colors
                                                                           .white,
                                                                   filled: true,
-                                                                  prefix: GestureDetector(
+                                                                  prefix:
+                                                                      GestureDetector(
                                                                     onTap: () {
                                                                       showCountryPicker(
-                                                                        context: context,
-                                                                        searchAutofocus: false,
-                                                                        showPhoneCode: true,
+                                                                        context:
+                                                                            context,
+                                                                        searchAutofocus:
+                                                                            false,
+                                                                        showPhoneCode:
+                                                                            true,
                                                                         // optional. Shows phone code before the country name.
-                                                                        onSelect: (Country country) {
-                                                                          setState(() {
-                                                                            code = country.phoneCode;
+                                                                        onSelect:
+                                                                            (Country
+                                                                                country) {
+                                                                          setState(
+                                                                              () {
+                                                                            code =
+                                                                                country.phoneCode;
                                                                           });
 
                                                                           // flag = country.flagEmoji;
@@ -650,14 +657,16 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                         },
                                                                       );
                                                                     },
-                                                                    child: SizedBox(
+                                                                    child:
+                                                                        SizedBox(
                                                                       // color: Colors.blue,
                                                                       width: 70,
                                                                       // width: MediaQuery.of(context).size.width/3.5,
-                                                                      child: Row(children: [
-                                                                        Text("+$code"),
-                                                                        const Icon(Icons.arrow_drop_down),
-                                                                      ]),
+                                                                      child: Row(
+                                                                          children: [
+                                                                            Text("+$code"),
+                                                                            const Icon(Icons.arrow_drop_down),
+                                                                          ]),
                                                                     ),
                                                                   ),
                                                                   border:
@@ -791,26 +800,30 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                             title:
                                                                                 const Text('Post Office'),
                                                                             content: billingPostal!.postOffice != null
-                                                                                ? ListView.builder(
-                                                                                    shrinkWrap: true,
-                                                                                    itemCount: billingPostal!.postOffice!.length,
-                                                                                    itemBuilder: (context, ind) {
-                                                                                      return InkWell(
-                                                                                        onTap: () {
-                                                                                          setState(() {
-                                                                                            billingPostOffice.text = billingPostal!.postOffice![ind].name.toString();
-                                                                                            Navigator.pop(context, true);
-                                                                                          });
-                                                                                        },
-                                                                                        child: SizedBox(
-                                                                                          height: 50,
-                                                                                          child: Text(
-                                                                                            billingPostal!.postOffice![ind].name.toString(),
-                                                                                            style: const TextStyle(fontSize: 18),
+                                                                                ? SizedBox(
+                                                                                    height: MediaQuery.of(context).size.height * .32,
+                                                                                    width: MediaQuery.of(context).size.height * .8,
+                                                                                    child: ListView.builder(
+                                                                                      shrinkWrap: true,
+                                                                                      itemCount: billingPostal!.postOffice!.length,
+                                                                                      itemBuilder: (context, ind) {
+                                                                                        return InkWell(
+                                                                                          onTap: () {
+                                                                                            setState(() {
+                                                                                              billingPostOffice.text = billingPostal!.postOffice![ind].name.toString();
+                                                                                              Navigator.pop(context, true);
+                                                                                            });
+                                                                                          },
+                                                                                          child: SizedBox(
+                                                                                            height: 50,
+                                                                                            child: Text(
+                                                                                              billingPostal!.postOffice![ind].name.toString(),
+                                                                                              style: const TextStyle(fontSize: 18),
+                                                                                            ),
                                                                                           ),
-                                                                                        ),
-                                                                                      );
-                                                                                    },
+                                                                                        );
+                                                                                      },
+                                                                                    ),
                                                                                   )
                                                                                 : const Text('No Post Office Found'));
                                                                       });
@@ -1685,9 +1698,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                               value = '0';
                                                             }
                                                             productTaxAmount
-                                                                .text = (double.parse(
-                                                                        value) *
-                                                                double.parse(
+                                                                .text = (double
+                                                                        .parse(
+                                                                            value) *
+                                                                    double.parse(
                                                                         productTaxPercent
                                                                             .text) /
                                                                     100)
@@ -1697,13 +1711,17 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                             value) +
                                                                         double.parse(productTaxAmount
                                                                             .text)) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         productQty
                                                                             .text))
                                                                 .toString();
 
-                                                            productTotalAmount.text=double.parse(productTotalAmount
-                                                                .text).toStringAsFixed(2);
+                                                            productTotalAmount
+                                                                .text = double.parse(
+                                                                    productTotalAmount
+                                                                        .text)
+                                                                .toStringAsFixed(
+                                                                    2);
 
                                                             setState(() {});
                                                           },
@@ -1758,11 +1776,20 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                             if (value == '') {
                                                               value = '0';
                                                             }
-                                                            productTotalAmount.text = ((double.parse(productRate.text) +
-                                                                        double.parse(productTaxAmount.text)) *
-                                                                double.parse(value)).toString();
-                                                            productTotalAmount.text=double.parse(productTotalAmount
-                                                                .text).toStringAsFixed(2);
+                                                            productTotalAmount
+                                                                .text = ((double.parse(productRate
+                                                                            .text) +
+                                                                        double.parse(productTaxAmount
+                                                                            .text)) *
+                                                                    double.parse(
+                                                                        value))
+                                                                .toString();
+                                                            productTotalAmount
+                                                                .text = double.parse(
+                                                                    productTotalAmount
+                                                                        .text)
+                                                                .toStringAsFixed(
+                                                                    2);
                                                             setState(() {});
                                                           },
                                                           controller:
@@ -1825,7 +1852,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                 .text = (double.parse(
                                                                         productRate
                                                                             .text) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         value) /
                                                                     100)
                                                                 .toString();
@@ -1834,12 +1861,16 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                             .text) +
                                                                         double.parse(productTaxAmount
                                                                             .text)) *
-                                                                double.parse(
+                                                                    double.parse(
                                                                         productQty
                                                                             .text))
                                                                 .toString();
-                                                            productTotalAmount.text=double.parse(productTotalAmount
-                                                                .text).toStringAsFixed(2);
+                                                            productTotalAmount
+                                                                .text = double.parse(
+                                                                    productTotalAmount
+                                                                        .text)
+                                                                .toStringAsFixed(
+                                                                    2);
                                                             setState(() {});
                                                           },
                                                           controller:
@@ -2819,7 +2850,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 onChanged: (newValue) {
                                                   setState(() {
                                                     paymentMethod = newValue;
-
                                                   });
                                                 },
                                               ),
@@ -2831,116 +2861,134 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 10,),
-
-                             paymentMethod=='2'?
-                             Container(
-                                child: templateImage==null?
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: Align(
-                                    alignment: Alignment.topRight,
-                                    child: InkWell(
-                                      onTap: _selectFile,
-                                      child: Container(
-                                          width:
-                                          MediaQuery.of(context).size.width *
-                                              0.4,
-                                          height: 35,
-                                          decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                              BorderRadius.circular(5)),
-                                          child: const Padding(
-                                            padding: EdgeInsets.only(
-                                                left: 10,
-                                                right: 10,
-                                                top: 5,
-                                                bottom: 5),
-                                            child:
-                                            Center(child: Text('Choose File')),
-                                          )),
-                                    ),
-                                  ),
-                                ): Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: Stack(
-                                    children: [
-                                      Align(
-                                        alignment: Alignment.topRight,
-                                        child: InkWell(
-                                          onTap: _selectFile,
-                                          child: Container(
-                                              width:
-                                              MediaQuery.of(context).size.width *
-                                                  0.6,
-                                              height: 80,
-                                              decoration: BoxDecoration(
-                                                  color: Colors.grey.shade300,
-                                                  borderRadius:
-                                                  BorderRadius.circular(5)),
-                                              child:  Padding(
-                                                padding: const EdgeInsets.only(
-                                                  right: 10,
-                                                ),
-                                                child:
-                                                Row(
-                                                  children: [
-                                                    Container(
-                                                      height:
-                                                      80,
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              paymentMethod == '2'
+                                  ? Container(
+                                      child: templateImage == null
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 10),
+                                              child: Align(
+                                                alignment: Alignment.topRight,
+                                                child: InkWell(
+                                                  onTap: _selectFile,
+                                                  child: Container(
                                                       width:
-                                                      90,
-                                                      decoration:
-                                                      BoxDecoration(
-                                                        image: DecorationImage(
-                                                          fit: BoxFit.fitWidth,
-                                                          image: FileImage(
-
-                                                            File(templateImage!),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      // Add your image widget here
-                                                    ),
-                                                    const SizedBox(width: 20,),
-                                                    const Center(child: Text('Change File')),
-                                                  ],
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.4,
+                                                      height: 35,
+                                                      decoration: BoxDecoration(
+                                                          color: Colors
+                                                              .grey.shade300,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5)),
+                                                      child: const Padding(
+                                                        padding:
+                                                            EdgeInsets.only(
+                                                                left: 10,
+                                                                right: 10,
+                                                                top: 5,
+                                                                bottom: 5),
+                                                        child: Center(
+                                                            child: Text(
+                                                                'Choose File')),
+                                                      )),
                                                 ),
-                                              )),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 0.0,
-                                        top: 0.0,
-                                        child:
-                                        InkWell(
-                                          onTap: (){
-                                            templateImage=null;
-                                            setState(() {
-
-                                            });
-                                          },
-                                          child: const Icon(
-                                            Icons.remove_circle,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-
-                                      )
-                                    ],
-                                  ),
-                                )
-                              ):const SizedBox(),
-
-
+                                              ),
+                                            )
+                                          : Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 10),
+                                              child: Stack(
+                                                children: [
+                                                  Align(
+                                                    alignment:
+                                                        Alignment.topRight,
+                                                    child: InkWell(
+                                                      onTap: _selectFile,
+                                                      child: Container(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                          height: 80,
+                                                          decoration: BoxDecoration(
+                                                              color: Colors.grey
+                                                                  .shade300,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5)),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                              right: 10,
+                                                            ),
+                                                            child: Row(
+                                                              children: [
+                                                                Container(
+                                                                  height: 80,
+                                                                  width: 90,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    image:
+                                                                        DecorationImage(
+                                                                      fit: BoxFit
+                                                                          .fitWidth,
+                                                                      image:
+                                                                          FileImage(
+                                                                        File(
+                                                                            templateImage!),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  // Add your image widget here
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 20,
+                                                                ),
+                                                                const Center(
+                                                                    child: Text(
+                                                                        'Change File')),
+                                                              ],
+                                                            ),
+                                                          )),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    right: 0.0,
+                                                    top: 0.0,
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        templateImage = null;
+                                                        setState(() {});
+                                                      },
+                                                      child: const Icon(
+                                                        Icons.remove_circle,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ))
+                                  : const SizedBox(),
                             ],
                           ),
                           const SizedBox(
                             height: 10,
                           ),
 
-                          const SizedBox(height: 10,),
+                          const SizedBox(
+                            height: 10,
+                          ),
                           Padding(
                             padding: const EdgeInsets.only(left: 10, right: 10),
                             child: InkWell(
@@ -2988,26 +3036,29 @@ class _AddInvoiceState extends State<AddInvoice> {
                                   if (products.isEmpty) {
                                     Common.toastMessaage(
                                         'Add at least one product', Colors.red);
-                                  }
-
-                                  else if (paidAmount.text.isNotEmpty&&double.parse(paidAmount.text) >
-                                      allTotal) {
+                                  } else if (paidAmount.text.isNotEmpty &&
+                                      double.parse(paidAmount.text) >
+                                          allTotal) {
                                     Common.toastMessaage(
                                         'Enter valid paid amount', Colors.red);
                                   } else {
                                     Common.showProgressDialog(
                                         context, "Loading..");
-                                    AddInvoiceCheckModel invCheck = await HttpService.addInvoiceCheck(widget.token,code,billingPhone.text);
-                                    if(invCheck.data==false){
+                                    AddInvoiceCheckModel invCheck =
+                                        await HttpService.addInvoiceCheck(
+                                            widget.token,
+                                            code,
+                                            billingPhone.text);
+                                    if (invCheck.data == false) {
                                       var body = FormData.fromMap({
                                         "token": widget.token,
                                         'invoice_number':
-                                        invDetails!.data!.invoiceNumber,
+                                            invDetails!.data!.invoiceNumber,
                                         'invoice_date': DateFormat("dd-MM-yyyy")
                                             .format(DateTime.parse(
-                                            fromdate.toString())),
+                                                fromdate.toString())),
                                         'customer_id':
-                                        invDetails!.data!.customerId,
+                                            invDetails!.data!.customerId,
                                         'sub_total': subTotal,
                                         'estimated_tax': totalTaxAmount,
                                         'discount_amount': discount.text,
@@ -3021,18 +3072,25 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         'billing_contact_no': billingPhone.text,
                                         'billing_gst': billingGstNo.text,
                                         "billing_pincode": billingPinCode.text,
-                                        "billing_post_office": billingPostOffice.text,
+                                        "billing_post_office":
+                                            billingPostOffice.text,
                                         'shipping_name': shippingName.text,
-                                        'shipping_address': shippingAddress.text,
-                                        'shipping_contact_no': shippingPhone.text,
+                                        'shipping_address':
+                                            shippingAddress.text,
+                                        'shipping_contact_no':
+                                            shippingPhone.text,
                                         'shipping_gst': shippingGstNo.text,
-                                        "shipping_pincode": shippingPinCode.text,
+                                        "shipping_pincode":
+                                            shippingPinCode.text,
                                         'shipping_country_code': code,
                                         "shipping_post_office":
-                                        shippingPostOffice.text,
+                                            shippingPostOffice.text,
                                         'amount_paid': paidAmount.text,
                                         'product_details': jsonEncode(products),
-                                        'upload_file':templateImage!=null?await MultipartFile.fromFile(templateImage.toString()):''
+                                        'upload_file': templateImage != null
+                                            ? await MultipartFile.fromFile(
+                                                templateImage.toString())
+                                            : ''
                                       });
 
                                       if (context.mounted) {
@@ -3040,7 +3098,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             context, "Loading..");
                                       }
                                       AddInvoiceModel inv =
-                                      await HttpService.addInvoice(body);
+                                          await HttpService.addInvoice(body);
                                       if (inv.status == true) {
                                         Common.toastMessaage(
                                             inv.message, Colors.green);
@@ -3048,7 +3106,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           showDialog(
                                               barrierDismissible: false,
                                               barrierColor:
-                                              Colors.white.withOpacity(.2),
+                                                  Colors.white.withOpacity(.2),
                                               context: context,
                                               builder: (BuildContext context) {
                                                 return WillPopScope(
@@ -3056,40 +3114,41 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     return false;
                                                   },
                                                   child: Material(
-                                                    type:
-                                                    MaterialType.transparency,
+                                                    type: MaterialType
+                                                        .transparency,
                                                     child: Padding(
                                                       padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 50),
+                                                          const EdgeInsets.only(
+                                                              bottom: 50),
                                                       child: Center(
                                                         child: Container(
                                                           decoration:
-                                                          BoxDecoration(
+                                                              BoxDecoration(
                                                             borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
                                                             color: Colors.white,
                                                           ),
                                                           width: MediaQuery.of(
-                                                              context)
-                                                              .size
-                                                              .width *
+                                                                      context)
+                                                                  .size
+                                                                  .width *
                                                               0.9,
                                                           height: 300,
                                                           child: Padding(
                                                             padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                left: 20,
-                                                                right: 20),
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 20,
+                                                                    right: 20),
                                                             child: Column(
                                                               mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
+                                                                  MainAxisAlignment
+                                                                      .center,
                                                               crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .center,
+                                                                  CrossAxisAlignment
+                                                                      .center,
                                                               children: [
                                                                 Image.asset(
                                                                   'assets/icons/check.png',
@@ -3102,10 +3161,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                   'Success',
                                                                   style: TextStyle(
                                                                       fontSize:
-                                                                      18,
+                                                                          18,
                                                                       fontWeight:
-                                                                      FontWeight
-                                                                          .w400),
+                                                                          FontWeight
+                                                                              .w400),
                                                                 ),
                                                                 const SizedBox(
                                                                   height: 5,
@@ -3115,50 +3174,45 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                       .toString(),
                                                                   style: const TextStyle(
                                                                       fontSize:
-                                                                      15,
+                                                                          15,
                                                                       fontWeight:
-                                                                      FontWeight
-                                                                          .w400),
+                                                                          FontWeight
+                                                                              .w400),
                                                                 ),
                                                                 const SizedBox(
                                                                   height: 15,
                                                                 ),
                                                                 Row(
                                                                   mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
                                                                   children: [
                                                                     InkWell(
-                                                                      onTap: () {
-                                                                        Navigator.of(
-                                                                            context)
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.of(context)
                                                                             .push(
                                                                           MaterialPageRoute(
-                                                                              builder: (context) =>
-                                                                                  Dashboard(widget.token)),
+                                                                              builder: (context) => Dashboard(widget.token)),
                                                                         );
                                                                       },
                                                                       child:
-                                                                      Container(
-                                                                        width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
+                                                                          Container(
+                                                                        width: MediaQuery.of(context).size.width *
                                                                             0.25,
                                                                         //  color: RandomColorModel().getColor(),
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .green
-                                                                                .shade100,
-                                                                            borderRadius:
-                                                                            BorderRadius.circular(10)),
+                                                                            color:
+                                                                                Colors.green.shade100,
+                                                                            borderRadius: BorderRadius.circular(10)),
                                                                         child:
-                                                                        const Padding(
+                                                                            const Padding(
                                                                           padding:
-                                                                          EdgeInsets.all(5),
+                                                                              EdgeInsets.all(5),
                                                                           child:
-                                                                          Column(
+                                                                              Column(
                                                                             mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
+                                                                                MainAxisAlignment.spaceEvenly,
                                                                             children: [
                                                                               Icon(
                                                                                 Icons.dashboard,
@@ -3167,44 +3221,37 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                               SizedBox(
                                                                                 height: 5,
                                                                               ),
-                                                                              Text('Dashboard',
-                                                                                  style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                  textAlign: TextAlign.center),
+                                                                              Text('Dashboard', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                             ],
                                                                           ),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                     InkWell(
-                                                                      onTap: () {
-                                                                        Navigator.of(
-                                                                            context)
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.of(context)
                                                                             .push(
                                                                           MaterialPageRoute(
-                                                                              builder: (context) =>
-                                                                                  InvoiceList(widget.token)),
+                                                                              builder: (context) => InvoiceList(widget.token)),
                                                                         );
                                                                       },
                                                                       child:
-                                                                      Container(
-                                                                        width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
+                                                                          Container(
+                                                                        width: MediaQuery.of(context).size.width *
                                                                             0.25,
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .green
-                                                                                .shade100,
-                                                                            borderRadius:
-                                                                            BorderRadius.circular(10)),
+                                                                            color:
+                                                                                Colors.green.shade100,
+                                                                            borderRadius: BorderRadius.circular(10)),
                                                                         child:
-                                                                        const Padding(
+                                                                            const Padding(
                                                                           padding:
-                                                                          EdgeInsets.all(5),
+                                                                              EdgeInsets.all(5),
                                                                           child:
-                                                                          Column(
+                                                                              Column(
                                                                             mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
+                                                                                MainAxisAlignment.spaceEvenly,
                                                                             children: [
                                                                               Icon(
                                                                                 Icons.list_alt,
@@ -3213,54 +3260,47 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                               SizedBox(
                                                                                 height: 5,
                                                                               ),
-                                                                              Text('Invoice',
-                                                                                  style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                  textAlign: TextAlign.center),
+                                                                              Text('Invoice', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                             ],
                                                                           ),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                     InkWell(
-                                                                      onTap: () {
-                                                                        if (double.parse(
-                                                                            paidAmount.text) <
+                                                                      onTap:
+                                                                          () {
+                                                                        if (double.parse(paidAmount.text) <
                                                                             allTotal) {
                                                                           Navigator.of(context)
                                                                               .push(
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
+                                                                            MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
                                                                           );
                                                                         } else {
                                                                           Navigator.of(context)
                                                                               .push(
                                                                             MaterialPageRoute(
                                                                                 builder: (context) => ReceiptList(
-                                                                                  widget.token,
-                                                                                )),
+                                                                                      widget.token,
+                                                                                    )),
                                                                           );
                                                                         }
                                                                       },
                                                                       child:
-                                                                      Container(
-                                                                        width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
+                                                                          Container(
+                                                                        width: MediaQuery.of(context).size.width *
                                                                             0.25,
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .green
-                                                                                .shade100,
-                                                                            borderRadius:
-                                                                            BorderRadius.circular(10)),
+                                                                            color:
+                                                                                Colors.green.shade100,
+                                                                            borderRadius: BorderRadius.circular(10)),
                                                                         child:
-                                                                        const Padding(
+                                                                            const Padding(
                                                                           padding:
-                                                                          EdgeInsets.all(5),
+                                                                              EdgeInsets.all(5),
                                                                           child:
-                                                                          Column(
+                                                                              Column(
                                                                             mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
+                                                                                MainAxisAlignment.spaceEvenly,
                                                                             children: [
                                                                               Icon(
                                                                                 Icons.currency_rupee,
@@ -3269,9 +3309,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                               SizedBox(
                                                                                 height: 5,
                                                                               ),
-                                                                              Text('Receipt',
-                                                                                  style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                  textAlign: TextAlign.center),
+                                                                              Text('Receipt', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                             ],
                                                                           ),
                                                                         ),
@@ -3284,40 +3322,35 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                 ),
                                                                 Row(
                                                                   mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
                                                                   children: [
                                                                     InkWell(
-                                                                      onTap: () {
-                                                                        Navigator.of(
-                                                                            context)
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.of(context)
                                                                             .push(
                                                                           MaterialPageRoute(
-                                                                              builder: (context) =>
-                                                                                  HomePage(widget.token)),
+                                                                              builder: (context) => HomePage(widget.token)),
                                                                         );
                                                                       },
                                                                       child:
-                                                                      Container(
-                                                                        width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
+                                                                          Container(
+                                                                        width: MediaQuery.of(context).size.width *
                                                                             0.25,
                                                                         //  color: RandomColorModel().getColor(),
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .green
-                                                                                .shade100,
-                                                                            borderRadius:
-                                                                            BorderRadius.circular(10)),
+                                                                            color:
+                                                                                Colors.green.shade100,
+                                                                            borderRadius: BorderRadius.circular(10)),
                                                                         child:
-                                                                        const Padding(
+                                                                            const Padding(
                                                                           padding:
-                                                                          EdgeInsets.all(5),
+                                                                              EdgeInsets.all(5),
                                                                           child:
-                                                                          Column(
+                                                                              Column(
                                                                             mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
+                                                                                MainAxisAlignment.spaceEvenly,
                                                                             children: [
                                                                               Icon(
                                                                                 Icons.home,
@@ -3326,15 +3359,15 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                               SizedBox(
                                                                                 height: 5,
                                                                               ),
-                                                                              Text('Home',
-                                                                                  style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                  textAlign: TextAlign.center),
+                                                                              Text('Home', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                             ],
                                                                           ),
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                    const SizedBox(width: 10,),
+                                                                    const SizedBox(
+                                                                      width: 10,
+                                                                    ),
                                                                     // InkWell(
                                                                     //   onTap: () {
                                                                     //     Navigator.of(
@@ -3383,36 +3416,32 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                     // ),
                                                                     Container(
                                                                       width: MediaQuery.of(context)
-                                                                          .size
-                                                                          .width *
+                                                                              .size
+                                                                              .width *
                                                                           0.25,
                                                                       decoration: BoxDecoration(
                                                                           color: Colors
                                                                               .green
                                                                               .shade100,
                                                                           borderRadius:
-                                                                          BorderRadius.circular(10)),
+                                                                              BorderRadius.circular(10)),
                                                                       child:
-                                                                      const Padding(
+                                                                          const Padding(
                                                                         padding:
-                                                                        EdgeInsets.all(
-                                                                            5),
+                                                                            EdgeInsets.all(5),
                                                                         child:
-                                                                        Column(
+                                                                            Column(
                                                                           mainAxisAlignment:
-                                                                          MainAxisAlignment.spaceEvenly,
+                                                                              MainAxisAlignment.spaceEvenly,
                                                                           children: [
                                                                             Icon(
                                                                               Icons.details,
-                                                                              size:
-                                                                              15,
+                                                                              size: 15,
                                                                             ),
                                                                             SizedBox(
-                                                                              height:
-                                                                              5,
+                                                                              height: 5,
                                                                             ),
-                                                                            Text(
-                                                                                'Others',
+                                                                            Text('Others',
                                                                                 style: TextStyle(fontSize: 13, color: Colors.black),
                                                                                 textAlign: TextAlign.center),
                                                                           ],
@@ -3440,124 +3469,178 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         //             widget.token)),
                                         //   );
                                         // }
-                                      }
-                                      else {
+                                      } else {
                                         Navigator.of(context).pop();
                                         Common.toastMessaage(
                                             inv.message, Colors.green);
                                       }
-                                    }
-                                    else{
+                                    } else {
                                       Navigator.of(context).pop();
-                                      if(mounted){
+                                      if (mounted) {
                                         showDialog(
                                             context: context,
                                             barrierDismissible: false,
                                             builder: (BuildContext ctx) {
                                               return AlertDialog(
                                                 title: const Text('Alert !!!'),
-                                                content:  Text(
-                                                    invCheck.message.toString()),
+                                                content: Text(invCheck.message
+                                                    .toString()),
                                                 actions: [
                                                   // The "Yes" button
                                                   TextButton(
                                                       onPressed: () {
-                                                        Navigator.of(context).push(MaterialPageRoute(builder: (context) => Dashboard(widget.token),));
+                                                        Navigator.of(context)
+                                                            .push(
+                                                                MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              Dashboard(
+                                                                  widget.token),
+                                                        ));
                                                       },
-                                                      child: const Text('Ignore')),
+                                                      child:
+                                                          const Text('Ignore')),
                                                   TextButton(
                                                       onPressed: () async {
-                                                        var body = FormData.fromMap({
+                                                        var body =
+                                                            FormData.fromMap({
                                                           "token": widget.token,
                                                           'invoice_number':
-                                                          invDetails!.data!.invoiceNumber,
-                                                          'invoice_date': DateFormat("dd-MM-yyyy")
-                                                              .format(DateTime.parse(
-                                                              fromdate.toString())),
+                                                              invDetails!.data!
+                                                                  .invoiceNumber,
+                                                          'invoice_date': DateFormat(
+                                                                  "dd-MM-yyyy")
+                                                              .format(DateTime
+                                                                  .parse(fromdate
+                                                                      .toString())),
                                                           'customer_id':
-                                                          invDetails!.data!.customerId,
+                                                              invDetails!.data!
+                                                                  .customerId,
                                                           'sub_total': subTotal,
-                                                          'estimated_tax': totalTaxAmount,
-                                                          'discount_amount': discount.text,
-                                                          'shipping_amount': shippingCharge.text,
-                                                          'total_invoice_amount': allTotal,
-                                                          'payment_method': paymentMethod,
-                                                          'remarks': remarks.text,
-                                                          'billing_name': billingName.text,
-                                                          'billing_address': billingAddress.text,
-                                                          'billing_country_code': code,
-                                                          'billing_contact_no': billingPhone.text,
-                                                          'billing_gst': billingGstNo.text,
-                                                          "billing_pincode": billingPinCode.text,
-                                                          "billing_post_office": billingPostOffice.text,
-                                                          'shipping_name': shippingName.text,
-                                                          'shipping_address': shippingAddress.text,
-                                                          'shipping_contact_no': shippingPhone.text,
-                                                          'shipping_gst': shippingGstNo.text,
-                                                          "shipping_pincode": shippingPinCode.text,
-                                                          'shipping_country_code': code,
+                                                          'estimated_tax':
+                                                              totalTaxAmount,
+                                                          'discount_amount':
+                                                              discount.text,
+                                                          'shipping_amount':
+                                                              shippingCharge
+                                                                  .text,
+                                                          'total_invoice_amount':
+                                                              allTotal,
+                                                          'payment_method':
+                                                              paymentMethod,
+                                                          'remarks':
+                                                              remarks.text,
+                                                          'billing_name':
+                                                              billingName.text,
+                                                          'billing_address':
+                                                              billingAddress
+                                                                  .text,
+                                                          'billing_country_code':
+                                                              code,
+                                                          'billing_contact_no':
+                                                              billingPhone.text,
+                                                          'billing_gst':
+                                                              billingGstNo.text,
+                                                          "billing_pincode":
+                                                              billingPinCode
+                                                                  .text,
+                                                          "billing_post_office":
+                                                              billingPostOffice
+                                                                  .text,
+                                                          'shipping_name':
+                                                              shippingName.text,
+                                                          'shipping_address':
+                                                              shippingAddress
+                                                                  .text,
+                                                          'shipping_contact_no':
+                                                              shippingPhone
+                                                                  .text,
+                                                          'shipping_gst':
+                                                              shippingGstNo
+                                                                  .text,
+                                                          "shipping_pincode":
+                                                              shippingPinCode
+                                                                  .text,
+                                                          'shipping_country_code':
+                                                              code,
                                                           "shipping_post_office":
-                                                          shippingPostOffice.text,
-                                                          'amount_paid': paidAmount.text,
-                                                          'product_details': jsonEncode(products),
-                                                          'upload_file':templateImage!=null?await MultipartFile.fromFile(templateImage.toString()):''
+                                                              shippingPostOffice
+                                                                  .text,
+                                                          'amount_paid':
+                                                              paidAmount.text,
+                                                          'product_details':
+                                                              jsonEncode(
+                                                                  products),
+                                                          'upload_file': templateImage !=
+                                                                  null
+                                                              ? await MultipartFile
+                                                                  .fromFile(
+                                                                      templateImage
+                                                                          .toString())
+                                                              : ''
                                                         });
 
                                                         if (context.mounted) {
-                                                          Common.showProgressDialog(
-                                                              context, "Loading..");
+                                                          Common
+                                                              .showProgressDialog(
+                                                                  context,
+                                                                  "Loading..");
                                                         }
                                                         AddInvoiceModel inv =
-                                                        await HttpService.addInvoice(body);
-                                                        if (inv.status == true) {
+                                                            await HttpService
+                                                                .addInvoice(
+                                                                    body);
+                                                        if (inv.status ==
+                                                            true) {
                                                           Common.toastMessaage(
-                                                              inv.message, Colors.green);
+                                                              inv.message,
+                                                              Colors.green);
                                                           if (mounted) {
                                                             showDialog(
-                                                                barrierDismissible: false,
-                                                                barrierColor:
-                                                                Colors.white.withOpacity(.2),
-                                                                context: context,
-                                                                builder: (BuildContext context) {
+                                                                barrierDismissible:
+                                                                    false,
+                                                                barrierColor: Colors
+                                                                    .white
+                                                                    .withOpacity(
+                                                                        .2),
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (BuildContext
+                                                                        context) {
                                                                   return WillPopScope(
-                                                                    onWillPop: () async {
+                                                                    onWillPop:
+                                                                        () async {
                                                                       return false;
                                                                     },
-                                                                    child: Material(
-                                                                      type:
-                                                                      MaterialType.transparency,
-                                                                      child: Padding(
-                                                                        padding:
-                                                                        const EdgeInsets.only(
-                                                                            bottom: 50),
-                                                                        child: Center(
-                                                                          child: Container(
+                                                                    child:
+                                                                        Material(
+                                                                      type: MaterialType
+                                                                          .transparency,
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            bottom:
+                                                                                50),
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Container(
                                                                             decoration:
-                                                                            BoxDecoration(
-                                                                              borderRadius:
-                                                                              BorderRadius
-                                                                                  .circular(10),
+                                                                                BoxDecoration(
+                                                                              borderRadius: BorderRadius.circular(10),
                                                                               color: Colors.white,
                                                                             ),
-                                                                            width: MediaQuery.of(
-                                                                                context)
-                                                                                .size
-                                                                                .width *
-                                                                                0.9,
-                                                                            height: 300,
-                                                                            child: Padding(
-                                                                              padding:
-                                                                              const EdgeInsets
-                                                                                  .only(
-                                                                                  left: 20,
-                                                                                  right: 20),
+                                                                            width:
+                                                                                MediaQuery.of(context).size.width * 0.9,
+                                                                            height:
+                                                                                300,
+                                                                            child:
+                                                                                Padding(
+                                                                              padding: const EdgeInsets.only(left: 20, right: 20),
                                                                               child: Column(
-                                                                                mainAxisAlignment:
-                                                                                MainAxisAlignment
-                                                                                    .center,
-                                                                                crossAxisAlignment:
-                                                                                CrossAxisAlignment
-                                                                                    .center,
+                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                crossAxisAlignment: CrossAxisAlignment.center,
                                                                                 children: [
                                                                                   Image.asset(
                                                                                     'assets/icons/check.png',
@@ -3568,65 +3651,35 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                   ),
                                                                                   const Text(
                                                                                     'Success',
-                                                                                    style: TextStyle(
-                                                                                        fontSize:
-                                                                                        18,
-                                                                                        fontWeight:
-                                                                                        FontWeight
-                                                                                            .w400),
+                                                                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                                                                                   ),
                                                                                   const SizedBox(
                                                                                     height: 5,
                                                                                   ),
                                                                                   Text(
-                                                                                    inv.message
-                                                                                        .toString(),
-                                                                                    style: const TextStyle(
-                                                                                        fontSize:
-                                                                                        15,
-                                                                                        fontWeight:
-                                                                                        FontWeight
-                                                                                            .w400),
+                                                                                    inv.message.toString(),
+                                                                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
                                                                                   ),
                                                                                   const SizedBox(
                                                                                     height: 15,
                                                                                   ),
                                                                                   Row(
-                                                                                    mainAxisAlignment:
-                                                                                    MainAxisAlignment
-                                                                                        .spaceBetween,
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                                     children: [
                                                                                       InkWell(
                                                                                         onTap: () {
-                                                                                          Navigator.of(
-                                                                                              context)
-                                                                                              .push(
-                                                                                            MaterialPageRoute(
-                                                                                                builder: (context) =>
-                                                                                                    Dashboard(widget.token)),
+                                                                                          Navigator.of(context).push(
+                                                                                            MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
                                                                                           );
                                                                                         },
-                                                                                        child:
-                                                                                        Container(
-                                                                                          width: MediaQuery.of(context)
-                                                                                              .size
-                                                                                              .width *
-                                                                                              0.25,
+                                                                                        child: Container(
+                                                                                          width: MediaQuery.of(context).size.width * 0.25,
                                                                                           //  color: RandomColorModel().getColor(),
-                                                                                          decoration: BoxDecoration(
-                                                                                              color: Colors
-                                                                                                  .green
-                                                                                                  .shade100,
-                                                                                              borderRadius:
-                                                                                              BorderRadius.circular(10)),
-                                                                                          child:
-                                                                                          const Padding(
-                                                                                            padding:
-                                                                                            EdgeInsets.all(5),
-                                                                                            child:
-                                                                                            Column(
-                                                                                              mainAxisAlignment:
-                                                                                              MainAxisAlignment.spaceEvenly,
+                                                                                          decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                                          child: const Padding(
+                                                                                            padding: EdgeInsets.all(5),
+                                                                                            child: Column(
+                                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                                                               children: [
                                                                                                 Icon(
                                                                                                   Icons.dashboard,
@@ -3635,9 +3688,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                                 SizedBox(
                                                                                                   height: 5,
                                                                                                 ),
-                                                                                                Text('Dashboard',
-                                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                                    textAlign: TextAlign.center),
+                                                                                                Text('Dashboard', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                                               ],
                                                                                             ),
                                                                                           ),
@@ -3645,34 +3696,17 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                       ),
                                                                                       InkWell(
                                                                                         onTap: () {
-                                                                                          Navigator.of(
-                                                                                              context)
-                                                                                              .push(
-                                                                                            MaterialPageRoute(
-                                                                                                builder: (context) =>
-                                                                                                    InvoiceList(widget.token)),
+                                                                                          Navigator.of(context).push(
+                                                                                            MaterialPageRoute(builder: (context) => InvoiceList(widget.token)),
                                                                                           );
                                                                                         },
-                                                                                        child:
-                                                                                        Container(
-                                                                                          width: MediaQuery.of(context)
-                                                                                              .size
-                                                                                              .width *
-                                                                                              0.25,
-                                                                                          decoration: BoxDecoration(
-                                                                                              color: Colors
-                                                                                                  .green
-                                                                                                  .shade100,
-                                                                                              borderRadius:
-                                                                                              BorderRadius.circular(10)),
-                                                                                          child:
-                                                                                          const Padding(
-                                                                                            padding:
-                                                                                            EdgeInsets.all(5),
-                                                                                            child:
-                                                                                            Column(
-                                                                                              mainAxisAlignment:
-                                                                                              MainAxisAlignment.spaceEvenly,
+                                                                                        child: Container(
+                                                                                          width: MediaQuery.of(context).size.width * 0.25,
+                                                                                          decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                                          child: const Padding(
+                                                                                            padding: EdgeInsets.all(5),
+                                                                                            child: Column(
+                                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                                                               children: [
                                                                                                 Icon(
                                                                                                   Icons.list_alt,
@@ -3681,9 +3715,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                                 SizedBox(
                                                                                                   height: 5,
                                                                                                 ),
-                                                                                                Text('Invoice',
-                                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                                    textAlign: TextAlign.center),
+                                                                                                Text('Invoice', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                                               ],
                                                                                             ),
                                                                                           ),
@@ -3691,44 +3723,26 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                       ),
                                                                                       InkWell(
                                                                                         onTap: () {
-                                                                                          if (double.parse(
-                                                                                              paidAmount.text) <
-                                                                                              allTotal) {
-                                                                                            Navigator.of(context)
-                                                                                                .push(
-                                                                                              MaterialPageRoute(
-                                                                                                  builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
+                                                                                          if (double.parse(paidAmount.text) < allTotal) {
+                                                                                            Navigator.of(context).push(
+                                                                                              MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
                                                                                             );
                                                                                           } else {
-                                                                                            Navigator.of(context)
-                                                                                                .push(
+                                                                                            Navigator.of(context).push(
                                                                                               MaterialPageRoute(
                                                                                                   builder: (context) => ReceiptList(
-                                                                                                    widget.token,
-                                                                                                  )),
+                                                                                                        widget.token,
+                                                                                                      )),
                                                                                             );
                                                                                           }
                                                                                         },
-                                                                                        child:
-                                                                                        Container(
-                                                                                          width: MediaQuery.of(context)
-                                                                                              .size
-                                                                                              .width *
-                                                                                              0.25,
-                                                                                          decoration: BoxDecoration(
-                                                                                              color: Colors
-                                                                                                  .green
-                                                                                                  .shade100,
-                                                                                              borderRadius:
-                                                                                              BorderRadius.circular(10)),
-                                                                                          child:
-                                                                                          const Padding(
-                                                                                            padding:
-                                                                                            EdgeInsets.all(5),
-                                                                                            child:
-                                                                                            Column(
-                                                                                              mainAxisAlignment:
-                                                                                              MainAxisAlignment.spaceEvenly,
+                                                                                        child: Container(
+                                                                                          width: MediaQuery.of(context).size.width * 0.25,
+                                                                                          decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                                          child: const Padding(
+                                                                                            padding: EdgeInsets.all(5),
+                                                                                            child: Column(
+                                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                                                               children: [
                                                                                                 Icon(
                                                                                                   Icons.currency_rupee,
@@ -3737,9 +3751,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                                 SizedBox(
                                                                                                   height: 5,
                                                                                                 ),
-                                                                                                Text('Receipt',
-                                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                                    textAlign: TextAlign.center),
+                                                                                                Text('Receipt', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                                               ],
                                                                                             ),
                                                                                           ),
@@ -3751,41 +3763,22 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                     height: 8,
                                                                                   ),
                                                                                   Row(
-                                                                                    mainAxisAlignment:
-                                                                                    MainAxisAlignment
-                                                                                        .spaceBetween,
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                                     children: [
                                                                                       InkWell(
                                                                                         onTap: () {
-                                                                                          Navigator.of(
-                                                                                              context)
-                                                                                              .push(
-                                                                                            MaterialPageRoute(
-                                                                                                builder: (context) =>
-                                                                                                    HomePage(widget.token)),
+                                                                                          Navigator.of(context).push(
+                                                                                            MaterialPageRoute(builder: (context) => HomePage(widget.token)),
                                                                                           );
                                                                                         },
-                                                                                        child:
-                                                                                        Container(
-                                                                                          width: MediaQuery.of(context)
-                                                                                              .size
-                                                                                              .width *
-                                                                                              0.25,
+                                                                                        child: Container(
+                                                                                          width: MediaQuery.of(context).size.width * 0.25,
                                                                                           //  color: RandomColorModel().getColor(),
-                                                                                          decoration: BoxDecoration(
-                                                                                              color: Colors
-                                                                                                  .green
-                                                                                                  .shade100,
-                                                                                              borderRadius:
-                                                                                              BorderRadius.circular(10)),
-                                                                                          child:
-                                                                                          const Padding(
-                                                                                            padding:
-                                                                                            EdgeInsets.all(5),
-                                                                                            child:
-                                                                                            Column(
-                                                                                              mainAxisAlignment:
-                                                                                              MainAxisAlignment.spaceEvenly,
+                                                                                          decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                                          child: const Padding(
+                                                                                            padding: EdgeInsets.all(5),
+                                                                                            child: Column(
+                                                                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                                                               children: [
                                                                                                 Icon(
                                                                                                   Icons.home,
@@ -3794,15 +3787,15 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                                 SizedBox(
                                                                                                   height: 5,
                                                                                                 ),
-                                                                                                Text('Home',
-                                                                                                    style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                                    textAlign: TextAlign.center),
+                                                                                                Text('Home', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                                               ],
                                                                                             ),
                                                                                           ),
                                                                                         ),
                                                                                       ),
-                                                                                      const SizedBox(width: 10,),
+                                                                                      const SizedBox(
+                                                                                        width: 10,
+                                                                                      ),
                                                                                       // InkWell(
                                                                                       //   onTap: () {
                                                                                       //     Navigator.of(
@@ -3850,39 +3843,21 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                       //   ),
                                                                                       // ),
                                                                                       Container(
-                                                                                        width: MediaQuery.of(context)
-                                                                                            .size
-                                                                                            .width *
-                                                                                            0.25,
-                                                                                        decoration: BoxDecoration(
-                                                                                            color: Colors
-                                                                                                .green
-                                                                                                .shade100,
-                                                                                            borderRadius:
-                                                                                            BorderRadius.circular(10)),
-                                                                                        child:
-                                                                                        const Padding(
-                                                                                          padding:
-                                                                                          EdgeInsets.all(
-                                                                                              5),
-                                                                                          child:
-                                                                                          Column(
-                                                                                            mainAxisAlignment:
-                                                                                            MainAxisAlignment.spaceEvenly,
+                                                                                        width: MediaQuery.of(context).size.width * 0.25,
+                                                                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                                        child: const Padding(
+                                                                                          padding: EdgeInsets.all(5),
+                                                                                          child: Column(
+                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                                                             children: [
                                                                                               Icon(
                                                                                                 Icons.details,
-                                                                                                size:
-                                                                                                15,
+                                                                                                size: 15,
                                                                                               ),
                                                                                               SizedBox(
-                                                                                                height:
-                                                                                                5,
+                                                                                                height: 5,
                                                                                               ),
-                                                                                              Text(
-                                                                                                  'Others',
-                                                                                                  style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                                  textAlign: TextAlign.center),
+                                                                                              Text('Others', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
                                                                                             ],
                                                                                           ),
                                                                                         ),
@@ -3908,21 +3883,21 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                           //             widget.token)),
                                                           //   );
                                                           // }
-                                                        }
-                                                        else {
-                                                          Navigator.of(context).pop();
+                                                        } else {
+                                                          Navigator.of(context)
+                                                              .pop();
                                                           Common.toastMessaage(
-                                                              inv.message, Colors.green);
+                                                              inv.message,
+                                                              Colors.green);
                                                         }
                                                       },
-                                                      child: const Text('Submit')),
+                                                      child:
+                                                          const Text('Submit')),
                                                 ],
                                               );
                                             });
                                       }
                                     }
-
-
                                   }
                                 },
                                 child: Container(
@@ -4012,6 +3987,7 @@ class _AddInvoiceState extends State<AddInvoice> {
               ),
             ));
   }
+
   pickTemplateImage(context, source) async {
     try {
       Navigator.pop(context);
@@ -4023,6 +3999,7 @@ class _AddInvoiceState extends State<AddInvoice> {
       // ignore: empty_catches
     } catch (e) {}
   }
+
   _selectFile() {
     showModalBottomSheet(
       context: context,
@@ -4046,29 +4023,22 @@ class _AddInvoiceState extends State<AddInvoice> {
                 height: 20,
               ),
               Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     InkWell(
                       onTap: () async {
-                        await pickTemplateImage(
-                            context,
-                            ImageSource.camera);
+                        await pickTemplateImage(context, ImageSource.camera);
                       },
                       child: const Column(
-                        children: [
-                          Icon(Icons.camera),
-                          Text('Camera')
-                        ],
+                        children: [Icon(Icons.camera), Text('Camera')],
                       ),
                     ),
-                    const SizedBox(width: 30,),
+                    const SizedBox(
+                      width: 30,
+                    ),
                     InkWell(
                       onTap: () async {
-                        await pickTemplateImage(
-                          context,
-                          ImageSource.gallery);
-
+                        await pickTemplateImage(context, ImageSource.gallery);
                       },
                       child: const Column(
                         children: [
@@ -4083,6 +4053,5 @@ class _AddInvoiceState extends State<AddInvoice> {
         );
       }),
     );
-
   }
 }

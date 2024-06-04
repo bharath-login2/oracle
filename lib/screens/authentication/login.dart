@@ -474,18 +474,18 @@ class _LoginState extends State<Login> {
                                       );
                                     });
                                   }
-                                  if (Platform.isAndroid) {
-                                    _channel.setMethodCallHandler((call) async {
-                                      if (call.method ==
-                                          'setAsBackgroundService') {
-                                        initService();
-                                        FlutterBackgroundService()
-                                            .invoke('setAsBackground');
-                                      }
-                                    });
-                                    Workmanager().initialize(callbackDispatcher,
-                                        isInDebugMode: true);
-                                  }
+                                  // if (Platform.isAndroid) {
+                                  //   _channel.setMethodCallHandler((call) async {
+                                  //     if (call.method ==
+                                  //         'setAsBackgroundService') {
+                                  //       initService();
+                                  //       FlutterBackgroundService()
+                                  //           .invoke('setAsBackground');
+                                  //     }
+                                  //   });
+                                  //   Workmanager().initialize(callbackDispatcher,
+                                  //       isInDebugMode: true);
+                                  // }
                                 },
                                 child: Container(
                                   width:

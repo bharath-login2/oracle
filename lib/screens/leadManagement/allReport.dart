@@ -506,7 +506,6 @@ class _AllReportState extends State<AllReport> {
                                                         items.clear();
                                                         page = 1;
                                                         getData();
-                                                      
                                                       });
                                                     },
                                                     child:
@@ -688,7 +687,6 @@ class _AllReportState extends State<AllReport> {
                                         items.clear();
                                         page = 1;
                                         getData();
-                                        
                                       });
                                     },
                                     child: Padding(
@@ -1674,79 +1672,89 @@ class _AllReportState extends State<AllReport> {
                                       return AlertDialog(
                                         scrollable: true,
                                         title: const Text('Lead Category'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.leadCategory.length,
-                                          itemBuilder: (context, ind) {
-                                            return CheckboxListTile(
-                                              title: SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .leadCategory[ind]
-                                                      .leadCategory
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 14),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.leadCategory.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!
+                                                        .data
+                                                        .leadCategory[ind]
+                                                        .leadCategory
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
                                                 ),
-                                              ),
-                                              value: checkedCategoryItems
-                                                      .contains(commonDetails!
-                                                          .data
-                                                          .leadCategory[ind]
-                                                          .leadCategoryId
-                                                          .toString())
-                                                  ? true
-                                                  : false,
-                                              onChanged: (bool? value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    checkedCategoryItems.add(
-                                                        commonDetails!
+                                                value: checkedCategoryItems
+                                                        .contains(commonDetails!
                                                             .data
                                                             .leadCategory[ind]
                                                             .leadCategoryId
-                                                            .toString());
-                                                    checkedCategoryItemsName
-                                                        .add(commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategory
-                                                            .toString());
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedCategoryItems.add(
+                                                          commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategoryId
+                                                              .toString());
+                                                      checkedCategoryItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategory
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    checkedCategoryItems.remove(
-                                                        commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategoryId
-                                                            .toString());
-                                                    checkedCategoryItemsName
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategory
-                                                            .toString());
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedCategoryItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategoryId
+                                                              .toString());
+                                                      checkedCategoryItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategory
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                }
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                            );
-                                          },
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       );
                                     });
@@ -1935,79 +1943,89 @@ class _AllReportState extends State<AllReport> {
                                       return AlertDialog(
                                         scrollable: true,
                                         title: const Text('Call Result'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.callResult.length,
-                                          itemBuilder: (context, ind) {
-                                            return CheckboxListTile(
-                                              title: SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .callResult[ind]
-                                                      .callResult
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 14),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.callResult.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!
+                                                        .data
+                                                        .callResult[ind]
+                                                        .callResult
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
                                                 ),
-                                              ),
-                                              value: checkedCallResultItems
-                                                      .contains(commonDetails!
-                                                          .data
-                                                          .callResult[ind]
-                                                          .callResultId
-                                                          .toString())
-                                                  ? true
-                                                  : false,
-                                              onChanged: (bool? value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    checkedCallResultItems.add(
-                                                        commonDetails!
+                                                value: checkedCallResultItems
+                                                        .contains(commonDetails!
                                                             .data
                                                             .callResult[ind]
                                                             .callResultId
-                                                            .toString());
-                                                    checkedCallResultItemsName
-                                                        .add(commonDetails!
-                                                            .data
-                                                            .callResult[ind]
-                                                            .callResult
-                                                            .toString());
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedCallResultItems
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .callResult[ind]
+                                                              .callResultId
+                                                              .toString());
+                                                      checkedCallResultItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .callResult[ind]
+                                                              .callResult
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    checkedCallResultItems
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .callResult[ind]
-                                                            .callResultId
-                                                            .toString());
-                                                    checkedCallResultItemsName
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .callResult[ind]
-                                                            .callResult
-                                                            .toString());
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedCallResultItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .callResult[ind]
+                                                              .callResultId
+                                                              .toString());
+                                                      checkedCallResultItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .callResult[ind]
+                                                              .callResult
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                }
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                            );
-                                          },
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       );
                                     });
@@ -2180,77 +2198,87 @@ class _AllReportState extends State<AllReport> {
                                       return AlertDialog(
                                         scrollable: true,
                                         title: const Text('Priority'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.priority.length,
-                                          itemBuilder: (context, ind) {
-                                            return CheckboxListTile(
-                                              title: SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  commonDetails!.data
-                                                      .priority[ind].priority
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 14),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.priority.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!.data
+                                                        .priority[ind].priority
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
                                                 ),
-                                              ),
-                                              value: checkedPriorityItems
-                                                      .contains(commonDetails!
-                                                          .data
-                                                          .priority[ind]
-                                                          .priorityId
-                                                          .toString())
-                                                  ? true
-                                                  : false,
-                                              onChanged: (bool? value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    checkedPriorityItems.add(
-                                                        commonDetails!
+                                                value: checkedPriorityItems
+                                                        .contains(commonDetails!
                                                             .data
                                                             .priority[ind]
                                                             .priorityId
-                                                            .toString());
-                                                    checkedPriorityItemsName
-                                                        .add(commonDetails!
-                                                            .data
-                                                            .priority[ind]
-                                                            .priority
-                                                            .toString());
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedPriorityItems.add(
+                                                          commonDetails!
+                                                              .data
+                                                              .priority[ind]
+                                                              .priorityId
+                                                              .toString());
+                                                      checkedPriorityItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .priority[ind]
+                                                              .priority
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    checkedPriorityItems.remove(
-                                                        commonDetails!
-                                                            .data
-                                                            .priority[ind]
-                                                            .priorityId
-                                                            .toString());
-                                                    checkedPriorityItemsName
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .priority[ind]
-                                                            .priority
-                                                            .toString());
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedPriorityItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .priority[ind]
+                                                              .priorityId
+                                                              .toString());
+                                                      checkedPriorityItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .priority[ind]
+                                                              .priority
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                }
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                            );
-                                          },
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       );
                                     });
@@ -2423,75 +2451,87 @@ class _AllReportState extends State<AllReport> {
                                       return AlertDialog(
                                         scrollable: true,
                                         title: const Text('Assign Staff'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount:
-                                              commonDetails!.data.staff.length,
-                                          itemBuilder: (context, ind) {
-                                            return CheckboxListTile(
-                                              title: SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data.staff[ind].staffName
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 14),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.staff.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!.data
+                                                        .staff[ind].staffName
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
                                                 ),
-                                              ),
-                                              value: checkedAssignedStaffItems
-                                                      .contains(commonDetails!
-                                                          .data
-                                                          .staff[ind]
-                                                          .staffId
-                                                          .toString())
-                                                  ? true
-                                                  : false,
-                                              onChanged: (bool? value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    checkedAssignedStaffItems
-                                                        .add(commonDetails!.data
-                                                            .staff[ind].staffId
-                                                            .toString());
-                                                    checkedAssignedStaffItemsName
-                                                        .add(commonDetails!
-                                                            .data
-                                                            .staff[ind]
-                                                            .staffName
-                                                            .toString());
-
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    checkedAssignedStaffItems
-                                                        .remove(commonDetails!
+                                                value: checkedAssignedStaffItems
+                                                        .contains(commonDetails!
                                                             .data
                                                             .staff[ind]
                                                             .staffId
-                                                            .toString());
-                                                    checkedAssignedStaffItemsName
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .staff[ind]
-                                                            .staffName
-                                                            .toString());
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedAssignedStaffItems
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .staff[ind]
+                                                              .staffId
+                                                              .toString());
+                                                      checkedAssignedStaffItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .staff[ind]
+                                                              .staffName
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                }
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                            );
-                                          },
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedAssignedStaffItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .staff[ind]
+                                                              .staffId
+                                                              .toString());
+                                                      checkedAssignedStaffItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .staff[ind]
+                                                              .staffName
+                                                              .toString());
+
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       );
                                     });
@@ -2664,79 +2704,93 @@ class _AllReportState extends State<AllReport> {
                                       return AlertDialog(
                                         scrollable: true,
                                         title: const Text('Created By'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.transferStaffs.length,
-                                          itemBuilder: (context, ind) {
-                                            return CheckboxListTile(
-                                              title: SizedBox(
-                                                width: 200,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .transferStaffs[ind]
-                                                      .tranStaffName
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 14),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.transferStaffs.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!
+                                                        .data
+                                                        .transferStaffs[ind]
+                                                        .tranStaffName
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
                                                 ),
-                                              ),
-                                              value: checkedCreatedStaffItems
-                                                      .contains(commonDetails!
-                                                          .data
-                                                          .transferStaffs[ind]
-                                                          .tranStaffId
-                                                          .toString())
-                                                  ? true
-                                                  : false,
-                                              onChanged: (bool? value) {
-                                                if (value == true) {
-                                                  setState(() {
-                                                    checkedCreatedStaffItems
-                                                        .add(commonDetails!
+                                                value: checkedCreatedStaffItems
+                                                        .contains(commonDetails!
                                                             .data
                                                             .transferStaffs[ind]
                                                             .tranStaffId
-                                                            .toString());
-                                                    checkedCreatedStaffItemsName
-                                                        .add(commonDetails!
-                                                            .data
-                                                            .transferStaffs[ind]
-                                                            .tranStaffName
-                                                            .toString());
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedCreatedStaffItems
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .transferStaffs[
+                                                                  ind]
+                                                              .tranStaffId
+                                                              .toString());
+                                                      checkedCreatedStaffItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .transferStaffs[
+                                                                  ind]
+                                                              .tranStaffName
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                } else {
-                                                  setState(() {
-                                                    checkedCreatedStaffItems
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .transferStaffs[ind]
-                                                            .tranStaffId
-                                                            .toString());
-                                                    checkedCreatedStaffItemsName
-                                                        .remove(commonDetails!
-                                                            .data
-                                                            .transferStaffs[ind]
-                                                            .tranStaffName
-                                                            .toString());
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedCreatedStaffItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .transferStaffs[
+                                                                  ind]
+                                                              .tranStaffId
+                                                              .toString());
+                                                      checkedCreatedStaffItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .transferStaffs[
+                                                                  ind]
+                                                              .tranStaffName
+                                                              .toString());
 
-                                                    Navigator.pop(
-                                                        context, true);
-                                                  });
-                                                }
-                                              },
-                                              controlAffinity:
-                                                  ListTileControlAffinity
-                                                      .leading,
-                                            );
-                                          },
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
                                         ),
                                       );
                                     });
@@ -2910,8 +2964,14 @@ class _AllReportState extends State<AllReport> {
                                         scrollable: true,
                                         title: const Text('Lead Source'),
                                         content: SizedBox(
-                                          height: 300,
-                                          width: 300,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
                                           child: ListView.builder(
                                             shrinkWrap: true,
                                             itemCount: commonDetails!

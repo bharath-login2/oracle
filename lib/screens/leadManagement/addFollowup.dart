@@ -232,7 +232,7 @@ class _AddFollowupState extends State<AddFollowup> {
                         children: [
                           InkWell(
                             onTap: () {
-                              // Navigator.push(
+                              // Navigator.pushReplacement(
                               //   context,
                               //   MaterialPageRoute(
                               //       builder: (context) => LeadDetails(
@@ -360,47 +360,55 @@ class _AddFollowupState extends State<AddFollowup> {
                                     return AlertDialog(
                                       scrollable: true,
                                       title: const Text('Status'),
-                                      content: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data!.callResultNew!.length,
-                                        itemBuilder: (context, ind) {
-                                          return InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                callResult = commonDetails!
-                                                    .data!
-                                                    .callResultNew![ind]
-                                                    .callResultNew
-                                                    .toString();
+                                      content: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                .32,
+                                        width:
+                                            MediaQuery.of(context).size.height *
+                                                .8,
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: commonDetails!
+                                              .data!.callResultNew!.length,
+                                          itemBuilder: (context, ind) {
+                                            return InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  callResult = commonDetails!
+                                                      .data!
+                                                      .callResultNew![ind]
+                                                      .callResultNew
+                                                      .toString();
 
-                                                callResultId = commonDetails!
-                                                    .data!
-                                                    .callResultNew![ind]
-                                                    .callResultIdNew
-                                                    .toString();
-                                                callResultReasonList();
-                                                if (callResultId != '2') {
-                                                  nextFollowupDate = '';
-                                                  checked = false;
-                                                }
-                                                Navigator.pop(context, true);
-                                              });
-                                            },
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Text(
-                                                commonDetails!
-                                                    .data!
-                                                    .callResultNew![ind]
-                                                    .callResultNew
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 18),
+                                                  callResultId = commonDetails!
+                                                      .data!
+                                                      .callResultNew![ind]
+                                                      .callResultIdNew
+                                                      .toString();
+                                                  callResultReasonList();
+                                                  if (callResultId != '2') {
+                                                    nextFollowupDate = '';
+                                                    checked = false;
+                                                  }
+                                                  Navigator.pop(context, true);
+                                                });
+                                              },
+                                              child: SizedBox(
+                                                height: 50,
+                                                child: Text(
+                                                  commonDetails!
+                                                      .data!
+                                                      .callResultNew![ind]
+                                                      .callResultNew
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 18),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     );
                                   });
@@ -437,40 +445,51 @@ class _AddFollowupState extends State<AddFollowup> {
                                             return AlertDialog(
                                               scrollable: true,
                                               title: const Text('Reason'),
-                                              content: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: callResultReason!
-                                                    .data!.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        callResultReasonName =
-                                                            callResultReason!
-                                                                .data![ind]
-                                                                .reason
-                                                                .toString();
-                                                        callResultReasonId =
-                                                            callResultReason!
-                                                                .data![ind].id
-                                                                .toString();
+                                              content: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .32,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: callResultReason!
+                                                      .data!.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          callResultReasonName =
+                                                              callResultReason!
+                                                                  .data![ind]
+                                                                  .reason
+                                                                  .toString();
+                                                          callResultReasonId =
+                                                              callResultReason!
+                                                                  .data![ind].id
+                                                                  .toString();
 
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        callResultReason!
-                                                            .data![ind].reason
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          callResultReason!
+                                                              .data![ind].reason
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             );
                                           });
@@ -824,42 +843,52 @@ class _AddFollowupState extends State<AddFollowup> {
                                     return AlertDialog(
                                       scrollable: true,
                                       title: const Text('Call Response'),
-                                      content: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data!.callResponseStatus!.length,
-                                        itemBuilder: (context, ind) {
-                                          return InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                callResponse = commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
-                                                    .callResponse
-                                                    .toString();
+                                      content: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                .32,
+                                        width:
+                                            MediaQuery.of(context).size.height *
+                                                .8,
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: commonDetails!
+                                              .data!.callResponseStatus!.length,
+                                          itemBuilder: (context, ind) {
+                                            return InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  callResponse = commonDetails!
+                                                      .data!
+                                                      .callResponseStatus![ind]
+                                                      .callResponse
+                                                      .toString();
 
-                                                callResponseId = commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
-                                                    .callResponseId
-                                                    .toString();
-                                                Navigator.pop(context, true);
-                                              });
-                                            },
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Text(
-                                                commonDetails!
-                                                    .data!
-                                                    .callResponseStatus![ind]
-                                                    .callResponse
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 18),
+                                                  callResponseId =
+                                                      commonDetails!
+                                                          .data!
+                                                          .callResponseStatus![
+                                                              ind]
+                                                          .callResponseId
+                                                          .toString();
+                                                  Navigator.pop(context, true);
+                                                });
+                                              },
+                                              child: SizedBox(
+                                                height: 50,
+                                                child: Text(
+                                                  commonDetails!
+                                                      .data!
+                                                      .callResponseStatus![ind]
+                                                      .callResponse
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 18),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     );
                                   });
@@ -1104,55 +1133,67 @@ class _AddFollowupState extends State<AddFollowup> {
                                           return AlertDialog(
                                             scrollable: true,
                                             title: const Text('Lead Category'),
-                                            content: ListView.builder(
-                                              shrinkWrap: true,
-                                              itemCount: commonDetails!
-                                                  .data!.leadCategory!.length,
-                                              itemBuilder: (context, ind) {
-                                                return InkWell(
-                                                  onTap: () async {
-                                                    leadSubTypeList =
-                                                        await HttpService.leadSubType(
+                                            content: SizedBox(
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  .32,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  .8,
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: commonDetails!
+                                                    .data!.leadCategory!.length,
+                                                itemBuilder: (context, ind) {
+                                                  return InkWell(
+                                                    onTap: () async {
+                                                      leadSubTypeList =
+                                                          await HttpService.leadSubType(
+                                                              commonDetails!
+                                                                  .data!
+                                                                  .leadCategory![
+                                                                      ind]
+                                                                  .leadCategoryId
+                                                                  .toString());
+                                                      setState(() {
+                                                        leadSubType =
+                                                            'Lead Sub Category';
+                                                        leadSubTypeId = '';
+                                                        leadType =
+                                                            commonDetails!
+                                                                .data!
+                                                                .leadCategory![
+                                                                    ind]
+                                                                .leadCategory
+                                                                .toString();
+                                                        leadTypeId =
                                                             commonDetails!
                                                                 .data!
                                                                 .leadCategory![
                                                                     ind]
                                                                 .leadCategoryId
-                                                                .toString());
-                                                    setState(() {
-                                                      leadSubType =
-                                                          'Lead Sub Category';
-                                                      leadSubTypeId = '';
-                                                      leadType = commonDetails!
-                                                          .data!
-                                                          .leadCategory![ind]
-                                                          .leadCategory
-                                                          .toString();
-                                                      leadTypeId =
-                                                          commonDetails!
-                                                              .data!
-                                                              .leadCategory![
-                                                                  ind]
-                                                              .leadCategoryId
-                                                              .toString();
-                                                      Navigator.pop(
-                                                          context, true);
-                                                    });
-                                                  },
-                                                  child: SizedBox(
-                                                    height: 50,
-                                                    child: Text(
-                                                      commonDetails!
-                                                          .data!
-                                                          .leadCategory![ind]
-                                                          .leadCategory
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 18),
+                                                                .toString();
+                                                        Navigator.pop(
+                                                            context, true);
+                                                      });
+                                                    },
+                                                    child: SizedBox(
+                                                      height: 50,
+                                                      child: Text(
+                                                        commonDetails!
+                                                            .data!
+                                                            .leadCategory![ind]
+                                                            .leadCategory
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 18),
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
+                                              ),
                                             ),
                                           );
                                         });
@@ -1194,49 +1235,59 @@ class _AddFollowupState extends State<AddFollowup> {
                                                     scrollable: true,
                                                     title: const Text(
                                                         'Lead Sub Category'),
-                                                    content: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      itemCount:
-                                                          leadSubTypeList!
-                                                              .data!.length,
-                                                      itemBuilder:
-                                                          (context, subIndex) {
-                                                        return InkWell(
-                                                          onTap: () async {
-                                                            setState(() {
-                                                              leadSubType =
-                                                                  leadSubTypeList!
-                                                                      .data![
-                                                                          subIndex]
-                                                                      .leadSubCategory
-                                                                      .toString();
-                                                              leadSubTypeId =
-                                                                  leadSubTypeList!
-                                                                      .data![
-                                                                          subIndex]
-                                                                      .leadSubCategoryId
-                                                                      .toString();
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
-                                                            });
-                                                          },
-                                                          child: SizedBox(
-                                                            height: 50,
-                                                            child: Text(
-                                                              leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategory
-                                                                  .toString(),
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          18),
+                                                    content: SizedBox(
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              .32,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              .8,
+                                                      child: ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount:
+                                                            leadSubTypeList!
+                                                                .data!.length,
+                                                        itemBuilder: (context,
+                                                            subIndex) {
+                                                          return InkWell(
+                                                            onTap: () async {
+                                                              setState(() {
+                                                                leadSubType = leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategory
+                                                                    .toString();
+                                                                leadSubTypeId = leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategoryId
+                                                                    .toString();
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              });
+                                                            },
+                                                            child: SizedBox(
+                                                              height: 50,
+                                                              child: Text(
+                                                                leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategory
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            18),
+                                                              ),
                                                             ),
-                                                          ),
-                                                        );
-                                                      },
+                                                          );
+                                                        },
+                                                      ),
                                                     ),
                                                   );
                                                 });
@@ -1402,6 +1453,28 @@ class _AddFollowupState extends State<AddFollowup> {
                                         object1.message, Colors.green);
                                     if (context.mounted) {
                                       Navigator.pop(context);
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => LeadDetails(
+                                                  widget.token!,
+                                                  widget.editLead,
+                                                  widget.deleteLead,
+                                                  widget.cloudCall,
+                                                  widget.callMasterId,
+                                                  pageName: widget.pageName,
+                                                  fromDate: widget.fromDate,
+                                                  toDate: widget.toDate,
+                                                  status: widget.status,
+                                                  category: widget.category,
+                                                  staff: widget.staff,
+                                                  isCalled: widget.isCalled,
+                                                  searchKey: widget.searchKey,
+                                                  scrollToIndex:
+                                                      widget.scrollToIndex,
+                                                  leadType: widget.leadType1,
+                                                )),
+                                      );
                                       Navigator.pop(context);
                                     }
 

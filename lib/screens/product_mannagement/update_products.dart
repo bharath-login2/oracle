@@ -594,8 +594,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                   ],
                 ),
                 content: SizedBox(
-                  height: MediaQuery.of(context).size.height * .4,
-                  width: MediaQuery.of(context).size.width * .7,
+                  height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: title == "category"

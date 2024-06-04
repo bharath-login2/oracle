@@ -104,7 +104,6 @@ class _EditFollowupState extends State<EditFollowup> {
     followupDetails =
         await HttpService.followupDetails(widget.token, widget.callFollowupId);
     if (followupDetails != null) {
-
       if (followupDetails!.data!.leadCategoryId.toString() != '') {
         leadSubTypeList = await HttpService.leadSubType(
             followupDetails!.data!.leadCategoryId.toString());
@@ -136,13 +135,13 @@ class _EditFollowupState extends State<EditFollowup> {
         callResultReasonId = followupDetails!.data!.reasonId.toString();
         callReasonVal.text = followupDetails!.data!.reason.toString();
         callResultReasonList();
-
       });
     }
   }
-  callResultReasonList() async {
 
-    callResultReason = await HttpService.callResultReasonLiat(widget.token,callResultId);
+  callResultReasonList() async {
+    callResultReason =
+        await HttpService.callResultReasonLiat(widget.token, callResultId);
     if (commonDetails != null) {
       setState(() {});
     }
@@ -204,7 +203,7 @@ class _EditFollowupState extends State<EditFollowup> {
                 ),
               ),
             ),
-            body: commonDetails != null && callResultReason!=null
+            body: commonDetails != null && callResultReason != null
                 ? SingleChildScrollView(
                     child: Padding(
                       padding:
@@ -268,50 +267,60 @@ class _EditFollowupState extends State<EditFollowup> {
                                     return AlertDialog(
                                       scrollable: true,
                                       title: const Text('Status'),
-                                      content: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data.callResult.length,
-                                        itemBuilder: (context, ind) {
-                                          return InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                callResultVal.text =
-                                                    commonDetails!
-                                                        .data
-                                                        .callResult[ind]
-                                                        .callResult
-                                                        .toString();
-                                                callResult = commonDetails!
-                                                    .data
-                                                    .callResult[ind]
-                                                    .callResult
-                                                    .toString();
+                                      content: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                .32,
+                                        width:
+                                            MediaQuery.of(context).size.height *
+                                                .8,
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: commonDetails!
+                                              .data.callResult.length,
+                                          itemBuilder: (context, ind) {
+                                            return InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  callResultVal.text =
+                                                      commonDetails!
+                                                          .data
+                                                          .callResult[ind]
+                                                          .callResult
+                                                          .toString();
+                                                  callResult = commonDetails!
+                                                      .data
+                                                      .callResult[ind]
+                                                      .callResult
+                                                      .toString();
 
-                                                callResultId = commonDetails!
-                                                    .data
-                                                    .callResult[ind]
-                                                    .callResultId
-                                                    .toString();
-                                                callResultReasonList();
-                                                if (callResultId != '2') {
-                                                  nextFollowupDate1.text = '';
-                                                }
-                                                Navigator.pop(context, true);
-                                              });
-                                            },
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Text(
-                                                commonDetails!.data
-                                                    .callResult[ind].callResult
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 18),
+                                                  callResultId = commonDetails!
+                                                      .data
+                                                      .callResult[ind]
+                                                      .callResultId
+                                                      .toString();
+                                                  callResultReasonList();
+                                                  if (callResultId != '2') {
+                                                    nextFollowupDate1.text = '';
+                                                  }
+                                                  Navigator.pop(context, true);
+                                                });
+                                              },
+                                              child: SizedBox(
+                                                height: 50,
+                                                child: Text(
+                                                  commonDetails!
+                                                      .data
+                                                      .callResult[ind]
+                                                      .callResult
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 18),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     );
                                   });
@@ -390,142 +399,182 @@ class _EditFollowupState extends State<EditFollowup> {
                                   ),
                                 )
                               : const SizedBox(),
-                          callResultReason!
-                              .data!.isNotEmpty?
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 15),
-                            child: TextFormField(
-                              onTap: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        scrollable: true,
-                                        title: const Text('Reason'),
-                                        content: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: callResultReason!
-                                              .data!.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  callResultReasonName = callResultReason!
-                                                      .data![ind].reason.toString();
-                                                  callResultReasonId = callResultReason!
-                                                      .data![ind].id.toString();
-                                                  callReasonVal.text=callResultReason!
-                                                      .data![ind].reason.toString();
+                          callResultReason!.data!.isNotEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.only(bottom: 15),
+                                  child: TextFormField(
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text('Reason'),
+                                              content: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .32,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: callResultReason!
+                                                      .data!.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          callResultReasonName =
+                                                              callResultReason!
+                                                                  .data![ind]
+                                                                  .reason
+                                                                  .toString();
+                                                          callResultReasonId =
+                                                              callResultReason!
+                                                                  .data![ind].id
+                                                                  .toString();
+                                                          callReasonVal.text =
+                                                              callResultReason!
+                                                                  .data![ind]
+                                                                  .reason
+                                                                  .toString();
 
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  callResultReason!
-                                                      .data![ind].reason.toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          callResultReason!
+                                                              .data![ind].reason
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                             );
-                                          },
+                                          });
+                                    },
+                                    maxLines: 1,
+                                    readOnly: true,
+                                    controller: callReasonVal,
+                                    decoration: const InputDecoration(
+                                        contentPadding: EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        labelText: 'Reason',
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        prefixIcon: Icon(Icons.reply_all_sharp,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
                                         ),
-                                      );
-                                    });
-                              },
-                              maxLines: 1,
-                              readOnly: true,
-                              controller: callReasonVal,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.only(
-                                      left: 10, top: 2, bottom: 2),
-                                  labelText: 'Reason',
-                                  fillColor: Colors.white,
-                                  filled: true,
-                                  prefixIcon: Icon(
-                                      Icons.reply_all_sharp,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey)),
                                   ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ):
-                          TextFormField(
-                            onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Call Response'),
-                                      content: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data.callResponseStatus.length,
-                                        itemBuilder: (context, ind) {
-                                          return InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                callResponseVal.text =
-                                                    commonDetails!
-                                                        .data
-                                                        .callResponseStatus[ind]
-                                                        .callResponse
-                                                        .toString();
-                                                callResponse = commonDetails!
-                                                    .data
-                                                    .callResponseStatus[ind]
-                                                    .callResponse
-                                                    .toString();
+                                )
+                              : TextFormField(
+                                  onTap: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            scrollable: true,
+                                            title: const Text('Call Response'),
+                                            content: SizedBox(
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  .32,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  .8,
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: commonDetails!.data
+                                                    .callResponseStatus.length,
+                                                itemBuilder: (context, ind) {
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        callResponseVal.text =
+                                                            commonDetails!
+                                                                .data
+                                                                .callResponseStatus[
+                                                                    ind]
+                                                                .callResponse
+                                                                .toString();
+                                                        callResponse =
+                                                            commonDetails!
+                                                                .data
+                                                                .callResponseStatus[
+                                                                    ind]
+                                                                .callResponse
+                                                                .toString();
 
-                                                callResponseId = commonDetails!
-                                                    .data
-                                                    .callResponseStatus[ind]
-                                                    .callResponseId
-                                                    .toString();
-                                                Navigator.pop(context, true);
-                                              });
-                                            },
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Text(
-                                                commonDetails!
-                                                    .data
-                                                    .callResponseStatus[ind]
-                                                    .callResponse
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 18),
+                                                        callResponseId =
+                                                            commonDetails!
+                                                                .data
+                                                                .callResponseStatus[
+                                                                    ind]
+                                                                .callResponseId
+                                                                .toString();
+                                                        Navigator.pop(
+                                                            context, true);
+                                                      });
+                                                    },
+                                                    child: SizedBox(
+                                                      height: 50,
+                                                      child: Text(
+                                                        commonDetails!
+                                                            .data
+                                                            .callResponseStatus[
+                                                                ind]
+                                                            .callResponse
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 18),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ),
                                           );
-                                        },
+                                        });
+                                  },
+                                  maxLines: 1,
+                                  readOnly: true,
+                                  controller: callResponseVal,
+                                  decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.only(
+                                          left: 10, top: 2, bottom: 2),
+                                      labelText: 'Call Response',
+                                      fillColor: Colors.white,
+                                      filled: true,
+                                      prefixIcon: Icon(
+                                          Icons.arrow_drop_down_circle_outlined,
+                                          color: Colors.grey),
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
                                       ),
-                                    );
-                                  });
-                            },
-                            maxLines: 1,
-                            readOnly: true,
-                            controller: callResponseVal,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
-                                    left: 10, top: 2, bottom: 2),
-                                labelText: 'Call Response',
-                                fillColor: Colors.white,
-                                filled: true,
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
+                                      labelStyle:
+                                          TextStyle(color: Colors.grey)),
                                 ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
                           const SizedBox(
                             height: 15,
                           ),
@@ -567,58 +616,68 @@ class _EditFollowupState extends State<EditFollowup> {
                                     return AlertDialog(
                                       scrollable: true,
                                       title: const Text('Lead Category'),
-                                      content: ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data.leadCategory.length,
-                                        itemBuilder: (context, ind) {
-                                          return InkWell(
-                                            onTap: () async {
-                                              leadSubTypeList =
-                                                  await HttpService.leadSubType(
+                                      content: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                .32,
+                                        width:
+                                            MediaQuery.of(context).size.height *
+                                                .8,
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: commonDetails!
+                                              .data.leadCategory.length,
+                                          itemBuilder: (context, ind) {
+                                            return InkWell(
+                                              onTap: () async {
+                                                leadSubTypeList =
+                                                    await HttpService
+                                                        .leadSubType(
+                                                            commonDetails!
+                                                                .data
+                                                                .leadCategory[
+                                                                    ind]
+                                                                .leadCategoryId
+                                                                .toString());
+
+                                                setState(() {
+                                                  leadTypeVal.text =
                                                       commonDetails!
                                                           .data
                                                           .leadCategory[ind]
-                                                          .leadCategoryId
-                                                          .toString());
-
-                                              setState(() {
-                                                leadTypeVal.text =
-                                                    commonDetails!
-                                                        .data
-                                                        .leadCategory[ind]
-                                                        .leadCategory
-                                                        .toString();
-                                                leadSubType =
-                                                    'Lead Sub Category';
-                                                leadSubTypeId = '';
-                                                leadType = commonDetails!
-                                                    .data
-                                                    .leadCategory[ind]
-                                                    .leadCategory
-                                                    .toString();
-                                                leadTypeId = commonDetails!
-                                                    .data
-                                                    .leadCategory[ind]
-                                                    .leadCategoryId
-                                                    .toString();
-                                                Navigator.pop(context, true);
-                                              });
-                                            },
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Text(
-                                                commonDetails!
-                                                    .data
-                                                    .leadCategory[ind]
-                                                    .leadCategory
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                    fontSize: 18),
+                                                          .leadCategory
+                                                          .toString();
+                                                  leadSubType =
+                                                      'Lead Sub Category';
+                                                  leadSubTypeId = '';
+                                                  leadType = commonDetails!
+                                                      .data
+                                                      .leadCategory[ind]
+                                                      .leadCategory
+                                                      .toString();
+                                                  leadTypeId = commonDetails!
+                                                      .data
+                                                      .leadCategory[ind]
+                                                      .leadCategoryId
+                                                      .toString();
+                                                  Navigator.pop(context, true);
+                                                });
+                                              },
+                                              child: SizedBox(
+                                                height: 50,
+                                                child: Text(
+                                                  commonDetails!
+                                                      .data
+                                                      .leadCategory[ind]
+                                                      .leadCategory
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontSize: 18),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     );
                                   });
@@ -656,47 +715,61 @@ class _EditFollowupState extends State<EditFollowup> {
                                               scrollable: true,
                                               title: const Text(
                                                   'Lead Sub Category'),
-                                              content: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: leadSubTypeList!
-                                                    .data!.length,
-                                                itemBuilder:
-                                                    (context, subIndex) {
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        leadSubTypeVal.text =
-                                                            leadSubTypeList!
-                                                                .data![subIndex]
-                                                                .leadSubCategory
-                                                                .toString();
-                                                        leadSubType =
-                                                            leadSubTypeList!
-                                                                .data![subIndex]
-                                                                .leadSubCategory
-                                                                .toString();
-                                                        leadSubTypeId =
-                                                            leadSubTypeList!
-                                                                .data![subIndex]
-                                                                .leadSubCategoryId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        leadSubTypeList!
-                                                            .data![subIndex]
-                                                            .leadSubCategory
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
+                                              content: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .32,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: leadSubTypeList!
+                                                      .data!.length,
+                                                  itemBuilder:
+                                                      (context, subIndex) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          leadSubTypeVal.text =
+                                                              leadSubTypeList!
+                                                                  .data![
+                                                                      subIndex]
+                                                                  .leadSubCategory
+                                                                  .toString();
+                                                          leadSubType =
+                                                              leadSubTypeList!
+                                                                  .data![
+                                                                      subIndex]
+                                                                  .leadSubCategory
+                                                                  .toString();
+                                                          leadSubTypeId =
+                                                              leadSubTypeList!
+                                                                  .data![
+                                                                      subIndex]
+                                                                  .leadSubCategoryId
+                                                                  .toString();
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          leadSubTypeList!
+                                                              .data![subIndex]
+                                                              .leadSubCategory
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             );
                                           });
@@ -766,11 +839,12 @@ class _EditFollowupState extends State<EditFollowup> {
                                           leadSubTypeId,
                                           remarks.text,
                                           calledDate1.text,
-                                          widget.callMasterId,callResponseId,callResultReasonId);
+                                          widget.callMasterId,
+                                          callResponseId,
+                                          callResultReasonId);
                                   if (object1.status == true) {
                                     Common.toastMessaage(
-                                        object1.message,
-                                        Colors.green);
+                                        object1.message, Colors.green);
                                     if (context.mounted) {
                                       Navigator.push(
                                         context,

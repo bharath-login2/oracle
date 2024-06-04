@@ -630,72 +630,75 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     true,
                                                                 title: const Text(
                                                                     'Lead Category'),
-                                                                content: ListView
-                                                                    .builder(
-                                                                  shrinkWrap:
-                                                                      true,
-                                                                  itemCount:
-                                                                      commonDetails!
-                                                                          .data!
-                                                                          .leadCategory!
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          ind) {
-                                                                    return CheckboxListTile(
-                                                                      title:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            200,
-                                                                        child:
-                                                                            Text(
-                                                                          commonDetails!
-                                                                              .data!
-                                                                              .leadCategory![ind]
-                                                                              .leadCategory
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontWeight: FontWeight.w400,
-                                                                              fontSize: 14),
+                                                                content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                                  child: ListView
+                                                                      .builder(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    itemCount:
+                                                                        commonDetails!
+                                                                            .data!
+                                                                            .leadCategory!
+                                                                            .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            ind) {
+                                                                      return CheckboxListTile(
+                                                                        title:
+                                                                            SizedBox(
+                                                                          width:
+                                                                              200,
+                                                                          child:
+                                                                              Text(
+                                                                            commonDetails!
+                                                                                .data!
+                                                                                .leadCategory![ind]
+                                                                                .leadCategory
+                                                                                .toString(),
+                                                                            style: const TextStyle(
+                                                                                color: Colors.black,
+                                                                                fontWeight: FontWeight.w400,
+                                                                                fontSize: 14),
+                                                                          ),
                                                                         ),
-                                                                      ),
-                                                                      value: checkedCategoryItems!.contains(commonDetails!
-                                                                              .data!
-                                                                              .leadCategory![ind]
-                                                                              .leadCategoryId
-                                                                              .toString())
-                                                                          ? true
-                                                                          : false,
-                                                                      onChanged:
-                                                                          (bool?
-                                                                              value) {
-                                                                        if (value ==
-                                                                            true) {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCategoryItems!.add(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
-                                                                            checkedCategoryItemsName!.add(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        } else {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCategoryItems!.remove(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
-                                                                            checkedCategoryItemsName!.remove(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      controlAffinity:
-                                                                          ListTileControlAffinity
-                                                                              .leading,
-                                                                    );
-                                                                  },
+                                                                        value: checkedCategoryItems!.contains(commonDetails!
+                                                                                .data!
+                                                                                .leadCategory![ind]
+                                                                                .leadCategoryId
+                                                                                .toString())
+                                                                            ? true
+                                                                            : false,
+                                                                        onChanged:
+                                                                            (bool?
+                                                                                value) {
+                                                                          if (value ==
+                                                                              true) {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCategoryItems!.add(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
+                                                                              checkedCategoryItemsName!.add(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          } else {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCategoryItems!.remove(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
+                                                                              checkedCategoryItemsName!.remove(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                        controlAffinity:
+                                                                            ListTileControlAffinity
+                                                                                .leading,
+                                                                      );
+                                                                    },
+                                                                  ),
                                                                 ),
                                                               );
                                                             });
@@ -872,72 +875,75 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     true,
                                                                 title: const Text(
                                                                     'Call Result'),
-                                                                content: ListView
-                                                                    .builder(
-                                                                  shrinkWrap:
-                                                                      true,
-                                                                  itemCount:
-                                                                      commonDetails!
-                                                                          .data!
-                                                                          .callResult!
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          ind) {
-                                                                    return CheckboxListTile(
-                                                                      title:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            200,
-                                                                        child:
-                                                                            Text(
-                                                                          commonDetails!
-                                                                              .data!
-                                                                              .callResult![ind]
-                                                                              .callResult
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontWeight: FontWeight.w400,
-                                                                              fontSize: 14),
+                                                                content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                                  child: ListView
+                                                                      .builder(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    itemCount:
+                                                                        commonDetails!
+                                                                            .data!
+                                                                            .callResult!
+                                                                            .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            ind) {
+                                                                      return CheckboxListTile(
+                                                                        title:
+                                                                            SizedBox(
+                                                                          width:
+                                                                              200,
+                                                                          child:
+                                                                              Text(
+                                                                            commonDetails!
+                                                                                .data!
+                                                                                .callResult![ind]
+                                                                                .callResult
+                                                                                .toString(),
+                                                                            style: const TextStyle(
+                                                                                color: Colors.black,
+                                                                                fontWeight: FontWeight.w400,
+                                                                                fontSize: 14),
+                                                                          ),
                                                                         ),
-                                                                      ),
-                                                                      value: checkedCallResultItems!.contains(commonDetails!
-                                                                              .data!
-                                                                              .callResult![ind]
-                                                                              .callResultId
-                                                                              .toString())
-                                                                          ? true
-                                                                          : false,
-                                                                      onChanged:
-                                                                          (bool?
-                                                                              value) {
-                                                                        if (value ==
-                                                                            true) {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCallResultItems!.add(commonDetails!.data!.callResult![ind].callResultId.toString());
-                                                                            checkedCallResultItemsName!.add(commonDetails!.data!.callResult![ind].callResult.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        } else {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCallResultItems!.remove(commonDetails!.data!.callResult![ind].callResultId.toString());
-                                                                            checkedCallResultItemsName!.remove(commonDetails!.data!.callResult![ind].callResult.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      controlAffinity:
-                                                                          ListTileControlAffinity
-                                                                              .leading,
-                                                                    );
-                                                                  },
+                                                                        value: checkedCallResultItems!.contains(commonDetails!
+                                                                                .data!
+                                                                                .callResult![ind]
+                                                                                .callResultId
+                                                                                .toString())
+                                                                            ? true
+                                                                            : false,
+                                                                        onChanged:
+                                                                            (bool?
+                                                                                value) {
+                                                                          if (value ==
+                                                                              true) {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCallResultItems!.add(commonDetails!.data!.callResult![ind].callResultId.toString());
+                                                                              checkedCallResultItemsName!.add(commonDetails!.data!.callResult![ind].callResult.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          } else {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCallResultItems!.remove(commonDetails!.data!.callResult![ind].callResultId.toString());
+                                                                              checkedCallResultItemsName!.remove(commonDetails!.data!.callResult![ind].callResult.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                        controlAffinity:
+                                                                            ListTileControlAffinity
+                                                                                .leading,
+                                                                      );
+                                                                    },
+                                                                  ),
                                                                 ),
                                                               );
                                                             });
@@ -1097,72 +1103,75 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     true,
                                                                 title: const Text(
                                                                     'From Staff'),
-                                                                content: ListView
-                                                                    .builder(
-                                                                  shrinkWrap:
-                                                                      true,
-                                                                  itemCount:
-                                                                      commonDetails!
-                                                                          .data!
-                                                                          .staff!
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          ind) {
-                                                                    return CheckboxListTile(
-                                                                      title:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            200,
-                                                                        child:
-                                                                            Text(
-                                                                          commonDetails!
-                                                                              .data!
-                                                                              .staff![ind]
-                                                                              .staffName
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontWeight: FontWeight.w400,
-                                                                              fontSize: 14),
+                                                                content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                                  child: ListView
+                                                                      .builder(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    itemCount:
+                                                                        commonDetails!
+                                                                            .data!
+                                                                            .staff!
+                                                                            .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            ind) {
+                                                                      return CheckboxListTile(
+                                                                        title:
+                                                                            SizedBox(
+                                                                          width:
+                                                                              200,
+                                                                          child:
+                                                                              Text(
+                                                                            commonDetails!
+                                                                                .data!
+                                                                                .staff![ind]
+                                                                                .staffName
+                                                                                .toString(),
+                                                                            style: const TextStyle(
+                                                                                color: Colors.black,
+                                                                                fontWeight: FontWeight.w400,
+                                                                                fontSize: 14),
+                                                                          ),
                                                                         ),
-                                                                      ),
-                                                                      value: checkedAssignedStaffItems!.contains(commonDetails!
-                                                                              .data!
-                                                                              .staff![ind]
-                                                                              .staffId
-                                                                              .toString())
-                                                                          ? true
-                                                                          : false,
-                                                                      onChanged:
-                                                                          (bool?
-                                                                              value) {
-                                                                        if (value ==
-                                                                            true) {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedAssignedStaffItems!.add(commonDetails!.data!.staff![ind].staffId.toString());
-                                                                            checkedAssignedStaffItemsName!.add(commonDetails!.data!.staff![ind].staffName.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        } else {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedAssignedStaffItems!.remove(commonDetails!.data!.staff![ind].staffId.toString());
-                                                                            checkedAssignedStaffItemsName!.remove(commonDetails!.data!.staff![ind].staffName.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      controlAffinity:
-                                                                          ListTileControlAffinity
-                                                                              .leading,
-                                                                    );
-                                                                  },
+                                                                        value: checkedAssignedStaffItems!.contains(commonDetails!
+                                                                                .data!
+                                                                                .staff![ind]
+                                                                                .staffId
+                                                                                .toString())
+                                                                            ? true
+                                                                            : false,
+                                                                        onChanged:
+                                                                            (bool?
+                                                                                value) {
+                                                                          if (value ==
+                                                                              true) {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedAssignedStaffItems!.add(commonDetails!.data!.staff![ind].staffId.toString());
+                                                                              checkedAssignedStaffItemsName!.add(commonDetails!.data!.staff![ind].staffName.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          } else {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedAssignedStaffItems!.remove(commonDetails!.data!.staff![ind].staffId.toString());
+                                                                              checkedAssignedStaffItemsName!.remove(commonDetails!.data!.staff![ind].staffName.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                        controlAffinity:
+                                                                            ListTileControlAffinity
+                                                                                .leading,
+                                                                      );
+                                                                    },
+                                                                  ),
                                                                 ),
                                                               );
                                                             });
@@ -1322,72 +1331,75 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     true,
                                                                 title: const Text(
                                                                     'To Staff'),
-                                                                content: ListView
-                                                                    .builder(
-                                                                  shrinkWrap:
-                                                                      true,
-                                                                  itemCount:
-                                                                      commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs!
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          ind) {
-                                                                    return CheckboxListTile(
-                                                                      title:
-                                                                          SizedBox(
-                                                                        width:
-                                                                            200,
-                                                                        child:
-                                                                            Text(
-                                                                          commonDetails!
-                                                                              .data!
-                                                                              .transferStaffs![ind]
-                                                                              .tranStaffName
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              color: Colors.black,
-                                                                              fontWeight: FontWeight.w400,
-                                                                              fontSize: 14),
+                                                                content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                                  child: ListView
+                                                                      .builder(
+                                                                    shrinkWrap:
+                                                                        true,
+                                                                    itemCount:
+                                                                        commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs!
+                                                                            .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            ind) {
+                                                                      return CheckboxListTile(
+                                                                        title:
+                                                                            SizedBox(
+                                                                          width:
+                                                                              200,
+                                                                          child:
+                                                                              Text(
+                                                                            commonDetails!
+                                                                                .data!
+                                                                                .transferStaffs![ind]
+                                                                                .tranStaffName
+                                                                                .toString(),
+                                                                            style: const TextStyle(
+                                                                                color: Colors.black,
+                                                                                fontWeight: FontWeight.w400,
+                                                                                fontSize: 14),
+                                                                          ),
                                                                         ),
-                                                                      ),
-                                                                      value: checkedCreatedStaffItems.contains(commonDetails!
-                                                                              .data!
-                                                                              .transferStaffs![ind]
-                                                                              .tranStaffId
-                                                                              .toString())
-                                                                          ? true
-                                                                          : false,
-                                                                      onChanged:
-                                                                          (bool?
-                                                                              value) {
-                                                                        if (value ==
-                                                                            true) {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCreatedStaffItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                            checkedCreatedStaffItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        } else {
-                                                                          setState(
-                                                                              () {
-                                                                            checkedCreatedStaffItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                            checkedCreatedStaffItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
-
-                                                                            Navigator.pop(context,
-                                                                                true);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      controlAffinity:
-                                                                          ListTileControlAffinity
-                                                                              .leading,
-                                                                    );
-                                                                  },
+                                                                        value: checkedCreatedStaffItems.contains(commonDetails!
+                                                                                .data!
+                                                                                .transferStaffs![ind]
+                                                                                .tranStaffId
+                                                                                .toString())
+                                                                            ? true
+                                                                            : false,
+                                                                        onChanged:
+                                                                            (bool?
+                                                                                value) {
+                                                                          if (value ==
+                                                                              true) {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCreatedStaffItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
+                                                                              checkedCreatedStaffItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          } else {
+                                                                            setState(
+                                                                                () {
+                                                                              checkedCreatedStaffItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
+                                                                              checkedCreatedStaffItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                  
+                                                                              Navigator.pop(context,
+                                                                                  true);
+                                                                            });
+                                                                          }
+                                                                        },
+                                                                        controlAffinity:
+                                                                            ListTileControlAffinity
+                                                                                .leading,
+                                                                      );
+                                                                    },
+                                                                  ),
                                                                 ),
                                                               );
                                                             });

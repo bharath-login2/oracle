@@ -584,7 +584,9 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                       context,
                                                       MaterialPageRoute(
                                                           builder: (context) =>
-                                                              UpComingPage(widget.token)),
+                                                              UpComingPage(
+                                                                  widget
+                                                                      .token)),
                                                     );
                                                   },
                                                   child: Container(
@@ -612,187 +614,197 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                 InkWell(
                                                   onTap: () {
                                                     for (int b = 0;
-                                                    b <
-                                                        fbSettings!
-                                                            .data!
-                                                            .fbData![i]
-                                                            .notificationUsers!
-                                                            .length;
-                                                    b++) {
-                                                      checkedNotificationStaffItems.add(
-                                                          fbSettings!
+                                                        b <
+                                                            fbSettings!
+                                                                .data!
+                                                                .fbData![i]
+                                                                .notificationUsers!
+                                                                .length;
+                                                        b++) {
+                                                      checkedNotificationStaffItems
+                                                          .add(fbSettings!
                                                               .data!
                                                               .fbData![i]
-                                                              .notificationUsers![b].notificationUserId);
-                                                      checkedNotificationsStaffItemsName.add(
-                                                          fbSettings!
+                                                              .notificationUsers![
+                                                                  b]
+                                                              .notificationUserId);
+                                                      checkedNotificationsStaffItemsName
+                                                          .add(fbSettings!
                                                               .data!
                                                               .fbData![i]
-                                                              .notificationUsers![b]
+                                                              .notificationUsers![
+                                                                  b]
                                                               .notificationUserName);
                                                     }
                                                     showDialog(
                                                       context: context,
-                                                      builder:
-                                                          (BuildContext context) {
+                                                      builder: (BuildContext
+                                                          context) {
                                                         return StatefulBuilder(
                                                             builder: (context,
                                                                 setState) {
-                                                              return AlertDialog(
-                                                                scrollable: true,
-                                                                title: const Text(
-                                                                    'Select the users to send push notification other than assigned staff',style: TextStyle(fontSize: 13),),
-                                                                content:
-                                                                ListView.builder(
-                                                                  shrinkWrap: true,
-                                                                  itemCount:
-                                                                  commonDetails!
-                                                                      .data!
-                                                                      .transferStaffs!
-                                                                      .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                      indexStaff) {
-                                                                    return CheckboxListTile(
-                                                                      title: SizedBox(
-                                                                        width: 200,
-                                                                        child: Text(
-                                                                          commonDetails!
-                                                                              .data!
-                                                                              .transferStaffs![
-                                                                          indexStaff]
-                                                                              .tranStaffName
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              color: Colors
-                                                                                  .black,
-                                                                              fontWeight:
-                                                                              FontWeight
-                                                                                  .w400,
-                                                                              fontSize:
-                                                                              14),
-                                                                        ),
+                                                          return AlertDialog(
+                                                            scrollable: true,
+                                                            title: const Text(
+                                                              'Select the users to send push notification other than assigned staff',
+                                                              style: TextStyle(
+                                                                  fontSize: 13),
+                                                            ),
+                                                            content: SizedBox(
+                                                              height: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .height *
+                                                                  .32,
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .height *
+                                                                  .8,
+                                                              child: ListView
+                                                                  .builder(
+                                                                shrinkWrap:
+                                                                    true,
+                                                                itemCount:
+                                                                    commonDetails!
+                                                                        .data!
+                                                                        .transferStaffs!
+                                                                        .length,
+                                                                itemBuilder:
+                                                                    (context,
+                                                                        indexStaff) {
+                                                                  return CheckboxListTile(
+                                                                    title:
+                                                                        SizedBox(
+                                                                      width:
+                                                                          200,
+                                                                      child:
+                                                                          Text(
+                                                                        commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffName
+                                                                            .toString(),
+                                                                        style: const TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontWeight: FontWeight.w400,
+                                                                            fontSize: 14),
                                                                       ),
-                                                                      value: checkedNotificationStaffItems.contains(commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs![
-                                                                      indexStaff]
-                                                                          .tranStaffId
-                                                                          .toString())
-                                                                          ? true
-                                                                          : false,
-                                                                      //value: false,
-                                                                      onChanged:
-                                                                          (bool?
-                                                                      value) {
-                                                                        if (value ==
-                                                                            true) {
-                                                                          checkedNotificationStaffItems.add(commonDetails!
+                                                                    ),
+                                                                    value: checkedNotificationStaffItems.contains(commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffId
+                                                                            .toString())
+                                                                        ? true
+                                                                        : false,
+                                                                    //value: false,
+                                                                    onChanged:
+                                                                        (bool?
+                                                                            value) {
+                                                                      if (value ==
+                                                                          true) {
+                                                                        checkedNotificationStaffItems.add(commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffId
+                                                                            .toString());
+                                                                        checkedNotificationsStaffItemsName.add(commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffName
+                                                                            .toString());
+                                                                        setState(
+                                                                            () {});
+                                                                      } else {
+                                                                        setState(
+                                                                            () {
+                                                                          checkedNotificationStaffItems.remove(commonDetails!
                                                                               .data!
-                                                                              .transferStaffs![
-                                                                          indexStaff]
+                                                                              .transferStaffs![indexStaff]
                                                                               .tranStaffId
                                                                               .toString());
-                                                                          checkedNotificationsStaffItemsName.add(commonDetails!
+                                                                          checkedNotificationsStaffItemsName.remove(commonDetails!
                                                                               .data!
-                                                                              .transferStaffs![
-                                                                          indexStaff]
+                                                                              .transferStaffs![indexStaff]
                                                                               .tranStaffName
                                                                               .toString());
-                                                                          setState(
-                                                                                  () {});
-                                                                        } else {
-                                                                          setState(
-                                                                                  () {
-                                                                                    checkedNotificationStaffItems.remove(commonDetails!
-                                                                                    .data!
-                                                                                    .transferStaffs![
-                                                                                indexStaff]
-                                                                                    .tranStaffId
-                                                                                    .toString());
-                                                                                    checkedNotificationsStaffItemsName.remove(commonDetails!
-                                                                                    .data!
-                                                                                    .transferStaffs![
-                                                                                indexStaff]
-                                                                                    .tranStaffName
-                                                                                    .toString());
-                                                                              });
-                                                                        }
-                                                                      },
-                                                                      controlAffinity:
-                                                                      ListTileControlAffinity
-                                                                          .leading,
-                                                                    );
-                                                                  },
-                                                                ),
-                                                                actions: [
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () async {
-                                                                        setState(
-                                                                                () {});
-                                                                        checkedNotificationStaffItems =
+                                                                        });
+                                                                      }
+                                                                    },
+                                                                    controlAffinity:
+                                                                        ListTileControlAffinity
+                                                                            .leading,
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () async {
+                                                                    setState(
+                                                                        () {});
+                                                                    checkedNotificationStaffItems =
                                                                         [];
-                                                                        checkedNotificationsStaffItemsName =
+                                                                    checkedNotificationsStaffItemsName =
                                                                         [];
-                                                                        Navigator.of(
+                                                                    Navigator.of(
                                                                             context)
-                                                                            .pop();
-                                                                      },
-                                                                      child: const Text(
-                                                                          'close')),
-                                                                  TextButton(
-                                                                      onPressed:
-                                                                          () async {
-                                                                        if (checkedNotificationStaffItems
-                                                                            .isEmpty) {
-                                                                          Common.toastMessaage(
-                                                                              'At least choose one staff',
-                                                                              Colors
-                                                                                  .red);
-                                                                        } else {
-                                                                          Common.showProgressDialog(
-                                                                              context,
-                                                                              "Loading..");
-                                                                          Map<String,
+                                                                        .pop();
+                                                                  },
+                                                                  child: const Text(
+                                                                      'close')),
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () async {
+                                                                    if (checkedNotificationStaffItems
+                                                                        .isEmpty) {
+                                                                      Common.toastMessaage(
+                                                                          'At least choose one staff',
+                                                                          Colors
+                                                                              .red);
+                                                                    } else {
+                                                                      Common.showProgressDialog(
+                                                                          context,
+                                                                          "Loading..");
+                                                                      Map<String,
                                                                               dynamic>
-                                                                          body = {
-                                                                            'token':
-                                                                            widget
-                                                                                .token,
-                                                                            "fb_settings_id": fbSettings!
-                                                                                .data!
-                                                                                .fbData![
-                                                                            i]
-                                                                                .id,
-                                                                            'staff_id':
+                                                                          body =
+                                                                          {
+                                                                        'token':
+                                                                            widget.token,
+                                                                        "fb_settings_id": fbSettings!
+                                                                            .data!
+                                                                            .fbData![i]
+                                                                            .id,
+                                                                        'staff_id':
                                                                             checkedNotificationStaffItems,
-                                                                          };
-                                                                          SendNotificationModel
+                                                                      };
+                                                                      SendNotificationModel
                                                                           sendNotification =
                                                                           await HttpService.sendLeadNotification(
                                                                               body);
-                                                                          // print(updateAssignStaff.data);
-                                                                          if (sendNotification
+                                                                      // print(updateAssignStaff.data);
+                                                                      if (sendNotification
                                                                               .data ==
-                                                                              true) {
-                                                                            if (mounted) {
-
-                                                                              Navigator
-                                                                                  .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => FacebookSettings(widget.token)),
-                                                                              );
-                                                                            }
-                                                                          }
+                                                                          true) {
+                                                                        if (mounted) {
+                                                                          Navigator
+                                                                              .push(
+                                                                            context,
+                                                                            MaterialPageRoute(builder: (context) => FacebookSettings(widget.token)),
+                                                                          );
                                                                         }
-                                                                      },
-                                                                      child: const Text(
-                                                                          'Submit'))
-                                                                ],
-                                                              );
-                                                            });
+                                                                      }
+                                                                    }
+                                                                  },
+                                                                  child: const Text(
+                                                                      'Submit'))
+                                                            ],
+                                                          );
+                                                        });
                                                       },
                                                     );
                                                   },
@@ -862,88 +874,98 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                           scrollable: true,
                                                           title: const Text(
                                                               'Assigned Staff'),
-                                                          content:
-                                                              ListView.builder(
-                                                            shrinkWrap: true,
-                                                            itemCount:
-                                                                commonDetails!
-                                                                    .data!
-                                                                    .transferStaffs!
-                                                                    .length,
-                                                            itemBuilder:
-                                                                (context,
-                                                                    indexStaff) {
-                                                              return CheckboxListTile(
-                                                                title: SizedBox(
-                                                                  width: 200,
-                                                                  child: Text(
-                                                                    commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs![
-                                                                            indexStaff]
-                                                                        .tranStaffName
-                                                                        .toString(),
-                                                                    style: const TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontWeight:
-                                                                            FontWeight
-                                                                                .w400,
-                                                                        fontSize:
-                                                                            14),
+                                                          content: SizedBox(
+                                                            height: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height *
+                                                                .32,
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height *
+                                                                .8,
+                                                            child: ListView
+                                                                .builder(
+                                                              shrinkWrap: true,
+                                                              itemCount:
+                                                                  commonDetails!
+                                                                      .data!
+                                                                      .transferStaffs!
+                                                                      .length,
+                                                              itemBuilder:
+                                                                  (context,
+                                                                      indexStaff) {
+                                                                return CheckboxListTile(
+                                                                  title:
+                                                                      SizedBox(
+                                                                    width: 200,
+                                                                    child: Text(
+                                                                      commonDetails!
+                                                                          .data!
+                                                                          .transferStaffs![
+                                                                              indexStaff]
+                                                                          .tranStaffName
+                                                                          .toString(),
+                                                                      style: const TextStyle(
+                                                                          color: Colors
+                                                                              .black,
+                                                                          fontWeight: FontWeight
+                                                                              .w400,
+                                                                          fontSize:
+                                                                              14),
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                                value: checkedStaffItems.contains(commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs![
-                                                                            indexStaff]
-                                                                        .tranStaffId
-                                                                        .toString())
-                                                                    ? true
-                                                                    : false,
-                                                                //value: false,
-                                                                onChanged:
-                                                                    (bool?
-                                                                        value) {
-                                                                  if (value ==
-                                                                      true) {
-                                                                    checkedStaffItems.add(commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs![
-                                                                            indexStaff]
-                                                                        .tranStaffId
-                                                                        .toString());
-                                                                    checkedStaffItemsName.add(commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs![
-                                                                            indexStaff]
-                                                                        .tranStaffName
-                                                                        .toString());
-                                                                    setState(
-                                                                        () {});
-                                                                  } else {
-                                                                    setState(
-                                                                        () {
-                                                                      checkedStaffItems.remove(commonDetails!
+                                                                  value: checkedStaffItems.contains(commonDetails!
+                                                                          .data!
+                                                                          .transferStaffs![
+                                                                              indexStaff]
+                                                                          .tranStaffId
+                                                                          .toString())
+                                                                      ? true
+                                                                      : false,
+                                                                  //value: false,
+                                                                  onChanged:
+                                                                      (bool?
+                                                                          value) {
+                                                                    if (value ==
+                                                                        true) {
+                                                                      checkedStaffItems.add(commonDetails!
                                                                           .data!
                                                                           .transferStaffs![
                                                                               indexStaff]
                                                                           .tranStaffId
                                                                           .toString());
-                                                                      checkedStaffItemsName.remove(commonDetails!
+                                                                      checkedStaffItemsName.add(commonDetails!
                                                                           .data!
                                                                           .transferStaffs![
                                                                               indexStaff]
                                                                           .tranStaffName
                                                                           .toString());
-                                                                    });
-                                                                  }
-                                                                },
-                                                                controlAffinity:
-                                                                    ListTileControlAffinity
-                                                                        .leading,
-                                                              );
-                                                            },
+                                                                      setState(
+                                                                          () {});
+                                                                    } else {
+                                                                      setState(
+                                                                          () {
+                                                                        checkedStaffItems.remove(commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffId
+                                                                            .toString());
+                                                                        checkedStaffItemsName.remove(commonDetails!
+                                                                            .data!
+                                                                            .transferStaffs![indexStaff]
+                                                                            .tranStaffName
+                                                                            .toString());
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  controlAffinity:
+                                                                      ListTileControlAffinity
+                                                                          .leading,
+                                                                );
+                                                              },
+                                                            ),
                                                           ),
                                                           actions: [
                                                             TextButton(
@@ -1026,40 +1048,55 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                             color:
                                                                 Colors.blue)),
                                                     child: const Padding(
-                                                      padding: EdgeInsets.only(left: 7,right: 7),
+                                                      padding: EdgeInsets.only(
+                                                          left: 7, right: 7),
                                                       child: Row(
                                                         children: [
                                                           Icon(
-                                                            Icons.person_add_alt_1,
+                                                            Icons
+                                                                .person_add_alt_1,
                                                             color: Colors.blue,
                                                             size: 18,
                                                           ),
-                                                          SizedBox(width: 7,),
-                                                          Text('Assign Staff',style: TextStyle(color: Colors.blue,fontSize: 11,fontWeight: FontWeight.bold),)
+                                                          SizedBox(
+                                                            width: 7,
+                                                          ),
+                                                          Text(
+                                                            'Assign Staff',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.blue,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          )
                                                         ],
                                                       ),
                                                     )),
                                               ),
                                               InkWell(
-                                                onTap: (){
+                                                onTap: () {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                         builder: (context) =>
-                                                            UpComingPage(widget.token)),
+                                                            UpComingPage(
+                                                                widget.token)),
                                                   );
                                                 },
                                                 child: Container(
                                                     height: 40,
-
                                                     decoration: BoxDecoration(
                                                         borderRadius:
-                                                            BorderRadius.circular(
-                                                                5),
+                                                            BorderRadius
+                                                                .circular(5),
                                                         border: Border.all(
-                                                            color: Colors.amber)),
+                                                            color:
+                                                                Colors.amber)),
                                                     child: const Padding(
-                                                      padding: EdgeInsets.only(left: 7,right: 7),
+                                                      padding: EdgeInsets.only(
+                                                          left: 7, right: 7),
                                                       child: Row(
                                                         children: [
                                                           Icon(
@@ -1067,9 +1104,19 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                             color: Colors.amber,
                                                             size: 18,
                                                           ),
-                                                          SizedBox(width: 7,),
-                                                          Text('Send Message',style: TextStyle(color: Colors.amber,fontSize: 11,fontWeight: FontWeight.bold),)
-
+                                                          SizedBox(
+                                                            width: 7,
+                                                          ),
+                                                          Text(
+                                                            'Send Message',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .amber,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          )
                                                         ],
                                                       ),
                                                     )),
@@ -1136,7 +1183,6 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                 },
                                                 child: Container(
                                                     height: 40,
-
                                                     decoration: BoxDecoration(
                                                         borderRadius:
                                                             BorderRadius
@@ -1144,7 +1190,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                         border: Border.all(
                                                             color: Colors.red)),
                                                     child: const Padding(
-                                                      padding: EdgeInsets.only(left: 7,right: 7),
+                                                      padding: EdgeInsets.only(
+                                                          left: 7, right: 7),
                                                       child: Row(
                                                         children: [
                                                           Icon(
@@ -1152,8 +1199,19 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                             color: Colors.red,
                                                             size: 18,
                                                           ),
-                                                          SizedBox(width: 7,),
-                                                          Text('Delete',style: TextStyle(color: Colors.red,fontSize: 11,fontWeight: FontWeight.bold),)
+                                                          SizedBox(
+                                                            width: 7,
+                                                          ),
+                                                          Text(
+                                                            'Delete',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.red,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          )
                                                         ],
                                                       ),
                                                     )),

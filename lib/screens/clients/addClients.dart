@@ -397,44 +397,48 @@ class _AddClientsState extends State<AddClients> {
                                                     const Text('Post Office'),
                                                 content: postal!.postOffice !=
                                                         null
-                                                    ? ListView.builder(
-                                                        shrinkWrap: true,
-                                                        itemCount: postal!
-                                                            .postOffice!.length,
-                                                        itemBuilder:
-                                                            (context, ind) {
-                                                          return InkWell(
-                                                            onTap: () {
-                                                              setState(() {
-                                                                postOffice
-                                                                        .text =
-                                                                    postal!
-                                                                        .postOffice![
-                                                                            ind]
-                                                                        .name
-                                                                        .toString();
-                                                                Navigator.pop(
-                                                                    context,
-                                                                    true);
-                                                              });
-                                                            },
-                                                            child: SizedBox(
-                                                              height: 50,
-                                                              child: Text(
-                                                                postal!
-                                                                    .postOffice![
-                                                                        ind]
-                                                                    .name
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                        fontSize:
-                                                                            18),
+                                                    ? SizedBox(
+                                                      height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                      child: ListView.builder(
+                                                          shrinkWrap: true,
+                                                          itemCount: postal!
+                                                              .postOffice!.length,
+                                                          itemBuilder:
+                                                              (context, ind) {
+                                                            return InkWell(
+                                                              onTap: () {
+                                                                setState(() {
+                                                                  postOffice
+                                                                          .text =
+                                                                      postal!
+                                                                          .postOffice![
+                                                                              ind]
+                                                                          .name
+                                                                          .toString();
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      true);
+                                                                });
+                                                              },
+                                                              child: SizedBox(
+                                                                height: 50,
+                                                                child: Text(
+                                                                  postal!
+                                                                      .postOffice![
+                                                                          ind]
+                                                                      .name
+                                                                      .toString(),
+                                                                  style:
+                                                                      const TextStyle(
+                                                                          fontSize:
+                                                                              18),
+                                                                ),
                                                               ),
-                                                            ),
-                                                          );
-                                                        },
-                                                      )
+                                                            );
+                                                          },
+                                                        ),
+                                                    )
                                                     : const Text(
                                                         'No Post Office Found'));
                                           });

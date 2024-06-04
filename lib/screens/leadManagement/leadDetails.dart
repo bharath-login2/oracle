@@ -269,11 +269,11 @@ class _LeadDetailsState extends State<LeadDetails> {
           ? Scaffold(
               backgroundColor: Colors.grey.shade200,
               appBar: PreferredSize(
-                preferredSize: Size.fromHeight(
-                    MediaQuery.of(context).size.height * 0.08),
+                preferredSize:
+                    Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
                 child: Container(
-                  padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top),
+                  padding:
+                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                         colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
@@ -310,8 +310,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                             ),
                             const Text(
                               'Lead Details',
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 18),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
                             ),
                           ],
                         ),
@@ -387,8 +387,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                 clipBehavior: Clip.antiAlias,
                                                 padding:
                                                     const EdgeInsets.all(16),
-                                                decoration:
-                                                    const BoxDecoration(
+                                                decoration: const BoxDecoration(
                                                   color: Colors.white,
                                                   borderRadius:
                                                       BorderRadius.only(
@@ -422,8 +421,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     EdgeInsets.only(
                                                                         left:
                                                                             10,
-                                                                        top:
-                                                                            2,
+                                                                        top: 2,
                                                                         bottom:
                                                                             2),
                                                                 labelText:
@@ -435,8 +433,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 prefixIcon: Icon(
                                                                     Icons
                                                                         .person,
-                                                                    color: Colors
-                                                                        .grey),
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -446,10 +445,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           color:
                                                                               Colors.grey),
                                                                 ),
-                                                                labelStyle:
-                                                                    TextStyle(
-                                                                        color:
-                                                                            Colors.grey)),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
                                                       ),
                                                       const SizedBox(
                                                         height: 13,
@@ -463,8 +461,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     EdgeInsets.only(
                                                                         left:
                                                                             10,
-                                                                        top:
-                                                                            2,
+                                                                        top: 2,
                                                                         bottom:
                                                                             2),
                                                                 labelText:
@@ -476,8 +473,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 prefixIcon: Icon(
                                                                     Icons
                                                                         .person,
-                                                                    color: Colors
-                                                                        .grey),
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -487,10 +485,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           color:
                                                                               Colors.grey),
                                                                 ),
-                                                                labelStyle:
-                                                                    TextStyle(
-                                                                        color:
-                                                                            Colors.grey)),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
                                                       ),
                                                       const SizedBox(
                                                         height: 13,
@@ -504,8 +501,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     EdgeInsets.only(
                                                                         left:
                                                                             10,
-                                                                        top:
-                                                                            2,
+                                                                        top: 2,
                                                                         bottom:
                                                                             2),
                                                                 labelText:
@@ -517,8 +513,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 prefixIcon: Icon(
                                                                     Icons
                                                                         .phone_android_rounded,
-                                                                    color: Colors
-                                                                        .grey),
+                                                                    color:
+                                                                        Colors
+                                                                            .grey),
                                                                 border:
                                                                     OutlineInputBorder(),
                                                                 focusedBorder:
@@ -528,10 +525,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           color:
                                                                               Colors.grey),
                                                                 ),
-                                                                labelStyle:
-                                                                    TextStyle(
-                                                                        color:
-                                                                            Colors.grey)),
+                                                                labelStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .grey)),
                                                       ),
                                                       const SizedBox(
                                                         height: 10,
@@ -540,31 +536,27 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           height: 16),
                                                       Container(
                                                         height: 40,
-                                                        width:
-                                                            double.maxFinite,
+                                                        width: double.maxFinite,
                                                         decoration:
                                                             const BoxDecoration(
-                                                          color: Color(
-                                                              0xFF3375e0),
+                                                          color:
+                                                              Color(0xFF3375e0),
                                                           borderRadius:
-                                                              BorderRadius
-                                                                  .all(Radius
+                                                              BorderRadius.all(
+                                                                  Radius
                                                                       .circular(
                                                                           8)),
                                                         ),
                                                         child:
                                                             RawMaterialButton(
-                                                          onPressed:
-                                                              () async {
+                                                          onPressed: () async {
                                                             if (contactFName
-                                                                .text
-                                                                .isEmpty) {
+                                                                .text.isEmpty) {
                                                               Common.toastMessaage(
                                                                   'Enter the first name',
                                                                   Colors.red);
                                                             } else if (contactMobile
-                                                                .text
-                                                                .isEmpty) {
+                                                                .text.isEmpty) {
                                                               Common.toastMessaage(
                                                                   'Enter the Mobile number',
                                                                   Colors.red);
@@ -574,7 +566,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   await Permission
                                                                       .contacts
                                                                       .status;
-    
+
                                                               if (permission !=
                                                                   PermissionStatus
                                                                       .granted) {
@@ -586,7 +578,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     await Permission
                                                                         .contacts
                                                                         .status;
-    
+
                                                                 if (permission ==
                                                                     PermissionStatus
                                                                         .granted) {
@@ -606,8 +598,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     Item(
                                                                         label:
                                                                             "mobile",
-                                                                        value:
-                                                                            contactMobile.text)
+                                                                        value: contactMobile
+                                                                            .text)
                                                                   ];
                                                                   await ContactsService
                                                                       .addContact(
@@ -660,8 +652,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           child: const Center(
                                                             child: Text(
                                                               'Save',
-                                                              style:
-                                                                  TextStyle(
+                                                              style: TextStyle(
                                                                 color: Colors
                                                                     .white,
                                                                 fontWeight:
@@ -733,8 +724,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 child: const Align(
                                   alignment: Alignment.centerLeft,
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: <Widget>[
                                       SizedBox(
                                         width: 20,
@@ -785,8 +775,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                               //   ),
                               // ),
                               confirmDismiss: (direction) async {
-                                if (direction ==
-                                    DismissDirection.startToEnd) {
+                                if (direction == DismissDirection.startToEnd) {
                                   if (leadDetails!.data!.callPermission ==
                                       false) {
                                     showDialog(
@@ -801,8 +790,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               // The "Yes" button
                                               TextButton(
                                                   onPressed: () {
-                                                    Navigator.of(context)
-                                                        .pop();
+                                                    Navigator.of(context).pop();
                                                   },
                                                   child: const Text('Close')),
                                               TextButton(
@@ -813,33 +801,28 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           builder: (context) => LeadDetails(
                                                               widget.token!,
                                                               widget.editLead,
-                                                              widget
-                                                                  .deleteLead,
-                                                              widget
-                                                                  .cloudCall,
-                                                              leadDetails!
-                                                                  .data!
+                                                              widget.deleteLead,
+                                                              widget.cloudCall,
+                                                              leadDetails!.data!
                                                                   .callLeadId
                                                                   .toString(),
                                                               pageName: widget
                                                                   .pageName,
-                                                              status: widget
-                                                                  .status,
-                                                              staff: widget
-                                                                  .staff,
+                                                              status:
+                                                                  widget.status,
+                                                              staff:
+                                                                  widget.staff,
                                                               isCalled: widget
                                                                   .isCalled,
                                                               fromDate: widget
                                                                   .fromDate,
-                                                              toDate: widget
-                                                                  .toDate,
+                                                              toDate:
+                                                                  widget.toDate,
                                                               category: widget
                                                                   .category,
-                                                              scrollToIndex:
-                                                                  widget
-                                                                      .scrollToIndex,
-                                                              page:
-                                                                  widget.page,
+                                                              scrollToIndex: widget
+                                                                  .scrollToIndex,
+                                                              page: widget.page,
                                                               pageSize: widget
                                                                   .pageSize,
                                                               leadType: widget
@@ -868,15 +851,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                 children: [
                                                   InkWell(
                                                     onTap: () async {
-                                                      Common
-                                                          .showProgressDialog(
-                                                              context,
-                                                              "Loading..");
+                                                      Common.showProgressDialog(
+                                                          context, "Loading..");
                                                       CloudCallModel object1 =
                                                           await HttpService
                                                               .addCloudCall(
-                                                                  widget
-                                                                      .token,
+                                                                  widget.token,
                                                                   widget
                                                                       .callMasterId,
                                                                   leadDetails!
@@ -892,11 +872,16 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 builder:
                                                                     (context) =>
                                                                         LeadDetails(
-                                                                          widget.token,
-                                                                          widget.editLead,
-                                                                          widget.deleteLead,
-                                                                          widget.cloudCall,
-                                                                          widget.callMasterId,
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .editLead,
+                                                                          widget
+                                                                              .deleteLead,
+                                                                          widget
+                                                                              .cloudCall,
+                                                                          widget
+                                                                              .callMasterId,
                                                                           pageName:
                                                                               widget.pageName,
                                                                           status:
@@ -1034,8 +1019,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Icon(
                                                               Icons
                                                                   .cloud_circle_rounded,
-                                                              color: Colors
-                                                                  .black,
+                                                              color:
+                                                                  Colors.black,
                                                             ),
                                                           ),
                                                           const SizedBox(
@@ -1075,10 +1060,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       .grey
                                                                       .shade300,
                                                                   borderRadius:
-                                                                      BorderRadius.circular(
-                                                                          5)),
-                                                              child:
-                                                                  const Icon(
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              5)),
+                                                              child: const Icon(
                                                                 Icons.call,
                                                                 color: Colors
                                                                     .black,
@@ -1090,8 +1075,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             const Text(
                                                               'Phone Call',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      18),
+                                                                  fontSize: 18),
                                                             ),
                                                           ],
                                                         )),
@@ -1324,12 +1308,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 10),
+                                      padding: const EdgeInsets.only(left: 10),
                                       child: Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.start,
@@ -1358,8 +1340,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                                 maxLines: 1,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                                 softWrap: false,
                                               ),
                                             ),
@@ -1372,8 +1353,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                           ),
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               SizedBox(
                                                 width: MediaQuery.of(context)
@@ -1399,10 +1379,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           .data!
                                                                           .priorityId ==
                                                                       '2'
-                                                                  ? Colors
-                                                                      .green
-                                                                  : Colors
-                                                                      .red,
+                                                                  ? Colors.green
+                                                                  : Colors.red,
                                                           shape:
                                                               BoxShape.circle,
                                                         ),
@@ -1414,29 +1392,26 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         width: 170,
                                                         //width: MediaQuery.of(context).size.width * 0.1,
                                                         child: Text(
-                                                          leadDetails!.data!
-                                                              .clientName
+                                                          leadDetails!
+                                                              .data!.clientName
                                                               .toString(),
                                                           style: const TextStyle(
                                                               fontSize: 16,
-                                                              color: Colors
-                                                                  .black,
+                                                              color:
+                                                                  Colors.black,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .bold),
                                                           maxLines: 1,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                               ),
-                                              leadDetails!
-                                                          .data!
-                                                          .leadCategories!
+                                              leadDetails!.data!.leadCategories!
                                                           .length >
                                                       1
                                                   ? PopupMenuButton(
@@ -1465,8 +1440,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       .leadCategories!
                                                                       .length;
                                                               i++)
-                                                            PopupMenuItem<
-                                                                    int>(
+                                                            PopupMenuItem<int>(
                                                                 value: int.parse(leadDetails!
                                                                     .data!
                                                                     .leadCategories![
@@ -1479,18 +1453,22 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             true
                                                                         ? const Icon(
                                                                             Icons.done,
-                                                                            size: 20,
-                                                                            color: Colors.green,
+                                                                            size:
+                                                                                20,
+                                                                            color:
+                                                                                Colors.green,
                                                                           )
                                                                         : const SizedBox(
-                                                                            width: 15,
+                                                                            width:
+                                                                                15,
                                                                           ),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     SizedBox(
-                                                                      width: MediaQuery.of(context).size.width *
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
                                                                           0.5,
                                                                       child:
                                                                           Text(
@@ -1528,8 +1506,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             widget.pageName,
                                                                         status:
                                                                             widget.status,
-                                                                        staff:
-                                                                            widget.staff,
+                                                                        staff: widget
+                                                                            .staff,
                                                                         isCalled:
                                                                             widget.isCalled,
                                                                         fromDate:
@@ -1564,8 +1542,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                           ),
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               SizedBox(
                                                 width: 220,
@@ -1584,8 +1561,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               Container(
                                                 decoration: BoxDecoration(
                                                     color: _colors[int.parse(
-                                                        leadDetails!.data!
-                                                            .callResultId
+                                                        leadDetails!
+                                                            .data!.callResultId
                                                             .toString())],
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -1652,8 +1629,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         maxLines: 1,
                                                         style: const TextStyle(
                                                             fontSize: 13,
-                                                            color: Colors
-                                                                .black54,
+                                                            color:
+                                                                Colors.black54,
                                                             fontWeight:
                                                                 FontWeight
                                                                     .w500),
@@ -1730,8 +1707,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   'Close')),
                                                           TextButton(
                                                               onPressed: () {
-                                                                Navigator
-                                                                    .push(
+                                                                Navigator.push(
                                                                   context,
                                                                   MaterialPageRoute(
                                                                       builder: (context) => LeadDetails(
@@ -1743,20 +1719,32 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               .deleteLead,
                                                                           widget
                                                                               .cloudCall,
-                                                                          leadDetails!.data!.callLeadId
+                                                                          leadDetails!
+                                                                              .data!
+                                                                              .callLeadId
                                                                               .toString(),
-                                                                          pageName:
-                                                                              widget.pageName,
-                                                                          status: widget.status,
-                                                                          staff: widget.staff,
-                                                                          isCalled: widget.isCalled,
-                                                                          fromDate: widget.fromDate,
-                                                                          toDate: widget.toDate,
-                                                                          category: widget.category,
-                                                                          scrollToIndex: widget.scrollToIndex,
-                                                                          page: widget.page,
-                                                                          pageSize: widget.pageSize,
-                                                                          leadType: widget.leadType)),
+                                                                          pageName: widget
+                                                                              .pageName,
+                                                                          status: widget
+                                                                              .status,
+                                                                          staff: widget
+                                                                              .staff,
+                                                                          isCalled: widget
+                                                                              .isCalled,
+                                                                          fromDate: widget
+                                                                              .fromDate,
+                                                                          toDate: widget
+                                                                              .toDate,
+                                                                          category: widget
+                                                                              .category,
+                                                                          scrollToIndex: widget
+                                                                              .scrollToIndex,
+                                                                          page: widget
+                                                                              .page,
+                                                                          pageSize: widget
+                                                                              .pageSize,
+                                                                          leadType:
+                                                                              widget.leadType)),
                                                                 );
                                                               },
                                                               child: const Text(
@@ -1765,8 +1753,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       );
                                                     });
                                               } else {
-                                                if (widget.cloudCall ==
-                                                    true) {
+                                                if (widget.cloudCall == true) {
                                                   showDialog(
                                                       context: context,
                                                       builder: (BuildContext
@@ -1789,14 +1776,16 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   Common.showProgressDialog(
                                                                       context,
                                                                       "Loading..");
-                                                                  CloudCallModel object1 = await HttpService.addCloudCall(
-                                                                      widget
-                                                                          .token,
-                                                                      widget
-                                                                          .callMasterId,
-                                                                      leadDetails!
-                                                                          .data!
-                                                                          .contactNumber1);
+                                                                  CloudCallModel
+                                                                      object1 =
+                                                                      await HttpService.addCloudCall(
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .callMasterId,
+                                                                          leadDetails!
+                                                                              .data!
+                                                                              .contactNumber1);
                                                                   if (object1
                                                                           .data ==
                                                                       true) {
@@ -1806,7 +1795,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           .push(
                                                                         context,
                                                                         MaterialPageRoute(
-                                                                            builder: (context) => LeadDetails(
+                                                                            builder: (context) =>
+                                                                                LeadDetails(
                                                                                   widget.token,
                                                                                   widget.editLead,
                                                                                   widget.deleteLead,
@@ -1840,8 +1830,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     }
                                                                   }
                                                                 },
-                                                                child:
-                                                                    SizedBox(
+                                                                child: SizedBox(
                                                                   height: 50,
                                                                   child: Row(
                                                                     children: [
@@ -1851,11 +1840,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         width:
                                                                             30,
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors.grey.shade300,
+                                                                            color:
+                                                                                Colors.grey.shade300,
                                                                             borderRadius: BorderRadius.circular(5)),
                                                                         child:
                                                                             const Icon(
-                                                                          Icons.cloud_circle_rounded,
+                                                                          Icons
+                                                                              .cloud_circle_rounded,
                                                                           color:
                                                                               Colors.black,
                                                                         ),
@@ -1866,8 +1857,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       ),
                                                                       const Text(
                                                                         'Cloud Call',
-                                                                        style:
-                                                                            TextStyle(fontSize: 18),
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                18),
                                                                       ),
                                                                     ],
                                                                   ),
@@ -1883,35 +1875,40 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                                                                   // await launch(
                                                                   //     url);
-                                                                  bool? res =
-                                                                      await FlutterPhoneDirectCaller.callNumber(
+                                                                  bool? res = await FlutterPhoneDirectCaller
+                                                                      .callNumber(
                                                                           '+${leadDetails!.data!.contactNumber1}');
                                                                 },
-                                                                child:
-                                                                    SizedBox(
-                                                                        height:
-                                                                            50,
-                                                                        child:
-                                                                            Row(
-                                                                          children: [
-                                                                            Container(
-                                                                              height: 30,
-                                                                              width: 30,
-                                                                              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                              child: const Icon(
-                                                                                Icons.call,
-                                                                                color: Colors.black,
-                                                                              ),
-                                                                            ),
-                                                                            const SizedBox(
-                                                                              width: 20,
-                                                                            ),
-                                                                            const Text(
-                                                                              'Phone Call',
-                                                                              style: TextStyle(fontSize: 18),
-                                                                            ),
-                                                                          ],
-                                                                        )),
+                                                                child: SizedBox(
+                                                                    height: 50,
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Container(
+                                                                          height:
+                                                                              30,
+                                                                          width:
+                                                                              30,
+                                                                          decoration: BoxDecoration(
+                                                                              color: Colors.grey.shade300,
+                                                                              borderRadius: BorderRadius.circular(5)),
+                                                                          child:
+                                                                              const Icon(
+                                                                            Icons.call,
+                                                                            color:
+                                                                                Colors.black,
+                                                                          ),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              20,
+                                                                        ),
+                                                                        const Text(
+                                                                          'Phone Call',
+                                                                          style:
+                                                                              TextStyle(fontSize: 18),
+                                                                        ),
+                                                                      ],
+                                                                    )),
                                                               ),
                                                             ],
                                                           ),
@@ -1938,11 +1935,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               child: const Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .center,
+                                                      CrossAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.call,
@@ -1957,8 +1952,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             fontFamily:
                                                                 "MontserratMedium",
                                                             fontSize: 14,
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             fontWeight:
                                                                 FontWeight
                                                                     .bold)),
@@ -1982,22 +1976,20 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               widget
                                                                   .callMasterId,
                                                               widget.editLead,
-                                                              widget
-                                                                  .deleteLead,
-                                                              widget
-                                                                  .cloudCall,
+                                                              widget.deleteLead,
+                                                              widget.cloudCall,
                                                               pageName: widget
                                                                   .pageName,
-                                                              status: widget
-                                                                  .status,
-                                                              staff: widget
-                                                                  .staff,
+                                                              status:
+                                                                  widget.status,
+                                                              staff:
+                                                                  widget.staff,
                                                               isCalled: widget
                                                                   .isCalled,
                                                               fromDate: widget
                                                                   .fromDate,
-                                                              toDate: widget
-                                                                  .toDate,
+                                                              toDate:
+                                                                  widget.toDate,
                                                               category: widget
                                                                   .category,
                                                               scrolToIndex: widget
@@ -2020,11 +2012,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               child: const Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .center,
+                                                      CrossAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.edit,
@@ -2039,8 +2029,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             fontFamily:
                                                                 "MontserratMedium",
                                                             fontSize: 14,
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             fontWeight:
                                                                 FontWeight
                                                                     .bold)),
@@ -2065,11 +2054,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     const Duration(
                                                         milliseconds: 400),
                                                 context: context,
-                                                pageBuilder:
-                                                    (context, _, __) {
+                                                pageBuilder: (context, _, __) {
                                                   return StatefulBuilder(
-                                                      builder: (context,
-                                                          setState) {
+                                                      builder:
+                                                          (context, setState) {
                                                     return Align(
                                                       alignment:
                                                           Alignment.center,
@@ -2083,15 +2071,15 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           child: Container(
                                                             width: double
                                                                 .maxFinite,
-                                                            clipBehavior: Clip
-                                                                .antiAlias,
+                                                            clipBehavior:
+                                                                Clip.antiAlias,
                                                             padding:
                                                                 const EdgeInsets
                                                                     .all(16),
                                                             decoration:
                                                                 const BoxDecoration(
-                                                              color: Colors
-                                                                  .white,
+                                                              color:
+                                                                  Colors.white,
                                                               borderRadius:
                                                                   BorderRadius
                                                                       .only(
@@ -2101,9 +2089,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 topRight: Radius
                                                                     .circular(
                                                                         10),
-                                                                bottomRight: Radius
-                                                                    .circular(
-                                                                        10),
+                                                                bottomRight:
+                                                                    Radius
+                                                                        .circular(
+                                                                            10),
                                                                 bottomLeft: Radius
                                                                     .circular(
                                                                         10),
@@ -2122,7 +2111,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       fontSize:
                                                                           18,
                                                                       fontWeight:
-                                                                          FontWeight.w500,
+                                                                          FontWeight
+                                                                              .w500,
                                                                     ),
                                                                   ),
                                                                   const SizedBox(
@@ -2136,23 +2126,28 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       return Container(
                                                                         height:
                                                                             50,
-                                                                        width:
-                                                                            MediaQuery.of(context).size.width * 0.9,
+                                                                        width: MediaQuery.of(context).size.width *
+                                                                            0.9,
                                                                         decoration: BoxDecoration(
-                                                                            border: Border.all(color: Colors.grey.shade900, width: 0),
+                                                                            border:
+                                                                                Border.all(color: Colors.grey.shade900, width: 0),
                                                                             color: Colors.white,
                                                                             borderRadius: const BorderRadius.all(Radius.circular(5))),
                                                                         child:
                                                                             DropdownButtonHideUnderline(
                                                                           child:
                                                                               DropdownButton<String>(
-                                                                            isExpanded: true,
-                                                                            hint: const Padding(
+                                                                            isExpanded:
+                                                                                true,
+                                                                            hint:
+                                                                                const Padding(
                                                                               padding: EdgeInsets.only(left: 20),
                                                                               child: Text('Staff'),
                                                                             ),
-                                                                            value: staff,
-                                                                            items: commonDetails!.data!.transferStaffs!.map((data) {
+                                                                            value:
+                                                                                staff,
+                                                                            items:
+                                                                                commonDetails!.data!.transferStaffs!.map((data) {
                                                                               return DropdownMenuItem(
                                                                                 value: data.tranStaffId.toString(),
                                                                                 child: Padding(
@@ -2161,7 +2156,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 ),
                                                                               );
                                                                             }).toList(),
-                                                                            onChanged: (newValue) {
+                                                                            onChanged:
+                                                                                (newValue) {
                                                                               setState(() {
                                                                                 staff = newValue;
                                                                               });
@@ -2172,8 +2168,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     },
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        15,
+                                                                    height: 15,
                                                                   ),
                                                                   TextFormField(
                                                                     controller:
@@ -2204,12 +2199,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        25,
+                                                                    height: 25,
                                                                   ),
                                                                   Container(
-                                                                    height:
-                                                                        40,
+                                                                    height: 40,
                                                                     width: double
                                                                         .maxFinite,
                                                                     decoration:
@@ -2217,7 +2210,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       color: Color(
                                                                           0xFF3375e0),
                                                                       borderRadius:
-                                                                          BorderRadius.all(Radius.circular(8)),
+                                                                          BorderRadius.all(
+                                                                              Radius.circular(8)),
                                                                     ),
                                                                     child:
                                                                         RawMaterialButton(
@@ -2225,10 +2219,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           () async {
                                                                         if (staff ==
                                                                             null) {
-                                                                          Common.toastMessaage('Choose Staff Name',
+                                                                          Common.toastMessaage(
+                                                                              'Choose Staff Name',
                                                                               Colors.red);
                                                                         } else {
-                                                                          Common.showProgressDialog(context,
+                                                                          Common.showProgressDialog(
+                                                                              context,
                                                                               "Loading..");
                                                                           LeadTransferModel transfer = await HttpService.leadTransfer(
                                                                               widget.token,
@@ -2237,7 +2233,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               transferRemark.text);
                                                                           if (transfer.status ==
                                                                               true) {
-                                                                            Common.toastMessaage(transfer.message, Colors.green);
+                                                                            Common.toastMessaage(transfer.message,
+                                                                                Colors.green);
                                                                             if (context.mounted) {
                                                                               Navigator.push(
                                                                                 context,
@@ -2261,7 +2258,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               );
                                                                             }
                                                                           } else {
-                                                                            Common.toastMessaage(transfer.message, Colors.red);
+                                                                            Common.toastMessaage(transfer.message,
+                                                                                Colors.red);
                                                                             if (context.mounted) {
                                                                               Navigator.of(context, rootNavigator: true).pop();
                                                                             }
@@ -2275,8 +2273,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           'Continue',
                                                                           style:
                                                                               TextStyle(
-                                                                            color: Colors.white,
-                                                                            fontWeight: FontWeight.w500,
+                                                                            color:
+                                                                                Colors.white,
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
                                                                           ),
                                                                         ),
                                                                       ),
@@ -2291,12 +2291,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     );
                                                   });
                                                 },
-                                                transitionBuilder: (_,
-                                                    animation1, __, child) {
+                                                transitionBuilder:
+                                                    (_, animation1, __, child) {
                                                   return SlideTransition(
                                                     position: Tween(
-                                                      begin:
-                                                          const Offset(0, 1),
+                                                      begin: const Offset(0, 1),
                                                       end: const Offset(0, 0),
                                                     ).animate(animation1),
                                                     child: child,
@@ -2318,11 +2317,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               child: const Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .center,
+                                                      CrossAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons
@@ -2338,8 +2335,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             fontFamily:
                                                                 "MontserratMedium",
                                                             fontSize: 14,
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             fontWeight:
                                                                 FontWeight
                                                                     .bold)),
@@ -2354,8 +2350,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddLeads(
+                                                builder: (context) => AddLeads(
                                                   widget.token,
                                                   page: 'leadDetails',
                                                   leadMasterId: leadDetails!
@@ -2369,12 +2364,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   fromDate: widget.fromDate,
                                                   toDate: widget.toDate,
                                                   editLead: widget.editLead,
-                                                  deleteLead:
-                                                      widget.deleteLead,
+                                                  deleteLead: widget.deleteLead,
                                                   cloudCall: widget.cloudCall,
                                                 ),
                                               ),
-                                            ).then((r){getData();});
+                                            ).then((r) {
+                                              getData();
+                                            });
                                           },
                                           child: Container(
                                             width: 30,
@@ -2384,8 +2380,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                 border: Border.all(
                                                     color: Colors.grey),
                                                 borderRadius:
-                                                    BorderRadius.circular(
-                                                        20)),
+                                                    BorderRadius.circular(20)),
                                             child: const Center(
                                               child: Icon(
                                                 Icons.add,
@@ -2411,8 +2406,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       alignment: Alignment.center,
                                       margin: const EdgeInsets.only(
                                           left: 20, top: 18, right: 20),
-                                      width:
-                                          MediaQuery.of(context).size.width,
+                                      width: MediaQuery.of(context).size.width,
                                       height: 30,
                                       child: ListView(
                                         scrollDirection: Axis.horizontal,
@@ -2434,28 +2428,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       color: Colors.white,
                                                       width: 0),
                                                   color: selectedIndex == 0
-                                                      ? const Color(
-                                                          0xFFd5f5f4)
+                                                      ? const Color(0xFFd5f5f4)
                                                       : Colors.white,
                                                   borderRadius:
                                                       const BorderRadius.all(
-                                                          Radius.circular(
-                                                              6))),
+                                                          Radius.circular(6))),
                                               child: Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Text(
                                                       'Followup',
                                                       style: TextStyle(
-                                                        color: selectedIndex ==
-                                                                0
-                                                            ? const Color(
-                                                                0xFF3c9f9a)
-                                                            : const Color(
-                                                                0xFF717171),
+                                                        color:
+                                                            selectedIndex == 0
+                                                                ? const Color(
+                                                                    0xFF3c9f9a)
+                                                                : const Color(
+                                                                    0xFF717171),
                                                       ),
                                                     ),
                                                   ],
@@ -2484,19 +2475,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     height: 30,
                                                     decoration: BoxDecoration(
                                                         border: Border.all(
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             width: 0),
-                                                        color: selectedIndex ==
-                                                                2
-                                                            ? const Color(
-                                                                0xFFd5f5f4)
-                                                            : Colors.white,
+                                                        color:
+                                                            selectedIndex == 2
+                                                                ? const Color(
+                                                                    0xFFd5f5f4)
+                                                                : Colors.white,
                                                         borderRadius:
                                                             const BorderRadius
-                                                                .all(Radius
-                                                                    .circular(
-                                                                        6))),
+                                                                .all(
+                                                                Radius.circular(
+                                                                    6))),
                                                     child: Center(
                                                       child: Row(
                                                         mainAxisAlignment:
@@ -2544,28 +2534,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       color: Colors.white,
                                                       width: 0),
                                                   color: selectedIndex == 1
-                                                      ? const Color(
-                                                          0xFFd5f5f4)
+                                                      ? const Color(0xFFd5f5f4)
                                                       : Colors.white,
                                                   borderRadius:
                                                       const BorderRadius.all(
-                                                          Radius.circular(
-                                                              6))),
+                                                          Radius.circular(6))),
                                               child: Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Text(
                                                       'Activities',
                                                       style: TextStyle(
-                                                        color: selectedIndex ==
-                                                                1
-                                                            ? const Color(
-                                                                0xFF3c9f9a)
-                                                            : const Color(
-                                                                0xFF717171),
+                                                        color:
+                                                            selectedIndex == 1
+                                                                ? const Color(
+                                                                    0xFF3c9f9a)
+                                                                : const Color(
+                                                                    0xFF717171),
                                                       ),
                                                     ),
                                                   ],
@@ -2593,28 +2580,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       color: Colors.white,
                                                       width: 0),
                                                   color: selectedIndex == 3
-                                                      ? const Color(
-                                                          0xFFd5f5f4)
+                                                      ? const Color(0xFFd5f5f4)
                                                       : Colors.white,
                                                   borderRadius:
                                                       const BorderRadius.all(
-                                                          Radius.circular(
-                                                              6))),
+                                                          Radius.circular(6))),
                                               child: Center(
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .center,
+                                                      MainAxisAlignment.center,
                                                   children: [
                                                     Text(
                                                       'Details',
                                                       style: TextStyle(
-                                                        color: selectedIndex ==
-                                                                3
-                                                            ? const Color(
-                                                                0xFF3c9f9a)
-                                                            : const Color(
-                                                                0xFF717171),
+                                                        color:
+                                                            selectedIndex == 3
+                                                                ? const Color(
+                                                                    0xFF3c9f9a)
+                                                                : const Color(
+                                                                    0xFF717171),
                                                       ),
                                                     ),
                                                   ],
@@ -2643,19 +2627,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     height: 30,
                                                     decoration: BoxDecoration(
                                                         border: Border.all(
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             width: 0),
-                                                        color: selectedIndex ==
-                                                                4
-                                                            ? const Color(
-                                                                0xFFd5f5f4)
-                                                            : Colors.white,
+                                                        color:
+                                                            selectedIndex == 4
+                                                                ? const Color(
+                                                                    0xFFd5f5f4)
+                                                                : Colors.white,
                                                         borderRadius:
                                                             const BorderRadius
-                                                                .all(Radius
-                                                                    .circular(
-                                                                        6))),
+                                                                .all(
+                                                                Radius.circular(
+                                                                    6))),
                                                     child: Center(
                                                       child: Row(
                                                         mainAxisAlignment:
@@ -2679,8 +2662,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   ),
                                                 )
                                               : const SizedBox(),
-                                          mileStone!.data!.milestones!
-                                                  .isNotEmpty
+                                          mileStone!
+                                                  .data!.milestones!.isNotEmpty
                                               ? Padding(
                                                   padding:
                                                       const EdgeInsets.only(
@@ -2692,16 +2675,16 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       });
                                                     },
                                                     child: Container(
-                                                      width: MediaQuery.of(
-                                                                  context)
-                                                              .size
-                                                              .width *
-                                                          .25,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              .25,
                                                       height: 30,
                                                       decoration: BoxDecoration(
                                                           border: Border.all(
-                                                              color: Colors
-                                                                  .white,
+                                                              color:
+                                                                  Colors.white,
                                                               width: 0),
                                                           color: selectedIndex ==
                                                                   5
@@ -2721,8 +2704,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           children: [
                                                             Text(
                                                               'Mile Stone',
-                                                              style:
-                                                                  TextStyle(
+                                                              style: TextStyle(
                                                                 color: selectedIndex ==
                                                                         5
                                                                     ? const Color(
@@ -2746,14 +2728,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                         physics:
                                             const NeverScrollableScrollPhysics(),
                                         shrinkWrap: true,
-                                        itemBuilder: (BuildContext context,
-                                            int index) {
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
                                           return Stack(
                                             children: <Widget>[
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
-                                                        left: 50.0),
+                                                padding: const EdgeInsets.only(
+                                                    left: 50.0),
                                                 child: InkWell(
                                                   onTap: () {
                                                     if (leadDetailsAdditional!
@@ -2767,8 +2748,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         MaterialPageRoute(
                                                             builder: (context) => AddFollowup(
                                                                 widget.token,
-                                                                widget
-                                                                    .editLead,
+                                                                widget.editLead,
                                                                 widget
                                                                     .deleteLead,
                                                                 widget
@@ -2815,8 +2795,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             20.0),
                                                     child: Container(
                                                       width: double.infinity,
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      decoration: BoxDecoration(
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(5),
@@ -2826,8 +2805,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         index]
                                                                     .isCalled ==
                                                                 false
-                                                            ? Colors.green
-                                                                .shade100
+                                                            ? Colors
+                                                                .green.shade100
                                                             : Colors.white,
                                                         boxShadow: [
                                                           BoxShadow(
@@ -2845,8 +2824,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       child: Padding(
                                                         padding:
                                                             const EdgeInsets
-                                                                .only(
-                                                                left: 40),
+                                                                .only(left: 40),
                                                         child: Column(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
@@ -2885,29 +2863,32 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         ),
                                                                         decoration:
                                                                             BoxDecoration(
-                                                                          border:
-                                                                              Border.all(color: Colors.white, width: 0),
+                                                                          border: Border.all(
+                                                                              color: Colors.white,
+                                                                              width: 0),
                                                                           boxShadow: const [
-                                                                            BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
+                                                                            BoxShadow(
+                                                                                color: Colors.grey,
+                                                                                blurRadius: 5,
+                                                                                offset: Offset(1, 1)),
                                                                           ],
                                                                           color:
                                                                               Colors.white,
                                                                           shape:
                                                                               BoxShape.circle,
-                                                                          image:
-                                                                              DecorationImage(fit: BoxFit.cover, image: NetworkImage(leadDetailsAdditional!.data!.followUpData![index].proPicThumb.toString())),
+                                                                          image: DecorationImage(
+                                                                              fit: BoxFit.cover,
+                                                                              image: NetworkImage(leadDetailsAdditional!.data!.followUpData![index].proPicThumb.toString())),
                                                                           // image: AssetImage(
                                                                           //     'assets/images/img.jpeg')),
                                                                         ),
                                                                       ),
                                                                     ),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     SizedBox(
-                                                                      width:
-                                                                          90,
+                                                                      width: 90,
                                                                       child:
                                                                           Text(
                                                                         leadDetailsAdditional!
@@ -2915,8 +2896,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             .followUpData![index]
                                                                             .staffName
                                                                             .toString(),
-                                                                        style:
-                                                                            const TextStyle(fontWeight: FontWeight.bold),
+                                                                        style: const TextStyle(
+                                                                            fontWeight:
+                                                                                FontWeight.bold),
                                                                         maxLines:
                                                                             2,
                                                                         overflow:
@@ -2930,7 +2912,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     leadDetailsAdditional!.data!.followUpData![index].isSetReminder ==
                                                                             true
                                                                         ? InkWell(
-                                                                            onTap: () {
+                                                                            onTap:
+                                                                                () {
                                                                               timeBefore.text = leadDetailsAdditional!.data!.followUpData![index].time.toString();
                                                                               checked = leadDetailsAdditional!.data!.followUpData![index].isReminder!;
                                                                               // print(widget.callMasterId);
@@ -3113,7 +3096,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 },
                                                                               );
                                                                             },
-                                                                            child: Icon(
+                                                                            child:
+                                                                                Icon(
                                                                               Icons.notifications,
                                                                               color: leadDetailsAdditional!.data!.followUpData![index].isReminder == true ? Colors.green : Colors.red,
                                                                               size: 20,
@@ -3121,13 +3105,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           )
                                                                         : const SizedBox(),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     leadDetailsAdditional!.data!.followUpData![index].isEdit ==
                                                                             true
                                                                         ? InkWell(
-                                                                            onTap: () {
+                                                                            onTap:
+                                                                                () {
                                                                               Navigator.push(
                                                                                 context,
                                                                                 MaterialPageRoute(
@@ -3149,31 +3133,32 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                         )),
                                                                               );
                                                                             },
-                                                                            child: const Icon(
+                                                                            child:
+                                                                                const Icon(
                                                                               Icons.edit,
                                                                               color: Colors.blue,
                                                                               size: 20,
                                                                             ))
                                                                         : const SizedBox(),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          5,
+                                                                      width: 5,
                                                                     ),
                                                                     leadDetailsAdditional!.data!.followUpData![index].isDelete ==
                                                                             true
                                                                         ? InkWell(
-                                                                            onTap: () {
+                                                                            onTap:
+                                                                                () {
                                                                               _deleteFollowup(context, leadDetailsAdditional!.data!.followUpData![index].callDetailsId);
                                                                             },
-                                                                            child: const Icon(
+                                                                            child:
+                                                                                const Icon(
                                                                               Icons.delete,
                                                                               color: Colors.red,
                                                                               size: 20,
                                                                             ))
                                                                         : const SizedBox(),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                   ],
                                                                 ),
@@ -3185,8 +3170,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             Text(
                                                               'Scheduled Date : ${leadDetailsAdditional!.data!.followUpData![index].scheduledDate}',
                                                               style: const TextStyle(
-                                                                  fontSize:
-                                                                      12,
+                                                                  fontSize: 12,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w400),
@@ -3197,8 +3181,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             Text(
                                                               'Remark:${leadDetailsAdditional!.data!.followUpData![index].remarks}',
                                                               style: const TextStyle(
-                                                                  fontSize:
-                                                                      12,
+                                                                  fontSize: 12,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w400),
@@ -3225,25 +3208,37 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               FontWeight.w400),
                                                                     ),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     Container(
                                                                       decoration: BoxDecoration(
-                                                                          color:
-                                                                              _colors[int.parse(leadDetailsAdditional!.data!.followUpData![index].callResultId.toString())],
-                                                                          borderRadius: BorderRadius.circular(5)),
+                                                                          color: _colors[int.parse(leadDetailsAdditional!
+                                                                              .data!
+                                                                              .followUpData![
+                                                                                  index]
+                                                                              .callResultId
+                                                                              .toString())],
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(5)),
                                                                       child:
                                                                           Padding(
                                                                         padding: const EdgeInsets
                                                                             .only(
-                                                                            left: 5,
-                                                                            right: 5,
-                                                                            top: 2,
-                                                                            bottom: 2),
+                                                                            left:
+                                                                                5,
+                                                                            right:
+                                                                                5,
+                                                                            top:
+                                                                                2,
+                                                                            bottom:
+                                                                                2),
                                                                         child:
                                                                             Text(
-                                                                          leadDetailsAdditional!.data!.followUpData![index].callResult.toString(),
+                                                                          leadDetailsAdditional!
+                                                                              .data!
+                                                                              .followUpData![index]
+                                                                              .callResult
+                                                                              .toString(),
                                                                           style: const TextStyle(
                                                                               fontSize: 13,
                                                                               color: Colors.white,
@@ -3252,14 +3247,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       ),
                                                                     ),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     leadDetailsAdditional!.data!.followUpData![index].isCalled ==
                                                                             false
                                                                         ? const Text(
                                                                             '( Pending )',
-                                                                            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                                                                            style:
+                                                                                TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
                                                                         : const SizedBox()
                                                                   ],
                                                                 ),
@@ -3279,15 +3274,15 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         .only(
                                                                         bottom:
                                                                             8),
-                                                                    child:
-                                                                        Text(
+                                                                    child: Text(
                                                                       'Reason: ${leadDetailsAdditional!.data!.followUpData![index].reason}',
                                                                       style: const TextStyle(
                                                                           fontSize:
                                                                               12,
-                                                                          color:
-                                                                              Colors.black,
-                                                                          fontWeight: FontWeight.w400),
+                                                                          color: Colors
+                                                                              .black,
+                                                                          fontWeight:
+                                                                              FontWeight.w400),
                                                                     ),
                                                                   )
                                                                 : const SizedBox(),
@@ -3330,8 +3325,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               "showGeneralDialog",
                                                                           barrierDismissible:
                                                                               false,
-                                                                          barrierColor:
-                                                                              Colors.black.withOpacity(0.6),
+                                                                          barrierColor: Colors
+                                                                              .black
+                                                                              .withOpacity(0.6),
                                                                           transitionDuration:
                                                                               const Duration(milliseconds: 400),
                                                                           context:
@@ -3473,7 +3469,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 ],
                                                                               ))),
                                                                           InkWell(
-                                                                            onTap: () {
+                                                                            onTap:
+                                                                                () {
                                                                               showDialog(
                                                                                   context: context,
                                                                                   builder: (BuildContext context) {
@@ -3508,7 +3505,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                     );
                                                                                   });
                                                                             },
-                                                                            child: Container(
+                                                                            child:
+                                                                                Container(
                                                                               height: 35,
                                                                               width: 30,
                                                                               decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
@@ -3532,12 +3530,19 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         onTap:
                                                                             () {
                                                                           showGeneralDialog(
-                                                                            barrierLabel: "showGeneralDialog",
-                                                                            barrierDismissible: false,
-                                                                            barrierColor: Colors.black.withOpacity(0.6),
-                                                                            transitionDuration: const Duration(milliseconds: 400),
-                                                                            context: context,
-                                                                            pageBuilder: (context, _, __) {
+                                                                            barrierLabel:
+                                                                                "showGeneralDialog",
+                                                                            barrierDismissible:
+                                                                                false,
+                                                                            barrierColor:
+                                                                                Colors.black.withOpacity(0.6),
+                                                                            transitionDuration:
+                                                                                const Duration(milliseconds: 400),
+                                                                            context:
+                                                                                context,
+                                                                            pageBuilder: (context,
+                                                                                _,
+                                                                                __) {
                                                                               return Obx(() {
                                                                                 return AlertDialog(
                                                                                   content: IntrinsicHeight(
@@ -3659,7 +3664,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                 audioCreateController.resetTimer();
                                                                                                 audioCreateController.audioPath.value = "";
                                                                                               }
-    
+
                                                                                               Get.back();
                                                                                             },
                                                                                             child: const Text(
@@ -3682,7 +3687,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                 audioCreateController.audioPath.value = '';
                                                                                                 audioCreateController.resetTimer();
                                                                                                 Common.toastMessaage(uploadAudio.message, Colors.green);
-    
+
                                                                                                 if (mounted) {
                                                                                                   getData();
                                                                                                   Get.back();
@@ -3701,7 +3706,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                   if (audioCreateController.audioPath.isNotEmpty) {
                                                                                                     audioCreateController.isBack.value = true;
                                                                                                     audioCreateController.resetTimer();
-    
+
                                                                                                     audioCreateController.startRecording();
                                                                                                   } else {
                                                                                                     audioCreateController.startRecording();
@@ -3718,7 +3723,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 );
                                                                               });
                                                                             },
-                                                                            transitionBuilder: (_, animation1, __, child) {
+                                                                            transitionBuilder: (_,
+                                                                                animation1,
+                                                                                __,
+                                                                                child) {
                                                                               return SlideTransition(
                                                                                 position: Tween(
                                                                                   begin: const Offset(0, 1),
@@ -3788,8 +3796,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       BoxShadow(
                                                           color: Colors.grey,
                                                           blurRadius: 5,
-                                                          offset:
-                                                              Offset(1, 1)),
+                                                          offset: Offset(1, 1)),
                                                     ],
                                                     color: Colors.white,
                                                     borderRadius:
@@ -3825,13 +3832,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               children: [
                                                 Padding(
                                                   padding:
-                                                      const EdgeInsets.all(
-                                                          20),
+                                                      const EdgeInsets.all(20),
                                                   child: Row(
                                                     children: [
                                                       SizedBox(
-                                                          width: size.width *
-                                                              0.2),
+                                                          width:
+                                                              size.width * 0.2),
                                                       SizedBox(
                                                         child: Column(
                                                           crossAxisAlignment:
@@ -3882,8 +3888,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               style: const TextStyle(
                                                                   color: Colors
                                                                       .grey,
-                                                                  fontSize:
-                                                                      12),
+                                                                  fontSize: 12),
                                                             )
                                                           ],
                                                         ),
@@ -3896,8 +3901,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   child: Container(
                                                     height: size.height * 0.7,
                                                     width: 1.0,
-                                                    color:
-                                                        Colors.grey.shade400,
+                                                    color: Colors.grey.shade400,
                                                   ),
                                                 ),
                                                 Positioned(
@@ -3921,30 +3925,29 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         decoration:
                                                             BoxDecoration(
                                                           border: Border.all(
-                                                              color: Colors
-                                                                  .white,
+                                                              color:
+                                                                  Colors.white,
                                                               width: 0),
                                                           boxShadow: const [
                                                             BoxShadow(
-                                                                color: Colors
-                                                                    .grey,
+                                                                color:
+                                                                    Colors.grey,
                                                                 blurRadius: 5,
-                                                                offset:
-                                                                    Offset(1,
-                                                                        1)),
+                                                                offset: Offset(
+                                                                    1, 1)),
                                                           ],
                                                           color: Colors.white,
                                                           shape:
                                                               BoxShape.circle,
                                                           image: DecorationImage(
-                                                              fit: BoxFit
-                                                                  .cover,
-                                                              image: NetworkImage(leadDetailsAdditional!
-                                                                  .data!
-                                                                  .activities![
-                                                                      i]
-                                                                  .proPicThumb
-                                                                  .toString())),
+                                                              fit: BoxFit.cover,
+                                                              image: NetworkImage(
+                                                                  leadDetailsAdditional!
+                                                                      .data!
+                                                                      .activities![
+                                                                          i]
+                                                                      .proPicThumb
+                                                                      .toString())),
                                                           // image: AssetImage(
                                                           //     'assets/images/img.jpeg')),
                                                         ),
@@ -3962,82 +3965,68 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               shrinkWrap: true,
                                               physics:
                                                   const NeverScrollableScrollPhysics(),
-                                              itemCount:
-                                                  leadDetailsAdditional!.data!
-                                                      .callHistory!.length,
+                                              itemCount: leadDetailsAdditional!
+                                                  .data!.callHistory!.length,
                                               itemBuilder: (context, i) {
                                                 return AudioItem(
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .direction
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .time
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .isAttended!,
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .date
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .status
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .resourceURL
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .callDurationHr
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .voiceListerningPermission!,
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .id
-                                                        .toString(),
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .isTransfered!,
-                                                    widget.token,
-                                                    widget.editLead,
-                                                    widget.deleteLead,
-                                                    widget.cloudCall,
-                                                    widget.callMasterId,
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .callHistoryImage,
-                                                    leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
-                                                        .staffName,
-                                                    leadDetails!
-                                                        .data!.clientName,
-                                                    pageName: widget.pageName,
-                                                    sts: widget.status,
-                                                    staff: widget.staff,
-                                                    isCalled: widget.isCalled,
-                                                    fromDate: widget.fromDate,
-                                                    toDate: widget.toDate,
-                                                    category:
-                                                        widget.category,
-                                                        getData: getData(),
-                                                        );
+                                                  leadDetailsAdditional!.data!
+                                                      .callHistory![i].direction
+                                                      .toString(),
+                                                  leadDetailsAdditional!.data!
+                                                      .callHistory![i].time
+                                                      .toString(),
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .isAttended!,
+                                                  leadDetailsAdditional!.data!
+                                                      .callHistory![i].date
+                                                      .toString(),
+                                                  leadDetailsAdditional!.data!
+                                                      .callHistory![i].status
+                                                      .toString(),
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .resourceURL
+                                                      .toString(),
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .callDurationHr
+                                                      .toString(),
+                                                  leadDetailsAdditional!.data!
+                                                      .voiceListerningPermission!,
+                                                  leadDetailsAdditional!
+                                                      .data!.callHistory![i].id
+                                                      .toString(),
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .isTransfered!,
+                                                  widget.token,
+                                                  widget.editLead,
+                                                  widget.deleteLead,
+                                                  widget.cloudCall,
+                                                  widget.callMasterId,
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .callHistoryImage,
+                                                  leadDetailsAdditional!
+                                                      .data!
+                                                      .callHistory![i]
+                                                      .staffName,
+                                                  leadDetails!.data!.clientName,
+                                                  pageName: widget.pageName,
+                                                  sts: widget.status,
+                                                  staff: widget.staff,
+                                                  isCalled: widget.isCalled,
+                                                  fromDate: widget.fromDate,
+                                                  toDate: widget.toDate,
+                                                  category: widget.category,
+                                                  getData: getData(),
+                                                );
                                               })
                                           : SizedBox(
                                               height: MediaQuery.of(context)
@@ -4072,8 +4061,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   ),
                                                   const Text(
                                                     'Whoops... this information is \n not available for a moment',
-                                                    style: TextStyle(
-                                                        fontSize: 12),
+                                                    style:
+                                                        TextStyle(fontSize: 12),
                                                   ),
                                                 ],
                                               ),
@@ -4092,8 +4081,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               decoration: BoxDecoration(
                                                   color: Colors.white,
                                                   borderRadius:
-                                                      BorderRadius.circular(
-                                                          6),
+                                                      BorderRadius.circular(6),
                                                   border: Border.all(
                                                       color: Colors.grey)),
                                               child: Column(
@@ -4150,8 +4138,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Client Name',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4199,8 +4186,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Phone',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4216,8 +4202,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .width *
                                                                 0.45,
                                                             child: Text(
-                                                              leadDetails!
-                                                                  .data!
+                                                              leadDetails!.data!
                                                                   .contactNumber1
                                                                   .toString(),
                                                               style:
@@ -4248,8 +4233,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Assigned to',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4265,8 +4249,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .width *
                                                                 0.45,
                                                             child: Text(
-                                                              leadDetails!
-                                                                  .data!
+                                                              leadDetails!.data!
                                                                   .staffName
                                                                   .toString(),
                                                               style:
@@ -4297,8 +4280,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Created date',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4314,8 +4296,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .width *
                                                                 0.45,
                                                             child: Text(
-                                                              leadDetails!
-                                                                  .data!
+                                                              leadDetails!.data!
                                                                   .createdDate
                                                                   .toString(),
                                                               style:
@@ -4346,8 +4327,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Call Result',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4363,8 +4343,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .width *
                                                                 0.45,
                                                             child: Text(
-                                                              leadDetails!
-                                                                  .data!
+                                                              leadDetails!.data!
                                                                   .callResult
                                                                   .toString(),
                                                               style:
@@ -4395,8 +4374,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Cost',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4443,8 +4421,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Source',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4460,8 +4437,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .width *
                                                                 0.45,
                                                             child: Text(
-                                                              leadDetails!
-                                                                  .data!
+                                                              leadDetails!.data!
                                                                   .leadMethod
                                                                   .toString(),
                                                               style:
@@ -4492,8 +4468,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             child: const Text(
                                                               'Remark',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      14,
+                                                                  fontSize: 14,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w500),
@@ -4510,8 +4485,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 0.45,
                                                             child: Text(
                                                               leadDetails!
-                                                                  .data!
-                                                                  .remarks
+                                                                  .data!.remarks
                                                                   .toString(),
                                                               style:
                                                                   const TextStyle(
@@ -4534,15 +4508,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                           const SizedBox(
                                             height: 10,
                                           ),
-                                          leadDetailsAdditional!
-                                                  .data!
-                                                  .additionalFields!
-                                                  .isNotEmpty
+                                          leadDetailsAdditional!.data!
+                                                  .additionalFields!.isNotEmpty
                                               ? Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                          left: 10,
-                                                          right: 10),
+                                                          left: 10, right: 10),
                                                   child: Container(
                                                     width:
                                                         MediaQuery.of(context)
@@ -4573,8 +4544,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               1,
                                                           decoration:
                                                               const BoxDecoration(
-                                                            color:
-                                                                Colors.grey,
+                                                            color: Colors.grey,
                                                             borderRadius: BorderRadius.only(
                                                                 topLeft: Radius
                                                                     .circular(
@@ -4583,16 +4553,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .circular(
                                                                         5)),
                                                           ),
-                                                          child:
-                                                              const Padding(
+                                                          child: const Padding(
                                                             padding:
-                                                                EdgeInsets
-                                                                    .all(10),
+                                                                EdgeInsets.all(
+                                                                    10),
                                                             child: Text(
                                                               'Additional Fields',
                                                               style: TextStyle(
-                                                                  fontSize:
-                                                                      15,
+                                                                  fontSize: 15,
                                                                   color: Colors
                                                                       .white),
                                                             ),
@@ -4620,8 +4588,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             10,
                                                                         right:
                                                                             10,
-                                                                        top:
-                                                                            5),
+                                                                        top: 5),
                                                                 child: Row(
                                                                   children: [
                                                                     SizedBox(
@@ -4629,9 +4596,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             0.44,
                                                                         child:
                                                                             Text(
-                                                                          leadDetailsAdditional!.data!.additionalFields![i].name.toString(),
-                                                                          style:
-                                                                              const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                                                          leadDetailsAdditional!
+                                                                              .data!
+                                                                              .additionalFields![i]
+                                                                              .name
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w500),
                                                                           maxLines:
                                                                               2,
                                                                           overflow:
@@ -4640,15 +4612,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     const Text(
                                                                         ':'),
                                                                     const SizedBox(
-                                                                      width:
-                                                                          10,
+                                                                      width: 10,
                                                                     ),
                                                                     SizedBox(
                                                                         width: MediaQuery.of(context).size.width *
                                                                             0.4,
                                                                         child:
                                                                             Text(
-                                                                          leadDetailsAdditional!.data!.additionalFields![i].value.toString(),
+                                                                          leadDetailsAdditional!
+                                                                              .data!
+                                                                              .additionalFields![i]
+                                                                              .value
+                                                                              .toString(),
                                                                           style:
                                                                               const TextStyle(fontSize: 14),
                                                                           maxLines:
@@ -4685,8 +4660,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     ),
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(
+                                                          const EdgeInsets.only(
                                                               left: 10,
                                                               right: 10),
                                                       child: Row(
@@ -4701,7 +4675,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         () {
                                                                       bool?
                                                                           checkString =
-                                                                          backPath.contains('/');
+                                                                          backPath
+                                                                              .contains('/');
                                                                       if (checkString ==
                                                                           true) {
                                                                         backPath = backPath.substring(
@@ -4722,13 +4697,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       selectedRawIndex =
                                                                           '';
                                                                       listFolderList(
-                                                                          widget.token,
-                                                                          widget.callMasterId,
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .callMasterId,
                                                                           backPath);
                                                                     });
                                                                   },
-                                                                  child:
-                                                                      Align(
+                                                                  child: Align(
                                                                     alignment:
                                                                         Alignment
                                                                             .topRight,
@@ -4751,19 +4727,21 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         ],
                                                                         strokeCap:
                                                                             StrokeCap.round,
-                                                                        color:
-                                                                            Colors.black,
+                                                                        color: Colors
+                                                                            .black,
                                                                         child:
                                                                             Container(
                                                                           width:
                                                                               100,
                                                                           height:
                                                                               30,
-                                                                          decoration:
-                                                                              BoxDecoration(color: Colors.blue.shade50.withOpacity(.3), borderRadius: BorderRadius.circular(10)),
+                                                                          decoration: BoxDecoration(
+                                                                              color: Colors.blue.shade50.withOpacity(.3),
+                                                                              borderRadius: BorderRadius.circular(10)),
                                                                           child:
                                                                               const Row(
-                                                                            mainAxisAlignment: MainAxisAlignment.center,
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.center,
                                                                             children: [
                                                                               Icon(Icons.arrow_back_ios, color: Colors.black, size: 15),
                                                                               SizedBox(
@@ -4797,19 +4775,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           true,
                                                                       barrierColor: Colors
                                                                           .black
-                                                                          .withOpacity(0.6),
+                                                                          .withOpacity(
+                                                                              0.6),
                                                                       transitionDuration:
-                                                                          const Duration(milliseconds: 400),
+                                                                          const Duration(
+                                                                              milliseconds: 400),
                                                                       context:
                                                                           context,
-                                                                      pageBuilder: (context,
-                                                                          _,
-                                                                          __) {
+                                                                      pageBuilder:
+                                                                          (context,
+                                                                              _,
+                                                                              __) {
                                                                         return StatefulBuilder(builder:
-                                                                            (context, setState) {
+                                                                            (context,
+                                                                                setState) {
                                                                           return Align(
-                                                                            alignment: Alignment.center,
-                                                                            child: IntrinsicHeight(
+                                                                            alignment:
+                                                                                Alignment.center,
+                                                                            child:
+                                                                                IntrinsicHeight(
                                                                               child: Padding(
                                                                                 padding: const EdgeInsets.only(left: 10, right: 10),
                                                                                 child: Container(
@@ -4909,8 +4893,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         return SlideTransition(
                                                                           position:
                                                                               Tween(
-                                                                            begin: const Offset(0, 1),
-                                                                            end: const Offset(0, 0),
+                                                                            begin:
+                                                                                const Offset(0, 1),
+                                                                            end:
+                                                                                const Offset(0, 0),
                                                                           ).animate(animation1),
                                                                           child:
                                                                               child,
@@ -4950,10 +4936,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       .blue,
                                                                   child:
                                                                       Container(
-                                                                    width:
-                                                                        130,
-                                                                    height:
-                                                                        30,
+                                                                    width: 130,
+                                                                    height: 30,
                                                                     decoration: BoxDecoration(
                                                                         color: Colors
                                                                             .blue
@@ -4965,11 +4949,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     child:
                                                                         const Row(
                                                                       mainAxisAlignment:
-                                                                          MainAxisAlignment.center,
+                                                                          MainAxisAlignment
+                                                                              .center,
                                                                       children: [
                                                                         Icon(
-                                                                            Icons.folder,
-                                                                            color: Colors.blue,
+                                                                            Icons
+                                                                                .folder,
+                                                                            color:
+                                                                                Colors.blue,
                                                                             size: 15),
                                                                         SizedBox(
                                                                           width:
@@ -4979,8 +4966,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           'New Folder',
                                                                           style:
                                                                               TextStyle(
-                                                                            fontSize: 15,
-                                                                            color: Colors.blue,
+                                                                            fontSize:
+                                                                                15,
+                                                                            color:
+                                                                                Colors.blue,
                                                                           ),
                                                                         ),
                                                                       ],
@@ -4997,12 +4986,19 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     fileManagerPermission!.data!.renameFile ==
                                                                             true
                                                                         ? showGeneralDialog(
-                                                                            barrierLabel: "showGeneralDialog",
-                                                                            barrierDismissible: true,
-                                                                            barrierColor: Colors.black.withOpacity(0.6),
-                                                                            transitionDuration: const Duration(milliseconds: 400),
-                                                                            context: context,
-                                                                            pageBuilder: (context, _, __) {
+                                                                            barrierLabel:
+                                                                                "showGeneralDialog",
+                                                                            barrierDismissible:
+                                                                                true,
+                                                                            barrierColor:
+                                                                                Colors.black.withOpacity(0.6),
+                                                                            transitionDuration:
+                                                                                const Duration(milliseconds: 400),
+                                                                            context:
+                                                                                context,
+                                                                            pageBuilder: (context,
+                                                                                _,
+                                                                                __) {
                                                                               return StatefulBuilder(builder: (context, setState) {
                                                                                 return Align(
                                                                                   alignment: Alignment.center,
@@ -5074,7 +5070,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                         folderActionEnable == false;
                                                                                                         selectedRawIndex = '';
                                                                                                         listFolderList(widget.token, widget.callMasterId, listPath);
-    
+
                                                                                                         if (mounted) {
                                                                                                           Navigator.pop(context);
                                                                                                         }
@@ -5101,7 +5097,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 );
                                                                               });
                                                                             },
-                                                                            transitionBuilder: (_, animation1, __, child) {
+                                                                            transitionBuilder: (_,
+                                                                                animation1,
+                                                                                __,
+                                                                                child) {
                                                                               return SlideTransition(
                                                                                 position: Tween(
                                                                                   begin: const Offset(0, 1),
@@ -5183,8 +5182,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     ),
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(
+                                                          const EdgeInsets.only(
                                                               left: 10,
                                                               right: 10),
                                                       child: GridView.builder(
@@ -5244,7 +5242,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           '';
                                                                       selectedRawIndex =
                                                                           '';
-                                                                      if (listFolder!.data![index].isFolder ==
+                                                                      if (listFolder!
+                                                                              .data![index]
+                                                                              .isFolder ==
                                                                           'Y') {
                                                                         backPath =
                                                                             '${listFolder!.data![index].path}';
@@ -5256,9 +5256,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         listPathAudio =
                                                                             '${listFolder!.data![index].path}';
                                                                       }
-    
-                                                                      folderName.text =
-                                                                          '';
+
+                                                                      folderName
+                                                                          .text = '';
                                                                       listFolder!.data![index].isFolder ==
                                                                               'Y'
                                                                           ? listFolderList(
@@ -5388,23 +5388,21 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               color: selectedRawIndex ==
                                                                       index
                                                                           .toString()
-                                                                  ? Colors
-                                                                      .white
-                                                                  : Colors
-                                                                      .grey
+                                                                  ? Colors.white
+                                                                  : Colors.grey
                                                                       .shade200,
                                                               child: Column(
                                                                 children: [
                                                                   Container(
                                                                     height:
                                                                         50.0,
-                                                                    width:
-                                                                        50.0,
+                                                                    width: 50.0,
                                                                     decoration:
                                                                         BoxDecoration(
                                                                       image:
                                                                           DecorationImage(
-                                                                        image: listFolder!.data![index].isFolder == 'Y'
+                                                                        image: listFolder!.data![index].isFolder ==
+                                                                                'Y'
                                                                             ? const AssetImage('assets/icons/folder.png')
                                                                             : listFolder!.data![index].extension == 'M4A' || listFolder!.data![index].extension == 'm4a'
                                                                                 ? const AssetImage('assets/icons/audio.png')
@@ -5422,8 +5420,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     height: 3,
                                                                   ),
                                                                   SizedBox(
-                                                                    width:
-                                                                        100,
+                                                                    width: 100,
                                                                     child:
                                                                         Center(
                                                                       child:
@@ -5470,8 +5467,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   contentBorderColor:
                                                       Colors.green,
                                                   contentBorderWidth: 3,
-                                                  contentHorizontalPadding:
-                                                      10,
+                                                  contentHorizontalPadding: 10,
                                                   scaleWhenAnimating: true,
                                                   openAndCloseAnimation: true,
                                                   disableScrolling: true,
@@ -5489,13 +5485,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         style: TextStyle(
                                                             fontSize: 15,
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .bold,
+                                                                FontWeight.bold,
                                                             color:
                                                                 Colors.white),
                                                       ),
-                                                      content:
-                                                          ListView.builder(
+                                                      content: ListView.builder(
                                                         shrinkWrap: true,
                                                         physics:
                                                             const NeverScrollableScrollPhysics(),
@@ -5507,16 +5501,16 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .only(
                                                                     left: 10,
                                                                     right: 10,
-                                                                    bottom:
-                                                                        10),
+                                                                    bottom: 10),
                                                             child: Container(
                                                               decoration: BoxDecoration(
                                                                   color: Colors
                                                                       .grey
                                                                       .shade200,
                                                                   borderRadius:
-                                                                      BorderRadius.circular(
-                                                                          10)),
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10)),
                                                               child: Padding(
                                                                 padding:
                                                                     const EdgeInsets
@@ -5555,39 +5549,43 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                     return AlertDialog(
                                                                                                       scrollable: true,
                                                                                                       title: const Text('Accessible Users'),
-                                                                                                      content: ListView.builder(
-                                                                                                        shrinkWrap: true,
-                                                                                                        itemCount: commonDetails!.data!.transferStaffs!.length,
-                                                                                                        itemBuilder: (context, ind) {
-                                                                                                          return CheckboxListTile(
-                                                                                                            title: SizedBox(
-                                                                                                              width: 200,
-                                                                                                              child: Text(
-                                                                                                                commonDetails!.data!.transferStaffs![ind].tranStaffName.toString(),
-                                                                                                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 14),
+                                                                                                      content: SizedBox(
+                                                                                                        height: MediaQuery.of(context).size.height * .32,
+                                                                                                        width: MediaQuery.of(context).size.height * .8,
+                                                                                                        child: ListView.builder(
+                                                                                                          shrinkWrap: true,
+                                                                                                          itemCount: commonDetails!.data!.transferStaffs!.length,
+                                                                                                          itemBuilder: (context, ind) {
+                                                                                                            return CheckboxListTile(
+                                                                                                              title: SizedBox(
+                                                                                                                width: 200,
+                                                                                                                child: Text(
+                                                                                                                  commonDetails!.data!.transferStaffs![ind].tranStaffName.toString(),
+                                                                                                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 14),
+                                                                                                                ),
                                                                                                               ),
-                                                                                                            ),
-                                                                                                            value: checkedItems.contains(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString()) ? true : false,
-                                                                                                            onChanged: (bool? value) {
-                                                                                                              if (value == true) {
-                                                                                                                setState(() {
-                                                                                                                  checkedItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                                                                  checkedItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
-    
-                                                                                                                  Navigator.pop(context, true);
-                                                                                                                });
-                                                                                                              } else {
-                                                                                                                setState(() {
-                                                                                                                  checkedItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                                                                  checkedItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
-    
-                                                                                                                  Navigator.pop(context, true);
-                                                                                                                });
-                                                                                                              }
-                                                                                                            },
-                                                                                                            controlAffinity: ListTileControlAffinity.leading,
-                                                                                                          );
-                                                                                                        },
+                                                                                                              value: checkedItems.contains(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString()) ? true : false,
+                                                                                                              onChanged: (bool? value) {
+                                                                                                                if (value == true) {
+                                                                                                                  setState(() {
+                                                                                                                    checkedItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
+                                                                                                                    checkedItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+
+                                                                                                                    Navigator.pop(context, true);
+                                                                                                                  });
+                                                                                                                } else {
+                                                                                                                  setState(() {
+                                                                                                                    checkedItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
+                                                                                                                    checkedItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+
+                                                                                                                    Navigator.pop(context, true);
+                                                                                                                  });
+                                                                                                                }
+                                                                                                              },
+                                                                                                              controlAffinity: ListTileControlAffinity.leading,
+                                                                                                            );
+                                                                                                          },
+                                                                                                        ),
                                                                                                       ),
                                                                                                     );
                                                                                                   });
@@ -5608,7 +5606,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                         padding: const EdgeInsets.only(right: 5),
                                                                                                         child: InkWell(
                                                                                                           onTap: () {
-                                                                                                            setState((){});
+                                                                                                            setState(() {});
                                                                                                           },
                                                                                                           child: Row(
                                                                                                             children: [
@@ -5755,9 +5753,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           },
                                                                           child:
                                                                               Container(
-                                                                            width: 25,
-                                                                            height: 25,
-                                                                            decoration: BoxDecoration(
+                                                                            width:
+                                                                                25,
+                                                                            height:
+                                                                                25,
+                                                                            decoration:
+                                                                                BoxDecoration(
                                                                               shape: BoxShape.circle,
                                                                               gradient: mileStone!.data!.milestones![i].isChecked! // if the checkbox is checked, apply a gradient to the container
                                                                                   ? const LinearGradient(
@@ -5782,7 +5783,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           ),
                                                                         ),
                                                                         const SizedBox(
-                                                                            width: 20),
+                                                                            width:
+                                                                                20),
                                                                         Text(mileStone!
                                                                             .data!
                                                                             .milestones![i]
@@ -5822,8 +5824,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             left: 10,
                                                             right: 10),
                                                     child: Container(
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      decoration: BoxDecoration(
                                                         color: Colors.white,
                                                         borderRadius:
                                                             BorderRadius
@@ -5831,29 +5832,27 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         border: Border(
                                                           top: BorderSide(
                                                             width: 3,
-                                                            color: Colors.blue
-                                                                .shade100,
+                                                            color: Colors
+                                                                .blue.shade100,
                                                           ),
                                                           left: BorderSide(
                                                             width: 3,
-                                                            color: Colors.blue
-                                                                .shade100,
+                                                            color: Colors
+                                                                .blue.shade100,
                                                           ),
                                                         ),
                                                       ),
                                                       child: Column(
                                                         children: [
                                                           Container(
-                                                            color: Colors.blue
-                                                                .shade100,
+                                                            color: Colors
+                                                                .blue.shade100,
                                                             child: Padding(
                                                               padding:
                                                                   const EdgeInsets
                                                                       .only(
-                                                                      left:
-                                                                          10,
-                                                                      right:
-                                                                          10,
+                                                                      left: 10,
+                                                                      right: 10,
                                                                       top: 10,
                                                                       bottom:
                                                                           10),
@@ -5866,7 +5865,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         .start,
                                                                 children: [
                                                                   SizedBox(
-                                                                      width: MediaQuery.of(context).size.width *
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
                                                                           0.85,
                                                                       child:
                                                                           Text(
@@ -5876,8 +5877,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             .milestone
                                                                             .toString(),
                                                                         style: const TextStyle(
-                                                                            fontSize: 15,
-                                                                            fontWeight: FontWeight.w500),
+                                                                            fontSize:
+                                                                                15,
+                                                                            fontWeight:
+                                                                                FontWeight.w500),
                                                                       )),
                                                                 ],
                                                               ),
@@ -5887,9 +5890,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             height: 5,
                                                           ),
                                                           Align(
-                                                            alignment:
-                                                                Alignment
-                                                                    .topRight,
+                                                            alignment: Alignment
+                                                                .topRight,
                                                             child: Padding(
                                                               padding:
                                                                   const EdgeInsets
@@ -5946,16 +5948,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           fontWeight:
                                                                               FontWeight.w500),
                                                                     )),
-                                                                const Text(
-                                                                    ':'),
+                                                                const Text(':'),
                                                                 const SizedBox(
                                                                   width: 10,
                                                                 ),
                                                                 SingleChildScrollView(
                                                                   child:
                                                                       SizedBox(
-                                                                    height:
-                                                                        30,
+                                                                    height: 30,
                                                                     width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
@@ -5968,21 +5968,26 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           Axis.horizontal,
                                                                       itemCount: mileStone!
                                                                           .data!
-                                                                          .leadMilestones![i]
+                                                                          .leadMilestones![
+                                                                              i]
                                                                           .userData!
                                                                           .length,
                                                                       itemBuilder:
                                                                           (context,
                                                                               index) {
                                                                         return Padding(
-                                                                          padding:
-                                                                              const EdgeInsets.only(left: 5, right: 5),
+                                                                          padding: const EdgeInsets
+                                                                              .only(
+                                                                              left: 5,
+                                                                              right: 5),
                                                                           child:
                                                                               InkWell(
-                                                                            onTap: () {
+                                                                            onTap:
+                                                                                () {
                                                                               setState(() {});
                                                                             },
-                                                                            child: Row(
+                                                                            child:
+                                                                                Row(
                                                                               children: [
                                                                                 Container(
                                                                                   height: 40,
@@ -6047,8 +6052,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           fontWeight:
                                                                               FontWeight.w500),
                                                                     )),
-                                                                const Text(
-                                                                    ':'),
+                                                                const Text(':'),
                                                                 const SizedBox(
                                                                   width: 10,
                                                                 ),
@@ -6057,11 +6061,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             .size
                                                                             .width *
                                                                         0.55,
-                                                                    child:
-                                                                        Text(
+                                                                    child: Text(
                                                                       mileStone!
                                                                           .data!
-                                                                          .leadMilestones![i]
+                                                                          .leadMilestones![
+                                                                              i]
                                                                           .remarks
                                                                           .toString(),
                                                                       style: const TextStyle(
@@ -6078,8 +6082,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 const EdgeInsets
                                                                     .only(
                                                                     right: 5,
-                                                                    bottom:
-                                                                        5),
+                                                                    bottom: 5),
                                                             child: InkWell(
                                                               onTap: () {
                                                                 showDialog(
@@ -6089,8 +6092,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         (BuildContext
                                                                             context) {
                                                                       return AlertDialog(
-                                                                        title:
-                                                                            const Text('Please Confirm'),
+                                                                        title: const Text(
+                                                                            'Please Confirm'),
                                                                         content:
                                                                             const Text('You are about to delete this Mile stone?'),
                                                                         actions: [
@@ -6137,37 +6140,40 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     });
                                                               },
                                                               child: Align(
-                                                                alignment:
-                                                                    Alignment
-                                                                        .centerRight,
-                                                                child: Container(
-                                                                    height: 30,
-                                                                    width: 80,
-                                                                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), border: Border.all(color: Colors.red)),
-                                                                    child: const Padding(
-                                                                      padding: EdgeInsets.only(
-                                                                          left:
-                                                                              7,
-                                                                          right:
-                                                                              7),
-                                                                      child:
-                                                                          Row(
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.delete,
-                                                                            color: Colors.red,
-                                                                            size: 18,
+                                                                alignment: Alignment
+                                                                    .centerRight,
+                                                                child:
+                                                                    Container(
+                                                                        height:
+                                                                            30,
+                                                                        width:
+                                                                            80,
+                                                                        decoration: BoxDecoration(
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(5),
+                                                                            border: Border.all(color: Colors.red)),
+                                                                        child: const Padding(
+                                                                          padding: EdgeInsets.only(
+                                                                              left: 7,
+                                                                              right: 7),
+                                                                          child:
+                                                                              Row(
+                                                                            children: [
+                                                                              Icon(
+                                                                                Icons.delete,
+                                                                                color: Colors.red,
+                                                                                size: 18,
+                                                                              ),
+                                                                              SizedBox(
+                                                                                width: 7,
+                                                                              ),
+                                                                              Text(
+                                                                                'Delete',
+                                                                                style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+                                                                              )
+                                                                            ],
                                                                           ),
-                                                                          SizedBox(
-                                                                            width: 7,
-                                                                          ),
-                                                                          Text(
-                                                                            'Delete',
-                                                                            style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
-                                                                          )
-                                                                        ],
-                                                                      ),
-                                                                    )),
+                                                                        )),
                                                               ),
                                                             ),
                                                           ),
@@ -6246,22 +6252,23 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .start,
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Container(
                                                       width: double.infinity,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: double.infinity,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: 100.0,
@@ -6322,22 +6329,23 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .start,
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Container(
                                                       width: 200,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: double.infinity,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: 100.0,
@@ -6398,22 +6406,23 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   mainAxisSize:
                                                       MainAxisSize.min,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .start,
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Container(
                                                       width: double.infinity,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: double.infinity,
                                                       height: 10.0,
                                                       color: Colors.white,
-                                                      margin: const EdgeInsets
-                                                          .only(bottom: 8.0),
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
                                                     ),
                                                     Container(
                                                       width: 100.0,
@@ -6465,8 +6474,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                   toDate: widget.toDate,
                                   category: widget.category,
                                   leadType: leadDetails!.data!.leadCategory,
-                                  leadTypeId:
-                                      leadDetails!.data!.leadCategoryId,
+                                  leadTypeId: leadDetails!.data!.leadCategoryId,
                                   leadSubType:
                                       leadDetails!.data!.leadSubCategory,
                                   leadSubTypeId:
@@ -6477,7 +6485,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                   address: leadDetails!.data!.address,
                                   searchKey: widget.searchKey,
                                   leadType1: widget.leadType)),
-                        ).then(getData());
+                        ).then((r) {
+                          getData();
+                        });
                       },
                       child: Container(
                         height: 40,
@@ -6520,12 +6530,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     const Duration(
                                                         milliseconds: 400),
                                                 context: context,
-                                                pageBuilder:
-                                                    (context, _, __) {
+                                                pageBuilder: (context, _, __) {
                                                   return Obx(() {
                                                     return AlertDialog(
-                                                      content:
-                                                          IntrinsicHeight(
+                                                      content: IntrinsicHeight(
                                                         child: Column(
                                                           children: [
                                                             audioCreateController
@@ -6541,8 +6549,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     children: [
                                                                       Text(
                                                                         '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
-                                                                        style:
-                                                                            const TextStyle(fontSize: 30),
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                30),
                                                                       ),
                                                                       if (audioCreateController
                                                                           .isRecording
@@ -6562,8 +6571,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       ),
                                                                       Text(
                                                                         'Voice Record ',
-                                                                        style:
-                                                                            TextStyle(fontSize: 18),
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                18),
                                                                       ),
                                                                       SizedBox(
                                                                         height:
@@ -6586,7 +6596,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     MainAxisAlignment
                                                                         .center,
                                                                 children: [
-                                                                  if (audioCreateController.isRecording.value ==
+                                                                  if (audioCreateController
+                                                                              .isRecording
+                                                                              .value ==
                                                                           false &&
                                                                       audioCreateController
                                                                           .audioPath
@@ -6596,18 +6608,23 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             "play tag",
                                                                         onPressed:
                                                                             () {
-                                                                          audioCreateController.resetTimer();
-                                                                          audioCreateController.playRcording();
+                                                                          audioCreateController
+                                                                              .resetTimer();
+                                                                          audioCreateController
+                                                                              .playRcording();
                                                                         },
                                                                         shape:
                                                                             const CircleBorder(),
-                                                                        backgroundColor: Colors
-                                                                            .white,
-                                                                        foregroundColor: Colors
-                                                                            .teal,
+                                                                        backgroundColor:
+                                                                            Colors
+                                                                                .white,
+                                                                        foregroundColor:
+                                                                            Colors
+                                                                                .teal,
                                                                         child:
                                                                             const Icon(
-                                                                          Icons.play_arrow_rounded,
+                                                                          Icons
+                                                                              .play_arrow_rounded,
                                                                           color:
                                                                               Colors.green,
                                                                           size:
@@ -6625,21 +6642,26 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             "start tag",
                                                                         onPressed:
                                                                             () {
-                                                                          audioCreateController.stopRecording();
+                                                                          audioCreateController
+                                                                              .stopRecording();
                                                                           // recordController.stopTimer();
                                                                         },
                                                                         shape:
                                                                             const CircleBorder(),
-                                                                        backgroundColor: Colors
-                                                                            .redAccent,
-                                                                        foregroundColor: Colors
-                                                                            .white,
-                                                                        child:
-                                                                            const Text("Stop")),
+                                                                        backgroundColor:
+                                                                            Colors
+                                                                                .redAccent,
+                                                                        foregroundColor:
+                                                                            Colors
+                                                                                .white,
+                                                                        child: const Text(
+                                                                            "Stop")),
                                                                   const SizedBox(
                                                                     width: 25,
                                                                   ),
-                                                                  if (audioCreateController.isRecording.value ==
+                                                                  if (audioCreateController
+                                                                              .isRecording
+                                                                              .value ==
                                                                           false &&
                                                                       audioCreateController
                                                                           .audioPath
@@ -6676,13 +6698,16 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         },
                                                                         shape:
                                                                             const CircleBorder(),
-                                                                        backgroundColor: Colors
-                                                                            .white,
-                                                                        foregroundColor: Colors
-                                                                            .red,
+                                                                        backgroundColor:
+                                                                            Colors
+                                                                                .white,
+                                                                        foregroundColor:
+                                                                            Colors
+                                                                                .red,
                                                                         child:
                                                                             const Icon(
-                                                                          Icons.delete,
+                                                                          Icons
+                                                                              .delete,
                                                                           color:
                                                                               Colors.red,
                                                                           size:
@@ -6701,18 +6726,36 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               TextFormField(
                                                                 controller:
                                                                     fileName,
-                                                                decoration: const InputDecoration(
-                                                                    contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                                                                    labelText: 'File Name',
-                                                                    fillColor: Colors.white,
-                                                                    filled: true,
-                                                                    prefixIcon: Icon(Icons.file_copy, color: Colors.grey),
-                                                                    border: OutlineInputBorder(),
-                                                                    focusedBorder: OutlineInputBorder(
-                                                                      borderSide:
-                                                                          BorderSide(color: Colors.grey),
-                                                                    ),
-                                                                    labelStyle: TextStyle(color: Colors.grey)),
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                        contentPadding: EdgeInsets.only(
+                                                                            left:
+                                                                                10,
+                                                                            top:
+                                                                                2,
+                                                                            bottom:
+                                                                                2),
+                                                                        labelText:
+                                                                            'File Name',
+                                                                        fillColor:
+                                                                            Colors
+                                                                                .white,
+                                                                        filled:
+                                                                            true,
+                                                                        prefixIcon: Icon(
+                                                                            Icons
+                                                                                .file_copy,
+                                                                            color: Colors
+                                                                                .grey),
+                                                                        border:
+                                                                            OutlineInputBorder(),
+                                                                        focusedBorder:
+                                                                            OutlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.grey),
+                                                                        ),
+                                                                        labelStyle:
+                                                                            TextStyle(color: Colors.grey)),
                                                               ),
                                                           ],
                                                         ),
@@ -6742,7 +6785,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     fileName.text =
                                                                         '';
                                                                   }
-    
+
                                                                   // if(audioCreateController
                                                                   //     .isRecording.value ==
                                                                   //     false &&
@@ -6779,7 +6822,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       .contains(audioCreateController
                                                                           .audioPath
                                                                           .value
-                                                                          .split('/')
+                                                                          .split(
+                                                                              '/')
                                                                           .last);
                                                                   bool
                                                                       containsString1;
@@ -6797,10 +6841,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   }
                                                                   setState(
                                                                       () {});
-                                                                  File file = File.fromUri(Uri.parse(audioCreateController
-                                                                      .audioPath
-                                                                      .value
-                                                                      .toString()));
+                                                                  File file = File.fromUri(Uri.parse(
+                                                                      audioCreateController
+                                                                          .audioPath
+                                                                          .value
+                                                                          .toString()));
                                                                   // File file = File(audioCreateController
                                                                   //     .audioPath
                                                                   //     .value);
@@ -6815,7 +6860,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       fileSizeInMB =
                                                                       fileSizeInKB /
                                                                           1024;
-    
+
                                                                   //print('file Size :$fileSizeInMB');
                                                                   if (fileName
                                                                           .text
@@ -6881,11 +6926,15 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       audioCreateController
                                                                           .resetTimer();
                                                                       Common.toastMessaage(
-                                                                          uploadAudio.message,
-                                                                          Colors.green);
+                                                                          uploadAudio
+                                                                              .message,
+                                                                          Colors
+                                                                              .green);
                                                                       listFolderList(
-                                                                          widget.token,
-                                                                          widget.callMasterId,
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .callMasterId,
                                                                           listPath);
                                                                       if (mounted) {
                                                                         Navigator.pop(
@@ -6917,7 +6966,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             .value = true;
                                                                         audioCreateController
                                                                             .resetTimer();
-    
+
                                                                         audioCreateController
                                                                             .startRecording();
                                                                       } else {
@@ -6940,20 +6989,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     );
                                                   });
                                                 },
-                                                transitionBuilder: (_,
-                                                    animation1, __, child) {
+                                                transitionBuilder:
+                                                    (_, animation1, __, child) {
                                                   return SlideTransition(
                                                     position: Tween(
-                                                      begin:
-                                                          const Offset(0, 1),
+                                                      begin: const Offset(0, 1),
                                                       end: const Offset(0, 0),
                                                     ).animate(animation1),
                                                     child: child,
                                                   );
                                                 },
                                               )
-                                            : _dialogue(
-                                                context, 'Create File');
+                                            : _dialogue(context, 'Create File');
                                       },
                                       child: Container(
                                         height: 40,
@@ -6988,12 +7035,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     const Duration(
                                                         milliseconds: 400),
                                                 context: context,
-                                                pageBuilder:
-                                                    (context, _, __) {
+                                                pageBuilder: (context, _, __) {
                                                   return Obx(() {
                                                     return AlertDialog(
-                                                      content:
-                                                          IntrinsicHeight(
+                                                      content: IntrinsicHeight(
                                                         child: Column(
                                                           children: [
                                                             Column(
@@ -7042,21 +7087,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 ),
                                                                               )),
                                                                           TextButton(
-                                                                            onPressed: () async {
+                                                                            onPressed:
+                                                                                () async {
                                                                               setState(() {
                                                                                 imageUploadController.file.value = '';
                                                                               });
                                                                             },
-                                                                            child: const Icon(
+                                                                            child:
+                                                                                const Icon(
                                                                               Icons.delete,
                                                                               color: Colors.red,
                                                                             ),
                                                                           ),
                                                                           const SizedBox(
-                                                                            height: 10,
+                                                                            height:
+                                                                                10,
                                                                           ),
                                                                           TextFormField(
-                                                                            controller: fileName,
+                                                                            controller:
+                                                                                fileName,
                                                                             decoration: const InputDecoration(
                                                                                 contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
                                                                                 labelText: 'File Name',
@@ -7084,8 +7133,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             imageUploadController
                                                                 .file
                                                                 .value = '';
-                                                            fileName.text =
-                                                                '';
+                                                            fileName.text = '';
                                                             Get.back();
                                                           },
                                                           child: const Text(
@@ -7137,7 +7185,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       fileSizeInMB =
                                                                       fileSizeInKB /
                                                                           1024;
-    
+
                                                                   if (fileName
                                                                           .text
                                                                           .isEmpty &&
@@ -7180,7 +7228,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           context,
                                                                           "Uploading..");
                                                                     }
-    
+
                                                                     UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
                                                                         widget
                                                                             .token,
@@ -7201,11 +7249,15 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       fileName.text =
                                                                           '';
                                                                       Common.toastMessaage(
-                                                                          uploadAudio.message,
-                                                                          Colors.green);
+                                                                          uploadAudio
+                                                                              .message,
+                                                                          Colors
+                                                                              .green);
                                                                       listFolderList(
-                                                                          widget.token,
-                                                                          widget.callMasterId,
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .callMasterId,
                                                                           listPath);
                                                                       if (mounted) {
                                                                         Navigator.pop(
@@ -7223,8 +7275,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 ),
                                                               )
                                                             : TextButton(
-                                                                onPressed:
-                                                                    () {
+                                                                onPressed: () {
                                                                   showModalBottomSheet(
                                                                     context:
                                                                         context,
@@ -7234,7 +7285,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         height:
                                                                             100.0,
                                                                         width:
-                                                                            MediaQuery.of(context).size.width * 1,
+                                                                            MediaQuery.of(context).size.width *
+                                                                                1,
                                                                         margin:
                                                                             const EdgeInsets.symmetric(
                                                                           horizontal:
@@ -7301,20 +7353,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     );
                                                   });
                                                 },
-                                                transitionBuilder: (_,
-                                                    animation1, __, child) {
+                                                transitionBuilder:
+                                                    (_, animation1, __, child) {
                                                   return SlideTransition(
                                                     position: Tween(
-                                                      begin:
-                                                          const Offset(0, 1),
+                                                      begin: const Offset(0, 1),
                                                       end: const Offset(0, 0),
                                                     ).animate(animation1),
                                                     child: child,
                                                   );
                                                 },
                                               )
-                                            : _dialogue(
-                                                context, 'Create File');
+                                            : _dialogue(context, 'Create File');
                                       },
                                       child: Container(
                                         height: 40,
@@ -7349,14 +7399,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     const Duration(
                                                         milliseconds: 400),
                                                 context: context,
-                                                pageBuilder:
-                                                    (context, _, __) {
+                                                pageBuilder: (context, _, __) {
                                                   return StatefulBuilder(
-                                                      builder: (context,
-                                                          setState) {
+                                                      builder:
+                                                          (context, setState) {
                                                     return AlertDialog(
-                                                      content:
-                                                          IntrinsicHeight(
+                                                      content: IntrinsicHeight(
                                                         child: Column(
                                                           children: [
                                                             Column(
@@ -7389,19 +7437,21 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         ],
                                                                         strokeCap:
                                                                             StrokeCap.round,
-                                                                        color:
-                                                                            Colors.black,
+                                                                        color: Colors
+                                                                            .black,
                                                                         child:
                                                                             Container(
                                                                           width:
                                                                               100,
                                                                           height:
                                                                               100,
-                                                                          decoration:
-                                                                              BoxDecoration(color: Colors.blue.shade50.withOpacity(.3), borderRadius: BorderRadius.circular(10)),
+                                                                          decoration: BoxDecoration(
+                                                                              color: Colors.blue.shade50.withOpacity(.3),
+                                                                              borderRadius: BorderRadius.circular(10)),
                                                                           child:
                                                                               const Column(
-                                                                            mainAxisAlignment: MainAxisAlignment.center,
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.center,
                                                                             children: [
                                                                               Icon(Icons.upload, color: Colors.black, size: 50),
                                                                               SizedBox(
@@ -7452,7 +7502,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       'docx'
                                                                     ],
                                                                   );
-    
+
                                                                   if (result !=
                                                                       null) {
                                                                     isFile =
@@ -7475,11 +7525,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             : TextButton(
                                                                 onPressed:
                                                                     () async {
-                                                                  String fileName1 = file!
-                                                                      .path!
-                                                                      .split(
-                                                                          '/')
-                                                                      .last;
+                                                                  String
+                                                                      fileName1 =
+                                                                      file!
+                                                                          .path!
+                                                                          .split(
+                                                                              '/')
+                                                                          .last;
                                                                   bool containsString = json
                                                                       .encode(listFolder!
                                                                           .data)
@@ -7499,7 +7551,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     containsString1 =
                                                                         false;
                                                                   }
-    
+
                                                                   int sizeInBytes = await File(file!
                                                                           .path
                                                                           .toString())
@@ -7579,11 +7631,15 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       fileName.text =
                                                                           '';
                                                                       Common.toastMessaage(
-                                                                          uploadAudio.message,
-                                                                          Colors.green);
+                                                                          uploadAudio
+                                                                              .message,
+                                                                          Colors
+                                                                              .green);
                                                                       listFolderList(
-                                                                          widget.token,
-                                                                          widget.callMasterId,
+                                                                          widget
+                                                                              .token,
+                                                                          widget
+                                                                              .callMasterId,
                                                                           listPath);
                                                                       if (mounted) {
                                                                         Navigator.pop(
@@ -7604,20 +7660,18 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     );
                                                   });
                                                 },
-                                                transitionBuilder: (_,
-                                                    animation1, __, child) {
+                                                transitionBuilder:
+                                                    (_, animation1, __, child) {
                                                   return SlideTransition(
                                                     position: Tween(
-                                                      begin:
-                                                          const Offset(0, 1),
+                                                      begin: const Offset(0, 1),
                                                       end: const Offset(0, 0),
                                                     ).animate(animation1),
                                                     child: child,
                                                   );
                                                 },
                                               )
-                                            : _dialogue(
-                                                context, 'Create File');
+                                            : _dialogue(context, 'Create File');
                                       },
                                       child: Container(
                                         height: 40,
@@ -7673,8 +7727,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                     ),
                     const Text(
                       'No Network Found !',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(
                       height: 15,
@@ -7845,8 +7899,7 @@ class AudioItem extends StatefulWidget {
       this.staff,
       this.pageName,
       this.isCalled,
-      required this.getData
-      });
+      required this.getData});
 
   @override
   State<AudioItem> createState() => _AudioItemState();

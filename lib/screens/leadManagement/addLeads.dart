@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_utils/get_utils.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -403,51 +404,55 @@ class _AddLeadsState extends State<AddLeads> {
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                        ListView.builder(
-                                                          shrinkWrap: true,
-                                                          itemCount:
-                                                              commonDetails!
-                                                                  .data
-                                                                  .transferStaffs
-                                                                  .length,
-                                                          itemBuilder:
-                                                              (context, ind) {
-                                                            return InkWell(
-                                                              onTap: () {
-                                                                setState(() {
-                                                                  assignStaff = commonDetails!
-                                                                      .data
-                                                                      .transferStaffs[
-                                                                          ind]
-                                                                      .tranStaffName
-                                                                      .toString();
-                                                                  assignStaffId = commonDetails!
-                                                                      .data
-                                                                      .transferStaffs[
-                                                                          ind]
-                                                                      .tranStaffId
-                                                                      .toString();
-                                                                  Navigator.pop(
-                                                                      context,
-                                                                      true);
-                                                                });
-                                                              },
-                                                              child: SizedBox(
-                                                                height: 50,
-                                                                child: Text(
-                                                                  commonDetails!
-                                                                      .data
-                                                                      .transferStaffs[
-                                                                          ind]
-                                                                      .tranStaffName
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          18),
+                                                        SizedBox(
+                                                          height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                          child: ListView.builder(
+                                                            shrinkWrap: true,
+                                                            itemCount:
+                                                                commonDetails!
+                                                                    .data
+                                                                    .transferStaffs
+                                                                    .length,
+                                                            itemBuilder:
+                                                                (context, ind) {
+                                                              return InkWell(
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    assignStaff = commonDetails!
+                                                                        .data
+                                                                        .transferStaffs[
+                                                                            ind]
+                                                                        .tranStaffName
+                                                                        .toString();
+                                                                    assignStaffId = commonDetails!
+                                                                        .data
+                                                                        .transferStaffs[
+                                                                            ind]
+                                                                        .tranStaffId
+                                                                        .toString();
+                                                                    Navigator.pop(
+                                                                        context,
+                                                                        true);
+                                                                  });
+                                                                },
+                                                                child: SizedBox(
+                                                                  height: 50,
+                                                                  child: Text(
+                                                                    commonDetails!
+                                                                        .data
+                                                                        .transferStaffs[
+                                                                            ind]
+                                                                        .tranStaffName
+                                                                        .toString(),
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                            18),
+                                                                  ),
                                                                 ),
-                                                              ),
-                                                            );
-                                                          },
+                                                              );
+                                                            },
+                                                          ),
                                                         ),
                                                         InkWell(
                                                           onTap: () {
@@ -543,57 +548,60 @@ class _AddLeadsState extends State<AddLeads> {
                                               scrollable: true,
                                               title:
                                                   const Text('Lead Category'),
-                                              content: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: commonDetails!
-                                                    .data.leadCategory.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () async {
-                                                      leadSubTypeList =
-                                                          await HttpService.leadSubType(
+                                              content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: commonDetails!
+                                                      .data.leadCategory.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () async {
+                                                        leadSubTypeList =
+                                                            await HttpService.leadSubType(
+                                                                commonDetails!
+                                                                    .data
+                                                                    .leadCategory[
+                                                                        ind]
+                                                                    .leadCategoryId
+                                                                    .toString());
+                                                        setState(() {
+                                                          leadSubType =
+                                                              'Lead Sub Category';
+                                                          leadSubTypeId = '';
+                                                          leadType =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadCategory[
+                                                                      ind]
+                                                                  .leadCategory
+                                                                  .toString();
+                                                          leadTypeId =
                                                               commonDetails!
                                                                   .data
                                                                   .leadCategory[
                                                                       ind]
                                                                   .leadCategoryId
-                                                                  .toString());
-                                                      setState(() {
-                                                        leadSubType =
-                                                            'Lead Sub Category';
-                                                        leadSubTypeId = '';
-                                                        leadType =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategory
-                                                                .toString();
-                                                        leadTypeId =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategoryId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategory
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
+                                                                  .toString();
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategory
+                                                              .toString(),
+                                                          style: const TextStyle(
+                                                              fontSize: 18),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             );
                                           });
@@ -638,49 +646,52 @@ class _AddLeadsState extends State<AddLeads> {
                                                     scrollable: true,
                                                     title: const Text(
                                                         'Lead Sub Category'),
-                                                    content: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      itemCount:
-                                                          leadSubTypeList!
-                                                              .data!.length,
-                                                      itemBuilder:
-                                                          (context, subIndex) {
-                                                        return InkWell(
-                                                          onTap: () {
-                                                            setState(() {
-                                                              leadSubType =
-                                                                  leadSubTypeList!
-                                                                      .data![
-                                                                          subIndex]
-                                                                      .leadSubCategory
-                                                                      .toString();
-                                                              leadSubTypeId =
-                                                                  leadSubTypeList!
-                                                                      .data![
-                                                                          subIndex]
-                                                                      .leadSubCategoryId
-                                                                      .toString();
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
-                                                            });
-                                                          },
-                                                          child: SizedBox(
-                                                            height: 50,
-                                                            child: Text(
-                                                              leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategory
-                                                                  .toString(),
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          18),
+                                                    content: SizedBox(height: MediaQuery.of(context).size.height*.32,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                      child: ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount:
+                                                            leadSubTypeList!
+                                                                .data!.length,
+                                                        itemBuilder:
+                                                            (context, subIndex) {
+                                                          return InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                leadSubType =
+                                                                    leadSubTypeList!
+                                                                        .data![
+                                                                            subIndex]
+                                                                        .leadSubCategory
+                                                                        .toString();
+                                                                leadSubTypeId =
+                                                                    leadSubTypeList!
+                                                                        .data![
+                                                                            subIndex]
+                                                                        .leadSubCategoryId
+                                                                        .toString();
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              });
+                                                            },
+                                                            child: SizedBox(
+                                                              height: 50,
+                                                              child: Text(
+                                                                leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategory
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            18),
+                                                              ),
                                                             ),
-                                                          ),
-                                                        );
-                                                      },
+                                                          );
+                                                        },
+                                                      ),
                                                     ),
                                                   );
                                                 });
