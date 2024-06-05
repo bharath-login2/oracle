@@ -369,16 +369,16 @@ void logout(BuildContext context) {
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const Login()),
                       (Route<dynamic> route) => false);
-                  // if (Platform.isAndroid) {
-                  //   _channel.setMethodCallHandler((call) async {
-                  //     if (call.method == 'setAsBackgroundService') {
-                  //       initService();
-                  //       FlutterBackgroundService().invoke('setAsBackground');
-                  //     }
-                  //   });
-                  //   Workmanager()
-                  //       .initialize(callbackDispatcher, isInDebugMode: true);
-                  // }
+                  if (Platform.isAndroid) {
+                    _channel.setMethodCallHandler((call) async {
+                      if (call.method == 'setAsBackgroundService') {
+                        initService();
+                        FlutterBackgroundService().invoke('setAsBackground');
+                      }
+                    });
+                    Workmanager()
+                        .initialize(callbackDispatcher, isInDebugMode: true);
+                  }
                 },
                 child: const Text('Yes')),
             TextButton(

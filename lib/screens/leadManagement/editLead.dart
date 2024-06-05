@@ -226,7 +226,7 @@ class _EditLeadState extends State<EditLead> {
                                   branch = value.toString();
                                 });
                               },
-                              items: commonDetails!.data!.branch!.map((data) {
+                              items: commonDetails!.data.branch.map((data) {
                                 return DropdownMenuItem<String>(
                                   value: data.branchId.toString(),
                                   child: Text(
@@ -281,22 +281,22 @@ class _EditLeadState extends State<EditLead> {
                                     content: SizedBox(
                                       height:
                                           MediaQuery.of(context).size.height *
-                                              .32,
+                                              .2,
                                       width:
                                           MediaQuery.of(context).size.height *
                                               .8,
                                       child: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount: commonDetails!
-                                            .data!.leadCategory!.length,
+                                            .data.leadCategory.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () async {
                                               leadSubTypeList =
                                                   await HttpService.leadSubType(
                                                       commonDetails!
-                                                          .data!
-                                                          .leadCategory![ind]
+                                                          .data
+                                                          .leadCategory[ind]
                                                           .leadCategoryId
                                                           .toString());
                                               setState(() {
@@ -305,18 +305,18 @@ class _EditLeadState extends State<EditLead> {
                                                 leadSubTypeId = '';
                                                 leadTypeVal.text =
                                                     commonDetails!
-                                                        .data!
-                                                        .leadCategory![ind]
+                                                        .data
+                                                        .leadCategory[ind]
                                                         .leadCategory
                                                         .toString();
                                                 leadType = commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategory
                                                     .toString();
                                                 leadTypeId = commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategoryId
                                                     .toString();
                                                 Navigator.pop(context, true);
@@ -326,8 +326,8 @@ class _EditLeadState extends State<EditLead> {
                                               height: 50,
                                               child: Text(
                                                 commonDetails!
-                                                    .data!
-                                                    .leadCategory![ind]
+                                                    .data
+                                                    .leadCategory[ind]
                                                     .leadCategory
                                                     .toString(),
                                                 style: const TextStyle(
@@ -484,7 +484,7 @@ class _EditLeadState extends State<EditLead> {
                                                   height: MediaQuery.of(context)
                                                           .size
                                                           .height *
-                                                      .32,
+                                                      .12,
                                                   width: MediaQuery.of(context)
                                                           .size
                                                           .height *
@@ -650,20 +650,20 @@ class _EditLeadState extends State<EditLead> {
                                       child: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount:
-                                            commonDetails!.data!.staff!.length,
+                                            commonDetails!.data.staff.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () {
                                               setState(() {
                                                 assignUserval.text =
-                                                    commonDetails!.data!
-                                                        .staff![ind].staffName
+                                                    commonDetails!.data
+                                                        .staff[ind].staffName
                                                         .toString();
                                                 assignStaff = commonDetails!
-                                                    .data!.staff![ind].staffName
+                                                    .data.staff[ind].staffName
                                                     .toString();
                                                 assignStaffId = commonDetails!
-                                                    .data!.staff![ind].staffId
+                                                    .data.staff[ind].staffId
                                                     .toString();
                                                 Navigator.pop(context, true);
                                               });
@@ -672,7 +672,7 @@ class _EditLeadState extends State<EditLead> {
                                               height: 50,
                                               child: Text(
                                                 commonDetails!
-                                                    .data!.staff![ind].staffName
+                                                    .data.staff[ind].staffName
                                                     .toString(),
                                                 style: const TextStyle(
                                                     fontSize: 18),
@@ -754,28 +754,28 @@ class _EditLeadState extends State<EditLead> {
                                     content: SizedBox(
                                       height:
                                           MediaQuery.of(context).size.height *
-                                              .32,
+                                              .18,
                                       width:
                                           MediaQuery.of(context).size.height *
                                               .8,
                                       child: ListView.builder(
                                         shrinkWrap: true,
                                         itemCount: commonDetails!
-                                            .data!.priority!.length,
+                                            .data.priority.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () {
                                               setState(() {
                                                 priorityVal.text =
-                                                    commonDetails!.data!
-                                                        .priority![ind].priority
+                                                    commonDetails!.data
+                                                        .priority[ind].priority
                                                         .toString();
-                                                priority = commonDetails!.data!
-                                                    .priority![ind].priority
+                                                priority = commonDetails!.data
+                                                    .priority[ind].priority
                                                     .toString();
                                                 priorityId = commonDetails!
-                                                    .data!
-                                                    .priority![ind]
+                                                    .data
+                                                    .priority[ind]
                                                     .priorityId
                                                     .toString();
                                                 Navigator.pop(context, true);
@@ -784,8 +784,8 @@ class _EditLeadState extends State<EditLead> {
                                             child: SizedBox(
                                               height: 50,
                                               child: Text(
-                                                commonDetails!.data!
-                                                    .priority![ind].priority
+                                                commonDetails!.data
+                                                    .priority[ind].priority
                                                     .toString(),
                                                 style: const TextStyle(
                                                     fontSize: 18),
@@ -1022,7 +1022,7 @@ class _EditLeadState extends State<EditLead> {
                   contentPadding:
                       const EdgeInsets.only(left: 10, top: 2, bottom: 2),
                   labelText:
-                      commonDetails!.data!.additionalFields![index].fieldName,
+                      commonDetails!.data.additionalFields[index].fieldName,
                   fillColor: Colors.white,
                   filled: true,
                   prefixIcon: const Icon(Icons.arrow_drop_down_circle,

@@ -270,7 +270,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                       content: SizedBox(
                                         height:
                                             MediaQuery.of(context).size.height *
-                                                .32,
+                                                .25,
                                         width:
                                             MediaQuery.of(context).size.height *
                                                 .8,
@@ -619,7 +619,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                       content: SizedBox(
                                         height:
                                             MediaQuery.of(context).size.height *
-                                                .32,
+                                                .2,
                                         width:
                                             MediaQuery.of(context).size.height *
                                                 .8,
@@ -719,7 +719,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                                 height: MediaQuery.of(context)
                                                         .size
                                                         .height *
-                                                    .32,
+                                                    .12,
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .height *
@@ -846,26 +846,8 @@ class _EditFollowupState extends State<EditFollowup> {
                                     Common.toastMessaage(
                                         object1.message, Colors.green);
                                     if (context.mounted) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => LeadDetails(
-                                                  widget.token!,
-                                                  widget.editLead,
-                                                  widget.deleteLead,
-                                                  widget.cloudCall,
-                                                  widget.callMasterId,
-                                                  pageName: widget.pageName,
-                                                  status: widget.status,
-                                                  staff: widget.staff,
-                                                  isCalled: widget.isCalled,
-                                                  fromDate: widget.fromDate,
-                                                  toDate: widget.toDate,
-                                                  category: widget.category,
-                                                  scrollToIndex:
-                                                      widget.scrollToIndex,
-                                                )),
-                                      );
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
                                     }
                                   } else {
                                     Common.toastMessaage(

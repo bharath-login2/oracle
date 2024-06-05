@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:convert';
 
 import 'package:country_picker/country_picker.dart';
@@ -11,7 +13,6 @@ import 'package:login2/screens/clients/clientList.dart';
 import 'package:login2/screens/clients/invoiceList.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
-import '../../models/clients/addInvoiceModel.dart';
 import '../../models/clients/editInvoiceDetailsModel.dart';
 import '../../models/clients/editInvoiceModel.dart';
 import '../../models/clients/ivoiceAddCommonDetailsModel.dart';
@@ -19,7 +20,6 @@ import '../../models/clients/postalCodeModel.dart';
 import '../../service/service.dart';
 import '../homePage.dart';
 import '../leadManagement/dashboard.dart';
-import '../userManagement/viewUsers.dart';
 import 'addReceipt.dart';
 
 class EditInvoice extends StatefulWidget {
@@ -35,7 +35,6 @@ class EditInvoice extends StatefulWidget {
 }
 
 class _EditInvoiceState extends State<EditInvoice> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   InvoiceAddCommonDetailsModel? invDetails;
   EditInvoiceDetailsModel? invoiceEditDetails;
   bool result = true;

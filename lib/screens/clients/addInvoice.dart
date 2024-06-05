@@ -1,3 +1,5 @@
+// ignore_for_file: file_names, must_be_immutable, deprecated_member_use
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -34,7 +36,6 @@ class AddInvoice extends StatefulWidget {
 }
 
 class _AddInvoiceState extends State<AddInvoice> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   InvoiceAddCommonDetailsModel? invDetails;
   bool result = true;
   var fromdate = DateTime.now();
@@ -97,7 +98,6 @@ class _AddInvoiceState extends State<AddInvoice> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
   }
@@ -3470,13 +3470,15 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         //   );
                                         // }
                                       } else {
-                                        Navigator.of(context).pop();
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                        }
                                         Common.toastMessaage(
                                             inv.message, Colors.green);
                                       }
                                     } else {
-                                      Navigator.of(context).pop();
-                                      if (mounted) {
+                                      if (context.mounted) {
+                                        Navigator.of(context).pop();
                                         showDialog(
                                             context: context,
                                             barrierDismissible: false,
@@ -3594,7 +3596,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                           Common.toastMessaage(
                                                               inv.message,
                                                               Colors.green);
-                                                          if (mounted) {
+                                                          if (context.mounted) {
                                                             showDialog(
                                                                 barrierDismissible:
                                                                     false,

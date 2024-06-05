@@ -2786,7 +2786,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 address: leadDetails!.data!.address,
                                                                 searchKey: widget.searchKey.toString(),
                                                                 leadType1: widget.leadType)),
-                                                      ).then(getData());
+                                                      ).then((r) {
+                                                        getData();
+                                                      });
                                                     }
                                                   },
                                                   child: Card(
@@ -3131,7 +3133,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                           category: widget.category,
                                                                                           scrollToIndex: widget.scrollToIndex,
                                                                                         )),
-                                                                              );
+                                                                              ).then((r) {
+                                                                                getData();
+                                                                              });
                                                                             },
                                                                             child:
                                                                                 const Icon(

@@ -231,9 +231,7 @@ class _RenewalListState extends State<RenewalList> {
 
   @override
   void initState() {
-    setState(() {
       isLoading = true;
-    });
     getList();
     getDetails();
     getBranch();

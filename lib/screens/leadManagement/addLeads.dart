@@ -548,8 +548,9 @@ class _AddLeadsState extends State<AddLeads> {
                                               scrollable: true,
                                               title:
                                                   const Text('Lead Category'),
-                                              content: SizedBox(height: MediaQuery.of(context).size.height*.32,
-                                                          width: MediaQuery.of(context).size.height*.8,
+                                              content: SizedBox(
+                                                height:MediaQuery.of(context).size.height *.18,
+                                                width:MediaQuery.of(context).size.width *.8,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!
@@ -646,8 +647,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                     scrollable: true,
                                                     title: const Text(
                                                         'Lead Sub Category'),
-                                                    content: SizedBox(height: MediaQuery.of(context).size.height*.32,
-                                                          width: MediaQuery.of(context).size.height*.8,
+                                                    content: SizedBox(
                                                       child: ListView.builder(
                                                         shrinkWrap: true,
                                                         itemCount:
@@ -731,44 +731,48 @@ class _AddLeadsState extends State<AddLeads> {
                                             return AlertDialog(
                                               scrollable: true,
                                               title: const Text('Priority'),
-                                              content: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: commonDetails!
-                                                    .data.priority.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        priority =
-                                                            commonDetails!
-                                                                .data
-                                                                .priority[ind]
-                                                                .priority
-                                                                .toString();
-                                                        priorityId =
-                                                            commonDetails!
-                                                                .data
-                                                                .priority[ind]
-                                                                .priorityId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        commonDetails!
-                                                            .data
-                                                            .priority[ind]
-                                                            .priority
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
+                                              content: SizedBox(
+                                                height: MediaQuery.of(context).size.height*.18,
+                                                          width: MediaQuery.of(context).size.height*.8,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: commonDetails!
+                                                      .data.priority.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          priority =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .priority[ind]
+                                                                  .priority
+                                                                  .toString();
+                                                          priorityId =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .priority[ind]
+                                                                  .priorityId
+                                                                  .toString();
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          commonDetails!
+                                                              .data
+                                                              .priority[ind]
+                                                              .priority
+                                                              .toString(),
+                                                          style: const TextStyle(
+                                                              fontSize: 18),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             );
                                           });
@@ -862,11 +866,11 @@ class _AddLeadsState extends State<AddLeads> {
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .width *
-                                                    .6,
+                                                    .8,
                                                 height: MediaQuery.of(context)
                                                         .size
                                                         .height *
-                                                    .35,
+                                                    .25,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!

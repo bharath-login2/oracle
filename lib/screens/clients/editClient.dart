@@ -1,3 +1,5 @@
+// ignore_for_file: file_names, must_be_immutable
+
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
