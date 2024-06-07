@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -209,12 +210,13 @@ class HttpService {
     try {
       var result = await _dio.get(
           "${await Config.getUrl()}check_package_expired",
+          // options: Options(receiveTimeout: const Duration(microseconds: 30)),
           queryParameters: params);
       if (kDebugMode) {}
       CommonConfigureModel model = CommonConfigureModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -225,19 +227,22 @@ class HttpService {
       if (kDebugMode) {}
       BackgroundModel model = BackgroundModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
   static Future forceUpdate() async {
     try {
-      var result = await _dio.get("https://account.login2.in/serverAuth.php");
+      var result = await _dio.get(
+        "https://account.login2.in/serverAuth.php",
+        // options: Options(receiveTimeout: const Duration(seconds: 30)),
+      );
       if (kDebugMode) {}
       UpdateModel model = UpdateModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -248,8 +253,8 @@ class HttpService {
       );
       CommonSettingsModel model = CommonSettingsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -264,8 +269,8 @@ class HttpService {
           queryParameters: params);
       LoginModel model = LoginModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -276,8 +281,8 @@ class HttpService {
           queryParameters: params);
       LoginCheckModel model = LoginCheckModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -291,15 +296,14 @@ class HttpService {
           queryParameters: params);
       SendOtpModel model = SendOtpModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
 /* Lead Management  Starts Here..*/
   static Future leadDashboard(
       token, fromDate, toDate, fromDate1, toDate1) async {
-        print(await Common.getSharedPref("token"));
     var params = {
       "token": token,
       "fromDate": fromDate,
@@ -309,11 +313,12 @@ class HttpService {
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}lead_dashboard",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       LeadDashboardModel model = LeadDashboardModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log(e.toString());
     }
   }
 
@@ -333,8 +338,8 @@ class HttpService {
       LeadCategoryStaffWiseModel model =
           LeadCategoryStaffWiseModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -353,8 +358,8 @@ class HttpService {
           queryParameters: params);
       StaffDashboardModel model = StaffDashboardModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -375,8 +380,8 @@ class HttpService {
       LeadCategoryStaffWiseModel model =
           LeadCategoryStaffWiseModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -387,8 +392,8 @@ class HttpService {
           data: jsonEncode(body));
       ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -399,8 +404,8 @@ class HttpService {
           data: jsonEncode(body));
       TransferLeadModel model = TransferLeadModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -423,25 +428,28 @@ class HttpService {
       "token": token,
       "fromDate": fromdate,
       "toDate": todate,
-      "leadCategoryId": category,
+      "leadCategoryId": category ?? "",
       "callResultId": status,
-      "staffId": staff,
+      "staffId": staff ?? "",
       "isCalled": isCalled,
-      "priority": priority,
+      "priority": priority ?? "",
       "sort": sort,
       "page": page,
       "pageSize": pageSize,
       "isFirst": isFirst,
-      "leadType": leadType,
-      "branchId": branchId
+      "leadType": leadType ?? "",
+      "branchId": branchId ?? ""
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}view_lead_report",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-      ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
-      return model;
-    } on Exception {
-      return null;
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -463,11 +471,12 @@ class HttpService {
     try {
       var result = await _dio.get(
           "${await Config.getUrl()}view_category_staff_wise_lead_report",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -477,13 +486,16 @@ class HttpService {
     try {
       var result = await _dio.get(
           "${await Config.getUrl()}lead_management_master_data",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
 
-      AddLeadCommonDataModel model =
-          AddLeadCommonDataModel.fromJson(result.data);
-      return model;
-    } on Exception {
-      return null;
+      if (result.statusCode == 200) {
+        AddLeadCommonDataModel model =
+            AddLeadCommonDataModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -504,8 +516,7 @@ class HttpService {
       descriptions,
       code,
       checked,
-      timeBefore
-      ) async {
+      timeBefore) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -531,8 +542,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}add_leads", data: formData);
       AddLeadModel model = AddLeadModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -545,8 +556,8 @@ class HttpService {
           queryParameters: params);
       ViewLeadCategoryModel model = ViewLeadCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -560,8 +571,8 @@ class HttpService {
           queryParameters: params);
       AddLeadCategoryModel model = AddLeadCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -576,8 +587,8 @@ class HttpService {
           queryParameters: params);
       EditLeadCategoryModel model = EditLeadCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -593,8 +604,8 @@ class HttpService {
       LeadCategoryDeleteModel model =
           LeadCategoryDeleteModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -606,8 +617,8 @@ class HttpService {
       ViewLeadSubCategoryModel model =
           ViewLeadSubCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -624,8 +635,8 @@ class HttpService {
       AddLeadSubCategoryModel model =
           AddLeadSubCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -643,8 +654,8 @@ class HttpService {
       EditLeadSubCategoryModel model =
           EditLeadSubCategoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -660,8 +671,8 @@ class HttpService {
       LeadSubCategoryDeleteModel model =
           LeadSubCategoryDeleteModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -674,8 +685,8 @@ class HttpService {
           queryParameters: params);
       LeadSubTypeModel model = LeadSubTypeModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -686,11 +697,14 @@ class HttpService {
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}lead_details",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-      LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
-      return model;
-    } on Exception {
-      return null;
+      if (result.statusCode == 200) {
+        LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -736,8 +750,8 @@ class HttpService {
           data: formData);
       AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -774,8 +788,8 @@ class HttpService {
           data: formData);
       EditLeadFollowupModel model = EditLeadFollowupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -791,8 +805,8 @@ class HttpService {
           .post("${await Config.getUrl()}delete_lead_followup", data: formData);
       DeleteLeadFollowModel model = DeleteLeadFollowModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -833,8 +847,8 @@ class HttpService {
 
       EditLeadModel model = EditLeadModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -851,8 +865,8 @@ class HttpService {
           data: formData);
       LeadTransferModel model = LeadTransferModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -868,8 +882,8 @@ class HttpService {
           data: formData);
       FollowupDetailsModel model = FollowupDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -887,8 +901,8 @@ class HttpService {
           data: formData);
       LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -908,8 +922,8 @@ class HttpService {
           data: formData);
       LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -924,8 +938,8 @@ class HttpService {
           data: formData);
       DeleteLeadModel model = DeleteLeadModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -942,8 +956,8 @@ class HttpService {
       BulkDeleteLeadModel model = BulkDeleteLeadModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -961,8 +975,8 @@ class HttpService {
       BulkTransferLeadModel model = BulkTransferLeadModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -980,8 +994,8 @@ class HttpService {
           AddBulkContactGroupModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -998,8 +1012,8 @@ class HttpService {
       // print(result);
       CloudCallModel model = CloudCallModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1018,8 +1032,8 @@ class HttpService {
       //print(result);
       CallHistoryModel model = CallHistoryModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1037,8 +1051,8 @@ class HttpService {
       SearchModel model = SearchModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1057,8 +1071,8 @@ class HttpService {
       // print(result);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1075,8 +1089,8 @@ class HttpService {
       EditDesignationDetailsModel model =
           EditDesignationDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1094,8 +1108,8 @@ class HttpService {
       PostSubmenuModel model = PostSubmenuModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1107,8 +1121,8 @@ class HttpService {
       PostEditSubmenuModel model = PostEditSubmenuModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1121,8 +1135,8 @@ class HttpService {
           PostEditStaffSubmenuModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1136,8 +1150,8 @@ class HttpService {
           PostEditStaffPermissionModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1153,8 +1167,8 @@ class HttpService {
 
       DesignationListModel model = DesignationListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1169,8 +1183,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}staff_list", data: formData);
       ViewStaffModel model = ViewStaffModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1185,8 +1199,8 @@ class HttpService {
       AddUserCommonDataModel model =
           AddUserCommonDataModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1196,8 +1210,8 @@ class HttpService {
           data: jsonEncode(body));
       AddUserModel model = AddUserModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1208,8 +1222,8 @@ class HttpService {
       EditUserBasicDetailsModel model =
           EditUserBasicDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1220,8 +1234,8 @@ class HttpService {
 
       AddUserImageModel model = AddUserImageModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1232,8 +1246,8 @@ class HttpService {
 
       AddUserImageModel model = AddUserImageModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1249,8 +1263,8 @@ class HttpService {
 
       DeleteStaffModel model = DeleteStaffModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1267,8 +1281,8 @@ class HttpService {
           data: formData);
       ChangePasswordModel model = ChangePasswordModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1282,8 +1296,8 @@ class HttpService {
       }
       StaffDetailsModel model = StaffDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1301,8 +1315,8 @@ class HttpService {
       WhatsappSettingsModel model = WhatsappSettingsModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1323,8 +1337,8 @@ class HttpService {
           AddWhatsappSettingsModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1345,8 +1359,8 @@ class HttpService {
           AddWhatsappSettingsOffModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1362,8 +1376,8 @@ class HttpService {
           data: formData);
       DashboardModel model = DashboardModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1378,8 +1392,8 @@ class HttpService {
       UserChangePasswordModel model =
           UserChangePasswordModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1395,8 +1409,8 @@ class HttpService {
 
       ContactGroupModel model = ContactGroupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1411,8 +1425,8 @@ class HttpService {
       ContactGroupDeatailsModel model =
           ContactGroupDeatailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1423,8 +1437,8 @@ class HttpService {
 
       SendMessageModel model = SendMessageModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1441,8 +1455,8 @@ class HttpService {
 
       AddContactGroupModel model = AddContactGroupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1456,8 +1470,8 @@ class HttpService {
           data: formData);
       GroupInfoModel model = GroupInfoModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1472,8 +1486,8 @@ class HttpService {
           data: formData);
       EditContactGroupModel model = EditContactGroupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1488,8 +1502,8 @@ class HttpService {
       DeleteContactGroupModel model =
           DeleteContactGroupModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1504,8 +1518,8 @@ class HttpService {
           .post("${await Config.getUrl()}add_contact_numbers", data: formData);
       AddContactNumberModel model = AddContactNumberModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1521,8 +1535,8 @@ class HttpService {
       EditContactNumberModel model =
           EditContactNumberModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1539,8 +1553,8 @@ class HttpService {
       DeleteContactNumberModel model =
           DeleteContactNumberModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1556,8 +1570,8 @@ class HttpService {
       VerifyPhoneModel model = VerifyPhoneModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1572,8 +1586,8 @@ class HttpService {
       ResetPasswordModel model = ResetPasswordModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1587,8 +1601,8 @@ class HttpService {
       RemoveUserModel model = RemoveUserModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1603,8 +1617,8 @@ class HttpService {
           data: formData);
       CreateFolderModel model = CreateFolderModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1622,8 +1636,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}uploadFile", data: formData);
       UploadAudioRecord model = UploadAudioRecord.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1638,8 +1652,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}getUploads", data: formData);
       ListFolderNameModel model = ListFolderNameModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1657,8 +1671,8 @@ class HttpService {
       DeleteFolderAndFileModel model =
           DeleteFolderAndFileModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1677,8 +1691,8 @@ class HttpService {
           data: formData);
       RenameFolderModel model = RenameFolderModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1690,8 +1704,8 @@ class HttpService {
           queryParameters: params);
       TestListApiModel model = TestListApiModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1700,11 +1714,12 @@ class HttpService {
 
     try {
       var result = await _dio.get("${await Config.getUrl()}lead_details_data",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       LeadDeatailsModelAdd model = LeadDeatailsModelAdd.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1714,12 +1729,13 @@ class HttpService {
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}file_manager_data",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       FileManagerPermissionModel model =
           FileManagerPermissionModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1737,8 +1753,8 @@ class HttpService {
           data: formData);
       UpdateReminderSetting model = UpdateReminderSetting.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1753,8 +1769,8 @@ class HttpService {
       DeleteDesignationModel model =
           DeleteDesignationModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1769,8 +1785,8 @@ class HttpService {
       MainFileManagerPermissionModel model =
           MainFileManagerPermissionModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1784,8 +1800,8 @@ class HttpService {
           data: formData);
       FileManagerModel model = FileManagerModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1801,8 +1817,8 @@ class HttpService {
           data: formData);
       UploadAudioRecord model = UploadAudioRecord.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1819,8 +1835,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}renameFile", data: formData);
       RenameFileModel model = RenameFileModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1836,8 +1852,8 @@ class HttpService {
           data: formData);
       DeleteFileModel model = DeleteFileModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1851,8 +1867,8 @@ class HttpService {
           queryParameters: params);
       UnsetReminderModel model = UnsetReminderModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1865,8 +1881,8 @@ class HttpService {
           queryParameters: params);
       FacebookSettingsModel model = FacebookSettingsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1878,8 +1894,8 @@ class HttpService {
       UpdateFbLeadAssignStaff model =
           UpdateFbLeadAssignStaff.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1893,8 +1909,8 @@ class HttpService {
           queryParameters: params);
       DeleteFbLeadsModel model = DeleteFbLeadsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1905,8 +1921,8 @@ class HttpService {
           data: jsonEncode(body));
       SendNotificationModel model = SendNotificationModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1924,8 +1940,8 @@ class HttpService {
         CallLogUploadModel model = CallLogUploadModel.fromJson(result.data);
         return model;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1940,11 +1956,11 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}get_phone_call_log",
           queryParameters: params);
       CallLogHistoryModel model = CallLogHistoryModel.fromJson(result.data);
-      if(result.statusCode ==200){
-      return model;
+      if (result.statusCode == 200) {
+        return model;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1963,8 +1979,8 @@ class HttpService {
           DeleteCallHistoryModel.fromJson(result.data);
 
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1980,8 +1996,8 @@ class HttpService {
           queryParameters: params);
       MainClientListModel model = MainClientListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -1993,8 +2009,8 @@ class HttpService {
       MainClientDetailsModel model =
           MainClientDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2005,8 +2021,8 @@ class HttpService {
           queryParameters: params);
       DeleteMainClientModel model = DeleteMainClientModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2022,8 +2038,8 @@ class HttpService {
       LeadConvertToClientModel model =
           LeadConvertToClientModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2033,8 +2049,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}postClient", data: body);
       AddClientsModel model = AddClientsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2049,8 +2065,8 @@ class HttpService {
       InvoiceAddCommonDetailsModel model =
           InvoiceAddCommonDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2068,8 +2084,8 @@ class HttpService {
         AddInvoiceModel model = AddInvoiceModel.fromJson(result.data);
         return model;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2085,8 +2101,8 @@ class HttpService {
       }
       EditInvoiceModel model = EditInvoiceModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2106,8 +2122,8 @@ class HttpService {
           data: formData);
       InvoiceListModel model = InvoiceListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2129,8 +2145,8 @@ class HttpService {
       PendingInvoiceListModel model =
           PendingInvoiceListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2141,8 +2157,8 @@ class HttpService {
           queryParameters: params);
       DeleteInvoiceModel model = DeleteInvoiceModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2157,8 +2173,8 @@ class HttpService {
           queryParameters: params);
       CustomerListModel model = CustomerListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2174,8 +2190,8 @@ class HttpService {
           data: formData);
       ReceiptListModel model = ReceiptListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2189,8 +2205,8 @@ class HttpService {
           data: formData);
       ReceiptByInvModel model = ReceiptByInvModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2204,8 +2220,8 @@ class HttpService {
           data: formData);
       ReceiptDeleteModel model = ReceiptDeleteModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2221,8 +2237,8 @@ class HttpService {
       ReceiptAddCommonDetailsModel model =
           ReceiptAddCommonDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2235,8 +2251,8 @@ class HttpService {
       EditClientDetailsModel model =
           EditClientDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2246,8 +2262,8 @@ class HttpService {
           await _dio.post("${await Config.getUrl()}updateClient", data: body);
       EditClientsModel model = EditClientsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2257,8 +2273,8 @@ class HttpService {
           await _dio.get("https://api.postalpincode.in/pincode/" + postalCode);
       PostalCodeModel model = PostalCodeModel.fromJson(result.data[0]);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2290,8 +2306,8 @@ class HttpService {
           data: formData);
       ReceiptAddModel model = ReceiptAddModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2307,8 +2323,8 @@ class HttpService {
       EditReceiptModelDetailsModel model =
           EditReceiptModelDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2331,8 +2347,8 @@ class HttpService {
           data: formData);
       EditReceiptModel model = EditReceiptModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2344,12 +2360,13 @@ class HttpService {
 
     try {
       var result = await _dio.get("${await Config.getUrl()}get_milestones",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       LeadMileStoneListModel model =
           LeadMileStoneListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2360,8 +2377,8 @@ class HttpService {
           data: jsonEncode(body));
       AddMileStoneModel model = AddMileStoneModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2377,8 +2394,8 @@ class HttpService {
       LeadNotificationListModel model =
           LeadNotificationListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2394,8 +2411,8 @@ class HttpService {
       ReadLeadNotificationModel model =
           ReadLeadNotificationModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2411,8 +2428,8 @@ class HttpService {
       DeleteLeadMileStoneModel model =
           DeleteLeadMileStoneModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2428,8 +2445,8 @@ class HttpService {
       CheckLeadPhoneNumberModel model =
           CheckLeadPhoneNumberModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2443,8 +2460,8 @@ class HttpService {
       // ${await Config.getUrl()}getBranch
       BranchListModel model = BranchListModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2459,8 +2476,8 @@ class HttpService {
       EditInvoiceDetailsModel model =
           EditInvoiceDetailsModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2478,8 +2495,8 @@ class HttpService {
           data: formData);
       UploadAudioRecord model = UploadAudioRecord.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2494,8 +2511,8 @@ class HttpService {
           data: formData);
       DeleteLeadVoiceModel model = DeleteLeadVoiceModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2508,8 +2525,8 @@ class HttpService {
           queryParameters: params);
       CallResultResonModel model = CallResultResonModel.fromJson(result.data);
       return model;
-    } on Exception {  
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2522,8 +2539,8 @@ class HttpService {
           queryParameters: params);
       UserPermissionModel model = UserPermissionModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2538,8 +2555,8 @@ class HttpService {
       ReceiptFileDeleteModel model =
           ReceiptFileDeleteModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2553,8 +2570,8 @@ class HttpService {
           queryParameters: params);
       ViewReceiptPdfModel model = ViewReceiptPdfModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2645,8 +2662,7 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
       // isLoading.value = false;
-    } 
-    catch(e) {
+    } catch (e) {
       log(e.toString());
     }
   }
@@ -2834,8 +2850,8 @@ class HttpService {
           queryParameters: params);
       MediaModel model = MediaModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2849,8 +2865,8 @@ class HttpService {
       CallLogUploadPermissionModel model =
           CallLogUploadPermissionModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2865,8 +2881,8 @@ class HttpService {
       CallLogUploadPermissionUpdateModel model =
           CallLogUploadPermissionUpdateModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -2882,8 +2898,8 @@ class HttpService {
       OfficialWhatsappConfigeModel model =
           OfficialWhatsappConfigeModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
   /*  Complaints Ansar */
@@ -3135,8 +3151,8 @@ class HttpService {
       print(result);
       AddInvoiceCheckModel model = AddInvoiceCheckModel.fromJson(result.data);
       return model;
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3205,8 +3221,8 @@ class HttpService {
             RenewalDashboardModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3223,8 +3239,8 @@ class HttpService {
             RenewalDetailslModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3262,8 +3278,8 @@ class HttpService {
         PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3323,8 +3339,8 @@ class HttpService {
         AddCustomerModel response = AddCustomerModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3349,8 +3365,8 @@ class HttpService {
         RenewalListModel response = RenewalListModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3392,8 +3408,8 @@ class HttpService {
         EditRenewalModel response = EditRenewalModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3407,8 +3423,8 @@ class HttpService {
         HideModel response = HideModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3466,8 +3482,8 @@ class HttpService {
         HiddenListModel response = HiddenListModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3489,8 +3505,8 @@ class HttpService {
         PaymentReportModel response = PaymentReportModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3517,8 +3533,8 @@ class HttpService {
             PostRenewDetailsModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3532,8 +3548,8 @@ class HttpService {
         RivertModel response = RivertModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3547,8 +3563,8 @@ class HttpService {
         DeleteRenewalModel response = DeleteRenewalModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3566,8 +3582,8 @@ class HttpService {
             ReminderHistoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3585,8 +3601,8 @@ class HttpService {
             IsCustomerExistModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3605,8 +3621,8 @@ class HttpService {
             RenewalTemplateModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3630,8 +3646,8 @@ class HttpService {
         PostReminderModel response = PostReminderModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3648,8 +3664,8 @@ class HttpService {
         BulkRemindModel response = BulkRemindModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3666,8 +3682,8 @@ class HttpService {
             ProductCategoriesModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3682,8 +3698,8 @@ class HttpService {
         SubCategoriesModel response = SubCategoriesModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3699,8 +3715,8 @@ class HttpService {
         ProductListModel response = ProductListModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3743,8 +3759,8 @@ class HttpService {
         PostProductModel response = PostProductModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3758,8 +3774,8 @@ class HttpService {
         ProdectsByIdModel response = ProdectsByIdModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3804,8 +3820,8 @@ class HttpService {
         PostProductModel response = PostProductModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3819,8 +3835,8 @@ class HttpService {
         DeleteProductModel response = DeleteProductModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3837,8 +3853,8 @@ class HttpService {
             PostProductCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3857,8 +3873,8 @@ class HttpService {
             UpdateProductCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3874,8 +3890,8 @@ class HttpService {
             DeleteProductCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3895,8 +3911,8 @@ class HttpService {
             PostProductSubCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3917,8 +3933,8 @@ class HttpService {
             UpdateProductSubCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 
@@ -3934,8 +3950,8 @@ class HttpService {
             DeleteProductSubCategoryModel.fromJson(result.data);
         return response;
       }
-    } on Exception {
-      return null;
+    } catch (e) {
+      log("error: $e");
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -23,6 +24,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   final splashDelay = 2;
   bool? result = true;
+  bool timeOut = false;
   String? firebaseToken;
   UpdateModel? updatedata;
   PackageInfo _packageInfo = PackageInfo(
@@ -42,12 +44,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     handleAsync();
     getData();
-
   }
   //!   deeplink init function
 
   Future<void> initDeepLinks() async {
-
     _appLinks = AppLinks();
 
     // Check initial link if app was in cold state (terminated)
@@ -55,8 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (appLink != null) {
       print('getInitialAppLink: $appLink');
       openAppLink(appLink);
-    }
-    else{
+    } else {
       print('else condition worked');
       String? token = await Common.getSharedPref("token");
       if (mounted) {
@@ -71,6 +70,7 @@ class _SplashScreenState extends State<SplashScreen> {
       openAppLink(uri);
     });
   }
+
   Future<void> openAppLink(Uri uri) async {
     print('fragment: ${uri.fragment}');
     String? token = await Common.getSharedPref("token");
@@ -78,16 +78,26 @@ class _SplashScreenState extends State<SplashScreen> {
     String editLead = await Common.getSharedPref("updateLeadPermission");
     String deleteLead = await Common.getSharedPref("deleteLeadPermission");
     String cloudCall = await Common.getSharedPref("cloudCallPermission");
-print(leadId);
+    print(leadId);
     // _navigatorKey.currentState?.pushNamed('/form');
-    if(leadId=='0')
-      {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => Dashboard(token),));
-      }
-    else{
-      Navigator.of(context).push(MaterialPageRoute(builder: (context) => LeadDetails(token.toString(),editLead.toBoolean(),deleteLead.toBoolean(),cloudCall.toBoolean(),leadId.toString(),fromDate: DateTime.now().toString(),toDate: DateTime.now().toString(),pageName: 'notification',),));
+    if (leadId == '0') {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => Dashboard(token),
+      ));
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => LeadDetails(
+          token.toString(),
+          editLead.toBoolean(),
+          deleteLead.toBoolean(),
+          cloudCall.toBoolean(),
+          leadId.toString(),
+          fromDate: DateTime.now().toString(),
+          toDate: DateTime.now().toString(),
+          pageName: 'notification',
+        ),
+      ));
     }
-
   }
 
   handleAsync() async {
@@ -95,32 +105,41 @@ print(leadId);
   }
 
   getData() async {
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      result = true;
-    } else {
-      result = false;
-    }
-
-    updatedata = await HttpService.forceUpdate();
     setState(() {
-      if (updatedata!.data!.server!.length == 1) {
-        Common.saveSharedPref(
-            "url", updatedata!.data!.server![0].url.toString());
+      timeOut = false;
+    });
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi) {
+        result = true;
+      } else {
+        result = false;
       }
-    });
-    final info = await PackageInfo.fromPlatform();
-    setState(() {
-      _packageInfo = info;
-    });
-    final appVersion = _packageInfo.version;
-    int versionCompare =
-        appVersion.compareTo(updatedata!.data!.minVersion.toString());
-    if (versionCompare < 0) {
-      _checkVersion();
-    } else {
-      _loadWidget();
+
+      updatedata = await HttpService.forceUpdate();
+      setState(() {
+        if (updatedata!.data!.server!.length == 1) {
+          Common.saveSharedPref(
+              "url", updatedata!.data!.server![0].url.toString());
+        }
+      });
+      final info = await PackageInfo.fromPlatform();
+      setState(() {
+        _packageInfo = info;
+      });
+      final appVersion = _packageInfo.version;
+      int versionCompare =
+          appVersion.compareTo(updatedata!.data!.minVersion.toString());
+      if (versionCompare < 0) {
+        _checkVersion();
+      } else {
+        _loadWidget();
+      }
+    } catch(e) {
+      setState(() {
+        timeOut = true;
+      });
     }
   }
 
@@ -137,45 +156,49 @@ print(leadId);
 
   @override
   Widget build(BuildContext context) {
-    return result == true
+    return result == true && timeOut == false
         ? Stack(
-          children: [
-            Container(
-                color: Colors.white,
-                width: MediaQuery.of(context).size.width * 1,
-                child: Center(
-                  child: Image.asset(
-                    'assets/main/logo.png',
-                    width: 200,
-                  ),
-                )),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: Colors.red,
-                      backgroundColor: Colors.grey.withOpacity(0.5),
+            children: [
+              Container(
+                  color: Colors.white,
+                  width: MediaQuery.of(context).size.width * 1,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/main/logo.png',
+                      width: 200,
                     ),
-                    const SizedBox(height: 10,),
-                    Text(
-                      _packageInfo.version=='Unknown'?' Connecting...':'Version ${_packageInfo.version}',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                        decoration: TextDecoration.none,
+                  )),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Colors.red,
+                        backgroundColor: Colors.grey.withOpacity(0.5),
                       ),
-                    ),
-                  ],
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        _packageInfo.version == 'Unknown'
+                            ? ' Connecting...'
+                            : 'Version ${_packageInfo.version}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 10,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          ],
-        )
+              )
+            ],
+          )
         : Scaffold(
             backgroundColor: Colors.white,
             body: SizedBox(
@@ -187,16 +210,17 @@ print(leadId);
                   Container(
                     width: 300,
                     height: 300,
-                    decoration: const BoxDecoration(
+                    decoration:  const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/icons/noNetwork.jpg'),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  const Text(
-                    'No Network Found !',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                   Text(
+                  timeOut == true?"There seems to be a temporary issue !, \n Please retry to continue" : 'No Network Found !',
+                  textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -257,6 +281,7 @@ print(leadId);
     }
   }
 }
+
 extension on String {
   bool toBoolean() {
     print(this);

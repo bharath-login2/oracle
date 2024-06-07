@@ -181,6 +181,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   List checkedItems = [];
   List checkedItemsName = [];
   String accessCallRecordingPermission = '';
+  bool timeOut = false;
 
   @override
   void initState() {
@@ -189,34 +190,47 @@ class _LeadDetailsState extends State<LeadDetails> {
   }
 
   getData() async {
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
+    setState(() {
+      timeOut = false;
+    });
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi) {
+        setState(() {
+          result = true;
+        });
+      } else {
+        setState(() {
+          result = false;
+        });
+      }
+      await Common.saveSharedPref("openAppLeadId", '0');
+      leadDetails =
+          await HttpService.leadDetails(widget.token, widget.callMasterId);
+      commonDetails = await HttpService.addLeadCommonData(widget.token);
+      if (leadDetails != null) {
+        setState(() {
+          // final myString = leadDetails!.data!.contactNumber1.toString();
+          // int countryCodeLengt = leadDetails!.data!.countryCode!.length;
+          // whatsappNo1 = myString.substring(countryCodeLengt);
+          whatsappNo1 = leadDetails!.data!.contactNumber1.toString();
+          whatsappNo = leadDetails!.data!.contactNumber1.toString();
+          contactFName.text = leadDetails!.data!.clientName.toString();
+          contactMobile.text = '+${leadDetails!.data!.contactNumber1}';
+        });
+        listAddonDet(widget.token, widget.callMasterId);
+        listFolderList(widget.token, widget.callMasterId, '');
+        listMileStone(widget.token, widget.callMasterId);
+      } else {
+        setState(() {
+          timeOut = true;
+        });
+      }
+    } catch (e) {
       setState(() {
-        result = true;
+        timeOut = true;
       });
-    } else {
-      setState(() {
-        result = false;
-      });
-    }
-    await Common.saveSharedPref("openAppLeadId", '0');
-    leadDetails =
-        await HttpService.leadDetails(widget.token, widget.callMasterId);
-    commonDetails = await HttpService.addLeadCommonData(widget.token);
-    if (leadDetails != null) {
-      setState(() {
-        // final myString = leadDetails!.data!.contactNumber1.toString();
-        // int countryCodeLengt = leadDetails!.data!.countryCode!.length;
-        // whatsappNo1 = myString.substring(countryCodeLengt);
-        whatsappNo1 = leadDetails!.data!.contactNumber1.toString();
-        whatsappNo = leadDetails!.data!.contactNumber1.toString();
-        contactFName.text = leadDetails!.data!.clientName.toString();
-        contactMobile.text = '+${leadDetails!.data!.contactNumber1}';
-      });
-      listAddonDet(widget.token, widget.callMasterId);
-      listFolderList(widget.token, widget.callMasterId, '');
-      listMileStone(widget.token, widget.callMasterId);
     }
   }
 
@@ -265,7 +279,7 @@ class _LeadDetailsState extends State<LeadDetails> {
         getData();
         return;
       },
-      child: result == true
+      child: result == true && timeOut == false
           ? Scaffold(
               backgroundColor: Colors.grey.shade200,
               appBar: PreferredSize(
@@ -7729,8 +7743,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                         ),
                       ),
                     ),
-                    const Text(
-                      'No Network Found !',
+                    Text(
+                      timeOut == true
+                          ? "There seems to be a temporary issue, \n Please retry to continue"
+                          : 'No Network Found !',
+                      textAlign: TextAlign.center,
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),

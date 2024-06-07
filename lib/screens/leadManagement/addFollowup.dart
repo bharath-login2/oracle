@@ -105,6 +105,7 @@ class _AddFollowupState extends State<AddFollowup> {
   bool isExpand = false;
   bool isChecked = false;
   bool isMoreDetails = false;
+  bool timeOut = false;
 
   void toggleTextFieldVisibility() {
     setState(() {
@@ -131,44 +132,59 @@ class _AddFollowupState extends State<AddFollowup> {
   }
 
   getData() async {
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
-    } else {
-      setState(() {
-        result = false;
-      });
-    }
-    commonDetails = await HttpService.addLeadCommonData(widget.token);
-    if (commonDetails != null) {
-      callResultReasonList();
-      if (widget.leadTypeId != '') {
-        leadSubTypeList = await HttpService.leadSubType(widget.leadTypeId);
-        if (widget.leadType != null) {
-          leadType = widget.leadType.toString();
-          leadTypeId = widget.leadTypeId.toString();
-        }
-        if (widget.leadSubType != null) {
-          leadSubType = widget.leadSubType.toString();
-          leadSubTypeId = widget.leadSubTypeId.toString();
-        }
-        if (widget.cost != null) {
-          cost.text = widget.cost.toString();
-        }
-        if (widget.address != null) {
-          address.text = widget.address.toString();
-        }
-        if (widget.priority != null) {
-          priority = widget.priority.toString();
-          priorityId = widget.priorityId.toString();
-        }
-
-        setState(() {});
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi) {
+        setState(() {
+          result = true;
+        });
+      } else {
+        setState(() {
+          result = false;
+        });
       }
-      setState(() {});
+      commonDetails = await HttpService.addLeadCommonData(widget.token);
+      if (commonDetails != null) {
+        callResultReasonList();
+        if (widget.leadTypeId != '') {
+          leadSubTypeList = await HttpService.leadSubType(widget.leadTypeId);
+          if (leadSubTypeList == null) {
+            setState(() {
+              timeOut = true;
+            });
+          }
+          if (widget.leadType != null) {
+            leadType = widget.leadType.toString();
+            leadTypeId = widget.leadTypeId.toString();
+          }
+          if (widget.leadSubType != null) {
+            leadSubType = widget.leadSubType.toString();
+            leadSubTypeId = widget.leadSubTypeId.toString();
+          }
+          if (widget.cost != null) {
+            cost.text = widget.cost.toString();
+          }
+          if (widget.address != null) {
+            address.text = widget.address.toString();
+          }
+          if (widget.priority != null) {
+            priority = widget.priority.toString();
+            priorityId = widget.priorityId.toString();
+          }
+
+          setState(() {});
+        }
+        setState(() {});
+      } else {
+        setState(() {
+          timeOut = true;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        timeOut = true;
+      });
     }
   }
 
@@ -206,7 +222,7 @@ class _AddFollowupState extends State<AddFollowup> {
       calledDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
     }
 
-    return result == true
+    return result == true && timeOut == false
         ? Scaffold(
             backgroundColor: Colors.white,
             appBar: PreferredSize(
@@ -515,8 +531,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                 )
                               : const SizedBox(),
                           if (callResultId == '4' &&
-                              commonDetails!.data.customerAddPermission ==
-                                  true)
+                              commonDetails!.data.customerAddPermission == true)
                             CheckboxListTile(
                                 title: const Text('Add  Client'),
                                 value:
@@ -1333,8 +1348,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                   height: 30,
                                   child: ListView.builder(
                                     scrollDirection: Axis.horizontal,
-                                    itemCount: commonDetails!
-                                        .data.callResponse.length,
+                                    itemCount:
+                                        commonDetails!.data.callResponse.length,
                                     itemBuilder: (context, i) {
                                       return Padding(
                                         padding: const EdgeInsets.only(
@@ -1476,219 +1491,6 @@ class _AddFollowupState extends State<AddFollowup> {
                                       );
                                       Navigator.pop(context);
                                     }
-
-                                    // if(mounted){
-                                    //   showDialog(
-                                    //       barrierDismissible: false,
-                                    //       barrierColor: Colors.white.withOpacity(.2),
-                                    //       context: context,
-                                    //       builder: (BuildContext context) {
-                                    //         return WillPopScope(
-                                    //           onWillPop: () async {
-                                    //             return false;
-                                    //           },
-                                    //           child: Material(
-                                    //             type: MaterialType.transparency,
-                                    //             child: Padding(
-                                    //               padding: const EdgeInsets.only(bottom: 50),
-                                    //               child: Center(
-                                    //                 child: Container(
-                                    //                   decoration: BoxDecoration(
-                                    //                     borderRadius: BorderRadius.circular(10),
-                                    //                     color: Colors.white,
-                                    //                   ),
-                                    //                   width: MediaQuery.of(context).size.width * 0.9,
-                                    //                   height: 300,
-                                    //                   child: Padding(
-                                    //                     padding: const EdgeInsets.only(left: 20, right: 20),
-                                    //                     child: Column(
-                                    //                       mainAxisAlignment: MainAxisAlignment.center,
-                                    //                       crossAxisAlignment: CrossAxisAlignment.center,
-                                    //                       children: [
-                                    //                         Image.asset(
-                                    //                           'assets/icons/check.png',
-                                    //                           width: 80,
-                                    //                         ),
-                                    //                         const SizedBox(height: 10,),
-                                    //                         const Text('Success',style: TextStyle(fontSize: 18,fontWeight: FontWeight.w400),),
-                                    //                         const SizedBox(height: 5,),
-                                    //                         Text(object1.message.toString(),style: const TextStyle(fontSize: 15,fontWeight: FontWeight.w400),),
-                                    //                         const SizedBox(height: 15,),
-                                    //                         Row(
-                                    //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    //                           children: [
-                                    //                             InkWell(
-                                    //                               onTap:(){
-                                    //                                 Navigator.of(context).push(
-                                    //                                   MaterialPageRoute(
-                                    //                                       builder: (context) =>
-                                    //                                           Dashboard(widget.token)),
-                                    //                                 );
-                                    //                               },
-                                    //                               child: Container(
-                                    //                                 width: MediaQuery.of(context).size.width * 0.25,
-                                    //                                 //  color: RandomColorModel().getColor(),
-                                    //                                 decoration: BoxDecoration(
-                                    //                                     color: Colors.green.shade100,
-                                    //                                     borderRadius: BorderRadius.circular(10)
-                                    //                                 ),
-                                    //                                 child: const Padding(
-                                    //                                   padding: EdgeInsets.all(5),
-                                    //                                   child: Column(
-                                    //                                     mainAxisAlignment:MainAxisAlignment.spaceEvenly,
-                                    //                                     children: [
-                                    //                                       Icon(Icons.dashboard,size: 15,),
-                                    //                                       SizedBox(height: 5,),
-                                    //                                       Text('Dashboard',style: TextStyle(fontSize: 13, color: Colors.black),
-                                    //                                           textAlign: TextAlign.center),
-                                    //                                     ],
-                                    //                                   ),
-                                    //                                 ),
-                                    //                               ),
-                                    //                             ),
-                                    //                             InkWell(
-                                    //                               onTap:(){
-                                    //                                 Navigator.push(
-                                    //                                   context,
-                                    //                                   MaterialPageRoute(
-                                    //                                       builder: (context) =>
-                                    //                                           LeadDetails(
-                                    //                                             widget.token!,
-                                    //                                             widget.editLead,
-                                    //                                             widget.deleteLead,
-                                    //                                             widget.cloudCall,
-                                    //                                             widget.callMasterId,
-                                    //                                             pageName: widget.pageName,
-                                    //                                             status: widget.status,
-                                    //                                             staff: widget.staff,
-                                    //                                             isCalled: widget.isCalled,
-                                    //                                             fromDate: widget.fromDate,
-                                    //                                             toDate: widget.toDate,
-                                    //                                             category: widget.category,
-                                    //                                             scrollToIndex:
-                                    //                                             widget.scrollToIndex,
-                                    //                                             searchKey:
-                                    //                                             widget.searchKey,
-                                    //                                             leadType:
-                                    //                                             widget.leadType1,
-                                    //                                           )),
-                                    //                                 );
-                                    //                               },
-                                    //                               child: Container(
-                                    //                                 width: MediaQuery.of(context).size.width * 0.25,
-                                    //                                 decoration: BoxDecoration(
-                                    //                                     color: Colors.green.shade100,
-                                    //                                     borderRadius: BorderRadius.circular(10)
-                                    //                                 ),
-                                    //                                 child: const Padding(
-                                    //                                   padding: EdgeInsets.all(5),
-                                    //                                   child: Column(
-                                    //                                     mainAxisAlignment:MainAxisAlignment.spaceEvenly,
-                                    //                                     children: [
-                                    //                                       Icon(Icons.list_alt,size: 15,),
-                                    //                                       SizedBox(height: 5,),
-                                    //                                       Text('Details',style: TextStyle(fontSize: 13, color: Colors.black),
-                                    //                                           textAlign: TextAlign.center),
-                                    //                                     ],
-                                    //                                   ),
-                                    //                                 ),
-                                    //                               ),
-                                    //                             ),
-
-                                    //                             object1.data != '' &&
-                                    //                                 commonDetails!.data!
-                                    //                                     .customerAddPermission ==
-                                    //                                     true &&
-                                    //                                 commonDetails!.data!
-                                    //                                     .customerAddInvoicePermission ==
-                                    //                                     true?
-                                    //                             InkWell(
-                                    //                               onTap:(){
-                                    //                                 Navigator.push(
-                                    //                                   context,
-                                    //                                   MaterialPageRoute(
-                                    //                                       builder: (context) =>
-                                    //                                           AddInvoice(widget.token!,
-                                    //                                               object1.data!)),
-                                    //                                 );
-                                    //                               },
-                                    //                               child: Container(
-                                    //                                 width: MediaQuery.of(context).size.width * 0.25,
-                                    //                                 decoration: BoxDecoration(
-                                    //                                     color: Colors.green.shade100,
-                                    //                                     borderRadius: BorderRadius.circular(10)
-                                    //                                 ),
-                                    //                                 child: const Padding(
-                                    //                                   padding: EdgeInsets.all(5),
-                                    //                                   child: Column(
-                                    //                                     mainAxisAlignment:MainAxisAlignment.spaceEvenly,
-                                    //                                     children: [
-                                    //                                       Icon(Icons.currency_rupee,size: 15,),
-                                    //                                       SizedBox(height: 5,),
-                                    //                                       Text('Invoice',style: TextStyle(fontSize: 13, color: Colors.black),
-                                    //                                           textAlign: TextAlign.center),
-                                    //                                     ],
-                                    //                                   ),
-                                    //                                 ),
-                                    //                               ),
-                                    //                             ):
-                                    //                             const SizedBox()
-                                    //                           ],
-                                    //                         ),
-                                    //                       ],
-                                    //                     ),
-                                    //                   ),
-                                    //                 ),
-                                    //               ),
-                                    //             ),
-                                    //           ),
-                                    //         );
-                                    //       });
-                                    // }
-                                    // if (context.mounted) {
-                                    //
-                                    //   if (object1.data != '' &&
-                                    //       commonDetails!.data!
-                                    //               .customerAddPermission ==
-                                    //           true &&
-                                    //       commonDetails!.data!
-                                    //               .customerAddInvoicePermission ==
-                                    //           true) {
-                                    //     Navigator.push(
-                                    //       context,
-                                    //       MaterialPageRoute(
-                                    //           builder: (context) =>
-                                    //               AddInvoice(widget.token!,
-                                    //                   object1.data!)),
-                                    //     );
-                                    //   } else {
-                                    //     Navigator.push(
-                                    //       context,
-                                    //       MaterialPageRoute(
-                                    //           builder: (context) =>
-                                    //               LeadDetails(
-                                    //                 widget.token!,
-                                    //                 widget.editLead,
-                                    //                 widget.deleteLead,
-                                    //                 widget.cloudCall,
-                                    //                 widget.callMasterId,
-                                    //                 pageName: widget.pageName,
-                                    //                 status: widget.status,
-                                    //                 staff: widget.staff,
-                                    //                 isCalled: widget.isCalled,
-                                    //                 fromDate: widget.fromDate,
-                                    //                 toDate: widget.toDate,
-                                    //                 category: widget.category,
-                                    //                 scrollToIndex:
-                                    //                     widget.scrollToIndex,
-                                    //                 searchKey:
-                                    //                     widget.searchKey,
-                                    //                 leadType:
-                                    //                     widget.leadType1,
-                                    //               )),
-                                    //     );
-                                    //   }
-                                    // }
                                   } else {
                                     Common.toastMessaage(
                                         object1.message, Colors.red);
@@ -1758,8 +1560,10 @@ class _AddFollowupState extends State<AddFollowup> {
                       ),
                     ),
                   ),
-                  const Text(
-                    'No Network Found !',
+                  Text(
+                    timeOut == true
+                        ? "There seems to be a temporary issue, \n Please retry to continue"
+                        : 'No Network Found !',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(

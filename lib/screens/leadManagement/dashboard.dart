@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -69,6 +70,7 @@ class _DashboardState extends State<Dashboard> {
   final _toolTipKey5 = GlobalKey<State<Tooltip>>();
   bool? result = true;
   bool? result1 = true;
+  bool timeOut = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Map<String, double> data = {};
   LeadDashboardModel? leadDashboard;
@@ -139,86 +141,99 @@ class _DashboardState extends State<Dashboard> {
   }
 
   getData(token, fromDate, toDate) async {
-    await Permission.notification.request();
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      setState(() {
-        result = true;
-      });
-    } else {
-      setState(() {
-        result = false;
-      });
-    }
-    name = await Common.getSharedPref("name");
-    role = await Common.getSharedPref("role");
-    userId = await Common.getSharedPref("userId");
-    officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
-    unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
-    createLeadPermission = await Common.getSharedPref("createLeadPermission");
-    viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
-    updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
-    deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
-    phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission");
-    accessCallHistoryPermission =
-        await Common.getSharedPref("accessCallHistoryPermission");
-    viewLeadCategoryPermission =
-        await Common.getSharedPref("viewLeadCategoryPermission");
-    cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
-    createLeadCategory = await Common.getSharedPref("createLeadCategory");
-    updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
-    deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
-    accessCallRecordingPermission =
-        await Common.getSharedPref("accessCallRecordingPermission");
-    visibleP = await Common.getSharedPref("isVisible");
-    if (visibleP == 'true') {
-      isVisible = true;
-    } else {
-      isVisible = false;
-    }
-    if (updateLeadPermission == 'true') {
-      updateLeadPermission1 = true;
-    }
-    if (deleteLeadPermission == 'true') {
-      deleteLeadPermission1 = true;
-    }
-    if (cloudCallPermission == 'true') {
-      cloudCallPermission1 = true;
-    }
-    if (createLeadCategory == 'true') {
-      createLeadCategory1 = true;
-    }
-    if (updateLeadCategory == 'true') {
-      updateLeadCategory1 = true;
-    }
-    if (deleteLeadCategory == 'true') {
-      deleteLeadCategory1 = true;
-    }
-    if (accessCallRecordingPermission == 'true') {
-      accessCallRecordingPermission1 = true;
-    }
-    firebaseToken = await FirebaseMessaging.instance.getToken();
-    LoginCheckModel loginCheck =
-        await HttpService.loginCheck(token, firebaseToken);
-    if (loginCheck.data == false) {
-      Common.toastMessaage('Token Expired', Colors.red);
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const Login()),
-            (Route<dynamic> route) => false);
+    setState(() {
+      timeOut = false;
+    });
+    try {
+      await Permission.notification.request();
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi) {
+        setState(() {
+          result = true;
+        });
+      } else {
+        setState(() {
+          result = false;
+        });
       }
-    } else {
-      configure = await HttpService.configure(token);
-      if (configure != null) {
-        setState(() {});
+      name = await Common.getSharedPref("name");
+      role = await Common.getSharedPref("role");
+      userId = await Common.getSharedPref("userId");
+      officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
+      unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
+      createLeadPermission = await Common.getSharedPref("createLeadPermission");
+      viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
+      updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
+      deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
+      phoneCallLogPermission =
+          await Common.getSharedPref("phoneCallLogPermission");
+      accessCallHistoryPermission =
+          await Common.getSharedPref("accessCallHistoryPermission");
+      viewLeadCategoryPermission =
+          await Common.getSharedPref("viewLeadCategoryPermission");
+      cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
+      createLeadCategory = await Common.getSharedPref("createLeadCategory");
+      updateLeadCategory = await Common.getSharedPref("updateLeadCategory");
+      deleteLeadCategory = await Common.getSharedPref("deleteLeadCategory");
+      accessCallRecordingPermission =
+          await Common.getSharedPref("accessCallRecordingPermission");
+      visibleP = await Common.getSharedPref("isVisible");
+      if (visibleP == 'true') {
+        isVisible = true;
+      } else {
+        isVisible = false;
       }
-      leadDashboard = await HttpService.leadDashboard(
-          token, fromdate, todate, fromdate1, todate1);
-      userDashboard = await HttpService.mainDashboard(widget.token);
+      if (updateLeadPermission == 'true') {
+        updateLeadPermission1 = true;
+      }
+      if (deleteLeadPermission == 'true') {
+        deleteLeadPermission1 = true;
+      }
+      if (cloudCallPermission == 'true') {
+        cloudCallPermission1 = true;
+      }
+      if (createLeadCategory == 'true') {
+        createLeadCategory1 = true;
+      }
+      if (updateLeadCategory == 'true') {
+        updateLeadCategory1 = true;
+      }
+      if (deleteLeadCategory == 'true') {
+        deleteLeadCategory1 = true;
+      }
+      if (accessCallRecordingPermission == 'true') {
+        accessCallRecordingPermission1 = true;
+      }
+      firebaseToken = await FirebaseMessaging.instance.getToken();
+      LoginCheckModel loginCheck =
+          await HttpService.loginCheck(token, firebaseToken);
+      if (loginCheck.data == false) {
+        Common.toastMessaage('Token Expired', Colors.red);
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Login()),
+              (Route<dynamic> route) => false);
+        }
+      } else {
+        configure = await HttpService.configure(token);
+        if (configure != null) {
+          setState(() {});
+        }
+        leadDashboard = await HttpService.leadDashboard(
+            token, fromdate, todate, fromdate1, todate1);
+        userDashboard = await HttpService.mainDashboard(widget.token);
+        setState(() {
+          notificationCount = leadDashboard!.data.unreadNotification;
+        });
+      }
       setState(() {
-        notificationCount = leadDashboard!.data.unreadNotification;
+        timeOut = false;
+      });
+    } catch (e) {
+      log("error: $e");
+      setState(() {
+        timeOut = true;
       });
     }
   }
@@ -333,7 +348,7 @@ class _DashboardState extends State<Dashboard> {
           getData(widget.token, fromdate, todate);
           return;
         },
-        child: result == true
+        child: result == true && timeOut == false
             ? Scaffold(
                 key: _scaffoldKey,
                 backgroundColor: Colors.white,
@@ -7943,13 +7958,16 @@ class _DashboardState extends State<Dashboard> {
                           ),
                         ),
                       ),
-                      const Text(
-                        'No Network Found !',
-                        style: TextStyle(
+                      Text(
+                        timeOut == true
+                            ? 'There seems to be a temporary issue !, \n Please retry to continue'
+                            : 'No Network Found !',
+                            textAlign: TextAlign.center,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(
-                        height: 15,
+                        height: 35,
                       ),
                       InkWell(
                         onTap: () {

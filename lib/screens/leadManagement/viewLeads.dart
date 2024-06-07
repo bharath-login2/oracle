@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -119,6 +121,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   String roleId = '';
   String multiBranch = '';
   String phoneCallLogPermission = '';
+  bool timeOut = false;
 
   @override
   void initState() {
@@ -147,10 +150,8 @@ class _ViewLeadsState extends State<ViewLeads> {
     if (widget.pageName == "Closed Leads" ||
         widget.pageName == "Total Called" ||
         widget.pageName == "Rejected Leads") {
-          
-        fromdate = DateTime.parse(widget.fromDate.toString());
-        todate = DateTime.now();
-     
+      fromdate = DateTime.parse(widget.fromDate.toString());
+      todate = DateTime.now();
     }
     getData('desc', true);
     itemPositionsListener.itemPositions.addListener(() {
@@ -165,83 +166,94 @@ class _ViewLeadsState extends State<ViewLeads> {
 
   void getData(sort, isFirst) async {
     //print('scrollIndex1:${widget.scrollToIndex}');
-
-    if (!isLoading) {
-      setState(() {
-        isLoading = true;
-      });
-      selectedIUsers.clear();
-      selectedUserNumbers.clear();
-      final connectivityResult = await (Connectivity().checkConnectivity());
-      if (connectivityResult == ConnectivityResult.mobile ||
-          connectivityResult == ConnectivityResult.wifi) {
+    setState(() {
+      timeOut = false;
+    });
+    try {
+      if (!isLoading) {
         setState(() {
-          result = true;
+          isLoading = true;
         });
-      } else {
-        setState(() {
-          result = false;
-        });
-      }
-      statusWise = await Common.getSharedPref("statusWise");
-      roleId = await Common.getSharedPref("roleId");
-      multiBranch = await Common.getSharedPref("multiBranch");
-      setState(() {});
-      if (statusWise == 'yes') {
-        statusWiseId = await Common.getSharedPref("statusWisId");
-        statusCatId = await Common.getSharedPref("statusCatId");
-        type = await Common.getSharedPref("type");
-        viewLeads = await HttpService.viewLeadsSts(
-            widget.token,
-            fromdate,
-            todate,
-            type,
-            statusCatId,
-            statusWiseId,
-            sort,
-            page,
-            pageSize,
-            isFirst,
-            branch);
+        selectedIUsers.clear();
+        selectedUserNumbers.clear();
+        final connectivityResult = await (Connectivity().checkConnectivity());
+        if (connectivityResult == ConnectivityResult.mobile ||
+            connectivityResult == ConnectivityResult.wifi) {
+          setState(() {
+            result = true;
+          });
+        } else {
+          setState(() {
+            result = false;
+          });
+        }
+        statusWise = await Common.getSharedPref("statusWise");
+        roleId = await Common.getSharedPref("roleId");
+        multiBranch = await Common.getSharedPref("multiBranch");
+        setState(() {});
+        if (statusWise == 'yes') {
+          statusWiseId = await Common.getSharedPref("statusWisId");
+          statusCatId = await Common.getSharedPref("statusCatId");
+          type = await Common.getSharedPref("type");
+          viewLeads = await HttpService.viewLeadsSts(
+              widget.token,
+              fromdate,
+              todate,
+              type,
+              statusCatId,
+              statusWiseId,
+              sort,
+              page,
+              pageSize,
+              isFirst,
+              branch);
+          if (viewLeads != null) {
+            // fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
+            // todate = DateTime.parse(viewLeads!.data!.todate.toString());
+            setState(() {});
+          }
+        } else {
+          viewLeads = await HttpService.viewLeads(
+              widget.token,
+              fromdate ?? "",
+              todate ?? "",
+              category,
+              status,
+              staff,
+              isCalled,
+              priority,
+              sort,
+              page,
+              pageSize,
+              isFirst,
+              widget.leadType,
+              branch);
+        }
         if (viewLeads != null) {
-          // fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());
-          // todate = DateTime.parse(viewLeads!.data!.todate.toString());
+          //  if()   {fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());}
+          //   if()  { todate = DateTime.parse(viewLeads!.data!.todate.toString());}
           setState(() {});
         }
+        commonDetails = await HttpService.addLeadCommonData(widget.token);
+        if (commonDetails != null) {
+          setState(() {});
+        }
+        configure = await HttpService.configure(widget.token);
+        setState(() {
+          items.addAll(viewLeads!.data!.details as Iterable);
+          page++;
+          isLoading = false;
+        });
       } else {
-        viewLeads = await HttpService.viewLeads(
-            widget.token,
-            fromdate ?? "",
-            todate ?? "",
-            category,
-            status,
-            staff,
-            isCalled,
-            priority,
-            sort,
-            page,
-            pageSize,
-            isFirst,
-            widget.leadType,
-            branch);
+        // Handle error
       }
-      if (viewLeads != null) {
-        //  if()   {fromdate = DateTime.parse(viewLeads!.data!.fromdate.toString());}
-        //   if()  { todate = DateTime.parse(viewLeads!.data!.todate.toString());}
-        setState(() {});
-      }
-      commonDetails = await HttpService.addLeadCommonData(widget.token);
-      if (commonDetails != null) {
-        setState(() {});
-      }
-      configure = await HttpService.configure(widget.token);
+    } catch (e) {
       setState(() {
-        items.addAll(viewLeads!.data!.details as Iterable);
-        page++;
         isLoading = false;
+        timeOut = true;
       });
-    } else {
-      // Handle error
+
+      log("error: $e");
     }
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
@@ -256,7 +268,7 @@ class _ViewLeadsState extends State<ViewLeads> {
         getData('desc', true);
         return;
       },
-      child: result == true
+      child: result == true && timeOut == false
           ? Scaffold(
               backgroundColor: Colors.grey.shade200,
               appBar: PreferredSize(
@@ -2759,16 +2771,20 @@ class _ViewLeadsState extends State<ViewLeads> {
                         ),
                       ),
                     ),
-                    const Text(
-                      'No Network Found !',
+                    Text(textAlign: TextAlign.center,
+                      timeOut == true
+                          ? "There seems to be a temporary issue !, \n Please retry to continue"
+                          : 'No Network Found !',
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(
                       height: 15,
                     ),
                     InkWell(
                       onTap: () {
+                        page = 1;
+                        items.clear();
                         getData('desc', true);
                       },
                       child: SizedBox(
