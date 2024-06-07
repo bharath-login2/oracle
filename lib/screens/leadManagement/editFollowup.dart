@@ -139,6 +139,60 @@ class _EditFollowupState extends State<EditFollowup> {
     }
   }
 
+  editFollowup() async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi) {
+      if (callResultId == '') {
+        Common.toastMessaage('Choose any Status', Colors.red);
+      } else if (callResultId == '2' && nextFollowupDate1.text == '') {
+        Common.toastMessaage('Choose next followup date', Colors.red);
+      } else {
+        if (context.mounted) {
+          Common.showProgressDialog(context, "Loading..");
+        }
+        print(callResponseId);
+        EditLeadFollowupModel object1 = await HttpService.editLeadsFollowup(
+            widget.token,
+            widget.callFollowupId,
+            callResultId,
+            nextFollowupDate1.text,
+            cost.text,
+            leadTypeId,
+            leadSubTypeId,
+            remarks.text,
+            calledDate1.text,
+            widget.callMasterId,
+            callResponseId,
+            callResultReasonId);
+        if (object1.status == true) {
+          Common.toastMessaage(object1.message, Colors.green);
+          if (context.mounted) {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          }
+        } else {
+          Common.toastMessaage(object1.message, Colors.red);
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
+        }
+      }
+    } else {
+      setState(() {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No Network Found..Try Again Later..'),
+            backgroundColor: Colors.redAccent,
+            elevation: 10,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(10),
+          ),
+        );
+      });
+    }
+  }
+
   callResultReasonList() async {
     callResultReason =
         await HttpService.callResultReasonLiat(widget.token, callResultId);
@@ -809,68 +863,7 @@ class _EditFollowupState extends State<EditFollowup> {
                           ),
                           InkWell(
                             onTap: () async {
-                              final connectivityResult =
-                                  await (Connectivity().checkConnectivity());
-                              if (connectivityResult ==
-                                      ConnectivityResult.mobile ||
-                                  connectivityResult ==
-                                      ConnectivityResult.wifi) {
-                                if (callResultId == '') {
-                                  Common.toastMessaage(
-                                      'Choose any Status', Colors.red);
-                                } else if (callResultId == '2' &&
-                                    nextFollowupDate1.text == '') {
-                                  Common.toastMessaage(
-                                      'Choose next followup date', Colors.red);
-                                } else {
-                                  if (context.mounted) {
-                                    Common.showProgressDialog(
-                                        context, "Loading..");
-                                  }
-                                  print(callResponseId);
-                                  EditLeadFollowupModel object1 =
-                                      await HttpService.editLeadsFollowup(
-                                          widget.token,
-                                          widget.callFollowupId,
-                                          callResultId,
-                                          nextFollowupDate1.text,
-                                          cost.text,
-                                          leadTypeId,
-                                          leadSubTypeId,
-                                          remarks.text,
-                                          calledDate1.text,
-                                          widget.callMasterId,
-                                          callResponseId,
-                                          callResultReasonId);
-                                  if (object1.status == true) {
-                                    Common.toastMessaage(
-                                        object1.message, Colors.green);
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                      Navigator.pop(context);
-                                    }
-                                  } else {
-                                    Common.toastMessaage(
-                                        object1.message, Colors.red);
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                    }
-                                  }
-                                }
-                              } else {
-                                setState(() {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'No Network Found..Try Again Later..'),
-                                      backgroundColor: Colors.redAccent,
-                                      elevation: 10,
-                                      behavior: SnackBarBehavior.floating,
-                                      margin: EdgeInsets.all(10),
-                                    ),
-                                  );
-                                });
-                              }
+                              editFollowup();
                             },
                             child: Container(
                               width: MediaQuery.of(context).size.width * 0.45,

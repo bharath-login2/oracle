@@ -68,7 +68,7 @@ class _LoginState extends State<Login> {
           serverChoose = true;
         }
       });
-    } catch(e){
+    } catch (e) {
       setState(() {
         timeOut = true;
         _loading = false;
@@ -194,16 +194,16 @@ class _LoginState extends State<Login> {
           );
         });
       }
-      if (Platform.isAndroid) {
-        _channel.setMethodCallHandler((call) async {
-          if (call.method == 'setAsBackgroundService') {
-            initService();
-            FlutterBackgroundService().invoke('setAsBackground');
-          }
-        });
-        Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-      }
-    } on TimeoutException {
+      // if (Platform.isAndroid) {
+      //   _channel.setMethodCallHandler((call) async {
+      //     if (call.method == 'setAsBackgroundService') {
+      //       initService();
+      //       FlutterBackgroundService().invoke('setAsBackground');
+      //     }
+      //   });
+      //   Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+      // }
+    } catch (e) {
       setState(() {
         timeOut = true;
       });
@@ -675,8 +675,10 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   Text(
-                    timeOut == true ? "There seems to be a temporary issue !, \n Please retry to continue" : 'No Network Found !',
-                   textAlign: TextAlign.center,
+                    timeOut == true
+                        ? "There seems to be a temporary issue !, \n Please retry to continue"
+                        : 'No Network Found !',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
                   ),
