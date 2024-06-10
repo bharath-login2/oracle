@@ -8090,7 +8090,9 @@ class _DashboardState extends State<Dashboard> {
       ))
           .then((r) {
         getData(widget.token, fromdate, todate);
-        if (loadmore == true) {}
+        if (loadmore == true) {
+          getStaffwise();
+        }
       });
     });
   }
