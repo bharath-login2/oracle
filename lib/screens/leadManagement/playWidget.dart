@@ -74,14 +74,13 @@ class AudioItemsState extends State<AudioItems> {
 
     Future.delayed(Duration.zero, () async {
       audioPlayer.onDurationChanged.listen((Duration d) {
-        //get the duration of audio
         maxDuration = d.inMilliseconds;
         setState(() {});
       });
 
       audioPlayer.onPositionChanged.listen((Duration p) {
         currentPos =
-            p.inMilliseconds; //get the current position of playing audio
+            p.inMilliseconds; 
 
         //generating the duration label
         int shours = Duration(milliseconds: currentPos).inHours;

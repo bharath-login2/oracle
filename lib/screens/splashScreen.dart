@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_this
+
 import 'dart:async';
 import 'dart:math';
 import 'package:app_links/app_links.dart';
@@ -36,6 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
   );
   late AppLinks _appLinks;
 
+  // ignore: unused_field
   StreamSubscription<Uri>? _linkSubscription;
 
   @override
@@ -53,10 +56,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // Check initial link if app was in cold state (terminated)
     final appLink = await _appLinks.getInitialAppLink();
     if (appLink != null) {
-      print('getInitialAppLink: $appLink');
       openAppLink(appLink);
     } else {
-      print('else condition worked');
       String? token = await Common.getSharedPref("token");
       if (mounted) {
         Navigator.of(context)
@@ -66,25 +67,24 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Handle link when app is in warm state (front or background)
     _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      print('onAppLink: $uri');
       openAppLink(uri);
     });
   }
 
   Future<void> openAppLink(Uri uri) async {
-    print('fragment: ${uri.fragment}');
     String? token = await Common.getSharedPref("token");
     String? leadId = await Common.getSharedPref("openAppLeadId");
     String editLead = await Common.getSharedPref("updateLeadPermission");
     String deleteLead = await Common.getSharedPref("deleteLeadPermission");
     String cloudCall = await Common.getSharedPref("cloudCallPermission");
-    print(leadId);
-    // _navigatorKey.currentState?.pushNamed('/form');
     if (leadId == '0') {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => Dashboard(token),
-      ));
+      if (mounted) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => Dashboard(token),
+        ));
+      }
     } else {
+      if (mounted) {
       Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => LeadDetails(
           token.toString(),
@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
           toDate: DateTime.now().toString(),
           pageName: 'notification',
         ),
-      ));
+      ));}
     }
   }
 
@@ -136,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         _loadWidget();
       }
-    } catch(e) {
+    } catch (e) {
       setState(() {
         timeOut = true;
       });
@@ -210,17 +210,20 @@ class _SplashScreenState extends State<SplashScreen> {
                   Container(
                     width: 300,
                     height: 300,
-                    decoration:  const BoxDecoration(
+                    decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/icons/noNetwork.jpg'),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                   Text(
-                  timeOut == true?"There seems to be a temporary issue !, \n Please retry to continue" : 'No Network Found !',
-                  textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    timeOut == true
+                        ? "There seems to be a temporary issue !, \n Please retry to continue"
+                        : 'No Network Found !',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -284,7 +287,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
 extension on String {
   bool toBoolean() {
-    print(this);
     return (this.toLowerCase() == "true" || this.toLowerCase() == "1")
         ? true
         : false;

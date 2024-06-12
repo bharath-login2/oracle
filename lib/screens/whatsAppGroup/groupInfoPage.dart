@@ -62,135 +62,267 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => GroupDetails(
-                  widget.token,widget.groupname,widget.imgUrl!,widget.groupId!
-              )),
-        );
-        return true;
-      },
-      child: SafeArea(
-        child: result == true
-            ?Scaffold(
-          backgroundColor: Colors.white,
-          body: groupInfo!=null?
-          CustomScrollView(
-            slivers: [
-              SliverPersistentHeader(
-                delegate: WhatsappAppbar(MediaQuery.of(context).size.width,groupInfo!.data!.image.toString(),widget.token!),
-                pinned: true,
-              ),
-              SliverToBoxAdapter(
-                child: Column(
-                  children:  [
-                    Column(
+    return SafeArea(
+      child: result == true
+          ?Scaffold(
+        backgroundColor: Colors.white,
+        body: groupInfo!=null?
+        CustomScrollView(
+          slivers: [
+            SliverPersistentHeader(
+              delegate: WhatsappAppbar(MediaQuery.of(context).size.width,groupInfo!.data!.image.toString(),widget.token!),
+              pinned: true,
+            ),
+            SliverToBoxAdapter(
+              child: Column(
+                children:  [
+                  Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      groupInfo!.data!.name.toString(),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      groupInfo!.data!.contactNos.toString(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 30),
+                  ],
+                ), Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 20),
-                      Text(
-                        groupInfo!.data!.name.toString(),
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        groupInfo!.data!.contactNos.toString(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 30),
-                    ],
-                  ), Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: (){
-                            showGeneralDialog(
-                              barrierLabel: "showGeneralDialog",
-                              barrierDismissible: true,
-                              barrierColor: Colors.black.withOpacity(0.6),
-                              transitionDuration: const Duration(milliseconds: 400),
-                              context: context,
-                              pageBuilder: (context, _, __) {
-                                return Align(
-                                  alignment: Alignment.center,
-                                  child:IntrinsicHeight(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 10,right: 10),
-                                      child: Container(
-                                        width: double.maxFinite,
-                                        clipBehavior: Clip.antiAlias,
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(10),
-                                            topRight: Radius.circular(10),
-                                            bottomRight: Radius.circular(10),
-                                            bottomLeft: Radius.circular(10),
-                                          ),
+                      InkWell(
+                        onTap: (){
+                          showGeneralDialog(
+                            barrierLabel: "showGeneralDialog",
+                            barrierDismissible: true,
+                            barrierColor: Colors.black.withOpacity(0.6),
+                            transitionDuration: const Duration(milliseconds: 400),
+                            context: context,
+                            pageBuilder: (context, _, __) {
+                              return Align(
+                                alignment: Alignment.center,
+                                child:IntrinsicHeight(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10,right: 10),
+                                    child: Container(
+                                      width: double.maxFinite,
+                                      clipBehavior: Clip.antiAlias,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10),
+                                          topRight: Radius.circular(10),
+                                          bottomRight: Radius.circular(10),
+                                          bottomLeft: Radius.circular(10),
                                         ),
-                                        child: Material(
-                                          child: Column(
-                                            children: [
-                                              const SizedBox(height: 20),
-                                              const Text(
-                                                'Add Contacts',
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
+                                      ),
+                                      child: Material(
+                                        child: Column(
+                                          children: [
+                                            const SizedBox(height: 20),
+                                            const Text(
+                                              'Add Contacts',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                              const SizedBox(height: 20),
-                                              TextFormField(
-                                                maxLines: 10,
-                                                controller: numbers,
-                                                style: const TextStyle(
-                                                  color: Colors.black,
-                                                ),
-                                                validator: (value) {
-                                                  if (value!.isEmpty) return "Numbers";
-                                                  return null;
-                                                },
-                                                keyboardType: TextInputType.name,
-                                                decoration: InputDecoration(
-                                                    filled: true,
-                                                    //<-- SEE HERE
-                                                    fillColor: Colors.white,
-                                                    counterText: "",
-                                                    hintText: "Numbers with country code (eg:9199476676xx,9195268841xx,etc..)",
-                                                    isDense: true,
-                                                    border: OutlineInputBorder(
-                                                        borderSide: BorderSide(
-                                                            color: Colors.purple.shade100),
-                                                        borderRadius: BorderRadius.circular(10))),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            TextFormField(
+                                              maxLines: 10,
+                                              controller: numbers,
+                                              style: const TextStyle(
+                                                color: Colors.black,
                                               ),
-                                              const SizedBox(height: 25,),
-                                              Container(
-                                                height: 40,
-                                                width: double.maxFinite,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF3375e0),
-                                                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                                                ),
-                                                child: RawMaterialButton(
-                                                  onPressed: () async {
-                                                    if(numbers.text.isEmpty){
-                                                      Common.toastMessaage('Please Enter Numbers', Colors.red);
+                                              validator: (value) {
+                                                if (value!.isEmpty) return "Numbers";
+                                                return null;
+                                              },
+                                              keyboardType: TextInputType.name,
+                                              decoration: InputDecoration(
+                                                  filled: true,
+                                                  //<-- SEE HERE
+                                                  fillColor: Colors.white,
+                                                  counterText: "",
+                                                  hintText: "Numbers with country code (eg:9199476676xx,9195268841xx,etc..)",
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors.purple.shade100),
+                                                      borderRadius: BorderRadius.circular(10))),
+                                            ),
+                                            const SizedBox(height: 25,),
+                                            Container(
+                                              height: 40,
+                                              width: double.maxFinite,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFF3375e0),
+                                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                                              ),
+                                              child: RawMaterialButton(
+                                                onPressed: () async {
+                                                  if(numbers.text.isEmpty){
+                                                    Common.toastMessaage('Please Enter Numbers', Colors.red);
+                                                  }
+                                                  else{
+                                                    Common.showProgressDialog(context, "Loading..");
+                                                    AddContactNumberModel addContact=await HttpService.addContactNumber(widget.token,numbers.text,widget.groupId);
+                                                    if(addContact.data==true)
+                                                    {
+                                                      Common.toastMessaage(
+                                                          addContact.message, Colors.green);
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) => GroupInfoPage(
+                                                                widget.token,widget.groupId,widget.groupname,widget.imgUrl)),
+                                                      );
                                                     }
                                                     else{
-                                                      Common.showProgressDialog(context, "Loading..");
-                                                      AddContactNumberModel addContact=await HttpService.addContactNumber(widget.token,numbers.text,widget.groupId);
-                                                      if(addContact.data==true)
-                                                      {
-                                                        Common.toastMessaage(
-                                                            addContact.message, Colors.green);
+                                                      Common.toastMessaage(
+                                                          addContact.message, Colors.red);
+                                                      Navigator.of(context).pop();
+                                                    }
+                                                  }
+                                                },
+                                                child: const Center(
+                                                  child: Text(
+                                                    'Continue',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            transitionBuilder: (_, animation1, __, child) {
+                              return SlideTransition(
+                                position: Tween(
+                                  begin: const Offset(0, 1),
+                                  end: const Offset(0, 0),
+                                ).animate(animation1),
+                                child: child,
+                              );
+                            },
+                          );
+                        },
+                        child: const Column(
+                          children: [
+                            Icon(
+                              Icons.person_add,
+                              size: 25,
+                              color: Color.fromARGB(255, 8, 141, 125),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Add",
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      InkWell(
+                        onTap: (){
+                          groupNameEdit.text=groupInfo!.data!.name.toString();
+                          showGeneralDialog(
+                            barrierLabel: "showGeneralDialog",
+                            barrierDismissible: true,
+                            barrierColor: Colors.black.withOpacity(0.6),
+                            transitionDuration: const Duration(milliseconds: 400),
+                            context: context,
+                            pageBuilder: (context, _, __) {
+                              return Align(
+                                alignment: Alignment.center,
+                                child:IntrinsicHeight(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10,right: 10),
+                                    child: Container(
+                                      width: double.maxFinite,
+                                      clipBehavior: Clip.antiAlias,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10),
+                                          topRight: Radius.circular(10),
+                                          bottomRight: Radius.circular(10),
+                                          bottomLeft: Radius.circular(10),
+                                        ),
+                                      ),
+                                      child: Material(
+                                        child: Column(
+                                          children: [
+                                            const SizedBox(height: 20),
+                                            const Text(
+                                              'Group Name Edit',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            TextFormField(
+                                              controller: groupNameEdit,
+                                              decoration: const InputDecoration(
+                                                  contentPadding: EdgeInsets.only(left: 10,top: 2,bottom: 2),
+                                                  labelText: 'Group Name',
+                                                  fillColor: Colors.white,
+                                                  filled: true,
+                                                  prefixIcon: Icon(Icons.person,
+                                                      color: Colors.grey),
+                                                  border: OutlineInputBorder(),
+                                                  focusedBorder:
+                                                  OutlineInputBorder(
+                                                    borderSide: BorderSide(
+                                                        color: Colors.grey),
+                                                  ),
+                                                  labelStyle: TextStyle(
+                                                      color: Colors.grey)),
+                                            ),
+    
+                                            const SizedBox(height: 25,),
+                                            Container(
+                                              height: 40,
+                                              width: double.maxFinite,
+                                              decoration: const BoxDecoration(
+                                                color: Color(0xFF3375e0),
+                                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                                              ),
+                                              child: RawMaterialButton(
+                                                onPressed: () async {
+                                                  if(groupNameEdit.text.isEmpty){
+                                                    Common.toastMessaage('Group Name cannot empty', Colors.red);
+                                                  }
+                                                  else{
+                                                    Common.showProgressDialog(context, "Loading..");
+                                                    EditContactGroupModel editGroupName=await HttpService.editContactGroupName(widget.token,groupNameEdit.text,widget.groupId);
+                                                    if(editGroupName.data==true)
+                                                    {
+                                                      Common.toastMessaage(
+                                                          editGroupName.message, Colors.green);
+                                                      if(mounted){
                                                         Navigator.push(
                                                           context,
                                                           MaterialPageRoute(
@@ -198,512 +330,368 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                                                                   widget.token,widget.groupId,widget.groupname,widget.imgUrl)),
                                                         );
                                                       }
-                                                      else{
-                                                        Common.toastMessaage(
-                                                            addContact.message, Colors.red);
-                                                        Navigator.of(context).pop();
-                                                      }
-                                                    }
-                                                  },
-                                                  child: const Center(
-                                                    child: Text(
-                                                      'Continue',
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                              transitionBuilder: (_, animation1, __, child) {
-                                return SlideTransition(
-                                  position: Tween(
-                                    begin: const Offset(0, 1),
-                                    end: const Offset(0, 0),
-                                  ).animate(animation1),
-                                  child: child,
-                                );
-                              },
-                            );
-                          },
-                          child: const Column(
-                            children: [
-                              Icon(
-                                Icons.person_add,
-                                size: 25,
-                                color: Color.fromARGB(255, 8, 141, 125),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                "Add",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        InkWell(
-                          onTap: (){
-                            groupNameEdit.text=groupInfo!.data!.name.toString();
-                            showGeneralDialog(
-                              barrierLabel: "showGeneralDialog",
-                              barrierDismissible: true,
-                              barrierColor: Colors.black.withOpacity(0.6),
-                              transitionDuration: const Duration(milliseconds: 400),
-                              context: context,
-                              pageBuilder: (context, _, __) {
-                                return Align(
-                                  alignment: Alignment.center,
-                                  child:IntrinsicHeight(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 10,right: 10),
-                                      child: Container(
-                                        width: double.maxFinite,
-                                        clipBehavior: Clip.antiAlias,
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(10),
-                                            topRight: Radius.circular(10),
-                                            bottomRight: Radius.circular(10),
-                                            bottomLeft: Radius.circular(10),
-                                          ),
-                                        ),
-                                        child: Material(
-                                          child: Column(
-                                            children: [
-                                              const SizedBox(height: 20),
-                                              const Text(
-                                                'Group Name Edit',
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 20),
-                                              TextFormField(
-                                                controller: groupNameEdit,
-                                                decoration: const InputDecoration(
-                                                    contentPadding: EdgeInsets.only(left: 10,top: 2,bottom: 2),
-                                                    labelText: 'Group Name',
-                                                    fillColor: Colors.white,
-                                                    filled: true,
-                                                    prefixIcon: Icon(Icons.person,
-                                                        color: Colors.grey),
-                                                    border: OutlineInputBorder(),
-                                                    focusedBorder:
-                                                    OutlineInputBorder(
-                                                      borderSide: BorderSide(
-                                                          color: Colors.grey),
-                                                    ),
-                                                    labelStyle: TextStyle(
-                                                        color: Colors.grey)),
-                                              ),
-
-                                              const SizedBox(height: 25,),
-                                              Container(
-                                                height: 40,
-                                                width: double.maxFinite,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF3375e0),
-                                                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                                                ),
-                                                child: RawMaterialButton(
-                                                  onPressed: () async {
-                                                    if(groupNameEdit.text.isEmpty){
-                                                      Common.toastMessaage('Group Name cannot empty', Colors.red);
+    
                                                     }
                                                     else{
-                                                      Common.showProgressDialog(context, "Loading..");
-                                                      EditContactGroupModel editGroupName=await HttpService.editContactGroupName(widget.token,groupNameEdit.text,widget.groupId);
-                                                      if(editGroupName.data==true)
-                                                      {
-                                                        Common.toastMessaage(
-                                                            editGroupName.message, Colors.green);
-                                                        if(mounted){
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) => GroupInfoPage(
-                                                                    widget.token,widget.groupId,widget.groupname,widget.imgUrl)),
-                                                          );
-                                                        }
-
+                                                      Common.toastMessaage(
+                                                          editGroupName.message, Colors.red);
+                                                      if(mounted){
+                                                        Navigator.of(context).pop();
                                                       }
-                                                      else{
-                                                        Common.toastMessaage(
-                                                            editGroupName.message, Colors.red);
-                                                        if(mounted){
-                                                          Navigator.of(context).pop();
-                                                        }
-
-                                                      }
+    
                                                     }
-                                                  },
-                                                  child: const Center(
-                                                    child: Text(
-                                                      'Continue',
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
+                                                  }
+                                                },
+                                                child: const Center(
+                                                  child: Text(
+                                                    'Continue',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w500,
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                              transitionBuilder: (_, animation1, __, child) {
-                                return SlideTransition(
-                                  position: Tween(
-                                    begin: const Offset(0, 1),
-                                    end: const Offset(0, 0),
-                                  ).animate(animation1),
-                                  child: child,
-                                );
-                              },
-                            );
-                          },
-                          child: const Column(
-                            children: [
-                              Icon(
-                                Icons.edit,
-                                size: 25,
-                                color: Colors.blue,
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                "Edit",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
                                 ),
-                              )
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 20),
-                        InkWell(
-                          onTap: (){
-                            _deleteGroup(context);
-                          },
-                          child: const Column(
-                            children: [
-                              Icon(
-                                Icons.delete,
-                                size: 25,
-                                color: Colors.red,
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                "Delete",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    )],
-                ),
-              ),
-              SliverList(
-                  delegate: SliverChildListDelegate( [
-                    const SizedBox(height: 20),
-                    const Divider(
-                      height: 1,
-                    ),
-                    ListTile(
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Date Created",style: TextStyle(color: Colors.grey.shade500,fontWeight: FontWeight.bold)),
-                          Text( groupInfo!.data!.createdDate.toString(),style: TextStyle(color: Colors.grey.shade500,fontWeight: FontWeight.bold),),
-                        ],
-                      ),
-                    ),
-                    const Divider(
-                      height: 1,
-                    ),
-                    const ListTile(
-                      title: Text("Contacts"),
-                      leading: Icon(Icons.person),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8, right: 8, top: 10),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: groupInfo!.data!.contactNumbers!.length,
-                        itemBuilder: (context, i) => Column(
+                              );
+                            },
+                            transitionBuilder: (_, animation1, __, child) {
+                              return SlideTransition(
+                                position: Tween(
+                                  begin: const Offset(0, 1),
+                                  end: const Offset(0, 0),
+                                ).animate(animation1),
+                                child: child,
+                              );
+                            },
+                          );
+                        },
+                        child: const Column(
                           children: [
-                            ListTile(
-                              onTap: () {
-
-                              },
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.grey.shade300,
-                                radius: 20,
-                                child: const Icon(Icons.person,color: Colors.black,),
+                            Icon(
+                              Icons.edit,
+                              size: 25,
+                              color: Colors.blue,
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Edit",
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
                               ),
-                              title: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    groupInfo!.data!.contactNumbers![i].phone.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      InkWell(
+                        onTap: (){
+                          _deleteGroup(context);
+                        },
+                        child: const Column(
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              size: 25,
+                              color: Colors.red,
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "Delete",
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  )],
+              ),
+            ),
+            SliverList(
+                delegate: SliverChildListDelegate( [
+                  const SizedBox(height: 20),
+                  const Divider(
+                    height: 1,
+                  ),
+                  ListTile(
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Date Created",style: TextStyle(color: Colors.grey.shade500,fontWeight: FontWeight.bold)),
+                        Text( groupInfo!.data!.createdDate.toString(),style: TextStyle(color: Colors.grey.shade500,fontWeight: FontWeight.bold),),
+                      ],
+                    ),
+                  ),
+                  const Divider(
+                    height: 1,
+                  ),
+                  const ListTile(
+                    title: Text("Contacts"),
+                    leading: Icon(Icons.person),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, right: 8, top: 10),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: groupInfo!.data!.contactNumbers!.length,
+                      itemBuilder: (context, i) => Column(
+                        children: [
+                          ListTile(
+                            onTap: () {
+    
+                            },
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.grey.shade300,
+                              radius: 20,
+                              child: const Icon(Icons.person,color: Colors.black,),
+                            ),
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  groupInfo!.data!.contactNumbers![i].phone.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  PopupMenuButton(
-                                    // add icon, by default "3 dot" icon
-                                      child: const SizedBox(
-                                        width: 35,
-                                        height: 35,
-                                        child: Padding(
-                                          padding:
-                                          EdgeInsets.all(8.0),
-                                          child: Icon(Icons.more_horiz, size: 25),
-                                        ),
-
+                                ),
+                                PopupMenuButton(
+                                  // add icon, by default "3 dot" icon
+                                    child: const SizedBox(
+                                      width: 35,
+                                      height: 35,
+                                      child: Padding(
+                                        padding:
+                                        EdgeInsets.all(8.0),
+                                        child: Icon(Icons.more_horiz, size: 25),
                                       ),
-                                      itemBuilder: (context) {
-                                        return [
-                                          const PopupMenuItem<int>(
-                                              value: 1,
-                                              child: Text('Edit')),
-                                          const PopupMenuItem<int>(
-                                              value: 2,
-                                              child: Text('Delete')),
-
-                                        ];
-                                      },
-                                      onSelected: (value) {
-                                        if(value==1)
-                                          {
-                                            editNumber.text=groupInfo!.data!.contactNumbers![i].phone.toString();
-                                            showGeneralDialog(
-                                              barrierLabel: "showGeneralDialog",
-                                              barrierDismissible: true,
-                                              barrierColor: Colors.black.withOpacity(0.6),
-                                              transitionDuration: const Duration(milliseconds: 400),
-                                              context: context,
-                                              pageBuilder: (context, _, __) {
-                                                return Align(
-                                                  alignment: Alignment.center,
-                                                  child:IntrinsicHeight(
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.only(left: 10,right: 10),
-                                                      child: Container(
-                                                        width: double.maxFinite,
-                                                        clipBehavior: Clip.antiAlias,
-                                                        padding: const EdgeInsets.all(16),
-                                                        decoration: const BoxDecoration(
-                                                          color: Colors.white,
-                                                          borderRadius: BorderRadius.only(
-                                                            topLeft: Radius.circular(10),
-                                                            topRight: Radius.circular(10),
-                                                            bottomRight: Radius.circular(10),
-                                                            bottomLeft: Radius.circular(10),
-                                                          ),
+    
+                                    ),
+                                    itemBuilder: (context) {
+                                      return [
+                                        const PopupMenuItem<int>(
+                                            value: 1,
+                                            child: Text('Edit')),
+                                        const PopupMenuItem<int>(
+                                            value: 2,
+                                            child: Text('Delete')),
+    
+                                      ];
+                                    },
+                                    onSelected: (value) {
+                                      if(value==1)
+                                        {
+                                          editNumber.text=groupInfo!.data!.contactNumbers![i].phone.toString();
+                                          showGeneralDialog(
+                                            barrierLabel: "showGeneralDialog",
+                                            barrierDismissible: true,
+                                            barrierColor: Colors.black.withOpacity(0.6),
+                                            transitionDuration: const Duration(milliseconds: 400),
+                                            context: context,
+                                            pageBuilder: (context, _, __) {
+                                              return Align(
+                                                alignment: Alignment.center,
+                                                child:IntrinsicHeight(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(left: 10,right: 10),
+                                                    child: Container(
+                                                      width: double.maxFinite,
+                                                      clipBehavior: Clip.antiAlias,
+                                                      padding: const EdgeInsets.all(16),
+                                                      decoration: const BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.only(
+                                                          topLeft: Radius.circular(10),
+                                                          topRight: Radius.circular(10),
+                                                          bottomRight: Radius.circular(10),
+                                                          bottomLeft: Radius.circular(10),
                                                         ),
-                                                        child: Material(
-                                                          child: Column(
-                                                            children: [
-                                                              const SizedBox(height: 20),
-                                                              const Text(
-                                                                'Edit Phone Number',
-                                                                style: TextStyle(
-                                                                  fontSize: 18,
-                                                                  fontWeight: FontWeight.w500,
-                                                                ),
+                                                      ),
+                                                      child: Material(
+                                                        child: Column(
+                                                          children: [
+                                                            const SizedBox(height: 20),
+                                                            const Text(
+                                                              'Edit Phone Number',
+                                                              style: TextStyle(
+                                                                fontSize: 18,
+                                                                fontWeight: FontWeight.w500,
                                                               ),
-                                                              const SizedBox(height: 20),
-                                                              TextFormField(
-                                                                controller: editNumber,
-                                                                decoration: const InputDecoration(
-                                                                    contentPadding: EdgeInsets.only(left: 10,top: 2,bottom: 2),
-                                                                    labelText: 'Phone Number',
-                                                                    fillColor: Colors.white,
-                                                                    filled: true,
-                                                                    prefixIcon: Icon(Icons.phone_android_rounded,
+                                                            ),
+                                                            const SizedBox(height: 20),
+                                                            TextFormField(
+                                                              controller: editNumber,
+                                                              decoration: const InputDecoration(
+                                                                  contentPadding: EdgeInsets.only(left: 10,top: 2,bottom: 2),
+                                                                  labelText: 'Phone Number',
+                                                                  fillColor: Colors.white,
+                                                                  filled: true,
+                                                                  prefixIcon: Icon(Icons.phone_android_rounded,
+                                                                      color: Colors.grey),
+                                                                  border: OutlineInputBorder(),
+                                                                  focusedBorder:
+                                                                  OutlineInputBorder(
+                                                                    borderSide: BorderSide(
                                                                         color: Colors.grey),
-                                                                    border: OutlineInputBorder(),
-                                                                    focusedBorder:
-                                                                    OutlineInputBorder(
-                                                                      borderSide: BorderSide(
-                                                                          color: Colors.grey),
-                                                                    ),
-                                                                    labelStyle: TextStyle(
-                                                                        color: Colors.grey)),
+                                                                  ),
+                                                                  labelStyle: TextStyle(
+                                                                      color: Colors.grey)),
+                                                            ),
+    
+                                                            const SizedBox(height: 25,),
+                                                            Container(
+                                                              height: 40,
+                                                              width: double.maxFinite,
+                                                              decoration: const BoxDecoration(
+                                                                color: Color(0xFF3375e0),
+                                                                borderRadius: BorderRadius.all(Radius.circular(8)),
                                                               ),
-
-                                                              const SizedBox(height: 25,),
-                                                              Container(
-                                                                height: 40,
-                                                                width: double.maxFinite,
-                                                                decoration: const BoxDecoration(
-                                                                  color: Color(0xFF3375e0),
-                                                                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                                                                ),
-                                                                child: RawMaterialButton(
-                                                                  onPressed: () async {
-                                                                    if(editNumber.text.isEmpty){
-                                                                      Common.toastMessaage('Number cannot empty', Colors.red);
+                                                              child: RawMaterialButton(
+                                                                onPressed: () async {
+                                                                  if(editNumber.text.isEmpty){
+                                                                    Common.toastMessaage('Number cannot empty', Colors.red);
+                                                                  }
+                                                                  else{
+                                                                    Common.showProgressDialog(context, "Loading..");
+                                                                    EditContactNumberModel editNumber1=await HttpService.editContactNumber(widget.token,editNumber.text,groupInfo!.data!.contactNumbers![i].id.toString());
+                                                                    if(editNumber1.data==true)
+                                                                    {
+                                                                      Common.toastMessaage(
+                                                                          editNumber1.message, Colors.green);
+                                                                      Navigator.push(
+                                                                        context,
+                                                                        MaterialPageRoute(
+                                                                            builder: (context) => GroupInfoPage(
+                                                                                widget.token,widget.groupId,widget.groupname,widget.imgUrl)),
+                                                                      );
                                                                     }
                                                                     else{
-                                                                      Common.showProgressDialog(context, "Loading..");
-                                                                      EditContactNumberModel editNumber1=await HttpService.editContactNumber(widget.token,editNumber.text,groupInfo!.data!.contactNumbers![i].id.toString());
-                                                                      if(editNumber1.data==true)
-                                                                      {
-                                                                        Common.toastMessaage(
-                                                                            editNumber1.message, Colors.green);
-                                                                        Navigator.push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => GroupInfoPage(
-                                                                                  widget.token,widget.groupId,widget.groupname,widget.imgUrl)),
-                                                                        );
-                                                                      }
-                                                                      else{
-                                                                        Common.toastMessaage(
-                                                                            editNumber1.message, Colors.red);
-                                                                        Navigator.of(context).pop();
-                                                                      }
+                                                                      Common.toastMessaage(
+                                                                          editNumber1.message, Colors.red);
+                                                                      Navigator.of(context).pop();
                                                                     }
-                                                                  },
-                                                                  child: const Center(
-                                                                    child: Text(
-                                                                      'Continue',
-                                                                      style: TextStyle(
-                                                                        color: Colors.white,
-                                                                        fontWeight: FontWeight.w500,
-                                                                      ),
+                                                                  }
+                                                                },
+                                                                child: const Center(
+                                                                  child: Text(
+                                                                    'Continue',
+                                                                    style: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontWeight: FontWeight.w500,
                                                                     ),
                                                                   ),
                                                                 ),
                                                               ),
-                                                            ],
-                                                          ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                              transitionBuilder: (_, animation1, __, child) {
-                                                return SlideTransition(
-                                                  position: Tween(
-                                                    begin: const Offset(0, 1),
-                                                    end: const Offset(0, 0),
-                                                  ).animate(animation1),
-                                                  child: child,
-                                                );
-                                              },
-                                            );
-                                          }
-                                        else if(value==2)
-                                          {
-                                            _deleteNumber(context,groupInfo!.data!.contactNumbers![i].id.toString());
-                                          }
-                                      })
-                                ],
-                              ),
-
+                                                ),
+                                              );
+                                            },
+                                            transitionBuilder: (_, animation1, __, child) {
+                                              return SlideTransition(
+                                                position: Tween(
+                                                  begin: const Offset(0, 1),
+                                                  end: const Offset(0, 0),
+                                                ).animate(animation1),
+                                                child: child,
+                                              );
+                                            },
+                                          );
+                                        }
+                                      else if(value==2)
+                                        {
+                                          _deleteNumber(context,groupInfo!.data!.contactNumbers![i].id.toString());
+                                        }
+                                    })
+                              ],
                             ),
-                            const Divider(
-                              height: 1,
-                            ),
-                          ],
+    
+                          ),
+                          const Divider(
+                            height: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+    
+                ])),
+          ],
+        ):Center(
+          child: Lottie.asset('assets/main/loading.json',
+              fit: BoxFit.fill),
+        ),
+      ):Scaffold(
+          backgroundColor: Colors.white,
+          body: SizedBox(
+            width: MediaQuery.of(context).size.width * 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 300,
+                  height: 300,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/icons/noNetwork.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const Text(
+                  'No Network Found !',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                InkWell(
+                  onTap: () {
+                    getData();
+                  },
+                  child: SizedBox(
+                    width: 120,
+                    height: 35,
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.5),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Try Again',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
-
-                  ])),
-            ],
-          ):Center(
-            child: Lottie.asset('assets/main/loading.json',
-                fit: BoxFit.fill),
-          ),
-        ):Scaffold(
-            backgroundColor: Colors.white,
-            body: SizedBox(
-              width: MediaQuery.of(context).size.width * 1,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 300,
-                    height: 300,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/icons/noNetwork.jpg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
                   ),
-                  const Text(
-                    'No Network Found !',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      getData();
-                    },
-                    child: SizedBox(
-                      width: 120,
-                      height: 35,
-                      child: Padding(
-                        padding: const EdgeInsets.all(1.5),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Try Again',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ))
-      ),
+                ),
+              ],
+            ),
+          ))
     );
   }
   void _deleteGroup(BuildContext context) {

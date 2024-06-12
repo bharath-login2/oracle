@@ -615,132 +615,138 @@ class _DashboardState extends State<Dashboard> {
                                                               .modules![i]
                                                               .menuName ==
                                                           'messages') {
-                                                        showDialog(
-                                                            barrierColor: Colors
-                                                                .grey
-                                                                .withOpacity(
-                                                                    .5),
-                                                            context: context,
-                                                            builder:
-                                                                (BuildContext
-                                                                    context) {
-                                                              return WillPopScope(
-                                                                onWillPop:
-                                                                    () async {
-                                                                  return true;
-                                                                },
-                                                                child: Material(
-                                                                  type: MaterialType
-                                                                      .transparency,
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .only(
-                                                                        bottom:
-                                                                            50),
-                                                                    child:
-                                                                        Center(
-                                                                      child:
-                                                                          Container(
-                                                                        decoration:
-                                                                            BoxDecoration(
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10),
-                                                                          color:
-                                                                              Colors.white,
-                                                                        ),
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.9,
-                                                                        height:
-                                                                            250,
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              left: 20,
-                                                                              right: 20),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.center,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.center,
-                                                                            children: [
-                                                                              Image.asset(
-                                                                                'assets/icons/official_whatsapp.png',
-                                                                                width: 80,
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 10,
-                                                                              ),
-                                                                              const Text(
-                                                                                'Whatsapp',
-                                                                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              const Text(
-                                                                                'Choose WhatsApp',
-                                                                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 15,
-                                                                              ),
-                                                                              Row(
-                                                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                children: [
-                                                                                  officialWhatsapp == 'true'
-                                                                                      ? InkWell(
-                                                                                          onTap: () {
-                                                                                            Navigator.push(
-                                                                                              context,
-                                                                                              MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
-                                                                                            );
-                                                                                          },
-                                                                                          child: Container(
-                                                                                            width: MediaQuery.of(context).size.width * 0.35,
-                                                                                            //  color: RandomColorModel().getColor(),
-                                                                                            decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                            child: const Padding(
-                                                                                              padding: EdgeInsets.all(5),
-                                                                                              child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ),
-                                                                                          ),
-                                                                                        )
-                                                                                      : const SizedBox(),
-                                                                                  unOfficialWhatsapp == 'true'
-                                                                                      ? InkWell(
-                                                                                          onTap: () {
-                                                                                            Navigator.push(
-                                                                                              context,
-                                                                                              MaterialPageRoute(builder: (context) => GroupList(widget.token)),
-                                                                                            );
-                                                                                          },
-                                                                                          child: Container(
-                                                                                            width: MediaQuery.of(context).size.width * 0.35,
-                                                                                            decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                            child: const Padding(
-                                                                                              padding: EdgeInsets.all(5),
-                                                                                              child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ),
-                                                                                          ),
-                                                                                        )
-                                                                                      : const SizedBox()
-                                                                                ],
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 8,
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              );
-                                                            });
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  const ChatHomeScreen()),
+                                                        );
+                                                        // showDialog(
+                                                        //     barrierColor: Colors
+                                                        //         .grey
+                                                        //         .withOpacity(
+                                                        //             .5),
+                                                        //     context: context,
+                                                        //     builder:
+                                                        //         (BuildContext
+                                                        //             context) {
+                                                        //       return WillPopScope(
+                                                        //         onWillPop:
+                                                        //             () async {
+                                                        //           return true;
+                                                        //         },
+                                                        //         child: Material(
+                                                        //           type: MaterialType
+                                                        //               .transparency,
+                                                        //           child:
+                                                        //               Padding(
+                                                        //             padding: const EdgeInsets
+                                                        //                 .only(
+                                                        //                 bottom:
+                                                        //                     50),
+                                                        //             child:
+                                                        //                 Center(
+                                                        //               child:
+                                                        //                   Container(
+                                                        //                 decoration:
+                                                        //                     BoxDecoration(
+                                                        //                   borderRadius:
+                                                        //                       BorderRadius.circular(10),
+                                                        //                   color:
+                                                        //                       Colors.white,
+                                                        //                 ),
+                                                        //                 width: MediaQuery.of(context).size.width *
+                                                        //                     0.9,
+                                                        //                 height:
+                                                        //                     250,
+                                                        //                 child:
+                                                        //                     Padding(
+                                                        //                   padding: const EdgeInsets
+                                                        //                       .only(
+                                                        //                       left: 20,
+                                                        //                       right: 20),
+                                                        //                   child:
+                                                        //                       Column(
+                                                        //                     mainAxisAlignment:
+                                                        //                         MainAxisAlignment.center,
+                                                        //                     crossAxisAlignment:
+                                                        //                         CrossAxisAlignment.center,
+                                                        //                     children: [
+                                                        //                       Image.asset(
+                                                        //                         'assets/icons/official_whatsapp.png',
+                                                        //                         width: 80,
+                                                        //                       ),
+                                                        //                       const SizedBox(
+                                                        //                         height: 10,
+                                                        //                       ),
+                                                        //                       const Text(
+                                                        //                         'Whatsapp',
+                                                        //                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                                                        //                       ),
+                                                        //                       const SizedBox(
+                                                        //                         height: 5,
+                                                        //                       ),
+                                                        //                       const Text(
+                                                        //                         'Choose WhatsApp',
+                                                        //                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                                                        //                       ),
+                                                        //                       const SizedBox(
+                                                        //                         height: 15,
+                                                        //                       ),
+                                                        //                       Row(
+                                                        //                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        //                         children: [
+                                                        //                           officialWhatsapp == 'true'
+                                                        //                               ? InkWell(
+                                                        //                                   onTap: () {
+                                                        //                                     Navigator.push(
+                                                        //                                       context,
+                                                        //                                       MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
+                                                        //                                     );
+                                                        //                                   },
+                                                        //                                   child: Container(
+                                                        //                                     width: MediaQuery.of(context).size.width * 0.35,
+                                                        //                                     //  color: RandomColorModel().getColor(),
+                                                        //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                        //                                     child: const Padding(
+                                                        //                                       padding: EdgeInsets.all(5),
+                                                        //                                       child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                        //                                     ),
+                                                        //                                   ),
+                                                        //                                 )
+                                                        //                               : const SizedBox(),
+                                                        //                           unOfficialWhatsapp == 'true'
+                                                        //                               ? InkWell(
+                                                        //                                   onTap: () {
+                                                        //                                     Navigator.push(
+                                                        //                                       context,
+                                                        //                                       MaterialPageRoute(builder: (context) => GroupList(widget.token)),
+                                                        //                                     );
+                                                        //                                   },
+                                                        //                                   child: Container(
+                                                        //                                     width: MediaQuery.of(context).size.width * 0.35,
+                                                        //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                        //                                     child: const Padding(
+                                                        //                                       padding: EdgeInsets.all(5),
+                                                        //                                       child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                        //                                     ),
+                                                        //                                   ),
+                                                        //                                 )
+                                                        //                               : const SizedBox()
+                                                        //                         ],
+                                                        //                       ),
+                                                        //                       const SizedBox(
+                                                        //                         height: 8,
+                                                        //                       ),
+                                                        //                     ],
+                                                        //                   ),
+                                                        //                 ),
+                                                        //               ),
+                                                        //             ),
+                                                        //           ),
+                                                        //         ),
+                                                        //       );
+                                                        //     });
                                                       } else if (userDashboard!
                                                               .data!
                                                               .modules![i]
@@ -1854,35 +1860,35 @@ class _DashboardState extends State<Dashboard> {
                                                               itemBuilder:
                                                                   (context) {
                                                                 return [
-                                                                  Platform
-                                                                          .isAndroid
-                                                                      ? PopupMenuItem<
-                                                                              int>(
-                                                                          value:
-                                                                              10,
-                                                                          child:
-                                                                              Row(
-                                                                            children: [
-                                                                              SizedBox(
-                                                                                width: 20,
-                                                                                height: 20,
-                                                                                child: Image.asset(
-                                                                                  "assets/icons/callLog.png",
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              const Text('Phone Call Logs'),
-                                                                            ],
-                                                                          ))
-                                                                      : const PopupMenuItem<
-                                                                          int>(
-                                                                          value:
-                                                                              0,
-                                                                          child:
-                                                                              Text(''),
-                                                                        ),
+                                                                  // Platform
+                                                                  //         .isAndroid
+                                                                  //     ? PopupMenuItem<
+                                                                  //             int>(
+                                                                  //         value:
+                                                                  //             10,
+                                                                  //         child:
+                                                                  //             Row(
+                                                                  //           children: [
+                                                                  //             SizedBox(
+                                                                  //               width: 20,
+                                                                  //               height: 20,
+                                                                  //               child: Image.asset(
+                                                                  //                 "assets/icons/callLog.png",
+                                                                  //               ),
+                                                                  //             ),
+                                                                  //             const SizedBox(
+                                                                  //               width: 10,
+                                                                  //             ),
+                                                                  //             const Text('Phone Call Logs'),
+                                                                  //           ],
+                                                                  //         ))
+                                                                  //     : const PopupMenuItem<
+                                                                  //         int>(
+                                                                  //         value:
+                                                                  //             0,
+                                                                  //         child:
+                                                                  //             Text(''),
+                                                                  //       ),
                                                                   PopupMenuItem<
                                                                           int>(
                                                                       value: 9,
@@ -1907,116 +1913,116 @@ class _DashboardState extends State<Dashboard> {
                                                                               'All Report'),
                                                                         ],
                                                                       )),
-                                                                  PopupMenuItem<
-                                                                          int>(
-                                                                      value: 5,
-                                                                      child:
-                                                                          Row(
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                            height:
-                                                                                20,
-                                                                            child:
-                                                                                Image.asset(
-                                                                              "assets/icons/viewLeads.png",
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                10,
-                                                                          ),
-                                                                          const Text(
-                                                                              'View Leads'),
-                                                                        ],
-                                                                      )),
-                                                                  PopupMenuItem<
-                                                                          int>(
-                                                                      value: 7,
-                                                                      child:
-                                                                          Row(
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                            height:
-                                                                                20,
-                                                                            child:
-                                                                                Image.asset(
-                                                                              "assets/icons/missed_leads.png",
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                10,
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              const Text('Missed Leads'),
-                                                                              const SizedBox(
-                                                                                width: 20,
-                                                                              ),
-                                                                              leadDashboard!.data.missedLeads != 0
-                                                                                  ? Container(
-                                                                                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
-                                                                                      child: Center(
-                                                                                          child: Padding(
-                                                                                        padding: const EdgeInsets.all(4),
-                                                                                        child: Text(
-                                                                                          leadDashboard!.data.missedLeads.toString(),
-                                                                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                                                                        ),
-                                                                                      )),
-                                                                                    )
-                                                                                  : const SizedBox(),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      )),
-                                                                  PopupMenuItem<
-                                                                          int>(
-                                                                      value: 8,
-                                                                      child:
-                                                                          Row(
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                            height:
-                                                                                20,
-                                                                            child:
-                                                                                Image.asset(
-                                                                              "assets/icons/transfer_leads.png",
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                10,
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              const Text('Transfered Leads'),
-                                                                              const SizedBox(
-                                                                                width: 20,
-                                                                              ),
-                                                                              leadDashboard!.data.transferLeads != 0
-                                                                                  ? Container(
-                                                                                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
-                                                                                      child: Center(
-                                                                                          child: Padding(
-                                                                                        padding: const EdgeInsets.all(4),
-                                                                                        child: Text(
-                                                                                          leadDashboard!.data.transferLeads.toString(),
-                                                                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                                                                        ),
-                                                                                      )),
-                                                                                    )
-                                                                                  : const SizedBox(),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      )),
+                                                                  // PopupMenuItem<
+                                                                  //         int>(
+                                                                  //     value: 5,
+                                                                  //     child:
+                                                                  //         Row(
+                                                                  //       children: [
+                                                                  //         SizedBox(
+                                                                  //           width:
+                                                                  //               20,
+                                                                  //           height:
+                                                                  //               20,
+                                                                  //           child:
+                                                                  //               Image.asset(
+                                                                  //             "assets/icons/viewLeads.png",
+                                                                  //           ),
+                                                                  //         ),
+                                                                  //         const SizedBox(
+                                                                  //           width:
+                                                                  //               10,
+                                                                  //         ),
+                                                                  //         const Text(
+                                                                  //             'View Leads'),
+                                                                  //       ],
+                                                                  //     )),
+                                                                  // PopupMenuItem<
+                                                                  //         int>(
+                                                                  //     value: 7,
+                                                                  //     child:
+                                                                  //         Row(
+                                                                  //       children: [
+                                                                  //         SizedBox(
+                                                                  //           width:
+                                                                  //               20,
+                                                                  //           height:
+                                                                  //               20,
+                                                                  //           child:
+                                                                  //               Image.asset(
+                                                                  //             "assets/icons/missed_leads.png",
+                                                                  //           ),
+                                                                  //         ),
+                                                                  //         const SizedBox(
+                                                                  //           width:
+                                                                  //               10,
+                                                                  //         ),
+                                                                  //         Row(
+                                                                  //           children: [
+                                                                  //             const Text('Missed Leads'),
+                                                                  //             const SizedBox(
+                                                                  //               width: 20,
+                                                                  //             ),
+                                                                  //             leadDashboard!.data.missedLeads != 0
+                                                                  //                 ? Container(
+                                                                  //                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
+                                                                  //                     child: Center(
+                                                                  //                         child: Padding(
+                                                                  //                       padding: const EdgeInsets.all(4),
+                                                                  //                       child: Text(
+                                                                  //                         leadDashboard!.data.missedLeads.toString(),
+                                                                  //                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                                                  //                       ),
+                                                                  //                     )),
+                                                                  //                   )
+                                                                  //                 : const SizedBox(),
+                                                                  //           ],
+                                                                  //         ),
+                                                                  //       ],
+                                                                  //     )),
+                                                                  // PopupMenuItem<
+                                                                  //         int>(
+                                                                  //     value: 8,
+                                                                  //     child:
+                                                                  //         Row(
+                                                                  //       children: [
+                                                                  //         SizedBox(
+                                                                  //           width:
+                                                                  //               20,
+                                                                  //           height:
+                                                                  //               20,
+                                                                  //           child:
+                                                                  //               Image.asset(
+                                                                  //             "assets/icons/transfer_leads.png",
+                                                                  //           ),
+                                                                  //         ),
+                                                                  //         const SizedBox(
+                                                                  //           width:
+                                                                  //               10,
+                                                                  //         ),
+                                                                  //         Row(
+                                                                  //           children: [
+                                                                  //             const Text('Transfered Leads'),
+                                                                  //             const SizedBox(
+                                                                  //               width: 20,
+                                                                  //             ),
+                                                                  //             leadDashboard!.data.transferLeads != 0
+                                                                  //                 ? Container(
+                                                                  //                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
+                                                                  //                     child: Center(
+                                                                  //                         child: Padding(
+                                                                  //                       padding: const EdgeInsets.all(4),
+                                                                  //                       child: Text(
+                                                                  //                         leadDashboard!.data.transferLeads.toString(),
+                                                                  //                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                                                  //                       ),
+                                                                  //                     )),
+                                                                  //                   )
+                                                                  //                 : const SizedBox(),
+                                                                  //           ],
+                                                                  //         ),
+                                                                  //       ],
+                                                                  //     )),
                                                                   PopupMenuItem<
                                                                           int>(
                                                                       value: 2,
@@ -2041,30 +2047,30 @@ class _DashboardState extends State<Dashboard> {
                                                                               'Lead Category'),
                                                                         ],
                                                                       )),
-                                                                  PopupMenuItem<
-                                                                          int>(
-                                                                      value: 3,
-                                                                      child:
-                                                                          Row(
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                            height:
-                                                                                20,
-                                                                            child:
-                                                                                Image.asset(
-                                                                              "assets/icons/whatsapp.png",
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                10,
-                                                                          ),
-                                                                          const Text(
-                                                                              'Whatsapp Settings'),
-                                                                        ],
-                                                                      )),
+                                                                  // PopupMenuItem<
+                                                                  //         int>(
+                                                                  //     value: 3,
+                                                                  //     child:
+                                                                  //         Row(
+                                                                  //       children: [
+                                                                  //         SizedBox(
+                                                                  //           width:
+                                                                  //               20,
+                                                                  //           height:
+                                                                  //               20,
+                                                                  //           child:
+                                                                  //               Image.asset(
+                                                                  //             "assets/icons/whatsapp.png",
+                                                                  //           ),
+                                                                  //         ),
+                                                                  //         const SizedBox(
+                                                                  //           width:
+                                                                  //               10,
+                                                                  //         ),
+                                                                  //         const Text(
+                                                                  //             'Whatsapp Settings'),
+                                                                  //       ],
+                                                                  //     )),
                                                                   PopupMenuItem<
                                                                           int>(
                                                                       value: 6,
@@ -6822,7 +6828,7 @@ class _DashboardState extends State<Dashboard> {
                                                                             Text(
                                                                               leadDashboard!.data.currentLeadsCount.date,
                                                                               textAlign: TextAlign.center,
-                                                                              style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.grey, fontSize: 9),
+                                                                              style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.black87, fontSize: 9),
                                                                             ),
                                                                             const SizedBox(
                                                                               height: 5,
@@ -6875,7 +6881,7 @@ class _DashboardState extends State<Dashboard> {
                                                                             Text(
                                                                               leadDashboard!.data.previousLeadsCount.date,
                                                                               textAlign: TextAlign.center,
-                                                                              style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.grey, fontSize: 9),
+                                                                              style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.black87, fontSize: 9),
                                                                             ),
                                                                             const SizedBox(
                                                                               height: 5,
@@ -7962,7 +7968,7 @@ class _DashboardState extends State<Dashboard> {
                         timeOut == true
                             ? 'There seems to be a temporary issue !, \n Please retry to continue'
                             : 'No Network Found !',
-                            textAlign: TextAlign.center,
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),

@@ -103,6 +103,7 @@ class _AddProductsState extends State<AddProducts> {
           ));
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
+      Navigator.pop(context);
       Common.toastMessaage(postResponse!.message, Colors.red);
     }
   }
@@ -494,11 +495,15 @@ class _AddProductsState extends State<AddProducts> {
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
                           if (productImage != null) {
+                            Common.showProgressDialog(context, "Loading...");
                             postProducts();
                           } else {
                             Common.toastMessaage(
                                 "Please Add Product Image", Colors.red);
                           }
+                        } else {
+                          Common.toastMessaage(
+                              "Please add all the fields", Colors.red);
                         }
                       },
                       child: const Text(

@@ -312,8 +312,8 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                                                     child: Container(
                                                       decoration: BoxDecoration(
                                                           border: Border.all(
-                                                              color: Colors
-                                                                  .grey.shade500),
+                                                              color: Colors.grey
+                                                                  .shade500),
                                                           borderRadius:
                                                               BorderRadius
                                                                   .circular(

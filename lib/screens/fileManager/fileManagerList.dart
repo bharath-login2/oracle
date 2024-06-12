@@ -82,11 +82,7 @@ class _FileMangerListState extends State<FileMangerList> {
                     children: [
                       InkWell(
                         onTap: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      Dashboard(widget.token)),
-                              (Route<dynamic> route) => false);
+                          Navigator.pop(context);
                         },
                         child: Container(
                           height: 25,

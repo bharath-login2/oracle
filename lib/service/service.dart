@@ -1372,6 +1372,7 @@ class HttpService {
       "token": token,
     });
     try {
+      log("${await Config.getUrl()}get_active_package");
       var result = await _dio.post("${await Config.getUrl()}get_active_package",
           data: formData);
       DashboardModel model = DashboardModel.fromJson(result.data);

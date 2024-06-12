@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import 'package:login2/screens/leadManagement/addFollowup.dart';
 import 'package:login2/screens/leadManagement/leadBulkGroupAdd.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -13,7 +14,6 @@ import '../../models/lead_management/BulkTransferLeadModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/bulkDeleteLeadModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
-import '../../models/lead_management/deleteLeadModel.dart';
 import '../../models/lead_management/viewLeadsModel.dart';
 import '../../screens/bottomNavigationBar.dart';
 import '../../screens/leadManagement/dashboard.dart';
@@ -23,7 +23,6 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // ignore: must_be_immutable
 class ViewLeads extends StatefulWidget {
@@ -109,7 +108,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
-  List<dynamic> items = [];
+  List<Detail> items = [];
   int page = 1;
   int pageSize = 20;
   bool isLoading = false;
@@ -157,7 +156,7 @@ class _ViewLeadsState extends State<ViewLeads> {
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
-        if (items.length < viewLeads!.data!.totalLeads!) {
+        if (items.length < viewLeads!.data.totalLeads) {
           getData('desc', false);
         }
       }
@@ -165,7 +164,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   }
 
   void getData(sort, isFirst) async {
-    //print('scrollIndex1:${widget.scrollToIndex}');      
+    //print('scrollIndex1:${widget.scrollToIndex}');
     setState(() {
       timeOut = false;
     });
@@ -240,7 +239,7 @@ class _ViewLeadsState extends State<ViewLeads> {
         }
         configure = await HttpService.configure(widget.token);
         setState(() {
-          items.addAll(viewLeads!.data!.details as Iterable);
+          items.addAll(viewLeads!.data.details);
           page++;
           isLoading = false;
         });
@@ -821,7 +820,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                     height: 5,
                                   ),
                                   Text(
-                                      'Total Leads : ${viewLeads!.data!.totalLeads}',
+                                      'Total Leads : ${viewLeads!.data.totalLeads}',
                                       style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold)),
@@ -1512,7 +1511,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                             ],
                           ),
                         ),
-                        viewLeads!.data!.details!.isNotEmpty
+                        viewLeads!.data.details.isNotEmpty
                             ? Expanded(
                                 child: ScrollablePositionedList.builder(
                                   //reverse: true,
@@ -1557,7 +1556,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                         ),
                                       ),
                                       secondaryBackground: Container(
-                                        color: Colors.red,
+                                        color: Colors.blue,
                                         child: const Align(
                                           alignment: Alignment.centerRight,
                                           child: Row(
@@ -1565,11 +1564,11 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                 MainAxisAlignment.end,
                                             children: <Widget>[
                                               Icon(
-                                                Icons.delete,
+                                                Icons.add,
                                                 color: Colors.white,
                                               ),
                                               Text(
-                                                "Delete",
+                                                "Add Followup",
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w700,
@@ -1586,90 +1585,56 @@ class _ViewLeadsState extends State<ViewLeads> {
                                       confirmDismiss: (direction) async {
                                         if (direction ==
                                             DismissDirection.endToStart) {
-                                          if (widget.deleteLead == true) {
-                                            showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Please Confirm'),
-                                                    content: const Text(
-                                                        'Are you sure to Delete?'),
-                                                    actions: [
-                                                      // The "Yes" button
-                                                      TextButton(
-                                                          onPressed: () async {
-                                                            DeleteLeadModel
-                                                                delete =
-                                                                await HttpService
-                                                                    .deleteLead(
-                                                                        widget
-                                                                            .token,
-                                                                        items[index]
-                                                                            .callMasterId);
-                                                            if (delete.data ==
-                                                                true) {
-                                                              Common.toastMessaage(
-                                                                  delete
-                                                                      .message,
-                                                                  Colors.green);
-                                                              if (context
-                                                                  .mounted) {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token!,
-                                                                                widget.editLead,
-                                                                                widget.deleteLead,
-                                                                                widget.cloudCall,
-                                                                                pageName: widget.pageName,
-                                                                                status: widget.status,
-                                                                                staff: widget.staff,
-                                                                                isCalled: widget.isCalled,
-                                                                                fromDate: widget.fromDate,
-                                                                                toDate: widget.toDate,
-                                                                                category: widget.category,
-                                                                              )),
-                                                                );
-                                                              }
-                                                            } else {
-                                                              Common.toastMessaage(
-                                                                  delete
-                                                                      .message,
-                                                                  Colors.red);
-                                                              if (context
-                                                                  .mounted) {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop();
-                                                              }
-                                                            }
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No'))
-                                                    ],
-                                                  );
-                                                });
-                                          } else {
-                                            Common.toastMessaage(
-                                                "You don't have permission to delete",
-                                                Colors.red);
-                                          }
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddFollowup(
+                                                        widget.token,
+                                                        widget.editLead,
+                                                        widget.deleteLead,
+                                                        widget.cloudCall,
+                                                        items[index]
+                                                            .callMasterId,
+                                                        pageName:
+                                                            widget.pageName,
+                                                        status: widget.status,
+                                                        staff: widget.staff,
+                                                        isCalled:
+                                                            widget.isCalled,
+                                                        fromDate:
+                                                            widget.fromDate,
+                                                        toDate: widget.toDate,
+                                                        category:
+                                                            widget.category,
+                                                        leadType: items[index]
+                                                            .leadCategory,
+                                                        leadTypeId: items[index]
+                                                            .leadCategoryId,
+                                                        leadSubType: items[index]
+                                                            .leadSubCategory,
+                                                        leadSubTypeId: items[
+                                                                index]
+                                                            .leadSubCategoryId,
+                                                        priorityId: items[index]
+                                                            .priority,
+                                                        priority: items[index]
+                                                            .priorityName,
+                                                        cost: items[index].cost,
+                                                        address: items[index]
+                                                            .address,
+                                                        leadType1:
+                                                            widget.leadType)),
+                                          ).then((value) {
+                                            items.clear();
+                                            page = 1;
+                                            getData(
+                                              'desc',
+                                              true,
+                                            );
+                                          });
                                         } else {
-                                          if (viewLeads!.data!.callPermission ==
+                                          if (viewLeads!.data.callPermission ==
                                               false) {
                                             showDialog(
                                                 context: context,
@@ -1678,7 +1643,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                     title:
                                                         const Text('Alert !!!'),
                                                     content: Text(viewLeads!
-                                                        .data!.warningMessage
+                                                        .data.warningMessage
                                                         .toString()),
                                                     actions: [
                                                       // The "Yes" button
@@ -1705,7 +1670,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       widget
                                                                           .cloudCall,
                                                                       viewLeads!
-                                                                          .data!
+                                                                          .data
                                                                           .callLeadId
                                                                           .toString(),
                                                                       pageName: widget
@@ -2083,122 +2048,177 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         SingleChildScrollView(
                                                           scrollDirection:
                                                               Axis.horizontal,
-                                                          child: Row(
-                                                            children: [
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '1')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '2')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
-                                                                    color: Colors
-                                                                        .green,
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '3')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
-                                                                    color: Colors
-                                                                        .red,
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                              const SizedBox(
-                                                                width: 5,
-                                                              ),
-                                                              SizedBox(
-                                                                width: 170,
-                                                                child: Text(
-                                                                  items[index]
-                                                                      .clientName
-                                                                      .toString(),
-                                                                  // items.length.toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          16,
-                                                                      color: Colors
-                                                                          .black,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                ),
-                                                              ),
-                                                              Align(
-                                                                alignment:
-                                                                    Alignment
-                                                                        .topRight,
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .pink
-                                                                          .shade100,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              5)),
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .only(
-                                                                        left: 5,
-                                                                        right:
-                                                                            5,
-                                                                        top: 2,
-                                                                        bottom:
-                                                                            2),
-                                                                    child: Text(
-                                                                      items[index]
-                                                                          .leadCategory
-                                                                          .toString(),
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: Colors
-                                                                            .red,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
+                                                          child: SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                .89,
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Row(
+                                                                  
+                                                                  children: [
+                                                                    if (items[index]
+                                                                            .priority ==
+                                                                        '1')
+                                                                      Container(
+                                                                        width: 10.0,
+                                                                        height:
+                                                                            10.0,
+                                                                        decoration:
+                                                                            const BoxDecoration(
+                                                                          color: Colors
+                                                                              .grey,
+                                                                          shape: BoxShape
+                                                                              .circle,
+                                                                        ),
                                                                       ),
-                                                                      maxLines:
-                                                                          1,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      softWrap:
-                                                                          false,
+                                                                    if (items[index]
+                                                                            .priority ==
+                                                                        '2')
+                                                                      Container(
+                                                                        width: 10.0,
+                                                                        height:
+                                                                            10.0,
+                                                                        decoration:
+                                                                            const BoxDecoration(
+                                                                          color: Colors
+                                                                              .green,
+                                                                          shape: BoxShape
+                                                                              .circle,
+                                                                        ),
+                                                                      ),
+                                                                    if (items[index]
+                                                                            .priority ==
+                                                                        '3')
+                                                                      Container(
+                                                                        width: 10.0,
+                                                                        height:
+                                                                            10.0,
+                                                                        decoration:
+                                                                            const BoxDecoration(
+                                                                          color: Colors
+                                                                              .red,
+                                                                          shape: BoxShape
+                                                                              .circle,
+                                                                        ),
+                                                                      ),
+                                                                    const SizedBox(
+                                                                      width: 5,
                                                                     ),
-                                                                  ),
+                                                                    SizedBox(
+                                                                      width: 170,
+                                                                      child: Text(
+                                                                        items[index]
+                                                                            .clientName
+                                                                            .toString(),
+                                                                        // items.length.toString(),
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                16,
+                                                                            color: Colors
+                                                                                .black,
+                                                                            fontWeight:
+                                                                                FontWeight.bold),
+                                                                        maxLines: 1,
+                                                                        overflow:
+                                                                            TextOverflow
+                                                                                .ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    Align(
+                                                                      alignment:
+                                                                          Alignment
+                                                                              .topRight,
+                                                                      child:
+                                                                          Container(
+                                                                        decoration: BoxDecoration(
+                                                                            color: Colors
+                                                                                .pink
+                                                                                .shade100,
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(5)),
+                                                                        child:
+                                                                            Padding(
+                                                                          padding: const EdgeInsets.only(
+                                                                              left:
+                                                                                  5,
+                                                                              right:
+                                                                                  5,
+                                                                              top:
+                                                                                  2,
+                                                                              bottom:
+                                                                                  2),
+                                                                          child:
+                                                                              Text(
+                                                                            items[index]
+                                                                                .leadCategory
+                                                                                .toString(),
+                                                                            style:
+                                                                                const TextStyle(
+                                                                              fontSize:
+                                                                                  13,
+                                                                              color:
+                                                                                  Colors.red,
+                                                                              fontWeight:
+                                                                                  FontWeight.w500,
+                                                                            ),
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            softWrap:
+                                                                                false,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  
+                                                                  ],
                                                                 ),
-                                                              ),
-                                                            ],
+                                                                  Visibility(
+                                                                      visible: items[
+                                                                                  index]
+                                                                              .categoryCount
+                                                                              .toString() !=
+                                                                          "1",
+                                                                      child:
+                                                                          Container(
+                                                                        height: 20,
+                                                                        width: 20,
+                                                                        decoration: const BoxDecoration(
+                                                                            color: Colors
+                                                                                .red,
+                                                                            shape: BoxShape
+                                                                                .circle),
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            items[index]
+                                                                                .categoryCount
+                                                                                .toString(),
+                                                                            // items.length.toString(),
+                                                                            style: const TextStyle(
+                                                                                fontSize:
+                                                                                    12,
+                                                                                color:
+                                                                                    Colors.white,
+                                                                                fontWeight: FontWeight.bold),
+                                                                            maxLines:
+                                                                                1,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                              ],
+                                                            ),
                                                           ),
                                                         ),
                                                         const SizedBox(
@@ -2445,7 +2465,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                   onTap:
                                                                       () async {
                                                                     if (viewLeads!
-                                                                            .data!
+                                                                            .data
                                                                             .callPermission ==
                                                                         false) {
                                                                       showDialog(
@@ -2455,7 +2475,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                               (BuildContext ctx) {
                                                                             return AlertDialog(
                                                                               title: const Text('Alert !!!'),
-                                                                              content: Text(viewLeads!.data!.warningMessage.toString()),
+                                                                              content: Text(viewLeads!.data.warningMessage.toString()),
                                                                               actions: [
                                                                                 // The "Yes" button
                                                                                 TextButton(
@@ -2467,7 +2487,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                                     onPressed: () {
                                                                                       Navigator.push(
                                                                                         context,
-                                                                                        MaterialPageRoute(builder: (context) => LeadDetails(widget.token!, widget.editLead, widget.deleteLead, widget.cloudCall, viewLeads!.data!.callLeadId.toString(), pageName: widget.pageName, status: widget.status, staff: widget.staff, isCalled: widget.isCalled, fromDate: widget.fromDate, toDate: widget.toDate, category: widget.category, scrollToIndex: index, page: page, pageSize: page * pageSize, leadType: widget.leadType)),
+                                                                                        MaterialPageRoute(builder: (context) => LeadDetails(widget.token!, widget.editLead, widget.deleteLead, widget.cloudCall, viewLeads!.data.callLeadId.toString(), pageName: widget.pageName, status: widget.status, staff: widget.staff, isCalled: widget.isCalled, fromDate: widget.fromDate, toDate: widget.toDate, category: widget.category, scrollToIndex: index, page: page, pageSize: page * pageSize, leadType: widget.leadType)),
                                                                                       ).then((r) {
                                                                                         items.clear();
                                                                                         page = 1;
@@ -2771,12 +2791,13 @@ class _ViewLeadsState extends State<ViewLeads> {
                         ),
                       ),
                     ),
-                    Text(textAlign: TextAlign.center,
+                    Text(
+                      textAlign: TextAlign.center,
                       timeOut == true
                           ? "There seems to be a temporary issue !, \n Please retry to continue"
                           : 'No Network Found !',
-                      style:
-                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(
                       height: 15,

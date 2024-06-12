@@ -27,7 +27,7 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
   PostModel? postResponse;
   bool isLoading = true;
   List remarks = [];
-  String selectedDropValue = "";
+  String? selectedDropValue ;
   String selectedDropName = "";
 
   final TextEditingController nameController = TextEditingController();

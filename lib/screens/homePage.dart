@@ -56,8 +56,7 @@ class _HomePageState extends State<HomePage> {
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
-    String phoneCallLogPermission = '';
-
+  String phoneCallLogPermission = '';
 
   @override
   void initState() {
@@ -552,146 +551,152 @@ class _HomePageState extends State<HomePage> {
                                             } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'messages') {
-                                              showDialog(
-                                                  barrierColor: Colors.grey
-                                                      .withOpacity(.5),
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return WillPopScope(
-                                                      onWillPop: () async {
-                                                        return true;
-                                                      },
-                                                      child: Material(
-                                                        type: MaterialType
-                                                            .transparency,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  bottom: 50),
-                                                          child: Center(
-                                                            child: Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            10),
-                                                                color: Colors
-                                                                    .white,
-                                                              ),
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.9,
-                                                              height: 250,
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        left:
-                                                                            20,
-                                                                        right:
-                                                                            20),
-                                                                child: Column(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .center,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .center,
-                                                                  children: [
-                                                                    Image.asset(
-                                                                      'assets/icons/official_whatsapp.png',
-                                                                      width: 80,
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          10,
-                                                                    ),
-                                                                    const Text(
-                                                                      'Whatsapp',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              18,
-                                                                          fontWeight:
-                                                                              FontWeight.w400),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height: 5,
-                                                                    ),
-                                                                    const Text(
-                                                                      'Choose WhatsApp',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              15,
-                                                                          fontWeight:
-                                                                              FontWeight.w400),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          15,
-                                                                    ),
-                                                                    Row(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .spaceBetween,
-                                                                      children: [
-                                                                        officialWhatsapp ==
-                                                                                'true'
-                                                                            ? InkWell(
-                                                                                onTap: () {
-                                                                                  Navigator.push(
-                                                                                    context,
-                                                                                    MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
-                                                                                  );
-                                                                                },
-                                                                                child: Container(
-                                                                                  width: MediaQuery.of(context).size.width * 0.35,
-                                                                                  //  color: RandomColorModel().getColor(),
-                                                                                  decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                  child: const Padding(
-                                                                                    padding: EdgeInsets.all(5),
-                                                                                    child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            : const SizedBox(),
-                                                                        unOfficialWhatsapp ==
-                                                                                'true'
-                                                                            ? InkWell(
-                                                                                onTap: () {
-                                                                                  Navigator.push(
-                                                                                    context,
-                                                                                    MaterialPageRoute(builder: (context) => GroupList(widget.token)),
-                                                                                  );
-                                                                                },
-                                                                                child: Container(
-                                                                                  width: MediaQuery.of(context).size.width * 0.35,
-                                                                                  decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                  child: const Padding(
-                                                                                    padding: EdgeInsets.all(5),
-                                                                                    child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            : const SizedBox()
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height: 8,
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  });
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const ChatHomeScreen()),
+                                              );
+                                              // showDialog(
+                                              //     barrierColor: Colors.grey
+                                              //         .withOpacity(.5),
+                                              //     context: context,
+                                              //     builder:
+                                              //         (BuildContext context) {
+                                              //       return WillPopScope(
+                                              //         onWillPop: () async {
+                                              //           return true;
+                                              //         },
+                                              //         child: Material(
+                                              //           type: MaterialType
+                                              //               .transparency,
+                                              //           child: Padding(
+                                              //             padding:
+                                              //                 const EdgeInsets
+                                              //                     .only(
+                                              //                     bottom: 50),
+                                              //             child: Center(
+                                              //               child: Container(
+                                              //                 decoration:
+                                              //                     BoxDecoration(
+                                              //                   borderRadius:
+                                              //                       BorderRadius
+                                              //                           .circular(
+                                              //                               10),
+                                              //                   color: Colors
+                                              //                       .white,
+                                              //                 ),
+                                              //                 width: MediaQuery.of(
+                                              //                             context)
+                                              //                         .size
+                                              //                         .width *
+                                              //                     0.9,
+                                              //                 height: 250,
+                                              //                 child: Padding(
+                                              //                   padding:
+                                              //                       const EdgeInsets
+                                              //                           .only(
+                                              //                           left:
+                                              //                               20,
+                                              //                           right:
+                                              //                               20),
+                                              //                   child: Column(
+                                              //                     mainAxisAlignment:
+                                              //                         MainAxisAlignment
+                                              //                             .center,
+                                              //                     crossAxisAlignment:
+                                              //                         CrossAxisAlignment
+                                              //                             .center,
+                                              //                     children: [
+                                              //                       Image.asset(
+                                              //                         'assets/icons/official_whatsapp.png',
+                                              //                         width: 80,
+                                              //                       ),
+                                              //                       const SizedBox(
+                                              //                         height:
+                                              //                             10,
+                                              //                       ),
+                                              //                       const Text(
+                                              //                         'Whatsapp',
+                                              //                         style: TextStyle(
+                                              //                             fontSize:
+                                              //                                 18,
+                                              //                             fontWeight:
+                                              //                                 FontWeight.w400),
+                                              //                       ),
+                                              //                       const SizedBox(
+                                              //                         height: 5,
+                                              //                       ),
+                                              //                       const Text(
+                                              //                         'Choose WhatsApp',
+                                              //                         style: TextStyle(
+                                              //                             fontSize:
+                                              //                                 15,
+                                              //                             fontWeight:
+                                              //                                 FontWeight.w400),
+                                              //                       ),
+                                              //                       const SizedBox(
+                                              //                         height:
+                                              //                             15,
+                                              //                       ),
+                                              //                       Row(
+                                              //                         mainAxisAlignment:
+                                              //                             MainAxisAlignment
+                                              //                                 .spaceBetween,
+                                              //                         children: [
+                                              //                           officialWhatsapp ==
+                                              //                                   'true'
+                                              //                               ? InkWell(
+                                              //                                   onTap: () {
+                                              //                                     Navigator.push(
+                                              //                                       context,
+                                              //                                       MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
+                                              //                                     );
+                                              //                                   },
+                                              //                                   child: Container(
+                                              //                                     width: MediaQuery.of(context).size.width * 0.35,
+                                              //                                     //  color: RandomColorModel().getColor(),
+                                              //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                              //                                     child: const Padding(
+                                              //                                       padding: EdgeInsets.all(5),
+                                              //                                       child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                              //                                     ),
+                                              //                                   ),
+                                              //                                 )
+                                              //                               : const SizedBox(),
+                                              //                           unOfficialWhatsapp ==
+                                              //                                   'true'
+                                              //                               ? InkWell(
+                                              //                                   onTap: () {
+                                              //                                     Navigator.push(
+                                              //                                       context,
+                                              //                                       MaterialPageRoute(builder: (context) => GroupList(widget.token)),
+                                              //                                     );
+                                              //                                   },
+                                              //                                   child: Container(
+                                              //                                     width: MediaQuery.of(context).size.width * 0.35,
+                                              //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                              //                                     child: const Padding(
+                                              //                                       padding: EdgeInsets.all(5),
+                                              //                                       child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                              //                                     ),
+                                              //                                   ),
+                                              //                                 )
+                                              //                               : const SizedBox()
+                                              //                         ],
+                                              //                       ),
+                                              //                       const SizedBox(
+                                              //                         height: 8,
+                                              //                       ),
+                                              //                     ],
+                                              //                   ),
+                                              //                 ),
+                                              //               ),
+                                              //             ),
+                                              //           ),
+                                              //         ),
+                                              //       );
+                                              //     });
                                             } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'Settings') {
@@ -1191,7 +1196,8 @@ class _HomePageState extends State<HomePage> {
                 ),
                 bottomNavigationBar: configure != null
                     ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured,phoneCallLogPermission: phoneCallLogPermission)
+                        widget.token!, configure!.data!.whatsappConfigured,
+                        phoneCallLogPermission: phoneCallLogPermission)
                     : const SizedBox())
             : Scaffold(
                 backgroundColor: Colors.white,
@@ -1221,7 +1227,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       InkWell(
                         onTap: () {
-                          getData(); 
+                          getData();
                         },
                         child: SizedBox(
                           width: 120,
@@ -1252,7 +1258,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 
   void _dialogue(BuildContext context, title) {
     showDialog(

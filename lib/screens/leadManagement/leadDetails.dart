@@ -879,49 +879,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       if (object1.data ==
                                                           true) {
                                                         if (context.mounted) {
-                                                          Navigator
-                                                              .pushReplacement(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        LeadDetails(
-                                                                          widget
-                                                                              .token,
-                                                                          widget
-                                                                              .editLead,
-                                                                          widget
-                                                                              .deleteLead,
-                                                                          widget
-                                                                              .cloudCall,
-                                                                          widget
-                                                                              .callMasterId,
-                                                                          pageName:
-                                                                              widget.pageName,
-                                                                          status:
-                                                                              widget.status,
-                                                                          staff:
-                                                                              widget.staff,
-                                                                          isCalled:
-                                                                              widget.isCalled,
-                                                                          fromDate:
-                                                                              widget.fromDate,
-                                                                          toDate:
-                                                                              widget.toDate,
-                                                                          category:
-                                                                              widget.category,
-                                                                          scrollToIndex:
-                                                                              widget.scrollToIndex,
-                                                                          searchKey:
-                                                                              widget.searchKey,
-                                                                          page:
-                                                                              widget.page,
-                                                                          pageSize:
-                                                                              widget.pageSize,
-                                                                          leadType:
-                                                                              widget.leadType,
-                                                                        )),
-                                                          );
+                                                          Navigator.pop(
+                                                              context);
                                                         }
                                                         // if (widget.pageName ==
                                                         //     'search') {

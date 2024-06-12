@@ -5,6 +5,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/addFollowup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -127,7 +128,7 @@ class _AllReportState extends State<AllReport> {
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
-        if (items.length < viewLeads!.data!.totalLeads!) {
+        if (items.length < viewLeads!.data.totalLeads) {
           getData();
         }
       }
@@ -199,7 +200,7 @@ class _AllReportState extends State<AllReport> {
       }
       configure = await HttpService.configure(widget.token);
       setState(() {
-        items.addAll(viewLeads!.data!.details as Iterable);
+        items.addAll(viewLeads!.data.details as Iterable);
         page++;
         isLoading = false;
       });
@@ -312,13 +313,13 @@ class _AllReportState extends State<AllReport> {
                       ],
                     ),
                   ),
-                  Text('Total Leads : ${viewLeads!.data!.totalLeads}',
+                  Text('Total Leads : ${viewLeads!.data.totalLeads}',
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(
                     height: 10,
                   ),
-                  viewLeads!.data!.details!.isNotEmpty
+                  viewLeads!.data.details.isNotEmpty
                       ? Expanded(
                           child: ScrollablePositionedList.builder(
                             //reverse: true,
@@ -360,18 +361,18 @@ class _AllReportState extends State<AllReport> {
                                   ),
                                 ),
                                 secondaryBackground: Container(
-                                  color: Colors.red,
+                                  color: Colors.blue,
                                   child: const Align(
                                     alignment: Alignment.centerRight,
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: <Widget>[
                                         Icon(
-                                          Icons.delete,
+                                          Icons.add,
                                           color: Colors.white,
                                         ),
                                         Text(
-                                          "Delete",
+                                          "Add Followup",
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w700,
@@ -388,78 +389,105 @@ class _AllReportState extends State<AllReport> {
                                 confirmDismiss: (direction) async {
                                   if (direction ==
                                       DismissDirection.endToStart) {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            scrollable: true,
-                                            title: const Text('Please Confirm'),
-                                            content: const Text(
-                                                'Are you sure to Delete?'),
-                                            actions: [
-                                              // The "Yes" button
-                                              TextButton(
-                                                  onPressed: () async {
-                                                    DeleteLeadModel delete =
-                                                        await HttpService
-                                                            .deleteLead(
-                                                                widget.token,
-                                                                items[index]
-                                                                    .callMasterId);
-                                                    if (delete.data == true) {
-                                                      Common.toastMessaage(
-                                                          delete.message,
-                                                          Colors.green);
-                                                      if (context.mounted) {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AllReport(
-                                                                        widget
-                                                                            .token!,
-                                                                        widget
-                                                                            .editLead,
-                                                                        widget
-                                                                            .deleteLead,
-                                                                        widget
-                                                                            .cloudCall,
-                                                                        pageName:
-                                                                            widget.pageName,
-                                                                      )),
-                                                        );
-                                                      }
-                                                    } else {
-                                                      Common.toastMessaage(
-                                                          delete.message,
-                                                          Colors.red);
-                                                      if (context.mounted) {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      }
-                                                    }
-                                                  },
-                                                  child: const Text('Yes')),
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text('No'))
-                                            ],
-                                          );
-                                        });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => AddFollowup(
+                                                widget.token,
+                                                widget.editLead,
+                                                widget.deleteLead,
+                                                widget.cloudCall,
+                                                items[index].callMasterId,
+                                                pageName: widget.pageName,
+                                                leadType:
+                                                    items[index].leadCategory,
+                                                leadTypeId:
+                                                    items[index].leadCategoryId,
+                                                leadSubType: items[index]
+                                                    .leadSubCategory,
+                                                leadSubTypeId: items[index]
+                                                    .leadSubCategoryId,
+                                                priorityId:
+                                                    items[index].priority,
+                                                priority:
+                                                    items[index].priorityName,
+                                                cost: items[index].cost,
+                                                address: items[index].address,
+                                              )),
+                                    ).then((value) {
+                                      items.clear();
+                                      page = 1;
+                                      getData();
+                                    });
+                                    // showDialog(
+                                    //     context: context,
+                                    //     builder: (BuildContext context) {
+                                    //       return AlertDialog(
+                                    //         scrollable: true,
+                                    //         title: const Text('Please Confirm'),
+                                    //         content: const Text(
+                                    //             'Are you sure to Delete?'),
+                                    //         actions: [
+                                    //           // The "Yes" button
+                                    //           TextButton(
+                                    //               onPressed: () async {
+                                    //                 DeleteLeadModel delete =
+                                    //                     await HttpService
+                                    //                         .deleteLead(
+                                    //                             widget.token,
+                                    //                             items[index]
+                                    //                                 .callMasterId);
+                                    //                 if (delete.data == true) {
+                                    //                   Common.toastMessaage(
+                                    //                       delete.message,
+                                    //                       Colors.green);
+                                    //                   if (context.mounted) {
+                                    //                     Navigator.push(
+                                    //                       context,
+                                    //                       MaterialPageRoute(
+                                    //                           builder:
+                                    //                               (context) =>
+                                    //                                   AllReport(
+                                    //                                     widget
+                                    //                                         .token!,
+                                    //                                     widget
+                                    //                                         .editLead,
+                                    //                                     widget
+                                    //                                         .deleteLead,
+                                    //                                     widget
+                                    //                                         .cloudCall,
+                                    //                                     pageName:
+                                    //                                         widget.pageName,
+                                    //                                   )),
+                                    //                     );
+                                    //                   }
+                                    //                 } else {
+                                    //                   Common.toastMessaage(
+                                    //                       delete.message,
+                                    //                       Colors.red);
+                                    //                   if (context.mounted) {
+                                    //                     Navigator.of(context)
+                                    //                         .pop();
+                                    //                   }
+                                    //                 }
+                                    //               },
+                                    //               child: const Text('Yes')),
+                                    //           TextButton(
+                                    //               onPressed: () {
+                                    //                 Navigator.of(context).pop();
+                                    //               },
+                                    //               child: const Text('No'))
+                                    //         ],
+                                    //       );
+                                    //     });
                                   } else {
-                                    if (viewLeads!.data!.callPermission ==
-                                        false) {
+                                    if (widget.cloudCall == false) {
                                       showDialog(
                                           context: context,
                                           builder: (BuildContext ctx) {
                                             return AlertDialog(
                                               title: const Text('Alert !!!'),
-                                              content: Text(viewLeads!
-                                                  .data!.warningMessage
-                                                  .toString()),
+                                              content: Text(""),
                                               actions: [
                                                 // The "Yes" button
                                                 TextButton(
@@ -485,8 +513,10 @@ class _AllReportState extends State<AllReport> {
                                                                       widget
                                                                           .cloudCall,
                                                                       viewLeads!
-                                                                          .data!
-                                                                          .callLeadId
+                                                                          .data
+                                                                          .details[
+                                                                              index]
+                                                                          .callMasterId
                                                                           .toString(),
                                                                       pageName:
                                                                           widget
@@ -724,116 +754,172 @@ class _AllReportState extends State<AllReport> {
                                                   SingleChildScrollView(
                                                     scrollDirection:
                                                         Axis.horizontal,
-                                                    child: Row(
-                                                      children: [
-                                                        if (items[index]
-                                                                .priority ==
-                                                            '1')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color:
-                                                                  Colors.grey,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
+                                                    child: SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              .89,
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              if (items[index]
+                                                                      .priority ==
+                                                                  '1')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                              if (items[index]
+                                                                      .priority ==
+                                                                  '2')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .green,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                              if (items[index]
+                                                                      .priority ==
+                                                                  '3')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .red,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                              const SizedBox(
+                                                                width: 5,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 170,
+                                                                child: Text(
+                                                                  items[index]
+                                                                      .clientName
+                                                                      .toString(),
+                                                                  // items.length.toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ),
+                                                              Align(
+                                                                alignment:
+                                                                    Alignment
+                                                                        .topRight,
+                                                                child:
+                                                                    Container(
+                                                                  decoration: BoxDecoration(
+                                                                      color: Colors
+                                                                          .pink
+                                                                          .shade100,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5)),
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left: 5,
+                                                                        right:
+                                                                            5,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                    child: Text(
+                                                                      items[index]
+                                                                          .leadCategory
+                                                                          .toString(),
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .red,
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                      ),
+                                                                      maxLines:
+                                                                          1,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      softWrap:
+                                                                          false,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
-                                                        if (items[index]
-                                                                .priority ==
-                                                            '2')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color:
-                                                                  Colors.green,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                        if (items[index]
-                                                                .priority ==
-                                                            '3')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color: Colors.red,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        SizedBox(
-                                                          width: 170,
-                                                          child: Text(
-                                                            items[index]
-                                                                .clientName
-                                                                .toString(),
-                                                            // items.length.toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 16,
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ),
-                                                        Align(
-                                                          alignment: Alignment
-                                                              .topRight,
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                color: Colors
-                                                                    .pink
-                                                                    .shade100,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5)),
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 5,
-                                                                      right: 5,
-                                                                      top: 2,
-                                                                      bottom:
-                                                                          2),
-                                                              child: Text(
-                                                                items[index]
-                                                                    .leadCategory
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 13,
+                                                          Visibility(
+                                                            visible: items[
+                                                                        index]
+                                                                    .categoryCount
+                                                                    .toString() !=
+                                                                "1",
+                                                            child: Container(
+                                                              height: 20,
+                                                              width: 20,
+                                                              decoration: const BoxDecoration(
                                                                   color: Colors
                                                                       .red,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
+                                                                  shape: BoxShape
+                                                                      .circle),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  items[index]
+                                                                      .categoryCount
+                                                                      .toString(),
+                                                                  // items.length.toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                 ),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                softWrap: false,
                                                               ),
                                                             ),
                                                           ),
-                                                        ),
-                                                      ],
+                                                        ],
+                                                      ),
                                                     ),
                                                   ),
                                                   const SizedBox(
@@ -1103,9 +1189,8 @@ class _AllReportState extends State<AllReport> {
                                                           ),
                                                           InkWell(
                                                             onTap: () async {
-                                                              if (viewLeads!
-                                                                      .data!
-                                                                      .callPermission ==
+                                                              if (widget
+                                                                      .cloudCall ==
                                                                   false) {
                                                                 showDialog(
                                                                     context:
@@ -1116,10 +1201,8 @@ class _AllReportState extends State<AllReport> {
                                                                       return AlertDialog(
                                                                         title: const Text(
                                                                             'Alert !!!'),
-                                                                        content: Text(viewLeads!
-                                                                            .data!
-                                                                            .warningMessage
-                                                                            .toString()),
+                                                                        content:
+                                                                            Text(""),
                                                                         actions: [
                                                                           // The "Yes" button
                                                                           TextButton(
@@ -1137,7 +1220,7 @@ class _AllReportState extends State<AllReport> {
                                                                                             widget.editLead,
                                                                                             widget.deleteLead,
                                                                                             widget.cloudCall,
-                                                                                            viewLeads!.data!.callLeadId.toString(),
+                                                                                            viewLeads!.data.details[index].callMasterId.toString(),
                                                                                             pageName: widget.pageName,
                                                                                             page: page,
                                                                                             pageSize: page * pageSize,
@@ -1150,7 +1233,7 @@ class _AllReportState extends State<AllReport> {
                                                                                   getData();
                                                                                   itemPositionsListener.itemPositions.addListener(() {
                                                                                     if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
-                                                                                      if (items.length < viewLeads!.data!.totalLeads!) {
+                                                                                      if (items.length < viewLeads!.data.totalLeads) {
                                                                                         getData();
                                                                                       }
                                                                                     }
