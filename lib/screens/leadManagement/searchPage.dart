@@ -649,125 +649,195 @@ class _SearchPageState extends State<SearchPage> {
                                                   SingleChildScrollView(
                                                     scrollDirection:
                                                         Axis.horizontal,
-                                                    child: Row(
-                                                      children: [
-                                                        if (search!
-                                                                .data
-                                                                .details[i]
-                                                                .priority ==
-                                                            '1')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color:
-                                                                  Colors.grey,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                        if (search!
-                                                                .data
-                                                                .details[i]
-                                                                .priority ==
-                                                            '2')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color:
-                                                                  Colors.green,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                        if (search!
-                                                                .data
-                                                                .details[i]
-                                                                .priority ==
-                                                            '3')
-                                                          Container(
-                                                            width: 10.0,
-                                                            height: 10.0,
-                                                            decoration:
-                                                                const BoxDecoration(
-                                                              color: Colors.red,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                          ),
-                                                        const SizedBox(
-                                                          width: 5,
-                                                        ),
-                                                        SizedBox(
-                                                          width: 170,
-                                                          child: Text(
-                                                            search!
-                                                                .data
-                                                                .details[i]
-                                                                .clientName
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 16,
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ),
-                                                        Align(
-                                                          alignment: Alignment
-                                                              .topRight,
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                color: Colors
-                                                                    .pink
-                                                                    .shade100,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5)),
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 5,
-                                                                      right: 5,
-                                                                      top: 2,
-                                                                      bottom:
-                                                                          2),
-                                                              child: Text(
-                                                                search!
-                                                                    .data
-                                                                    .details[i]
-                                                                    .leadCategory
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 13,
-                                                                  color: Colors
-                                                                      .red,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
+                                                    child: SizedBox(
+                                                      width: MediaQuery.of(context).size.width*.88,
+                                                      child: Stack(
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              if (search!
+                                                                      .data
+                                                                      .details[i]
+                                                                      .priority ==
+                                                                  '1')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
                                                                 ),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                softWrap: false,
+                                                              if (search!
+                                                                      .data
+                                                                      .details[i]
+                                                                      .priority ==
+                                                                  '2')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .green,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                              if (search!
+                                                                      .data
+                                                                      .details[i]
+                                                                      .priority ==
+                                                                  '3')
+                                                                Container(
+                                                                  width: 10.0,
+                                                                  height: 10.0,
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .red,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                                ),
+                                                              const SizedBox(
+                                                                width: 5,
                                                               ),
-                                                            ),
+                                                              SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .46,
+                                                                child: Text(
+                                                                  search!
+                                                                      .data
+                                                                      .details[i]
+                                                                      .clientName
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          16,
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ),
+                                                              Align(
+                                                                alignment:
+                                                                    Alignment
+                                                                        .topRight,
+                                                                child: Container(
+                                                                  decoration: BoxDecoration(
+                                                                      color: Colors
+                                                                          .pink
+                                                                          .shade100,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              5)),
+                                                                  child: Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .only(
+                                                                        left: 5,
+                                                                        right: 5,
+                                                                        top: 2,
+                                                                        bottom:
+                                                                            2),
+                                                                    child: Text(
+                                                                      search!
+                                                                          .data
+                                                                          .details[
+                                                                              i]
+                                                                          .leadCategory
+                                                                          .toString(),
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .red,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w500,
+                                                                      ),
+                                                                      maxLines: 1,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      softWrap:
+                                                                          false,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
-                                                        ),
-                                                      ],
+                                                         Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .end,
+                                                            children: [
+                                                              Visibility(
+                                                                visible: search!
+                                                                            .data
+                                                                            .details[
+                                                                                i]
+                                                                            .categoryCount
+                                                                             !=
+                                                                        "1" &&
+                                                                    search!
+                                                                            .data
+                                                                            .details[
+                                                                                i]
+                                                                            .categoryCount
+                                                                            .toString() !=
+                                                                        "",
+                                                                child: Container(
+                                                                  height: 20,
+                                                                  width: 20,
+                                                                  decoration: const BoxDecoration(
+                                                                      color: Colors
+                                                                          .red,
+                                                                      shape: BoxShape
+                                                                          .circle),
+                                                                  child: Center(
+                                                                    child: Text(
+                                                                      search!
+                                                                          .data
+                                                                          .details[
+                                                                              i]
+                                                                          .categoryCount
+                                                                          .toString(),
+                                                                      // items.length.toString(),
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              12,
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontWeight:
+                                                                              FontWeight.bold),
+                                                                      maxLines: 1,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        
+                                                        ],
+                                                      ),
                                                     ),
                                                   ),
                                                   const SizedBox(

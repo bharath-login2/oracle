@@ -699,6 +699,7 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}lead_details",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
+
       if (result.statusCode == 200) {
         LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
         return model;
@@ -875,7 +876,7 @@ class HttpService {
       "token": token,
       "call_details_id": callDetailsId,
     });
-
+    
     try {
       var result = await _dio.post(
           "${await Config.getUrl()}get_lead_followup_details",

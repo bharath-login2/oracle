@@ -2005,7 +2005,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                     child: Row(
                                                       children: [
                                                         SizedBox(
-                                                          width: 170,
+                                                          width: MediaQuery.of(context).size.width *.5,
                                                           child: Text(
                                                             items[index]
                                                                 .clientName

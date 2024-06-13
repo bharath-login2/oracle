@@ -759,11 +759,8 @@ class _AllReportState extends State<AllReport> {
                                                           MediaQuery.of(context)
                                                                   .size
                                                                   .width *
-                                                              .89,
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
+                                                              .88,
+                                                      child: Stack(
                                                         children: [
                                                           Row(
                                                             children: [
@@ -813,7 +810,7 @@ class _AllReportState extends State<AllReport> {
                                                                 width: 5,
                                                               ),
                                                               SizedBox(
-                                                                width: 170,
+                                                                width: MediaQuery.of(context).size.width*.46,
                                                                 child: Text(
                                                                   items[index]
                                                                       .clientName
@@ -882,41 +879,52 @@ class _AllReportState extends State<AllReport> {
                                                               ),
                                                             ],
                                                           ),
-                                                          Visibility(
-                                                            visible: items[
-                                                                        index]
-                                                                    .categoryCount
-                                                                    .toString() !=
-                                                                "1",
-                                                            child: Container(
-                                                              height: 20,
-                                                              width: 20,
-                                                              decoration: const BoxDecoration(
-                                                                  color: Colors
-                                                                      .red,
-                                                                  shape: BoxShape
-                                                                      .circle),
-                                                              child: Center(
-                                                                child: Text(
-                                                                  items[index]
-                                                                      .categoryCount
-                                                                      .toString(),
-                                                                  // items.length.toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          12,
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                            children: [
+                                                              Visibility(
+                                                                visible: items[
+                                                                            index]
+                                                                        .categoryCount
+                                                                        .toString() !=
+                                                                    "1"&& items[
+                                                                            index]
+                                                                        .categoryCount
+                                                                        .toString() !=
+                                                                    "",
+                                                                child: Container(
+                                                                  height: 20,
+                                                                  width: 20,
+                                                                  decoration: const BoxDecoration(
                                                                       color: Colors
-                                                                          .white,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
+                                                                          .red,
+                                                                      shape: BoxShape
+                                                                          .circle),
+                                                                  child: Center(
+                                                                    child: Text(
+                                                                      items[index]
+                                                                          .categoryCount
+                                                                          .toString(),
+                                                                      // items.length.toString(),
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              12,
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontWeight:
+                                                                              FontWeight
+                                                                                  .bold),
+                                                                      maxLines: 1,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                  ),
                                                                 ),
                                                               ),
-                                                            ),
+                                                            ],
                                                           ),
                                                         ],
                                                       ),

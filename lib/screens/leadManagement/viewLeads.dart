@@ -2053,66 +2053,69 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         context)
                                                                     .size
                                                                     .width *
-                                                                .89,
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
+                                                                .88,
+                                                            child: Stack(
                                                               children: [
                                                                 Row(
-                                                                  
                                                                   children: [
                                                                     if (items[index]
                                                                             .priority ==
                                                                         '1')
                                                                       Container(
-                                                                        width: 10.0,
+                                                                        width:
+                                                                            10.0,
                                                                         height:
                                                                             10.0,
                                                                         decoration:
                                                                             const BoxDecoration(
-                                                                          color: Colors
-                                                                              .grey,
-                                                                          shape: BoxShape
-                                                                              .circle,
+                                                                          color:
+                                                                              Colors.grey,
+                                                                          shape:
+                                                                              BoxShape.circle,
                                                                         ),
                                                                       ),
                                                                     if (items[index]
                                                                             .priority ==
                                                                         '2')
                                                                       Container(
-                                                                        width: 10.0,
+                                                                        width:
+                                                                            10.0,
                                                                         height:
                                                                             10.0,
                                                                         decoration:
                                                                             const BoxDecoration(
-                                                                          color: Colors
-                                                                              .green,
-                                                                          shape: BoxShape
-                                                                              .circle,
+                                                                          color:
+                                                                              Colors.green,
+                                                                          shape:
+                                                                              BoxShape.circle,
                                                                         ),
                                                                       ),
                                                                     if (items[index]
                                                                             .priority ==
                                                                         '3')
                                                                       Container(
-                                                                        width: 10.0,
+                                                                        width:
+                                                                            10.0,
                                                                         height:
                                                                             10.0,
                                                                         decoration:
                                                                             const BoxDecoration(
-                                                                          color: Colors
-                                                                              .red,
-                                                                          shape: BoxShape
-                                                                              .circle,
+                                                                          color:
+                                                                              Colors.red,
+                                                                          shape:
+                                                                              BoxShape.circle,
                                                                         ),
                                                                       ),
                                                                     const SizedBox(
                                                                       width: 5,
                                                                     ),
                                                                     SizedBox(
-                                                                      width: 170,
-                                                                      child: Text(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .46,
+                                                                      child:
+                                                                          Text(
                                                                         items[index]
                                                                             .clientName
                                                                             .toString(),
@@ -2120,14 +2123,13 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         style: const TextStyle(
                                                                             fontSize:
                                                                                 16,
-                                                                            color: Colors
-                                                                                .black,
-                                                                            fontWeight:
-                                                                                FontWeight.bold),
-                                                                        maxLines: 1,
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontWeight: FontWeight.bold),
+                                                                        maxLines:
+                                                                            1,
                                                                         overflow:
-                                                                            TextOverflow
-                                                                                .ellipsis,
+                                                                            TextOverflow.ellipsis,
                                                                       ),
                                                                     ),
                                                                     Align(
@@ -2137,35 +2139,25 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       child:
                                                                           Container(
                                                                         decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .pink
-                                                                                .shade100,
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(5)),
+                                                                            color:
+                                                                                Colors.pink.shade100,
+                                                                            borderRadius: BorderRadius.circular(5)),
                                                                         child:
                                                                             Padding(
-                                                                          padding: const EdgeInsets.only(
-                                                                              left:
-                                                                                  5,
-                                                                              right:
-                                                                                  5,
-                                                                              top:
-                                                                                  2,
-                                                                              bottom:
-                                                                                  2),
+                                                                          padding: const EdgeInsets
+                                                                              .only(
+                                                                              left: 5,
+                                                                              right: 5,
+                                                                              top: 2,
+                                                                              bottom: 2),
                                                                           child:
                                                                               Text(
-                                                                            items[index]
-                                                                                .leadCategory
-                                                                                .toString(),
+                                                                            items[index].leadCategory.toString(),
                                                                             style:
                                                                                 const TextStyle(
-                                                                              fontSize:
-                                                                                  13,
-                                                                              color:
-                                                                                  Colors.red,
-                                                                              fontWeight:
-                                                                                  FontWeight.w500,
+                                                                              fontSize: 13,
+                                                                              color: Colors.red,
+                                                                              fontWeight: FontWeight.w500,
                                                                             ),
                                                                             maxLines:
                                                                                 1,
@@ -2177,37 +2169,37 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         ),
                                                                       ),
                                                                     ),
-                                                                  
                                                                   ],
                                                                 ),
-                                                                  Visibility(
-                                                                      visible: items[
-                                                                                  index]
-                                                                              .categoryCount
-                                                                              .toString() !=
-                                                                          "1",
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .end,
+                                                                  children: [
+                                                                    Visibility(
+                                                                      visible: items[index].categoryCount.toString() !=
+                                                                              "1" &&
+                                                                          items[index].categoryCount.toString() !=
+                                                                              "",
                                                                       child:
                                                                           Container(
-                                                                        height: 20,
-                                                                        width: 20,
+                                                                        height:
+                                                                            20,
+                                                                        width:
+                                                                            20,
                                                                         decoration: const BoxDecoration(
-                                                                            color: Colors
-                                                                                .red,
-                                                                            shape: BoxShape
-                                                                                .circle),
+                                                                            color:
+                                                                                Colors.red,
+                                                                            shape: BoxShape.circle),
                                                                         child:
                                                                             Center(
                                                                           child:
                                                                               Text(
-                                                                            items[index]
-                                                                                .categoryCount
-                                                                                .toString(),
+                                                                            items[index].categoryCount.toString(),
                                                                             // items.length.toString(),
                                                                             style: const TextStyle(
-                                                                                fontSize:
-                                                                                    12,
-                                                                                color:
-                                                                                    Colors.white,
+                                                                                fontSize: 12,
+                                                                                color: Colors.white,
                                                                                 fontWeight: FontWeight.bold),
                                                                             maxLines:
                                                                                 1,
@@ -2217,6 +2209,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         ),
                                                                       ),
                                                                     ),
+                                                                  ],
+                                                                ),
                                                               ],
                                                             ),
                                                           ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:accordion/accordion.dart';
@@ -228,6 +229,7 @@ class _LeadDetailsState extends State<LeadDetails> {
         });
       }
     } catch (e) {
+      log(e.toString());
       setState(() {
         timeOut = true;
       });
