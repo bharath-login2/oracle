@@ -101,10 +101,10 @@ class Data {
     callResult = json['call_result']??"";
     staffName = json['staff_name']??"";
     priorityId = json['priority_id']??"";
-    priority = json['priority'];
-    countryCode = json['country_code'];
-    contactNumber1 = json['contact_number1'];
-    branchId = json['branch_id'];
+    priority = json['priority']??"";
+    countryCode = json['country_code']??"";
+    contactNumber1 = json['contact_number1']??"";
+    branchId = json['branch_id']??"";
     callHistoryPermission = json['callHistoryPermission'];
     fileManagerPermission = json['fileManagerPermission'];
     if (json['leadCategories'] != null) {
@@ -114,8 +114,8 @@ class Data {
       });
     }
     callPermission = json['callPermission'];
-    warningMessage = json['warningMessage'];
-    callLeadId = json['callLeadId'];
+    warningMessage = json['warningMessage']??"";
+    callLeadId = json['callLeadId']??"";
   }
 
   Map<String, dynamic> toJson() {

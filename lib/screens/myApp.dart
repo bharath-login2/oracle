@@ -70,7 +70,8 @@ class _MyAppState extends State<MyApp> {
               ? const SplashScreen()
               : LeadDetails(
                   token!, editLead!, deleteLead!, cloudCall!, detailId!,
-                  pageName: 'notification'),
+                  pageName: 'notification',
+                  ),
     );
   }
 }

@@ -85,18 +85,19 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } else {
       if (mounted) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => LeadDetails(
-          token.toString(),
-          editLead.toBoolean(),
-          deleteLead.toBoolean(),
-          cloudCall.toBoolean(),
-          leadId.toString(),
-          fromDate: DateTime.now().toString(),
-          toDate: DateTime.now().toString(),
-          pageName: 'notification',
-        ),
-      ));}
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => LeadDetails(
+            token.toString(),
+            editLead.toBoolean(),
+            deleteLead.toBoolean(),
+            cloudCall.toBoolean(),
+            leadId.toString(),
+            fromDate: DateTime.now().toString(),
+            toDate: DateTime.now().toString(),
+            pageName: 'notification',
+          ),
+        ));
+      }
     }
   }
 
@@ -118,28 +119,32 @@ class _SplashScreenState extends State<SplashScreen> {
       }
 
       updatedata = await HttpService.forceUpdate();
-      setState(() {
-        if (updatedata!.data!.server!.length == 1) {
-          Common.saveSharedPref(
-              "url", updatedata!.data!.server![0].url.toString());
+      if (mounted) {
+        setState(() {
+          if (updatedata!.data!.server!.length == 1) {
+            Common.saveSharedPref(
+                "url", updatedata!.data!.server![0].url.toString());
+          }
+        });
+        final info = await PackageInfo.fromPlatform();
+        setState(() {
+          _packageInfo = info;
+        });
+        final appVersion = _packageInfo.version;
+        int versionCompare =
+            appVersion.compareTo(updatedata!.data!.minVersion.toString());
+        if (versionCompare < 0) {
+          _checkVersion();
+        } else {
+          _loadWidget();
         }
-      });
-      final info = await PackageInfo.fromPlatform();
-      setState(() {
-        _packageInfo = info;
-      });
-      final appVersion = _packageInfo.version;
-      int versionCompare =
-          appVersion.compareTo(updatedata!.data!.minVersion.toString());
-      if (versionCompare < 0) {
-        _checkVersion();
-      } else {
-        _loadWidget();
       }
     } catch (e) {
-      setState(() {
-        timeOut = true;
-      });
+      if (mounted) {
+        setState(() {
+          timeOut = true;
+        });
+      }
     }
   }
 
