@@ -876,7 +876,7 @@ class HttpService {
       "token": token,
       "call_details_id": callDetailsId,
     });
-    
+
     try {
       var result = await _dio.post(
           "${await Config.getUrl()}get_lead_followup_details",
@@ -1652,8 +1652,10 @@ class HttpService {
     try {
       var result =
           await _dio.post("${await Config.getUrl()}getUploads", data: formData);
-      ListFolderNameModel model = ListFolderNameModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        ListFolderNameModel model = ListFolderNameModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }

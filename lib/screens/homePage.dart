@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -76,6 +77,7 @@ class _HomePageState extends State<HomePage> {
 
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+    log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
     phoneCallLogPermission =
@@ -303,200 +305,203 @@ class _HomePageState extends State<HomePage> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-                                Card(
-                                  // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  // Set the clip behavior of the card
-                                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                                  // Define the child widgets of the card
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
-                                      Image.network(
-                                        userDashboard!.data!.image1.toString(),
-                                        height: 160,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
-                                      // Add a container with padding that contains the card's title, text, and buttons
-                                      Container(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            15, 15, 15, 0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            // Display the card's title using a font size of 24 and a dark grey color
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  userDashboard!
-                                                      .data!.packageName
-                                                      .toString(),
-                                                  style: TextStyle(
-                                                    fontSize: 18,
-                                                    color: Colors.grey[800],
-                                                  ),
-                                                ),
-                                                userDashboard!
-                                                            .data!.expireSoon ==
-                                                        true
-                                                    ? Container(
-                                                        decoration: BoxDecoration(
-                                                            color: const Color(
-                                                                0xFFd6ebff),
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 8,
-                                                                  right: 5,
-                                                                  top: 4,
-                                                                  bottom: 4),
-                                                          child: Text(
-                                                            userDashboard!.data!
-                                                                .expireSoonContent
-                                                                .toString(),
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 11,
-                                                              color: Colors.red,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            softWrap: false,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : const SizedBox(),
-                                              ],
-                                            ),
-                                            // Add a space between the title and the text
-                                            Container(height: 10),
-                                            // Display the card's text using a font size of 15 and a light grey color
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Start Date',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.grey[700],
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Text(
-                                                      userDashboard!
-                                                          .data!.startDate
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 15,
-                                                          color: Colors.red,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'End Date',
-                                                      style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.grey[700],
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Text(
-                                                      userDashboard!
-                                                          .data!.endDate
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 15,
-                                                          color: Colors.red,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Text(
-                                              'Staff Count ( ${userDashboard!.data!.currentStaff}/${userDashboard!.data!.staffCount} )',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[700],
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            StepProgressIndicator(
-                                              selectedColor: Colors.green,
-                                              totalSteps: userDashboard!
-                                                  .data!.staffCount!,
-                                              currentStep: userDashboard!
-                                                  .data!.currentStaff!,
-                                            ),
-                                            // Add a row with two buttons spaced apart and aligned to the right side of the card
-                                            Row(
-                                              children: <Widget>[
-                                                // Add a spacer to push the buttons to the right side of the card
-                                                const Spacer(),
-                                                // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
-
-                                                // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
-                                                TextButton(
-                                                  child: const Text(
-                                                    "UPGRADE",
-                                                  ),
-                                                  onPressed: () {
-                                                    _upgrade(context);
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                Visibility(
+                                  visible: role =="Company Admin",
+                                  child: Card(
+                                    // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    // Set the clip behavior of the card
+                                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                                    // Define the child widgets of the card
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
+                                        Image.network(
+                                          userDashboard!.data!.image1.toString(),
+                                          height: 160,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
                                         ),
-                                      ),
-                                      // Add a small space between the card and the next widget
-                                      Container(height: 5),
-                                    ],
+                                        // Add a container with padding that contains the card's title, text, and buttons
+                                        Container(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              15, 15, 15, 0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              // Display the card's title using a font size of 24 and a dark grey color
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    userDashboard!
+                                                        .data!.packageName
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                      fontSize: 18,
+                                                      color: Colors.grey[800],
+                                                    ),
+                                                  ),
+                                                  userDashboard!
+                                                              .data!.expireSoon ==
+                                                          true
+                                                      ? Container(
+                                                          decoration: BoxDecoration(
+                                                              color: const Color(
+                                                                  0xFFd6ebff),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5)),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 8,
+                                                                    right: 5,
+                                                                    top: 4,
+                                                                    bottom: 4),
+                                                            child: Text(
+                                                              userDashboard!.data!
+                                                                  .expireSoonContent
+                                                                  .toString(),
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 11,
+                                                                color: Colors.red,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              softWrap: false,
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : const SizedBox(),
+                                                ],
+                                              ),
+                                              // Add a space between the title and the text 
+                                              Container(height: 10),
+                                              // Display the card's text using a font size of 15 and a light grey color
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Start Date',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.grey[700],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      Text(
+                                                        userDashboard!
+                                                            .data!.startDate
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 15,
+                                                            color: Colors.red,
+                                                            fontWeight:
+                                                                FontWeight.bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'End Date',
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.grey[700],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      Text(
+                                                        userDashboard!
+                                                            .data!.endDate
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 15,
+                                                            color: Colors.red,
+                                                            fontWeight:
+                                                                FontWeight.bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              Text(
+                                                'Staff Count ( ${userDashboard!.data!.currentStaff}/${userDashboard!.data!.staffCount} )',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              StepProgressIndicator(
+                                                selectedColor: Colors.green,
+                                                totalSteps: userDashboard!
+                                                    .data!.staffCount!,
+                                                currentStep: userDashboard!
+                                                    .data!.currentStaff!,
+                                              ),
+                                              // Add a row with two buttons spaced apart and aligned to the right side of the card
+                                              Row(
+                                                children: <Widget>[
+                                                  // Add a spacer to push the buttons to the right side of the card
+                                                  const Spacer(),
+                                                  // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
+                                  
+                                                  // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
+                                                  TextButton(
+                                                    child: const Text(
+                                                      "UPGRADE",
+                                                    ),
+                                                    onPressed: () {
+                                                      _upgrade(context);
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Add a small space between the card and the next widget
+                                        Container(height: 5),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(
