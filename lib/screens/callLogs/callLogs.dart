@@ -124,8 +124,8 @@ class _CallLogsState extends State<CallLogs> {
         child: Container(
           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
           ),
           child: Padding(
             padding: const EdgeInsets.only(
@@ -182,14 +182,8 @@ class _CallLogsState extends State<CallLogs> {
                                 Common.toastMessaage(
                                     object1.message, Colors.green);
                                 if (context.mounted) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => CallLogs(
-                                            widget.token,
-                                            widget.name,
-                                            widget.userId)),
-                                  );
+                                  Navigator.pop(context);
+                                  getData();
                                 }
                               } else {
                                 Common.toastMessaage(
@@ -214,16 +208,15 @@ class _CallLogsState extends State<CallLogs> {
                                     return AlertDialog(
                                       scrollable: true,
                                       title: const Text('Please Confirm'),
-                                      content: const Text(
-                                          'Are you sure to Delete?'),
+                                      content:
+                                          const Text('Are you sure to Delete?'),
                                       actions: [
                                         // The "Yes" button
                                         TextButton(
                                             onPressed: () async {
                                               Map<String, dynamic> body = {
                                                 "token": widget.token,
-                                                'deletedIds':
-                                                    deleteHistoryIds,
+                                                'deletedIds': deleteHistoryIds,
                                               };
                                               DeleteCallHistoryModel delete =
                                                   await HttpService
@@ -242,14 +235,12 @@ class _CallLogsState extends State<CallLogs> {
                                                             CallLogs(
                                                                 widget.token,
                                                                 widget.name,
-                                                                widget
-                                                                    .userId)),
+                                                                widget.userId)),
                                                   );
                                                 }
                                               } else {
                                                 Common.toastMessaage(
-                                                    delete.message,
-                                                    Colors.red);
+                                                    delete.message, Colors.red);
                                                 if (context.mounted) {
                                                   Navigator.of(context).pop();
                                                 }
@@ -272,8 +263,7 @@ class _CallLogsState extends State<CallLogs> {
                         : const SizedBox(),
                     callUploadPermission != null
                         ? Padding(
-                            padding:
-                                const EdgeInsets.only(left: 10, right: 10),
+                            padding: const EdgeInsets.only(left: 10, right: 10),
                             child: GestureDetector(
                               onTap: () async {
                                 displayOverApps = await Permission
@@ -457,8 +447,8 @@ class _CallLogsState extends State<CallLogs> {
                                 color: selectedIndex == 0
                                     ? const Color(0xFFd5f5f4)
                                     : Colors.white,
-                                borderRadius: const BorderRadius.all(
-                                    Radius.circular(6))),
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(6))),
                             child: Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -497,8 +487,8 @@ class _CallLogsState extends State<CallLogs> {
                                 color: selectedIndex == 1
                                     ? const Color(0xFFd5f5f4)
                                     : Colors.white,
-                                borderRadius: const BorderRadius.all(
-                                    Radius.circular(6))),
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(6))),
                             child: Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -529,7 +519,7 @@ class _CallLogsState extends State<CallLogs> {
                               height: 10,
                             ),
                             //Text(_callLogEntries as String),
-    
+
                             refresh == false
                                 ? Column(
                                     children: [
@@ -546,8 +536,7 @@ class _CallLogsState extends State<CallLogs> {
                                       _callLogEntries.isNotEmpty
                                           ? ListView.builder(
                                               shrinkWrap: true,
-                                              itemCount:
-                                                  _callLogEntries.length,
+                                              itemCount: _callLogEntries.length,
                                               physics:
                                                   const NeverScrollableScrollPhysics(),
                                               itemBuilder:
@@ -587,10 +576,11 @@ class _CallLogsState extends State<CallLogs> {
                                                                   .elementAt(
                                                                       indexStaff)
                                                                   .duration,
-                                                          "simName": _callLogEntries
-                                                              .elementAt(
-                                                                  indexStaff)
-                                                              .simDisplayName,
+                                                          "simName":
+                                                              _callLogEntries
+                                                                  .elementAt(
+                                                                      indexStaff)
+                                                                  .simDisplayName,
                                                           "timeStamp":
                                                               _callLogEntries
                                                                   .elementAt(
@@ -602,43 +592,51 @@ class _CallLogsState extends State<CallLogs> {
                                                       });
                                                     },
                                                     onTap: () {
-                                                      if (onLongPress ==
-                                                          true) {
+                                                      if (onLongPress == true) {
                                                         if (historyIndex
                                                             .contains(
                                                                 indexStaff)) {
                                                           historyIndex.remove(
                                                               indexStaff);
                                                           history.removeWhere(
-                                                            (item) =>
-                                                                mapEquals(
-                                                                    item,
-                                                                    ({
-                                                                      "name": _callLogEntries
-                                                                          .elementAt(indexStaff)
-                                                                          .name,
-                                                                      "phone_number": _callLogEntries
-                                                                          .elementAt(indexStaff)
-                                                                          .number,
-                                                                      "callTypes": _callLogEntries
+                                                            (item) => mapEquals(
+                                                                item,
+                                                                ({
+                                                                  "name": _callLogEntries
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .name,
+                                                                  "phone_number":
+                                                                      _callLogEntries
                                                                           .elementAt(
                                                                               indexStaff)
-                                                                          .callType
-                                                                          .toString()
-                                                                          .substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') +
-                                                                              1),
-                                                                      "time":
-                                                                          '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
-                                                                      "duration": _callLogEntries
-                                                                          .elementAt(indexStaff)
-                                                                          .duration,
-                                                                      "simName": _callLogEntries
-                                                                          .elementAt(indexStaff)
-                                                                          .simDisplayName,
-                                                                      "timeStamp": _callLogEntries
-                                                                          .elementAt(indexStaff)
-                                                                          .timestamp,
-                                                                    })),
+                                                                          .number,
+                                                                  "callTypes": _callLogEntries
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .callType
+                                                                      .toString()
+                                                                      .substring(_callLogEntries
+                                                                              .elementAt(indexStaff)
+                                                                              .callType
+                                                                              .toString()
+                                                                              .indexOf('.') +
+                                                                          1),
+                                                                  "time":
+                                                                      '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
+                                                                  "duration": _callLogEntries
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .duration,
+                                                                  "simName": _callLogEntries
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .simDisplayName,
+                                                                  "timeStamp": _callLogEntries
+                                                                      .elementAt(
+                                                                          indexStaff)
+                                                                      .timestamp,
+                                                                })),
                                                           );
                                                         } else {
                                                           history.add({
@@ -682,16 +680,15 @@ class _CallLogsState extends State<CallLogs> {
                                                                         indexStaff)
                                                                     .timestamp,
                                                           });
-                                                          historyIndex.add(
-                                                              indexStaff);
+                                                          historyIndex
+                                                              .add(indexStaff);
                                                         }
                                                       }
                                                       setState(() {});
                                                     },
                                                     child: Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(
+                                                          const EdgeInsets.only(
                                                               left: 10,
                                                               right: 10,
                                                               bottom: 10),
@@ -706,8 +703,7 @@ class _CallLogsState extends State<CallLogs> {
                                                           color: historyIndex
                                                                   .contains(
                                                                       indexStaff)
-                                                              ? Colors
-                                                                  .blueGrey
+                                                              ? Colors.blueGrey
                                                                   .shade200
                                                               : Colors.white,
                                                           boxShadow: const [
@@ -720,8 +716,7 @@ class _CallLogsState extends State<CallLogs> {
                                                           ],
                                                           borderRadius:
                                                               BorderRadius
-                                                                  .circular(
-                                                                      10),
+                                                                  .circular(10),
                                                         ),
                                                         child: Column(
                                                           children: [
@@ -730,10 +725,8 @@ class _CallLogsState extends State<CallLogs> {
                                                                   const EdgeInsets
                                                                       .only(
                                                                       top: 10,
-                                                                      right:
-                                                                          10,
-                                                                      left:
-                                                                          10),
+                                                                      right: 10,
+                                                                      left: 10),
                                                               child: Column(
                                                                 mainAxisAlignment:
                                                                     MainAxisAlignment
@@ -758,20 +751,28 @@ class _CallLogsState extends State<CallLogs> {
                                                                             Container(
                                                                           constraints:
                                                                               const BoxConstraints(
-                                                                            minHeight: 20,
-                                                                            minWidth: 20,
-                                                                            maxHeight: 50,
-                                                                            maxWidth: 50,
+                                                                            minHeight:
+                                                                                20,
+                                                                            minWidth:
+                                                                                20,
+                                                                            maxHeight:
+                                                                                50,
+                                                                            maxWidth:
+                                                                                50,
                                                                           ),
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(color: Colors.white, width: 0),
+                                                                            border:
+                                                                                Border.all(color: Colors.white, width: 0),
                                                                             boxShadow: const [
                                                                               BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
                                                                             ],
-                                                                            color: Colors.white,
-                                                                            shape: BoxShape.circle,
-                                                                            image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
+                                                                            color:
+                                                                                Colors.white,
+                                                                            shape:
+                                                                                BoxShape.circle,
+                                                                            image:
+                                                                                const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
                                                                           ),
                                                                         ),
                                                                       ),
@@ -784,8 +785,10 @@ class _CallLogsState extends State<CallLogs> {
                                                                             MainAxisAlignment.spaceBetween,
                                                                         children: [
                                                                           SizedBox(
-                                                                            width: MediaQuery.of(context).size.width * 0.6,
-                                                                            child: Column(
+                                                                            width:
+                                                                                MediaQuery.of(context).size.width * 0.6,
+                                                                            child:
+                                                                                Column(
                                                                               mainAxisAlignment: MainAxisAlignment.center,
                                                                               crossAxisAlignment: CrossAxisAlignment.start,
                                                                               children: [
@@ -825,10 +828,8 @@ class _CallLogsState extends State<CallLogs> {
                                                                                     if (object1.data == true) {
                                                                                       Common.toastMessaage(object1.message, Colors.green);
                                                                                       if (context.mounted) {
-                                                                                        Navigator.push(
-                                                                                          context,
-                                                                                          MaterialPageRoute(builder: (context) => CallLogs(widget.token, widget.name, widget.userId)),
-                                                                                        );
+                                                                                        Navigator.pop(context);
+                                                                                        getData();
                                                                                       }
                                                                                     } else {
                                                                                       Common.toastMessaage(object1.message, Colors.red);
@@ -844,8 +845,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                     ],
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        10,
+                                                                    height: 10,
                                                                   ),
                                                                   Row(
                                                                     mainAxisAlignment:
@@ -854,10 +854,12 @@ class _CallLogsState extends State<CallLogs> {
                                                                     children: [
                                                                       Row(
                                                                         children: [
-                                                                          Image.asset("assets/icons/calendar.png",
+                                                                          Image.asset(
+                                                                              "assets/icons/calendar.png",
                                                                               width: 20),
                                                                           const SizedBox(
-                                                                            width: 15,
+                                                                            width:
+                                                                                15,
                                                                           ),
                                                                           Text(
                                                                             '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
@@ -866,13 +868,17 @@ class _CallLogsState extends State<CallLogs> {
                                                                       ),
                                                                       Row(
                                                                         children: [
-                                                                          const Icon(Icons.timer_outlined),
+                                                                          const Icon(
+                                                                              Icons.timer_outlined),
                                                                           const SizedBox(
-                                                                            width: 10,
+                                                                            width:
+                                                                                10,
                                                                           ),
                                                                           Padding(
-                                                                            padding: const EdgeInsets.only(right: 10),
-                                                                            child: Text(
+                                                                            padding:
+                                                                                const EdgeInsets.only(right: 10),
+                                                                            child:
+                                                                                Text(
                                                                               '${(Duration(seconds: _callLogEntries.elementAt(indexStaff).duration!))}'.split('.')[0].padLeft(8, '0'),
                                                                               style: const TextStyle(fontSize: 15, color: Colors.green),
                                                                             ),
@@ -913,8 +919,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                     ],
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        10,
+                                                                    height: 10,
                                                                   )
                                                                 ],
                                                               ),
@@ -940,8 +945,8 @@ class _CallLogsState extends State<CallLogs> {
                                                   ),
                                                   const Text(
                                                     'No Calls Found',
-                                                    style: TextStyle(
-                                                        fontSize: 18),
+                                                    style:
+                                                        TextStyle(fontSize: 18),
                                                   )
                                                 ],
                                               ),
@@ -1000,12 +1005,11 @@ class _CallLogsState extends State<CallLogs> {
                                                   children: [
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(left: 10),
+                                                          const EdgeInsets.only(
+                                                              left: 10),
                                                       child: Text(
                                                         fromdate,
-                                                        style:
-                                                            const TextStyle(
+                                                        style: const TextStyle(
                                                           fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.w400,
@@ -1016,8 +1020,7 @@ class _CallLogsState extends State<CallLogs> {
                                                     Container(
                                                       width: 40,
                                                       height: 40,
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      decoration: BoxDecoration(
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(2),
@@ -1043,8 +1046,7 @@ class _CallLogsState extends State<CallLogs> {
                                                 );
                                                 todate = DateFormat(
                                                         'dd-MM-yyyy')
-                                                    .format(
-                                                        toDateSelectTemp!);
+                                                    .format(toDateSelectTemp!);
                                                 setState(() {});
                                               },
                                               child: Container(
@@ -1055,8 +1057,7 @@ class _CallLogsState extends State<CallLogs> {
                                                 height: 45,
                                                 decoration: BoxDecoration(
                                                   borderRadius:
-                                                      BorderRadius.circular(
-                                                          5),
+                                                      BorderRadius.circular(5),
                                                   color: Colors.white,
                                                 ),
                                                 child: Row(
@@ -1066,8 +1067,8 @@ class _CallLogsState extends State<CallLogs> {
                                                   children: [
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(left: 10),
+                                                          const EdgeInsets.only(
+                                                              left: 10),
                                                       child: Text(
                                                         todate,
                                                       ),
@@ -1075,8 +1076,7 @@ class _CallLogsState extends State<CallLogs> {
                                                     Container(
                                                       width: 40,
                                                       height: 40,
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      decoration: BoxDecoration(
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(5),
@@ -1141,8 +1141,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                     (context,
                                                                         ind) {
                                                                   return InkWell(
-                                                                    onTap:
-                                                                        () {
+                                                                    onTap: () {
                                                                       setState(
                                                                           () {
                                                                         assignStaff = commonDetails!
@@ -1171,8 +1170,9 @@ class _CallLogsState extends State<CallLogs> {
                                                                             .staff[ind]
                                                                             .staffName
                                                                             .toString(),
-                                                                        style:
-                                                                            const TextStyle(fontSize: 18),
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                18),
                                                                       ),
                                                                     ),
                                                                   );
@@ -1188,8 +1188,8 @@ class _CallLogsState extends State<CallLogs> {
                                                       TextInputType.text,
                                                   decoration: InputDecoration(
                                                       contentPadding:
-                                                          const EdgeInsets
-                                                              .all(3),
+                                                          const EdgeInsets.all(
+                                                              3),
                                                       filled: true,
                                                       //<-- SEE HERE
                                                       fillColor: Colors.white,
@@ -1201,13 +1201,15 @@ class _CallLogsState extends State<CallLogs> {
                                                       counterText: "",
                                                       hintText: assignStaff,
                                                       isDense: true,
-                                                      border: OutlineInputBorder(
-                                                          borderSide:
-                                                              BorderSide.none,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      5)))),
+                                                      border:
+                                                          OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide
+                                                                      .none,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5)))),
                                             ),
                                             const SizedBox(
                                               width: 12,
@@ -1231,8 +1233,7 @@ class _CallLogsState extends State<CallLogs> {
                                                 decoration: BoxDecoration(
                                                   color: Colors.black,
                                                   borderRadius:
-                                                      BorderRadius.circular(
-                                                          10),
+                                                      BorderRadius.circular(10),
                                                 ),
                                                 child: const Center(
                                                   child: Text('Search',
@@ -1240,8 +1241,7 @@ class _CallLogsState extends State<CallLogs> {
                                                           fontSize: 14,
                                                           color: Colors.white,
                                                           fontWeight:
-                                                              FontWeight
-                                                                  .w500)),
+                                                              FontWeight.w500)),
                                                 ),
                                               ),
                                             ),
@@ -1266,8 +1266,7 @@ class _CallLogsState extends State<CallLogs> {
                                                             true;
                                                         deleteHistoryIds.add(
                                                             logHistory!
-                                                                .data![index]
-                                                                .id
+                                                                .data![index].id
                                                                 .toString());
                                                       });
                                                     },
@@ -1276,20 +1275,17 @@ class _CallLogsState extends State<CallLogs> {
                                                           true) {
                                                         if (deleteHistoryIds
                                                             .contains(logHistory!
-                                                                .data![index]
-                                                                .id
+                                                                .data![index].id
                                                                 .toString())) {
                                                           deleteHistoryIds
                                                               .remove(logHistory!
-                                                                  .data![
-                                                                      index]
+                                                                  .data![index]
                                                                   .id
                                                                   .toString());
                                                         } else {
-                                                          deleteHistoryIds
-                                                              .add(logHistory!
-                                                                  .data![
-                                                                      index]
+                                                          deleteHistoryIds.add(
+                                                              logHistory!
+                                                                  .data![index]
                                                                   .id
                                                                   .toString());
                                                         }
@@ -1298,8 +1294,7 @@ class _CallLogsState extends State<CallLogs> {
                                                     },
                                                     child: Padding(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .only(
+                                                          const EdgeInsets.only(
                                                               left: 10,
                                                               right: 10,
                                                               bottom: 10),
@@ -1317,8 +1312,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                           index]
                                                                       .id
                                                                       .toString())
-                                                              ? Colors
-                                                                  .blueGrey
+                                                              ? Colors.blueGrey
                                                                   .shade200
                                                               : Colors.white,
                                                           boxShadow: const [
@@ -1331,8 +1325,7 @@ class _CallLogsState extends State<CallLogs> {
                                                           ],
                                                           borderRadius:
                                                               BorderRadius
-                                                                  .circular(
-                                                                      10),
+                                                                  .circular(10),
                                                         ),
                                                         child: Column(
                                                           children: [
@@ -1341,10 +1334,8 @@ class _CallLogsState extends State<CallLogs> {
                                                                   const EdgeInsets
                                                                       .only(
                                                                       top: 10,
-                                                                      right:
-                                                                          10,
-                                                                      left:
-                                                                          10),
+                                                                      right: 10,
+                                                                      left: 10),
                                                               child: Column(
                                                                 mainAxisAlignment:
                                                                     MainAxisAlignment
@@ -1365,20 +1356,28 @@ class _CallLogsState extends State<CallLogs> {
                                                                             Container(
                                                                           constraints:
                                                                               const BoxConstraints(
-                                                                            minHeight: 20,
-                                                                            minWidth: 20,
-                                                                            maxHeight: 50,
-                                                                            maxWidth: 50,
+                                                                            minHeight:
+                                                                                20,
+                                                                            minWidth:
+                                                                                20,
+                                                                            maxHeight:
+                                                                                50,
+                                                                            maxWidth:
+                                                                                50,
                                                                           ),
                                                                           decoration:
                                                                               BoxDecoration(
-                                                                            border: Border.all(color: Colors.white, width: 0),
+                                                                            border:
+                                                                                Border.all(color: Colors.white, width: 0),
                                                                             boxShadow: const [
                                                                               BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
                                                                             ],
-                                                                            color: Colors.white,
-                                                                            shape: BoxShape.circle,
-                                                                            image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
+                                                                            color:
+                                                                                Colors.white,
+                                                                            shape:
+                                                                                BoxShape.circle,
+                                                                            image:
+                                                                                const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
                                                                           ),
                                                                         ),
                                                                       ),
@@ -1393,23 +1392,27 @@ class _CallLogsState extends State<CallLogs> {
                                                                             CrossAxisAlignment.start,
                                                                         children: [
                                                                           Text(
-                                                                            logHistory!.data![index].name.toString() == "" ? "Unknown" : logHistory!.data![index].name.toString(),
-                                                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                                                            logHistory!.data![index].name.toString() == ""
+                                                                                ? "Unknown"
+                                                                                : logHistory!.data![index].name.toString(),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                           ),
                                                                           const SizedBox(
-                                                                            height: 3,
+                                                                            height:
+                                                                                3,
                                                                           ),
                                                                           Text(
                                                                             logHistory!.data![index].phoneNumber.toString(),
-                                                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
                                                                           ),
                                                                         ],
                                                                       ),
                                                                     ],
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        10,
+                                                                    height: 10,
                                                                   ),
                                                                   Row(
                                                                     mainAxisAlignment:
@@ -1418,10 +1421,12 @@ class _CallLogsState extends State<CallLogs> {
                                                                     children: [
                                                                       Row(
                                                                         children: [
-                                                                          Image.asset("assets/icons/calendar.png",
+                                                                          Image.asset(
+                                                                              "assets/icons/calendar.png",
                                                                               width: 20),
                                                                           const SizedBox(
-                                                                            width: 15,
+                                                                            width:
+                                                                                15,
                                                                           ),
                                                                           Text(
                                                                             logHistory!.data![index].dateTime.toString(),
@@ -1430,13 +1435,17 @@ class _CallLogsState extends State<CallLogs> {
                                                                       ),
                                                                       Row(
                                                                         children: [
-                                                                          const Icon(Icons.timer_outlined),
+                                                                          const Icon(
+                                                                              Icons.timer_outlined),
                                                                           const SizedBox(
-                                                                            width: 10,
+                                                                            width:
+                                                                                10,
                                                                           ),
                                                                           Padding(
-                                                                            padding: const EdgeInsets.only(right: 10),
-                                                                            child: Text(
+                                                                            padding:
+                                                                                const EdgeInsets.only(right: 10),
+                                                                            child:
+                                                                                Text(
                                                                               logHistory!.data![index].duration.toString().split('.')[0].padLeft(8, '0'),
                                                                               style: const TextStyle(fontSize: 15, color: Colors.green),
                                                                             ),
@@ -1477,8 +1486,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                     ],
                                                                   ),
                                                                   const SizedBox(
-                                                                    height:
-                                                                        10,
+                                                                    height: 10,
                                                                   )
                                                                   // Text(
                                                                   //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
@@ -1564,8 +1572,8 @@ class _CallLogsState extends State<CallLogs> {
                                   );
                                 },
                                 child: Container(
-                                  width: MediaQuery.of(context).size.width *
-                                      0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 30,
                                   decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(5),
@@ -1591,8 +1599,8 @@ class _CallLogsState extends State<CallLogs> {
                                   });
                                 },
                                 child: Container(
-                                  width: MediaQuery.of(context).size.width *
-                                      0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 30,
                                   decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(5),

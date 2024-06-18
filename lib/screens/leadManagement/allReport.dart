@@ -520,7 +520,7 @@ class _AllReportState extends State<AllReport> {
                                                                           .toString(),
                                                                       pageName:
                                                                           widget
-                                                                              .pageName,
+                                                                              .pageName.toString(),
                                                                       page:
                                                                           page,
                                                                       pageSize:
@@ -707,7 +707,7 @@ class _AllReportState extends State<AllReport> {
                                                   items[index]
                                                       .callMasterId
                                                       .toString(),
-                                                  pageName: widget.pageName,
+                                                  pageName: widget.pageName.toString(),
                                                   page: page,
                                                   pageSize: page * pageSize,
                                                   fromDate: fromdate.toString(),
@@ -1229,7 +1229,7 @@ class _AllReportState extends State<AllReport> {
                                                                                             widget.deleteLead,
                                                                                             widget.cloudCall,
                                                                                             viewLeads!.data.details[index].callMasterId.toString(),
-                                                                                            pageName: widget.pageName,
+                                                                                            pageName: widget.pageName.toString(),
                                                                                             page: page,
                                                                                             pageSize: page * pageSize,
                                                                                             fromDate: fromdate.toString(),

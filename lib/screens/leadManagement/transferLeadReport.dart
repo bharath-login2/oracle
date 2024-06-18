@@ -1772,7 +1772,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                           .toString(),
                                                                       pageName:
                                                                           widget
-                                                                              .pageName,
+                                                                              .pageName.toString(),
                                                                       page:
                                                                           page,
                                                                       pageSize:
@@ -1957,7 +1957,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                   items[index]
                                                       .callMasterId
                                                       .toString(),
-                                                  pageName: widget.pageName,
+                                                  pageName: widget.pageName.toString(),
                                                   page: page,
                                                   pageSize: page * pageSize,
                                                   fromDate: fromdate.toString(),
@@ -2189,7 +2189,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                             widget.deleteLead,
                                                                                             widget.cloudCall,
                                                                                             viewLeads!.data!.callLeadId.toString(),
-                                                                                            pageName: widget.pageName,
+                                                                                            pageName: widget.pageName.toString(),
                                                                                             page: page,
                                                                                             pageSize: page * pageSize,
                                                                                             fromDate: fromdate.toString(),

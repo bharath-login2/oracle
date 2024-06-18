@@ -693,7 +693,6 @@ class _EditFollowupState extends State<EditFollowup> {
                                                                     ind]
                                                                 .leadCategoryId
                                                                 .toString());
-
                                                 setState(() {
                                                   leadTypeVal.text =
                                                       commonDetails!
@@ -714,6 +713,11 @@ class _EditFollowupState extends State<EditFollowup> {
                                                       .leadCategory[ind]
                                                       .leadCategoryId
                                                       .toString();
+                                                  leadSubType =
+                                                      'Lead Sub Category';
+                                                  leadSubTypeId = '';
+                                                  leadSubTypeVal.text =
+                                                      'Lead Sub Category';
                                                   Navigator.pop(context, true);
                                                 });
                                               },

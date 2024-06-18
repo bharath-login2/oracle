@@ -1476,7 +1476,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   widget.deleteLead,
                                                   widget.cloudCall,
                                                   widget.callMasterId,
-                                                  pageName: widget.pageName,
+                                                  pageName: widget.pageName
+                                                      .toString(),
                                                   fromDate: widget.fromDate,
                                                   toDate: widget.toDate,
                                                   status: widget.status,

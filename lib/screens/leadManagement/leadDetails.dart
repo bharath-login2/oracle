@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:accordion/accordion.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -15,8 +14,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/screens/leadManagement/allReport.dart';
-import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -42,18 +40,14 @@ import '../../models/lead_management/unsetReminderModel.dart';
 import '../../models/lead_management/updateReminderSetings.dart';
 import '../../models/lead_management/uploadAudioRecoed.dart';
 import '../../screens/leadManagement/addFollowup.dart';
-import '../../screens/leadManagement/callHistoryPage.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/leadManagement/editFollowup.dart';
 import '../../screens/leadManagement/editLead.dart';
-import '../../screens/leadManagement/searchPage.dart';
-import '../../screens/leadManagement/viewLeads.dart';
 import '../../service/service.dart';
 import 'addLeads.dart';
 import 'audio_controller.dart';
 import 'docViewWebView.dart';
 import 'imageUploadController.dart';
-import 'leadNotificationPage.dart';
 
 // ignore: must_be_immutable
 class LeadDetails extends StatefulWidget {
@@ -67,7 +61,7 @@ class LeadDetails extends StatefulWidget {
   String? status;
   String? category;
   String? staff;
-  String? pageName;
+  String pageName;
   bool? isCalled;
   String? searchKey;
   String? name;
@@ -89,7 +83,7 @@ class LeadDetails extends StatefulWidget {
     this.status,
     this.category,
     this.staff,
-    this.pageName,
+    required this.pageName,
     this.isCalled,
     this.searchKey,
     this.name,
@@ -184,12 +178,15 @@ class _LeadDetailsState extends State<LeadDetails> {
   String accessCallRecordingPermission = '';
   bool timeOut = false;
   String callMasterId = "";
+  bool canPop = true;
 
   @override
   void initState() {
     super.initState();
     callMasterId = widget.callMasterId;
     getData();
+    widget.fromDate ??= DateTime.now().toString();
+    widget.toDate ??= DateTime.now().toString();
   }
 
   getData() async {
@@ -272,31 +269,56 @@ class _LeadDetailsState extends State<LeadDetails> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.staff);
-    widget.fromDate ??= DateTime.now().toString();
-    widget.toDate ??= DateTime.now().toString();
-
     Size size = MediaQuery.of(context).size;
-    return RefreshIndicator(
-      onRefresh: () async {
-        getData();
-        return;
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (pop) async {
+        try {
+          if (widget.pageName == "notification") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ViewLeads(
+                        widget.token,
+                        widget.editLead,
+                        widget.deleteLead,
+                        widget.cloudCall,
+                        pageName: widget.pageName,
+                        status: widget.status,
+                        staff: widget.staff,
+                        isCalled: widget.isCalled,
+                        fromDate: widget.fromDate,
+                        toDate: widget.toDate,
+                        category: widget.category,
+                        scrollToIndex: widget.scrollToIndex,
+                        page: widget.page,
+                        pageSize: widget.pageSize,
+                        leadType: widget.leadType,
+                      )),
+            );
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          //   backgroundColor: Colors.red,
+          //   content: Text(stackTrace.toString()),
+          //   duration: Duration(seconds: 15),
+          // ));
+          log(e.toString());
+        }
       },
-      child: result == true && timeOut == false
-          ? PopScope(
-              canPop: true,
-              onPopInvoked: (pop) async {
-                if (widget.pageName == "notification") {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => Dashboard(widget.token)),
-                  );
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              child: Scaffold(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          getData();
+          return;
+        },
+        child: result == true && timeOut == false
+            ? Scaffold(
                 backgroundColor: Colors.grey.shade200,
                 appBar: PreferredSize(
                   preferredSize: Size.fromHeight(
@@ -319,7 +341,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               InkWell(
-                                onTap: () {
+                                onTap: () async {
                                   if (widget.pageName == "notification") {
                                     Navigator.push(
                                       context,
@@ -328,6 +350,28 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               Dashboard(widget.token)),
                                     );
                                   } else {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ViewLeads(
+                                                widget.token,
+                                                widget.editLead,
+                                                widget.deleteLead,
+                                                widget.cloudCall,
+                                                pageName: widget.pageName,
+                                                status: widget.status,
+                                                staff: widget.staff,
+                                                isCalled: widget.isCalled,
+                                                fromDate: widget.fromDate,
+                                                toDate: widget.toDate,
+                                                category: widget.category,
+                                                scrollToIndex:
+                                                    widget.scrollToIndex,
+                                                page: widget.page,
+                                                pageSize: widget.pageSize,
+                                                leadType: widget.leadType,
+                                              )),
+                                    );
                                     Navigator.pop(context);
                                   }
                                 },
@@ -850,7 +894,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         context,
                                                         MaterialPageRoute(
                                                             builder: (context) => LeadDetails(
-                                                                widget.token!,
+                                                                widget.token,
                                                                 widget.editLead,
                                                                 widget
                                                                     .deleteLead,
@@ -1706,7 +1750,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     MaterialPageRoute(
                                                                         builder: (context) => LeadDetails(
                                                                             widget
-                                                                                .token!,
+                                                                                .token,
                                                                             widget
                                                                                 .editLead,
                                                                             widget
@@ -1972,7 +2016,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     .category,
                                                                 scrolToIndex: widget
                                                                     .scrollToIndex)),
-                                                      )
+                                                      ).then((r) {
+                                                        getData();
+                                                      })
                                                     : _dialogue(
                                                         context, 'Edit Leads');
                                               },
@@ -2122,7 +2168,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 child: Text('Staff'),
                                                                               ),
                                                                               value: staff,
-                                                                              items: commonDetails!.data!.transferStaffs!.map((data) {
+                                                                              items: commonDetails!.data.transferStaffs.map((data) {
                                                                                 return DropdownMenuItem(
                                                                                   value: data.tranStaffId.toString(),
                                                                                   child: Padding(
@@ -5509,29 +5555,29 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                           width: MediaQuery.of(context).size.height * .8,
                                                                                                           child: ListView.builder(
                                                                                                             shrinkWrap: true,
-                                                                                                            itemCount: commonDetails!.data!.transferStaffs!.length,
+                                                                                                            itemCount: commonDetails!.data.transferStaffs.length,
                                                                                                             itemBuilder: (context, ind) {
                                                                                                               return CheckboxListTile(
                                                                                                                 title: SizedBox(
                                                                                                                   width: 200,
                                                                                                                   child: Text(
-                                                                                                                    commonDetails!.data!.transferStaffs![ind].tranStaffName.toString(),
+                                                                                                                    commonDetails!.data.transferStaffs[ind].tranStaffName.toString(),
                                                                                                                     style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400, fontSize: 14),
                                                                                                                   ),
                                                                                                                 ),
-                                                                                                                value: checkedItems.contains(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString()) ? true : false,
+                                                                                                                value: checkedItems.contains(commonDetails!.data.transferStaffs[ind].tranStaffId.toString()) ? true : false,
                                                                                                                 onChanged: (bool? value) {
                                                                                                                   if (value == true) {
                                                                                                                     setState(() {
-                                                                                                                      checkedItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                                                                      checkedItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                                                                      checkedItems.add(commonDetails!.data.transferStaffs[ind].tranStaffId.toString());
+                                                                                                                      checkedItemsName.add(commonDetails!.data.transferStaffs[ind].tranStaffName.toString());
 
                                                                                                                       Navigator.pop(context, true);
                                                                                                                     });
                                                                                                                   } else {
                                                                                                                     setState(() {
-                                                                                                                      checkedItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                                                                      checkedItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                                                                      checkedItems.remove(commonDetails!.data.transferStaffs[ind].tranStaffId.toString());
+                                                                                                                      checkedItemsName.remove(commonDetails!.data.transferStaffs[ind].tranStaffName.toString());
 
                                                                                                                       Navigator.pop(context, true);
                                                                                                                     });
@@ -7607,67 +7653,67 @@ class _LeadDetailsState extends State<LeadDetails> {
                     ],
                   ),
                 ),
-              ),
-            )
-          : Scaffold(
-              backgroundColor: Colors.white,
-              body: SizedBox(
-                width: MediaQuery.of(context).size.width * 1,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 300,
-                      height: 300,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/icons/noNetwork.jpg'),
-                          fit: BoxFit.cover,
+              )
+            : Scaffold(
+                backgroundColor: Colors.white,
+                body: SizedBox(
+                  width: MediaQuery.of(context).size.width * 1,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 300,
+                        height: 300,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/icons/noNetwork.jpg'),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                    ),
-                    Text(
-                      timeOut == true
-                          ? "There seems to be a temporary issue, \n Please retry to continue"
-                          : 'No Network Found !',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    InkWell(
-                      onTap: () {
-                        getData();
-                      },
-                      child: SizedBox(
-                        width: 120,
-                        height: 35,
-                        child: Padding(
-                          padding: const EdgeInsets.all(1.5),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade400,
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'Try Again',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold),
+                      Text(
+                        timeOut == true
+                            ? "There seems to be a temporary issue, \n Please retry to continue"
+                            : 'No Network Found !',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          getData();
+                        },
+                        child: SizedBox(
+                          width: 120,
+                          height: 35,
+                          child: Padding(
+                            padding: const EdgeInsets.all(1.5),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade400,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'Try Again',
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              )),
+                    ],
+                  ),
+                )),
+      ),
     );
   }
 

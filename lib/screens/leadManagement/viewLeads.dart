@@ -1674,7 +1674,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                           .callLeadId
                                                                           .toString(),
                                                                       pageName: widget
-                                                                          .pageName,
+                                                                          .pageName.toString(),
                                                                       status: widget
                                                                           .status,
                                                                       staff: widget
@@ -1962,7 +1962,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                     .callMasterId
                                                                     .toString(),
                                                                 pageName: widget
-                                                                    .pageName,
+                                                                    .pageName.toString(),
                                                                 status: widget
                                                                     .status,
                                                                 staff: widget
@@ -2481,7 +2481,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                                     onPressed: () {
                                                                                       Navigator.push(
                                                                                         context,
-                                                                                        MaterialPageRoute(builder: (context) => LeadDetails(widget.token!, widget.editLead, widget.deleteLead, widget.cloudCall, viewLeads!.data.callLeadId.toString(), pageName: widget.pageName, status: widget.status, staff: widget.staff, isCalled: widget.isCalled, fromDate: widget.fromDate, toDate: widget.toDate, category: widget.category, scrollToIndex: index, page: page, pageSize: page * pageSize, leadType: widget.leadType)),
+                                                                                        MaterialPageRoute(builder: (context) => LeadDetails(widget.token!, widget.editLead, widget.deleteLead, widget.cloudCall, viewLeads!.data.callLeadId.toString(), pageName: widget.pageName.toString(), status: widget.status, staff: widget.staff, isCalled: widget.isCalled, fromDate: widget.fromDate, toDate: widget.toDate, category: widget.category, scrollToIndex: index, page: page, pageSize: page * pageSize, leadType: widget.leadType)),
                                                                                       ).then((r) {
                                                                                         items.clear();
                                                                                         page = 1;
