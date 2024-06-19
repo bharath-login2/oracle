@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
@@ -48,7 +47,6 @@ import '../fileManager/fileManagerList.dart';
 import '../officialWhatsapp/chatHomeScreen.dart';
 import '../userManagement/staffDashboard.dart';
 import '../userManagement/viewUsers.dart';
-import '../whatsAppGroup/groupList.dart';
 import 'leadNotificationPage.dart';
 
 // ignore: must_be_immutable
@@ -6261,83 +6259,81 @@ class _DashboardState extends State<Dashboard> {
                                                           ),
                                                           const Divider(),
                                                           data.isNotEmpty
-                                                              ? Table(
-                                                                  columnWidths: const {
-                                                                      0: FlexColumnWidth(
-                                                                          10),
-                                                                      1: FlexColumnWidth(
-                                                                          5),
-                                                                      2: FlexColumnWidth(
-                                                                          5),
-                                                                      3: FlexColumnWidth(
-                                                                          5),
-                                                                      4: FlexColumnWidth(
-                                                                          5),
-                                                                      5: FlexColumnWidth(
-                                                                          5),
-                                                                    },
+                                                              ? Column(
                                                                   children: [
-                                                                      const TableRow(
-                                                                          // decoration: new BoxDecoration(
-                                                                          //     color: Colors.greenAccent),
-                                                                          children: [
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                "",
-                                                                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                'New',
-                                                                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                'Pending',
-                                                                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                'Followup',
-                                                                                style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                'Rejected',
-                                                                                style: TextStyle(fontSize: 10, color: Colors.red, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                'Closed',
-                                                                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                          ]),
-                                                                      for (int i =
-                                                                              0;
-                                                                          i <
-                                                                              staffWise!
-                                                                                  .data!.categoryLeads!.length;
-                                                                          i++)
-                                                                        TableRow(
-                                                                            children: [
+                                                                    Table(
+                                                                        columnWidths: const {
+                                                                          0: FlexColumnWidth(
+                                                                              10),
+                                                                          1: FlexColumnWidth(
+                                                                              5),
+                                                                          2: FlexColumnWidth(
+                                                                              5),
+                                                                          3: FlexColumnWidth(
+                                                                              5),
+                                                                          4: FlexColumnWidth(
+                                                                              5),
+                                                                          5: FlexColumnWidth(
+                                                                              5),
+                                                                        },
+                                                                        children: [
+                                                                          const TableRow(
+                                                                              // decoration: new BoxDecoration(
+                                                                              //     color: Colors.greenAccent),
+                                                                              children: [
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    "",
+                                                                                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    'New',
+                                                                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    'Pending',
+                                                                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    'Followup',
+                                                                                    style: TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    'Rejected',
+                                                                                    style: TextStyle(fontSize: 10, color: Colors.red, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    'Closed',
+                                                                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                              ]),
+                                                                          for (int i = 0;
+                                                                              i < staffWise!.data!.categoryLeads!.length;
+                                                                              i++)
+                                                                            TableRow(children: [
                                                                               Padding(
                                                                                 padding: const EdgeInsets.only(top: 0, bottom: 10, left: 10),
                                                                                 child: Text(
@@ -6526,200 +6522,216 @@ class _DashboardState extends State<Dashboard> {
                                                                                 ),
                                                                               ),
                                                                             ]),
-                                                                      TableRow(
-                                                                          // decoration: new BoxDecoration(
-                                                                          //     color: Colors.greenAccent),
-                                                                          children: [
-                                                                            const Padding(
-                                                                              padding: EdgeInsets.only(top: 10, bottom: 10),
-                                                                              child: Center(
-                                                                                  child: Text(
-                                                                                "Total Leads",
-                                                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                                                                              )),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                Common.saveSharedPref("statusWise", 'yes');
-                                                                                Common.saveSharedPref("statusWisId", '1');
-                                                                                Common.saveSharedPref("type", 'category');
-                                                                                Common.saveSharedPref("statusCatId", "-1");
-                                                                                viewLeadPermission == 'true'
-                                                                                    ? Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => ViewLeads(
-                                                                                                  widget.token,
-                                                                                                  updateLeadPermission1,
-                                                                                                  deleteLeadPermission1,
-                                                                                                  cloudCallPermission1,
-                                                                                                  pageName: 'New Leads',
-                                                                                                  // fromDate: fromdate1.toString(),
-                                                                                                  // toDate: todate1.toString(),
-                                                                                                )),
-                                                                                      ).then((r) {
-                                                                                        getData(widget.token, fromdate, todate);
-                                                                                        if (loadmore == true) {
-                                                                                          getStaffwise();
-                                                                                        }
-                                                                                      })
-                                                                                    : _dialogue(context, 'View Leads');
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                child: Center(
+                                                                        ]),
+                                                                    const Divider(
+                                                                      endIndent:
+                                                                          8,
+                                                                      indent: 8,
+                                                                    ),
+                                                                    Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .only(
+                                                                          top:
+                                                                              8.0,
+                                                                          bottom:
+                                                                              12.0),
+                                                                      child:
+                                                                          Table(
+                                                                        columnWidths: const {
+                                                                          0: FlexColumnWidth(
+                                                                              10),
+                                                                          1: FlexColumnWidth(
+                                                                              5),
+                                                                          2: FlexColumnWidth(
+                                                                              5),
+                                                                          3: FlexColumnWidth(
+                                                                              5),
+                                                                          4: FlexColumnWidth(
+                                                                              5),
+                                                                          5: FlexColumnWidth(
+                                                                              5),
+                                                                        },
+                                                                        children: [
+                                                                          TableRow(
+                                                                              // decoration: new BoxDecoration(
+                                                                              //     color: Colors.greenAccent),
+                                                                              children: [
+                                                                                const Center(
                                                                                     child: Text(
-                                                                                  catNew.toString(),
-                                                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  "Total Leads",
+                                                                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                                                                 )),
-                                                                              ),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                Common.saveSharedPref("statusWise", 'yes');
-                                                                                Common.saveSharedPref("statusWisId", '2');
-                                                                                Common.saveSharedPref("type", 'category');
-                                                                                Common.saveSharedPref("statusCatId", "-1");
-                                                                                viewLeadPermission == 'true'
-                                                                                    ? Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => ViewLeads(
-                                                                                                  widget.token,
-                                                                                                  updateLeadPermission1,
-                                                                                                  deleteLeadPermission1,
-                                                                                                  cloudCallPermission1,
-                                                                                                  pageName: 'Pending Leads',
-                                                                                                  fromDate: fromdate1.toString(),
-                                                                                                  toDate: todate1.toString(),
-                                                                                                )),
-                                                                                      ).then((r) {
-                                                                                        getData(widget.token, fromdate, todate);
-                                                                                        if (loadmore == true) {
-                                                                                          getStaffwise();
-                                                                                        }
-                                                                                      })
-                                                                                    : _dialogue(context, 'View Leads');
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                child: Center(
-                                                                                    child: Text(
-                                                                                  catPending.toString(),
-                                                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                                )),
-                                                                              ),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                Common.saveSharedPref("statusWise", 'yes');
-                                                                                Common.saveSharedPref("statusWisId", '3');
-                                                                                Common.saveSharedPref("type", 'category');
-                                                                                Common.saveSharedPref("statusCatId", "-1");
-                                                                                viewLeadPermission == 'true'
-                                                                                    ? Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => ViewLeads(
-                                                                                                  widget.token,
-                                                                                                  updateLeadPermission1,
-                                                                                                  deleteLeadPermission1,
-                                                                                                  cloudCallPermission1,
-                                                                                                  pageName: 'Followup Leads',
-                                                                                                  fromDate: fromdate1.toString(),
-                                                                                                  toDate: todate1.toString(),
-                                                                                                )),
-                                                                                      ).then((r) {
-                                                                                        getData(widget.token, fromdate, todate);
-                                                                                        if (loadmore == true) {
-                                                                                          getStaffwise();
-                                                                                        }
-                                                                                      })
-                                                                                    : _dialogue(context, 'View Leads');
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                child: Center(
-                                                                                    child: Text(
-                                                                                  catFollowup.toString(),
-                                                                                  style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                                )),
-                                                                              ),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                Common.saveSharedPref("statusWise", 'yes');
-                                                                                Common.saveSharedPref("statusWisId", '4');
-                                                                                Common.saveSharedPref("type", 'category');
-                                                                                Common.saveSharedPref("statusCatId", "-1");
-                                                                                viewLeadPermission == 'true'
-                                                                                    ? Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => ViewLeads(
-                                                                                                  widget.token,
-                                                                                                  updateLeadPermission1,
-                                                                                                  updateLeadPermission1,
-                                                                                                  cloudCallPermission1,
-                                                                                                  pageName: 'Rejected Leads',
-                                                                                                  fromDate: fromdate1.toString(),
-                                                                                                  toDate: todate1.toString(),
-                                                                                                )),
-                                                                                      ).then((r) {
-                                                                                        getData(widget.token, fromdate, todate);
-                                                                                        if (loadmore == true) {
-                                                                                          getStaffwise();
-                                                                                        }
-                                                                                      })
-                                                                                    : _dialogue(context, 'View Leads');
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                child: Center(
-                                                                                    child: Text(
-                                                                                  catRejected.toString(),
-                                                                                  style: const TextStyle(fontSize: 10, color: Colors.red, fontWeight: FontWeight.bold),
-                                                                                )),
-                                                                              ),
-                                                                            ),
-                                                                            InkWell(
-                                                                              onTap: () {
-                                                                                Common.saveSharedPref("statusWise", 'yes');
-                                                                                Common.saveSharedPref("type", 'category');
-                                                                                Common.saveSharedPref("statusCatId", "-1");
-                                                                                Common.saveSharedPref("statusWisId", '5');
-                                                                                viewLeadPermission == 'true'
-                                                                                    ? Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => ViewLeads(
-                                                                                                  widget.token,
-                                                                                                  updateLeadPermission1,
-                                                                                                  deleteLeadPermission1,
-                                                                                                  cloudCallPermission1,
-                                                                                                  pageName: 'Closed Leads',
-                                                                                                  fromDate: fromdate1.toString(),
-                                                                                                  toDate: todate1.toString(),
-                                                                                                )),
-                                                                                      ).then((r) {
-                                                                                        getData(widget.token, fromdate, todate);
-                                                                                        if (loadmore == true) {
-                                                                                          getStaffwise();
-                                                                                        }
-                                                                                      })
-                                                                                    : _dialogue(context, 'View Leads');
-                                                                              },
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                                                child: Center(
-                                                                                    child: Text(
-                                                                                  catClosed.toString(),
-                                                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                                )),
-                                                                              ),
-                                                                            ),
-                                                                          ]),
-                                                                    ])
+                                                                                InkWell(
+                                                                                  onTap: () {
+                                                                                    Common.saveSharedPref("statusWise", 'yes');
+                                                                                    Common.saveSharedPref("statusWisId", '1');
+                                                                                    Common.saveSharedPref("type", 'category');
+                                                                                    Common.saveSharedPref("statusCatId", "-1");
+                                                                                    viewLeadPermission == 'true'
+                                                                                        ? Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                                builder: (context) => ViewLeads(
+                                                                                                      widget.token,
+                                                                                                      updateLeadPermission1,
+                                                                                                      deleteLeadPermission1,
+                                                                                                      cloudCallPermission1,
+                                                                                                      pageName: 'New Leads',
+                                                                                                      // fromDate: fromdate1.toString(),
+                                                                                                      // toDate: todate1.toString(),
+                                                                                                    )),
+                                                                                          ).then((r) {
+                                                                                            getData(widget.token, fromdate, todate);
+                                                                                            if (loadmore == true) {
+                                                                                              getStaffwise();
+                                                                                            }
+                                                                                          })
+                                                                                        : _dialogue(context, 'View Leads');
+                                                                                  },
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    catNew.toString(),
+                                                                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                InkWell(
+                                                                                  onTap: () {
+                                                                                    Common.saveSharedPref("statusWise", 'yes');
+                                                                                    Common.saveSharedPref("statusWisId", '2');
+                                                                                    Common.saveSharedPref("type", 'category');
+                                                                                    Common.saveSharedPref("statusCatId", "-1");
+                                                                                    viewLeadPermission == 'true'
+                                                                                        ? Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                                builder: (context) => ViewLeads(
+                                                                                                      widget.token,
+                                                                                                      updateLeadPermission1,
+                                                                                                      deleteLeadPermission1,
+                                                                                                      cloudCallPermission1,
+                                                                                                      pageName: 'Pending Leads',
+                                                                                                      fromDate: fromdate1.toString(),
+                                                                                                      toDate: todate1.toString(),
+                                                                                                    )),
+                                                                                          ).then((r) {
+                                                                                            getData(widget.token, fromdate, todate);
+                                                                                            if (loadmore == true) {
+                                                                                              getStaffwise();
+                                                                                            }
+                                                                                          })
+                                                                                        : _dialogue(context, 'View Leads');
+                                                                                  },
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    catPending.toString(),
+                                                                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                InkWell(
+                                                                                  onTap: () {
+                                                                                    Common.saveSharedPref("statusWise", 'yes');
+                                                                                    Common.saveSharedPref("statusWisId", '3');
+                                                                                    Common.saveSharedPref("type", 'category');
+                                                                                    Common.saveSharedPref("statusCatId", "-1");
+                                                                                    viewLeadPermission == 'true'
+                                                                                        ? Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                                builder: (context) => ViewLeads(
+                                                                                                      widget.token,
+                                                                                                      updateLeadPermission1,
+                                                                                                      deleteLeadPermission1,
+                                                                                                      cloudCallPermission1,
+                                                                                                      pageName: 'Followup Leads',
+                                                                                                      fromDate: fromdate1.toString(),
+                                                                                                      toDate: todate1.toString(),
+                                                                                                    )),
+                                                                                          ).then((r) {
+                                                                                            getData(widget.token, fromdate, todate);
+                                                                                            if (loadmore == true) {
+                                                                                              getStaffwise();
+                                                                                            }
+                                                                                          })
+                                                                                        : _dialogue(context, 'View Leads');
+                                                                                  },
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    catFollowup.toString(),
+                                                                                    style: const TextStyle(fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                InkWell(
+                                                                                  onTap: () {
+                                                                                    Common.saveSharedPref("statusWise", 'yes');
+                                                                                    Common.saveSharedPref("statusWisId", '4');
+                                                                                    Common.saveSharedPref("type", 'category');
+                                                                                    Common.saveSharedPref("statusCatId", "-1");
+                                                                                    viewLeadPermission == 'true'
+                                                                                        ? Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                                builder: (context) => ViewLeads(
+                                                                                                      widget.token,
+                                                                                                      updateLeadPermission1,
+                                                                                                      updateLeadPermission1,
+                                                                                                      cloudCallPermission1,
+                                                                                                      pageName: 'Rejected Leads',
+                                                                                                      fromDate: fromdate1.toString(),
+                                                                                                      toDate: todate1.toString(),
+                                                                                                    )),
+                                                                                          ).then((r) {
+                                                                                            getData(widget.token, fromdate, todate);
+                                                                                            if (loadmore == true) {
+                                                                                              getStaffwise();
+                                                                                            }
+                                                                                          })
+                                                                                        : _dialogue(context, 'View Leads');
+                                                                                  },
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    catRejected.toString(),
+                                                                                    style: const TextStyle(fontSize: 10, color: Colors.red, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                                InkWell(
+                                                                                  onTap: () {
+                                                                                    Common.saveSharedPref("statusWise", 'yes');
+                                                                                    Common.saveSharedPref("type", 'category');
+                                                                                    Common.saveSharedPref("statusCatId", "-1");
+                                                                                    Common.saveSharedPref("statusWisId", '5');
+                                                                                    viewLeadPermission == 'true'
+                                                                                        ? Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                                builder: (context) => ViewLeads(
+                                                                                                      widget.token,
+                                                                                                      updateLeadPermission1,
+                                                                                                      deleteLeadPermission1,
+                                                                                                      cloudCallPermission1,
+                                                                                                      pageName: 'Closed Leads',
+                                                                                                      fromDate: fromdate1.toString(),
+                                                                                                      toDate: todate1.toString(),
+                                                                                                    )),
+                                                                                          ).then((r) {
+                                                                                            getData(widget.token, fromdate, todate);
+                                                                                            if (loadmore == true) {
+                                                                                              getStaffwise();
+                                                                                            }
+                                                                                          })
+                                                                                        : _dialogue(context, 'View Leads');
+                                                                                  },
+                                                                                  child: Center(
+                                                                                      child: Text(
+                                                                                    catClosed.toString(),
+                                                                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                                                                  )),
+                                                                                ),
+                                                                              ]),
+                                                                        ],
+                                                                      ),
+                                                                    )
+                                                                  ],
+                                                                )
                                                               : const SizedBox(),
                                                         ],
                                                       ),
@@ -7353,24 +7365,48 @@ class _DashboardState extends State<Dashboard> {
                                                                           ),
                                                                         ),
                                                                       ]),
+                                                              ]),
+                                                          const Divider(
+                                                            endIndent: 8,
+                                                            indent: 8,
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 5.0,
+                                                                    bottom:
+                                                                        12.0),
+                                                            child: Table(
+                                                              columnWidths: const {
+                                                                0: FlexColumnWidth(
+                                                                    10),
+                                                                1: FlexColumnWidth(
+                                                                    5),
+                                                                2: FlexColumnWidth(
+                                                                    5),
+                                                                3: FlexColumnWidth(
+                                                                    5),
+                                                                4: FlexColumnWidth(
+                                                                    5),
+                                                                5: FlexColumnWidth(
+                                                                    5),
+                                                              },
+                                                              children: [
                                                                 TableRow(
                                                                     // decoration: new BoxDecoration(
                                                                     //     color: Colors.greenAccent),
                                                                     children: [
-                                                                      const Padding(
-                                                                        padding: EdgeInsets.only(
-                                                                            top:
-                                                                                10,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          "Total Leads",
-                                                                          style: TextStyle(
-                                                                              fontSize: 11,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
+                                                                      const Center(
+                                                                          child:
+                                                                              Text(
+                                                                        "Total Leads",
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                11,
+                                                                            fontWeight:
+                                                                                FontWeight.bold),
+                                                                      )),
                                                                       InkWell(
                                                                         onTap:
                                                                             () {
@@ -7407,19 +7443,14 @@ class _DashboardState extends State<Dashboard> {
                                                                                 })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              top: 10,
-                                                                              bottom: 10),
-                                                                          child: Center(
-                                                                              child: Text(
-                                                                            stfNew.toString(),
-                                                                            style:
-                                                                                const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                          )),
-                                                                        ),
+                                                                        child: Center(
+                                                                            child: Text(
+                                                                          stfNew
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 10,
+                                                                              fontWeight: FontWeight.bold),
+                                                                        )),
                                                                       ),
                                                                       InkWell(
                                                                         onTap:
@@ -7457,19 +7488,14 @@ class _DashboardState extends State<Dashboard> {
                                                                                 })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              top: 10,
-                                                                              bottom: 10),
-                                                                          child: Center(
-                                                                              child: Text(
-                                                                            stfPending.toString(),
-                                                                            style:
-                                                                                const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                          )),
-                                                                        ),
+                                                                        child: Center(
+                                                                            child: Text(
+                                                                          stfPending
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 10,
+                                                                              fontWeight: FontWeight.bold),
+                                                                        )),
                                                                       ),
                                                                       InkWell(
                                                                         onTap:
@@ -7507,21 +7533,15 @@ class _DashboardState extends State<Dashboard> {
                                                                                 })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              top: 10,
-                                                                              bottom: 10),
-                                                                          child: Center(
-                                                                              child: Text(
-                                                                            stfFollowup.toString(),
-                                                                            style: const TextStyle(
-                                                                                fontSize: 10,
-                                                                                color: Colors.black,
-                                                                                fontWeight: FontWeight.bold),
-                                                                          )),
-                                                                        ),
+                                                                        child: Center(
+                                                                            child: Text(
+                                                                          stfFollowup
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 10,
+                                                                              color: Colors.black,
+                                                                              fontWeight: FontWeight.bold),
+                                                                        )),
                                                                       ),
                                                                       InkWell(
                                                                         onTap:
@@ -7559,21 +7579,15 @@ class _DashboardState extends State<Dashboard> {
                                                                                 })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              top: 10,
-                                                                              bottom: 10),
-                                                                          child: Center(
-                                                                              child: Text(
-                                                                            stfRejected.toString(),
-                                                                            style: const TextStyle(
-                                                                                fontSize: 10,
-                                                                                color: Colors.red,
-                                                                                fontWeight: FontWeight.bold),
-                                                                          )),
-                                                                        ),
+                                                                        child: Center(
+                                                                            child: Text(
+                                                                          stfRejected
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 10,
+                                                                              color: Colors.red,
+                                                                              fontWeight: FontWeight.bold),
+                                                                        )),
                                                                       ),
                                                                       InkWell(
                                                                         onTap:
@@ -7611,22 +7625,19 @@ class _DashboardState extends State<Dashboard> {
                                                                                 })
                                                                               : _dialogue(context, 'View Leads');
                                                                         },
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              top: 10,
-                                                                              bottom: 10),
-                                                                          child: Center(
-                                                                              child: Text(
-                                                                            stfClosed.toString(),
-                                                                            style:
-                                                                                const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                                                          )),
-                                                                        ),
+                                                                        child: Center(
+                                                                            child: Text(
+                                                                          stfClosed
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 10,
+                                                                              fontWeight: FontWeight.bold),
+                                                                        )),
                                                                       ),
                                                                     ]),
-                                                              ])
+                                                              ],
+                                                            ),
+                                                          )
                                                         ],
                                                       )),
                                                 ],
