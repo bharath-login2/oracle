@@ -4031,7 +4031,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     fromDate: widget.fromDate,
                                                     toDate: widget.toDate,
                                                     category: widget.category,
-                                                    getData: getData(),
+                                                    
                                                   );
                                                 })
                                             : SizedBox(
@@ -7821,7 +7821,6 @@ class AudioItem extends StatefulWidget {
   String? image;
   String? staffName;
   String? clientName;
-  dynamic getData;
 
   AudioItem(
       this.direction,
@@ -7850,7 +7849,7 @@ class AudioItem extends StatefulWidget {
       this.staff,
       this.pageName,
       this.isCalled,
-      required this.getData});
+      });
 
   @override
   State<AudioItem> createState() => _AudioItemState();
@@ -8129,7 +8128,7 @@ class _AudioItemState extends State<AudioItem> {
                                                       callHistoryId:
                                                           widget.callHistoryId,
                                                     )),
-                                          ).then(widget.getData);
+                                          );
                                         },
                                         child: CircleAvatar(
                                           backgroundColor: Colors.white,
