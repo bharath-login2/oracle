@@ -5594,7 +5594,6 @@ class _StaffDashboardState extends State<StaffDashboard> {
                                                                     Colors.red,
                                                               ),
                                                             ),
-
                                                             // Add a row with two buttons spaced apart and aligned to the right side of the card
                                                             Row(
                                                               children: <Widget>[
