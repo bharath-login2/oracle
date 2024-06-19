@@ -1,14 +1,9 @@
-import 'dart:developer';
-import 'dart:io';
-
-import 'package:call_log/call_log.dart';
+import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/screens/myApp.dart';
-import 'package:login2/service/backgroundService.dart';
-import 'package:workmanager/workmanager.dart';
+
 // MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
 // void callbackDispatcher() {
 //   Workmanager().executeTask((dynamic task, dynamic inputData) async {
@@ -47,7 +42,15 @@ Future<void> main() async {
   //   FlutterBackgroundService().invoke('setAsBackground');
   // }
   await Firebase.initializeApp();
-  runApp( const MyApp());
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  FlutterError.onError = (errorDetails) {
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  runApp(const MyApp());
   // if(Platform.isAndroid)
   // {
   //   _channel.setMethodCallHandler((call) async {
