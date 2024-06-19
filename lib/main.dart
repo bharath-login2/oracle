@@ -1,14 +1,7 @@
-import 'dart:developer';
-import 'dart:io';
 
-import 'package:call_log/call_log.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/screens/myApp.dart';
-import 'package:login2/service/backgroundService.dart';
-import 'package:workmanager/workmanager.dart';
 // MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
 // void callbackDispatcher() {
 //   Workmanager().executeTask((dynamic task, dynamic inputData) async {

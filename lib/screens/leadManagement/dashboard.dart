@@ -4663,7 +4663,7 @@ class _DashboardState extends State<Dashboard> {
                                                                             deleteLeadPermission1,
                                                                             cloudCallPermission1,
                                                                             pageName:
-                                                                                'Transfered Leads',
+                                                                                'Transferred Leads',
                                                                             leadType:
                                                                                 "2",
                                                                           )),
@@ -4721,7 +4721,7 @@ class _DashboardState extends State<Dashboard> {
                                                                         .spaceBetween,
                                                                 children: [
                                                                   const Text(
-                                                                    "Transfered Leads",
+                                                                    "Transferred Leads",
                                                                     style: TextStyle(
                                                                         fontWeight:
                                                                             FontWeight
@@ -4746,7 +4746,7 @@ class _DashboardState extends State<Dashboard> {
                                                                           .all(
                                                                           10),
                                                                       message:
-                                                                          'Transfered leads can be filtered \n using a specific date range to \n determine the count of closed \n leads within that period',
+                                                                          'Transferred leads can be filtered \n using a specific date range to \n determine the count of Transferred \n leads within that period',
                                                                       key:
                                                                           _toolTipKey4,
                                                                       child:
@@ -4897,7 +4897,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                               ],
                                                                                             ),
                                                                                             const Text(
-                                                                                              'Transfered Leads',
+                                                                                              'Transferred Leads',
                                                                                               style: TextStyle(
                                                                                                 fontSize: 18,
                                                                                                 fontWeight: FontWeight.w500,
@@ -4972,7 +4972,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                   onTap: () {
                                                                                                                     Navigator.push(
                                                                                                                       context,
-                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transfered Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", staff: object1.data!.staffLeads![i].staffId.toString())),
+                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transferred Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", staff: object1.data!.staffLeads![i].staffId.toString())),
                                                                                                                     ).then((r) {
                                                                                                                       getData(widget.token, fromdate, todate);
                                                                                                                       if (loadmore == true) {
@@ -5060,7 +5060,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                   onTap: () {
                                                                                                                     Navigator.push(
                                                                                                                       context,
-                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transfered Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", category: object1.data!.categoryLeads![i].categoryId.toString())),
+                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Transferred Leads', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "2", category: object1.data!.categoryLeads![i].categoryId.toString())),
                                                                                                                     ).then((r) {
                                                                                                                       getData(widget.token, fromdate, todate);
                                                                                                                       if (loadmore == true) {
@@ -5251,7 +5251,7 @@ class _DashboardState extends State<Dashboard> {
                                                                           .all(
                                                                           10),
                                                                       message:
-                                                                          'Missed Leads can be filtered \n using a specific date range to \n determine the count of total leads \n within that period',
+                                                                          'Missed Leads can be filtered \n using a specific date range to \n determine the count of missed \n leads within that period',
                                                                       key:
                                                                           _toolTipKey5,
                                                                       child:
