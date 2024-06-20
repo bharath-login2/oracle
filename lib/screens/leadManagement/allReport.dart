@@ -545,146 +545,7 @@ class _AllReportState extends State<AllReport> {
                                           });
                                     } else {
                                       if (widget.cloudCall == true) {
-                                        showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                scrollable: true,
-                                                title: const Text(
-                                                    'Choose Call Type'),
-                                                content: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        CloudCallModel object1 =
-                                                            await HttpService
-                                                                .addCloudCall(
-                                                                    widget
-                                                                        .token,
-                                                                    items[index]
-                                                                        .callMasterId,
-                                                                    items[index]
-                                                                        .contactNumber1);
-                                                        if (object1.data ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          AllReport(
-                                                                            widget.token!,
-                                                                            widget.editLead,
-                                                                            widget.deleteLead,
-                                                                            widget.cloudCall,
-                                                                            pageName:
-                                                                                widget.pageName,
-                                                                          )),
-                                                            );
-                                                          }
-                                                        } else {
-                                                          Common.toastMessaage(
-                                                              object1.message,
-                                                              Colors.red);
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                          }
-                                                        }
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Row(
-                                                          children: [
-                                                            Container(
-                                                              height: 30,
-                                                              width: 30,
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade300,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              child: const Icon(
-                                                                Icons
-                                                                    .cloud_circle_rounded,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            const Text(
-                                                              'Cloud Call',
-                                                              style: TextStyle(
-                                                                  fontSize: 18),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        // String url =
-                                                        //     'tel:${'+${items[index].contactNumber1}'}';
-                                                        // await launchUrl(Uri.parse(url));
-                                                        bool? res =
-                                                            await FlutterPhoneDirectCaller
-                                                                .callNumber(
-                                                                    '+${items[index].contactNumber1}');
-                                                      },
-                                                      child: SizedBox(
-                                                          height: 50,
-                                                          child: Row(
-                                                            children: [
-                                                              Container(
-                                                                height: 30,
-                                                                width: 30,
-                                                                decoration: BoxDecoration(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade300,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            5)),
-                                                                child:
-                                                                    const Icon(
-                                                                  Icons.call,
-                                                                  color: Colors
-                                                                      .black,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 20,
-                                                              ),
-                                                              const Text(
-                                                                'Phone Call',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        18),
-                                                              ),
-                                                            ],
-                                                          )),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            });
+                                        chooseCallDialog(context, index);
                                       } else {
                                         String url =
                                             'tel:+${items[index].contactNumber1}';
@@ -1256,110 +1117,7 @@ class _AllReportState extends State<AllReport> {
                                                                 if (widget
                                                                         .cloudCall ==
                                                                     true) {
-                                                                  showDialog(
-                                                                      context:
-                                                                          context,
-                                                                      builder:
-                                                                          (BuildContext
-                                                                              context) {
-                                                                        return AlertDialog(
-                                                                          scrollable:
-                                                                              true,
-                                                                          title:
-                                                                              const Text('Choose Call Type'),
-                                                                          content:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.start,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              InkWell(
-                                                                                onTap: () async {
-                                                                                  Common.showProgressDialog(context, "Loading..");
-                                                                                  CloudCallModel object1 = await HttpService.addCloudCall(widget.token, items[index].callMasterId, items[index].contactNumber1);
-                                                                                  if (object1.data == true) {
-                                                                                    if (context.mounted) {
-                                                                                      Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => AllReport(
-                                                                                                  widget.token!,
-                                                                                                  widget.editLead,
-                                                                                                  widget.deleteLead,
-                                                                                                  widget.cloudCall,
-                                                                                                  pageName: widget.pageName,
-                                                                                                )),
-                                                                                      );
-                                                                                    }
-                                                                                  } else {
-                                                                                    Common.toastMessaage(object1.message, Colors.red);
-                                                                                    if (context.mounted) {
-                                                                                      Navigator.pop(context);
-                                                                                    }
-                                                                                  }
-                                                                                },
-                                                                                child: SizedBox(
-                                                                                  height: 50,
-                                                                                  child: Row(
-                                                                                    children: [
-                                                                                      Container(
-                                                                                        height: 30,
-                                                                                        width: 30,
-                                                                                        decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                        child: const Icon(
-                                                                                          Icons.cloud_circle_rounded,
-                                                                                          color: Colors.black,
-                                                                                        ),
-                                                                                      ),
-                                                                                      const SizedBox(
-                                                                                        width: 20,
-                                                                                      ),
-                                                                                      const Text(
-                                                                                        'Cloud Call',
-                                                                                        style: TextStyle(fontSize: 18),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 10,
-                                                                              ),
-                                                                              InkWell(
-                                                                                onTap: () async {
-                                                                                  // String url =
-                                                                                  //     'tel:${'+${items[index].contactNumber1}'}';
-                                                                                  // await launchUrl(Uri.parse(url));
-                                                                                  bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
-                                                                                },
-                                                                                child: SizedBox(
-                                                                                    height: 50,
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        Container(
-                                                                                          height: 30,
-                                                                                          width: 30,
-                                                                                          decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                          child: const Icon(
-                                                                                            Icons.call,
-                                                                                            color: Colors.black,
-                                                                                          ),
-                                                                                        ),
-                                                                                        const SizedBox(
-                                                                                          width: 20,
-                                                                                        ),
-                                                                                        const Text(
-                                                                                          'Phone Call',
-                                                                                          style: TextStyle(fontSize: 18),
-                                                                                        ),
-                                                                                      ],
-                                                                                    )),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        );
-                                                                      });
+                                                                       chooseCallDialog(context, index);
                                                                 } else {
                                                                   String url =
                                                                       'tel:+${items[index].contactNumber1}';
@@ -1503,6 +1261,140 @@ class _AllReportState extends State<AllReport> {
               ),
       ),
     );
+  }
+
+  Future<dynamic> chooseCallDialog(BuildContext context, int index) {
+    return showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text(
+                                                  'Choose Call Type'),
+                                              content: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      Common
+                                                          .showProgressDialog(
+                                                              context,
+                                                              "Loading..");
+                                                      CloudCallModel object1 =
+                                                          await HttpService
+                                                              .addCloudCall(
+                                                                  widget
+                                                                      .token,
+                                                                  items[index]
+                                                                      .callMasterId,
+                                                                  items[index]
+                                                                      .contactNumber1);
+                                                      if (object1.data ==
+                                                          true) {
+                                                        if (context.mounted) {
+                                                          Common.toastMessaage(
+                                                            object1.message,
+                                                            Colors.green);
+                                                          Navigator.pop(context);
+                                                          Navigator.pop(context);
+                                                        }
+                                                      } else {
+                                                        Common.toastMessaage(
+                                                            object1.message,
+                                                            Colors.red);
+                                                        if (context.mounted) {
+                                                          Navigator.pop(
+                                                              context);
+                                                        }
+                                                      }
+                                                    },
+                                                    child: SizedBox(
+                                                      height: 50,
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            height: 30,
+                                                            width: 30,
+                                                            decoration: BoxDecoration(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade300,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            5)),
+                                                            child: const Icon(
+                                                              Icons
+                                                                  .cloud_circle_rounded,
+                                                              color: Colors
+                                                                  .black,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 20,
+                                                          ),
+                                                          const Text(
+                                                            'Cloud Call',
+                                                            style: TextStyle(
+                                                                fontSize: 18),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      // String url =
+                                                      //     'tel:${'+${items[index].contactNumber1}'}';
+                                                      // await launchUrl(Uri.parse(url));
+                                                      bool? res =
+                                                          await FlutterPhoneDirectCaller
+                                                              .callNumber(
+                                                                  '+${items[index].contactNumber1}');
+                                                    },
+                                                    child: SizedBox(
+                                                        height: 50,
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              height: 30,
+                                                              width: 30,
+                                                              decoration: BoxDecoration(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade300,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                          5)),
+                                                              child:
+                                                                  const Icon(
+                                                                Icons.call,
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 20,
+                                                            ),
+                                                            const Text(
+                                                              'Phone Call',
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      18),
+                                                            ),
+                                                          ],
+                                                        )),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          });
   }
 
   Future<dynamic> filtrationSheet(BuildContext context) {
