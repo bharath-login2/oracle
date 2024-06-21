@@ -1353,6 +1353,7 @@ class _AllReportState extends State<AllReport> {
                                                       // String url =
                                                       //     'tel:${'+${items[index].contactNumber1}'}';
                                                       // await launchUrl(Uri.parse(url));
+                                                      Navigator.pop(context);
                                                       bool? res =
                                                           await FlutterPhoneDirectCaller
                                                               .callNumber(

@@ -7420,6 +7420,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                 ),
                 InkWell(
                   onTap: () async {
+                    Navigator.pop(context);
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);

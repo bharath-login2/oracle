@@ -1317,6 +1317,7 @@ class _SearchPageState extends State<SearchPage> {
                                                         ),
                                                         InkWell(
                                                           onTap: () async {
+                                                            Navigator.pop(context);
                                                             // String url = 'tel:+${search!.data!.details![i]
                                                             //     .contactNumber1}';
                                                             // await launch(url);

@@ -2623,6 +2623,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                 ),
                 InkWell(
                   onTap: () async {
+                    Navigator.pop(context);
                     // String url = 'tel:+${items[index].contactNumber1}';
                     // await launchUrl(Uri.parse(url));
                     bool? res = await FlutterPhoneDirectCaller.callNumber(
