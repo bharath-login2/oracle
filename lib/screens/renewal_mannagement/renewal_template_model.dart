@@ -20,7 +20,7 @@ class RenewalTemplateModel {
     });
 
     factory RenewalTemplateModel.fromJson(Map<String, dynamic> json) => RenewalTemplateModel(
-        data: Data.fromJson(json["data"]),
+        data:Data.fromJson(json["data"]),
         status: json["status"],
         message: json["message"],
     );

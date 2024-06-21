@@ -7381,7 +7381,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                         Navigator.pop(context);
                         Navigator.pop(context);
                       }
-
                     } else {
                       Common.toastMessaage(object1.message, Colors.red);
                       if (context.mounted) {

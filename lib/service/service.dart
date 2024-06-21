@@ -3611,11 +3611,10 @@ class HttpService {
     }
   }
 
-  static Future getRenewalReminderMessage(String renId, String medium) async {
+  static Future getRenewalReminderMessage(String renId) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_id": renId,
-      "medium": medium == "Official" ? "official" : "unofficial"
     });
     try {
       var result = await _dio.post(
@@ -3632,7 +3631,7 @@ class HttpService {
   }
 
   static Future postReminder(String renId, String contactNumber, templateType,
-      templateName, templateId, medium, customerId, messageContent) async {
+      templateName, templateId, customerId, messageContent) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "row_id": renId,
@@ -3640,7 +3639,7 @@ class HttpService {
       "template_type": templateType,
       "template_name": templateName,
       "template_id": templateId,
-      "medium": medium == "Official" ? "official" : "unofficial",
+      "medium": "official" ,
       "customer_id": customerId,
       "message_content": messageContent
     });
@@ -3656,11 +3655,10 @@ class HttpService {
     }
   }
 
-  static Future bulkReminder(List recordId, String medium) async {
+  static Future bulkReminder(List recordId) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_id": jsonEncode(recordId),
-      "medium": medium == "Official" ? "official" : "unofficial"
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}sendBulkReminder",

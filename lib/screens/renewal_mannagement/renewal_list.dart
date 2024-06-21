@@ -56,12 +56,12 @@ class _RenewalListState extends State<RenewalList> {
   String clientId = "";
   bool isLoading = true;
   int page = 1;
+  int add = 1;
   int pageSize = 10;
   String daysToExpire = "";
   List filteredNames = [];
   List selectedIds = [];
   List selectedNames = [];
-  String selectedMedium = "select medium";
   RenewalDetailslModel? detailsResponse;
   RenewalTemplateModel? template;
   PostReminderModel? postReminderRes;
@@ -162,13 +162,17 @@ class _RenewalListState extends State<RenewalList> {
   }
 
   getRenewalReminderMessage(String renewalId, String contactId) async {
-    template =
-        await HttpService.getRenewalReminderMessage(renewalId, selectedMedium);
-    if (template != null) {
+    template = await HttpService.getRenewalReminderMessage(renewalId);
+    if (template != null && template!.status == true) {
       setState(() {
         Navigator.pop(context);
         reminderBottomSheet(renewalId, contactId);
       });
+    } else {
+      Common.toastMessaage(template!.message, Colors.red);
+        Navigator.pop(context);        
+        setState(() {
+        });
     }
   }
 
@@ -179,10 +183,9 @@ class _RenewalListState extends State<RenewalList> {
         template!.data.templateType,
         template!.data.templateName,
         template!.data.templateId,
-        template!.data.medium,
         template!.data.customerId,
         template!.data.message);
-    if (postReminderRes != null) {
+    if (postReminderRes != null && postReminderRes!.status == true) {
       Common.toastMessaage(postReminderRes!.message, Colors.green);
     } else {
       Common.toastMessaage(postReminderRes!.message, Colors.red);
@@ -191,7 +194,7 @@ class _RenewalListState extends State<RenewalList> {
 
   postBulkReminder() async {
     Common.showProgressDialog(context, "Loading..");
-    bulkResponse = await HttpService.bulkReminder(selectedIds, selectedMedium);
+    bulkResponse = await HttpService.bulkReminder(selectedIds);
     if (bulkResponse != null) {
       Common.toastMessaage(bulkResponse!.message, Colors.green);
     } else {
@@ -231,7 +234,7 @@ class _RenewalListState extends State<RenewalList> {
 
   @override
   void initState() {
-      isLoading = true;
+    isLoading = true;
     getList();
     getDetails();
     getBranch();
@@ -242,8 +245,10 @@ class _RenewalListState extends State<RenewalList> {
   void _onLoadMore() {
     if (items.length + 10 == page * pageSize &&
         itemPositionsListener.itemPositions.value.last.index ==
-            items.length - 1) {
+            items.length - 1 &&
+        page > add) {
       getList();
+      add++;
     }
   }
 
@@ -312,13 +317,15 @@ class _RenewalListState extends State<RenewalList> {
                                     isAllSelected = value!;
                                     if (isAllSelected == true) {
                                       for (int i = 0; i < items.length; i++) {
-                                     if (items[i].isRenewed ==
-                                                  false)   {if (selectedIds.contains(items[i].id)) {
-                                        } else {
-                                          selectedIds.add(items[i].id);
-                                          selectedNames
-                                              .add(items[i].clientName);
-                                        }}
+                                        if (items[i].isRenewed == false) {
+                                          if (selectedIds
+                                              .contains(items[i].id)) {
+                                          } else {
+                                            selectedIds.add(items[i].id);
+                                            selectedNames
+                                                .add(items[i].clientName);
+                                          }
+                                        }
                                       }
                                     } else {
                                       selectedNames.clear();
@@ -357,7 +364,7 @@ class _RenewalListState extends State<RenewalList> {
                           )
                         : InkWell(
                             onTap: () {
-                              selectMediumDialog(0, true);
+                              bulkReminderSheet();
                             },
                             child: Container(
                               height: 35,
@@ -376,7 +383,8 @@ class _RenewalListState extends State<RenewalList> {
         ),
         body: RefreshIndicator(
             onRefresh: (() async {
-              page=1;
+              page = 1;
+              add = 1;
               items.clear();
               getList();
             }),
@@ -429,7 +437,8 @@ class _RenewalListState extends State<RenewalList> {
                                                   }
                                                 }
                                               });
-                                              if ((items.length - widget.renewed )==
+                                              if ((items.length -
+                                                      widget.renewed) ==
                                                   selectedIds.length) {
                                                 isAllSelected = true;
                                               } else {
@@ -720,8 +729,22 @@ class _RenewalListState extends State<RenewalList> {
                                                               false,
                                                           child: InkWell(
                                                             onTap: () async {
-                                                              selectMediumDialog(
-                                                                  index, false);
+                                                              Common.showProgressDialog(
+                                                                  context,
+                                                                  "Loading..");
+                                                              getRenewalReminderMessage(
+                                                                  items[index]
+                                                                      .id,
+                                                                  items[index]
+                                                                      .contactNo);
+                                                              recieverName
+                                                                  .text = items[
+                                                                      index]
+                                                                  .clientName;
+                                                              contactNumber
+                                                                  .text = items[
+                                                                      index]
+                                                                  .contactNo;
 
                                                               // setState(() {});
                                                             },
@@ -1210,6 +1233,7 @@ class _RenewalListState extends State<RenewalList> {
                               onPressed: () {
                                 items.clear();
                                 page = 1;
+                                add = 1;
                                 getList();
                                 Navigator.pop(context);
                               },
@@ -1738,6 +1762,7 @@ class _RenewalListState extends State<RenewalList> {
                                 Navigator.pop(context);
                                 await postRenewDetails(id);
                                 page = 1;
+                                add = 1;
                                 items.clear();
                                 getList();
                               }
@@ -1961,96 +1986,96 @@ class _RenewalListState extends State<RenewalList> {
     );
   }
 
-  selectMediumDialog(int index, isBulk) {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: StatefulBuilder(builder: (context, setState) {
-              return Column(
-                children: [
-                  const Text(
-                    "Select Medium",
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(top: 25, bottom: 10, left: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedMedium,
-                          style: const TextStyle(
-                              fontSize: 20, fontStyle: FontStyle.normal),
-                        ),
-                        PopupMenuButton<String>(
-                          icon: const Icon(Icons.arrow_drop_down),
-                          iconColor: Colors.black,
-                          color: Colors.white,
-                          onSelected: (value) {
-                            if (value == "1") {
-                              selectedMedium = "Official";
-                            } else {
-                              selectedMedium = "Un Official";
-                            }
-                            setState(() {});
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              const PopupMenuItem<String>(
-                                value: '1',
-                                child: Text('Official'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: '2',
-                                child: Text('Un Official'),
-                              ),
-                            ];
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    "Cancel",
-                    style: TextStyle(color: Colors.black),
-                  )),
-              ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                  onPressed: () {
-                    if (selectedMedium != "select medium") {
-                      Navigator.pop(context);
-                      if (isBulk == false) {
-                        Common.showProgressDialog(context, "Loading..");
-                        getRenewalReminderMessage(
-                            items[index].id, items[index].contactNo);
-                        recieverName.text = items[index].clientName;
-                        contactNumber.text = items[index].contactNo;
-                      } else {
-                        bulkReminderSheet();
-                      }
-                    } else {}
-                  },
-                  child: const Text(
-                    "Done",
-                    style: TextStyle(color: Colors.white),
-                  )),
-            ],
-          );
-        });
-  }
+  // selectMediumDialog(int index, isBulk) {
+  //   return showDialog(
+  //       context: context,
+  //       builder: (context) {
+  //         return AlertDialog(
+  //           title: StatefulBuilder(builder: (context, setState) {
+  //             return Column(
+  //               children: [
+  //                 const Text(
+  //                   "Select Medium",
+  //                   style: TextStyle(
+  //                       fontSize: 20,
+  //                       fontStyle: FontStyle.normal,
+  //                       fontWeight: FontWeight.bold),
+  //                 ),
+  //                 Padding(
+  //                   padding:
+  //                       const EdgeInsets.only(top: 25, bottom: 10, left: 10),
+  //                   child: Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Text(
+  //                         selectedMedium,
+  //                         style: const TextStyle(
+  //                             fontSize: 20, fontStyle: FontStyle.normal),
+  //                       ),
+  //                       PopupMenuButton<String>(
+  //                         icon: const Icon(Icons.arrow_drop_down),
+  //                         iconColor: Colors.black,
+  //                         color: Colors.white,
+  //                         onSelected: (value) {
+  //                           if (value == "1") {
+  //                             selectedMedium = "Official";
+  //                           } else {
+  //                             selectedMedium = "Un Official";
+  //                           }
+  //                           setState(() {});
+  //                         },
+  //                         itemBuilder: (BuildContext context) {
+  //                           return [
+  //                             const PopupMenuItem<String>(
+  //                               value: '1',
+  //                               child: Text('Official'),
+  //                             ),
+  //                             const PopupMenuItem<String>(
+  //                               value: '2',
+  //                               child: Text('Un Official'),
+  //                             ),
+  //                           ];
+  //                         },
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             );
+  //           }),
+  //           actions: [
+  //             TextButton(
+  //                 onPressed: () {
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: const Text(
+  //                   "Cancel",
+  //                   style: TextStyle(color: Colors.black),
+  //                 )),
+  //             ElevatedButton(
+  //                 style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+  //                 onPressed: () {
+  //                   if (selectedMedium != "select medium") {
+  //                     Navigator.pop(context);
+  //                     if (isBulk == false) {
+  //                       Common.showProgressDialog(context, "Loading..");
+  //                       getRenewalReminderMessage(
+  //                           items[index].id, items[index].contactNo);
+  //                       recieverName.text = items[index].clientName;
+  //                       contactNumber.text = items[index].contactNo;
+  //                     } else {
+  //                       bulkReminderSheet();
+  //                     }
+  //                   } else {}
+  //                 },
+  //                 child: const Text(
+  //                   "Done",
+  //                   style: TextStyle(color: Colors.white),
+  //                 )),
+  //           ],
+  //         );
+  //       });
+  // }
 }
 
 Widget buildLoaderListItem() {
