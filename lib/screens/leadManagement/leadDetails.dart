@@ -936,217 +936,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                           });
                                     } else {
                                       if (widget.cloudCall == true) {
-                                        showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                scrollable: true,
-                                                title: const Text(
-                                                    'Choose Call Type'),
-                                                content: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        CloudCallModel object1 =
-                                                            await HttpService
-                                                                .addCloudCall(
-                                                                    widget
-                                                                        .token,
-                                                                    widget
-                                                                        .callMasterId,
-                                                                    leadDetails!
-                                                                        .data!
-                                                                        .contactNumber1);
-                                                        if (object1.data ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                          }
-                                                          // if (widget.pageName ==
-                                                          //     'search') {
-                                                          //   Navigator.push(
-                                                          //     context,
-                                                          //     MaterialPageRoute(
-                                                          //         builder: (context) => SearchPage(
-                                                          //             widget
-                                                          //                 .token,
-                                                          //             widget
-                                                          //                 .editLead,
-                                                          //             widget
-                                                          //                 .deleteLead,
-                                                          //             widget
-                                                          //                 .cloudCall,
-                                                          //             widget
-                                                          //                 .searchKey
-                                                          //                 .toString())),
-                                                          //   );
-                                                          // } else if (widget
-                                                          //         .pageName ==
-                                                          //     'callHistory') {
-                                                          //   Navigator.push(
-                                                          //     context,
-                                                          //     MaterialPageRoute(
-                                                          //         builder: (context) => AddFollowup(
-                                                          //             widget
-                                                          //                 .token,
-                                                          //             widget
-                                                          //                 .editLead,
-                                                          //             widget
-                                                          //                 .deleteLead,
-                                                          //             widget
-                                                          //                 .cloudCall,
-                                                          //             widget
-                                                          //                 .callMasterId,
-                                                          //             pageName: widget
-                                                          //                 .pageName,
-                                                          //             status: widget
-                                                          //                 .status,
-                                                          //             staff: widget
-                                                          //                 .status,
-                                                          //             isCalled: widget
-                                                          //                 .isCalled,
-                                                          //             fromDate: widget
-                                                          //                 .fromDate,
-                                                          //             toDate: widget
-                                                          //                 .toDate,
-                                                          //             category: widget
-                                                          //                 .category)),
-                                                          //   );
-                                                          // } else {
-                                                          //   Navigator.push(
-                                                          //     context,
-                                                          //     MaterialPageRoute(
-                                                          //         builder: (context) => ViewLeads(
-                                                          //             widget
-                                                          //                 .token,
-                                                          //             widget
-                                                          //                 .editLead,
-                                                          //             widget
-                                                          //                 .deleteLead,
-                                                          //             widget
-                                                          //                 .cloudCall,
-                                                          //             pageName: widget
-                                                          //                 .pageName,
-                                                          //             status: widget
-                                                          //                 .status,
-                                                          //             staff: widget
-                                                          //                 .status,
-                                                          //             isCalled: widget
-                                                          //                 .isCalled,
-                                                          //             fromDate: widget
-                                                          //                 .fromDate,
-                                                          //             toDate: widget
-                                                          //                 .toDate,
-                                                          //             category: widget
-                                                          //                 .category,
-                                                          //             scrollToIndex:
-                                                          //                 widget
-                                                          //                     .scrollToIndex)),
-                                                          //   );
-                                                          // }
-                                                        } else {
-                                                          Common.toastMessaage(
-                                                              object1.message,
-                                                              Colors.red);
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                          }
-                                                        }
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Row(
-                                                          children: [
-                                                            Container(
-                                                              height: 30,
-                                                              width: 30,
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade300,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              child: const Icon(
-                                                                Icons
-                                                                    .cloud_circle_rounded,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            const Text(
-                                                              'Cloud Call',
-                                                              style: TextStyle(
-                                                                  fontSize: 18),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        // String url =
-                                                        //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
-                                                        // await launch(url);
-                                                        bool? res =
-                                                            await FlutterPhoneDirectCaller
-                                                                .callNumber(
-                                                                    '+${leadDetails!.data!.contactNumber1}');
-                                                      },
-                                                      child: SizedBox(
-                                                          height: 50,
-                                                          child: Row(
-                                                            children: [
-                                                              Container(
-                                                                height: 30,
-                                                                width: 30,
-                                                                decoration: BoxDecoration(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade300,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            5)),
-                                                                child:
-                                                                    const Icon(
-                                                                  Icons.call,
-                                                                  color: Colors
-                                                                      .black,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                width: 20,
-                                                              ),
-                                                              const Text(
-                                                                'Phone Call',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        18),
-                                                              ),
-                                                            ],
-                                                          )),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            });
+                                        chooseCallDialog(context);
                                       } else {
                                         String url =
                                             'tel:+${leadDetails!.data!.contactNumber1}';
@@ -1781,156 +1571,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                 } else {
                                                   if (widget.cloudCall ==
                                                       true) {
-                                                    showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext
-                                                            context) {
-                                                          return AlertDialog(
-                                                            scrollable: true,
-                                                            title: const Text(
-                                                                'Choose Call Type'),
-                                                            content: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .start,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                InkWell(
-                                                                  onTap:
-                                                                      () async {
-                                                                    Common.showProgressDialog(
-                                                                        context,
-                                                                        "Loading..");
-                                                                    CloudCallModel object1 = await HttpService.addCloudCall(
-                                                                        widget
-                                                                            .token,
-                                                                        widget
-                                                                            .callMasterId,
-                                                                        leadDetails!
-                                                                            .data!
-                                                                            .contactNumber1);
-                                                                    if (object1
-                                                                            .data ==
-                                                                        true) {
-                                                                      if (context
-                                                                          .mounted) {
-                                                                        Navigator
-                                                                            .push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => LeadDetails(
-                                                                                    widget.token,
-                                                                                    widget.editLead,
-                                                                                    widget.deleteLead,
-                                                                                    widget.cloudCall,
-                                                                                    callMasterId,
-                                                                                    pageName: widget.pageName,
-                                                                                    status: widget.status,
-                                                                                    staff: widget.staff,
-                                                                                    isCalled: widget.isCalled,
-                                                                                    fromDate: widget.fromDate,
-                                                                                    toDate: widget.toDate,
-                                                                                    category: widget.category,
-                                                                                    scrollToIndex: widget.scrollToIndex,
-                                                                                    searchKey: widget.searchKey,
-                                                                                    page: widget.page,
-                                                                                    pageSize: widget.pageSize,
-                                                                                    leadType: widget.leadType,
-                                                                                  )),
-                                                                        );
-                                                                      }
-                                                                    } else {
-                                                                      Common.toastMessaage(
-                                                                          object1
-                                                                              .message,
-                                                                          Colors
-                                                                              .red);
-                                                                      if (context
-                                                                          .mounted) {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      }
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      SizedBox(
-                                                                    height: 50,
-                                                                    child: Row(
-                                                                      children: [
-                                                                        Container(
-                                                                          height:
-                                                                              30,
-                                                                          width:
-                                                                              30,
-                                                                          decoration: BoxDecoration(
-                                                                              color: Colors.grey.shade300,
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              const Icon(
-                                                                            Icons.cloud_circle_rounded,
-                                                                            color:
-                                                                                Colors.black,
-                                                                          ),
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          width:
-                                                                              20,
-                                                                        ),
-                                                                        const Text(
-                                                                          'Cloud Call',
-                                                                          style:
-                                                                              TextStyle(fontSize: 18),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 10,
-                                                                ),
-                                                                InkWell(
-                                                                  onTap:
-                                                                      () async {
-                                                                    // String url =
-                                                                    //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
-                                                                    // await launch(
-                                                                    //     url);
-                                                                    bool? res =
-                                                                        await FlutterPhoneDirectCaller.callNumber(
-                                                                            '+${leadDetails!.data!.contactNumber1}');
-                                                                  },
-                                                                  child:
-                                                                      SizedBox(
-                                                                          height:
-                                                                              50,
-                                                                          child:
-                                                                              Row(
-                                                                            children: [
-                                                                              Container(
-                                                                                height: 30,
-                                                                                width: 30,
-                                                                                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                child: const Icon(
-                                                                                  Icons.call,
-                                                                                  color: Colors.black,
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                width: 20,
-                                                                              ),
-                                                                              const Text(
-                                                                                'Phone Call',
-                                                                                style: TextStyle(fontSize: 18),
-                                                                              ),
-                                                                            ],
-                                                                          )),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          );
-                                                        });
+                                                    chooseCallDialog(context);
                                                   } else {
                                                     String url =
                                                         'tel:+${leadDetails!.data!.contactNumber1}';
@@ -4031,7 +3672,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     fromDate: widget.fromDate,
                                                     toDate: widget.toDate,
                                                     category: widget.category,
-                                                    getData: getData(),
                                                   );
                                                 })
                                             : SizedBox(
@@ -7717,6 +7357,107 @@ class _LeadDetailsState extends State<LeadDetails> {
     );
   }
 
+  Future<dynamic> chooseCallDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Choose Call Type'),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    CloudCallModel object1 = await HttpService.addCloudCall(
+                        widget.token,
+                        widget.callMasterId,
+                        leadDetails!.data!.contactNumber1);
+                    if (object1.data == true) {
+                      Common.toastMessaage(object1.message, Colors.green);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+
+                    } else {
+                      Common.toastMessaage(object1.message, Colors.red);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Icon(
+                            Icons.cloud_circle_rounded,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        const Text(
+                          'Cloud Call',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    // String url =
+                    //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
+                    // await launch(url);
+                    bool? res = await FlutterPhoneDirectCaller.callNumber(
+                        '+${leadDetails!.data!.contactNumber1}');
+                  },
+                  child: SizedBox(
+                      height: 50,
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(5)),
+                            child: const Icon(
+                              Icons.call,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          const Text(
+                            'Phone Call',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ],
+                      )),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
   void _dialogue(BuildContext context, title) {
     showDialog(
         context: context,
@@ -7821,36 +7562,35 @@ class AudioItem extends StatefulWidget {
   String? image;
   String? staffName;
   String? clientName;
-  dynamic getData;
 
   AudioItem(
-      this.direction,
-      this.time,
-      this.isAttend,
-      this.date,
-      this.status,
-      this.resourceUrl,
-      this.duration,
-      this.voicePlayPermission,
-      this.callHistoryId,
-      this.isTransfer,
-      this.token,
-      this.editLead,
-      this.deleteLead,
-      this.cloudCall,
-      this.callMasterId,
-      this.image,
-      this.staffName,
-      this.clientName,
-      {super.key,
-      this.fromDate,
-      this.toDate,
-      this.sts,
-      this.category,
-      this.staff,
-      this.pageName,
-      this.isCalled,
-      required this.getData});
+    this.direction,
+    this.time,
+    this.isAttend,
+    this.date,
+    this.status,
+    this.resourceUrl,
+    this.duration,
+    this.voicePlayPermission,
+    this.callHistoryId,
+    this.isTransfer,
+    this.token,
+    this.editLead,
+    this.deleteLead,
+    this.cloudCall,
+    this.callMasterId,
+    this.image,
+    this.staffName,
+    this.clientName, {
+    super.key,
+    this.fromDate,
+    this.toDate,
+    this.sts,
+    this.category,
+    this.staff,
+    this.pageName,
+    this.isCalled,
+  });
 
   @override
   State<AudioItem> createState() => _AudioItemState();
@@ -8129,7 +7869,7 @@ class _AudioItemState extends State<AudioItem> {
                                                       callHistoryId:
                                                           widget.callHistoryId,
                                                     )),
-                                          ).then(widget.getData);
+                                          );
                                         },
                                         child: CircleAvatar(
                                           backgroundColor: Colors.white,

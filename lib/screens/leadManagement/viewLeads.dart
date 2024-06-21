@@ -512,24 +512,15 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         .green);
                                                                 if (context
                                                                     .mounted) {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token!,
-                                                                              widget.editLead,
-                                                                              widget.deleteLead,
-                                                                              widget.cloudCall,
-                                                                              pageName: widget.pageName,
-                                                                              status: widget.status,
-                                                                              staff: widget.staff,
-                                                                              isCalled: widget.isCalled,
-                                                                              fromDate: widget.fromDate,
-                                                                              toDate: widget.toDate,
-                                                                              category: widget.category,
-                                                                            )),
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  page = 1;
+                                                                  items.clear();
+                                                                  getData(
+                                                                    'desc',
+                                                                    true,
                                                                   );
                                                                 }
                                                               } else {
@@ -565,107 +556,107 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             color: Colors.white,
                                           )),
                                       const SizedBox(
-                                        width: 10,
+                                        width: 15,
                                       ),
-                                      InkWell(
-                                          onTap: () {
-                                            showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    title: const Text(
-                                                        'Please Confirm'),
-                                                    content: const Text(
-                                                        'Are you sure to Create Contact Group?'),
-                                                    actions: [
-                                                      TextButton(
-                                                          onPressed: () async {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      AddBulkContactGroup(
-                                                                          widget
-                                                                              .token,
-                                                                          selectedUserNumbers)),
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                      // The "Yes" button
+                                      // InkWell(
+                                      //     onTap: () {
+                                      //       showDialog(
+                                      //           context: context,
+                                      //           builder:
+                                      //               (BuildContext context) {
+                                      //             return AlertDialog(
+                                      //               title: const Text(
+                                      //                   'Please Confirm'),
+                                      //               content: const Text(
+                                      //                   'Are you sure to Create Contact Group?'),
+                                      //               actions: [
+                                      //                 TextButton(
+                                      //                     onPressed: () async {
+                                      //                       Navigator.push(
+                                      //                         context,
+                                      //                         MaterialPageRoute(
+                                      //                             builder: (context) =>
+                                      //                                 AddBulkContactGroup(
+                                      //                                     widget
+                                      //                                         .token,
+                                      //                                     selectedUserNumbers)),
+                                      //                       );
+                                      //                     },
+                                      //                     child: const Text(
+                                      //                         'Yes')),
+                                      //                 // The "Yes" button
 
-                                                      // TextButton(
-                                                      //     onPressed: () async {
-                                                      //       Map<String, dynamic> body = {
-                                                      //         "token": widget.token,
-                                                      //         'leadMasterIds': selectedIUsers,
-                                                      //         'staffId': transferStaff,
-                                                      //       };
-                                                      //       BulkTransferLeadsModel transferLead =
-                                                      //       await HttpService.bulkDeleteLead(body);
-                                                      //       if (deleteBulk.data ==
-                                                      //           true) {
-                                                      //         Common.toastMessaage(
-                                                      //             deleteBulk.message,
-                                                      //             Colors.green);
-                                                      //         if (context
-                                                      //             .mounted) {
-                                                      //           Navigator.push(
-                                                      //             context,
-                                                      //             MaterialPageRoute(
-                                                      //                 builder:
-                                                      //                     (context) =>
-                                                      //                     ViewLeads(
-                                                      //                       widget.token!,
-                                                      //                       widget.editLead,
-                                                      //                       widget.deleteLead,
-                                                      //                       widget.cloudCall,
-                                                      //                       pageName: widget.pageName,
-                                                      //                       status: widget.status,
-                                                      //                       staff: widget.staff,
-                                                      //                       isCalled: widget.isCalled,
-                                                      //                       fromDate: widget.fromDate,
-                                                      //                       toDate: widget.toDate,
-                                                      //                       category: widget.category,
-                                                      //                     )),
-                                                      //           );
-                                                      //         }
-                                                      //       }
-                                                      //       else
-                                                      //       {
-                                                      //         Common.toastMessaage(
-                                                      //             deleteBulk.message,
-                                                      //             Colors.red);
-                                                      //         if (context
-                                                      //             .mounted) {
-                                                      //           Navigator.of(
-                                                      //               context)
-                                                      //               .pop();
-                                                      //         }
-                                                      //       }
-                                                      //     },
-                                                      //     child:
-                                                      //     const Text('Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No'))
-                                                    ],
-                                                  );
-                                                });
-                                          },
-                                          child: const Icon(
-                                            Icons.group_add,
-                                            color: Colors.white,
-                                          )),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
+                                      //                 // TextButton(
+                                      //                 //     onPressed: () async {
+                                      //                 //       Map<String, dynamic> body = {
+                                      //                 //         "token": widget.token,
+                                      //                 //         'leadMasterIds': selectedIUsers,
+                                      //                 //         'staffId': transferStaff,
+                                      //                 //       };
+                                      //                 //       BulkTransferLeadsModel transferLead =
+                                      //                 //       await HttpService.bulkDeleteLead(body);
+                                      //                 //       if (deleteBulk.data ==
+                                      //                 //           true) {
+                                      //                 //         Common.toastMessaage(
+                                      //                 //             deleteBulk.message,
+                                      //                 //             Colors.green);
+                                      //                 //         if (context
+                                      //                 //             .mounted) {
+                                      //                 //           Navigator.push(
+                                      //                 //             context,
+                                      //                 //             MaterialPageRoute(
+                                      //                 //                 builder:
+                                      //                 //                     (context) =>
+                                      //                 //                     ViewLeads(
+                                      //                 //                       widget.token!,
+                                      //                 //                       widget.editLead,
+                                      //                 //                       widget.deleteLead,
+                                      //                 //                       widget.cloudCall,
+                                      //                 //                       pageName: widget.pageName,
+                                      //                 //                       status: widget.status,
+                                      //                 //                       staff: widget.staff,
+                                      //                 //                       isCalled: widget.isCalled,
+                                      //                 //                       fromDate: widget.fromDate,
+                                      //                 //                       toDate: widget.toDate,
+                                      //                 //                       category: widget.category,
+                                      //                 //                     )),
+                                      //                 //           );
+                                      //                 //         }
+                                      //                 //       }
+                                      //                 //       else
+                                      //                 //       {
+                                      //                 //         Common.toastMessaage(
+                                      //                 //             deleteBulk.message,
+                                      //                 //             Colors.red);
+                                      //                 //         if (context
+                                      //                 //             .mounted) {
+                                      //                 //           Navigator.of(
+                                      //                 //               context)
+                                      //                 //               .pop();
+                                      //                 //         }
+                                      //                 //       }
+                                      //                 //     },
+                                      //                 //     child:
+                                      //                 //     const Text('Yes')),
+                                      //                 TextButton(
+                                      //                     onPressed: () {
+                                      //                       Navigator.of(
+                                      //                               context)
+                                      //                           .pop();
+                                      //                     },
+                                      //                     child:
+                                      //                         const Text('No'))
+                                      //               ],
+                                      //             );
+                                      //           });
+                                      //     },
+                                      //     child: const Icon(
+                                      //       Icons.group_add,
+                                      //       color: Colors.white,
+                                      //     )),
+                                      // const SizedBox(
+                                      //   width: 10,
+                                      // ),
                                       InkWell(
                                           onTap: () {
                                             if (widget.deleteLead == true) {
@@ -706,24 +697,13 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         .green);
                                                                 if (context
                                                                     .mounted) {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token!,
-                                                                              widget.editLead,
-                                                                              widget.deleteLead,
-                                                                              widget.cloudCall,
-                                                                              pageName: widget.pageName,
-                                                                              status: widget.status,
-                                                                              staff: widget.staff,
-                                                                              isCalled: widget.isCalled,
-                                                                              fromDate: widget.fromDate,
-                                                                              toDate: widget.toDate,
-                                                                              category: widget.category,
-                                                                            )),
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  page = 1;
+                                                                  items.clear();
+                                                                  getData(
+                                                                    'desc',
+                                                                    true,
                                                                   );
                                                                 }
                                                               } else {
@@ -1674,7 +1654,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                           .callLeadId
                                                                           .toString(),
                                                                       pageName: widget
-                                                                          .pageName.toString(),
+                                                                          .pageName
+                                                                          .toString(),
                                                                       status: widget
                                                                           .status,
                                                                       staff: widget
@@ -1736,159 +1717,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                 });
                                           } else {
                                             if (widget.cloudCall == true) {
-                                              showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      scrollable: true,
-                                                      title: const Text(
-                                                          'Choose Call Type'),
-                                                      content: Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          InkWell(
-                                                            onTap: () async {
-                                                              Common.showProgressDialog(
-                                                                  context,
-                                                                  "Loading..");
-                                                              CloudCallModel object1 =
-                                                                  await HttpService.addCloudCall(
-                                                                      widget
-                                                                          .token,
-                                                                      items[index]
-                                                                          .callMasterId,
-                                                                      items[index]
-                                                                          .contactNumber1);
-                                                              if (object1
-                                                                      .data ==
-                                                                  true) {
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator
-                                                                      .push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            ViewLeads(
-                                                                              widget.token!,
-                                                                              widget.editLead,
-                                                                              widget.deleteLead,
-                                                                              widget.cloudCall,
-                                                                              pageName: widget.pageName,
-                                                                              status: widget.status,
-                                                                              staff: widget.staff,
-                                                                              isCalled: widget.isCalled,
-                                                                              fromDate: widget.fromDate,
-                                                                              toDate: widget.toDate,
-                                                                              category: widget.category,
-                                                                            )),
-                                                                  );
-                                                                }
-                                                              } else {
-                                                                Common.toastMessaage(
-                                                                    object1
-                                                                        .message,
-                                                                    Colors.red);
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                }
-                                                              }
-                                                            },
-                                                            child: SizedBox(
-                                                              height: 50,
-                                                              child: Row(
-                                                                children: [
-                                                                  Container(
-                                                                    height: 30,
-                                                                    width: 30,
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .grey
-                                                                            .shade300,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(5)),
-                                                                    child:
-                                                                        const Icon(
-                                                                      Icons
-                                                                          .cloud_circle_rounded,
-                                                                      color: Colors
-                                                                          .black,
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 20,
-                                                                  ),
-                                                                  const Text(
-                                                                    'Cloud Call',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          InkWell(
-                                                            onTap: () async {
-                                                              // String url =
-                                                              //     'tel:${'+${items[index].contactNumber1}'}';
-                                                              // await launchUrl(
-                                                              //     Uri.parse(
-                                                              //         url));
-                                                              bool? res =
-                                                                  await FlutterPhoneDirectCaller
-                                                                      .callNumber(
-                                                                          '+${items[index].contactNumber1}');
-                                                            },
-                                                            child: SizedBox(
-                                                                height: 50,
-                                                                child: Row(
-                                                                  children: [
-                                                                    Container(
-                                                                      height:
-                                                                          30,
-                                                                      width: 30,
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .grey
-                                                                              .shade300,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(5)),
-                                                                      child:
-                                                                          const Icon(
-                                                                        Icons
-                                                                            .call,
-                                                                        color: Colors
-                                                                            .black,
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      width: 20,
-                                                                    ),
-                                                                    const Text(
-                                                                      'Phone Call',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              18),
-                                                                    ),
-                                                                  ],
-                                                                )),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  });
+                                              chooseCallDialog(context, index);
                                             } else {
                                               // String url =
                                               //     'tel:+${items[index].contactNumber1}';
@@ -1962,7 +1791,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                     .callMasterId
                                                                     .toString(),
                                                                 pageName: widget
-                                                                    .pageName.toString(),
+                                                                    .pageName
+                                                                    .toString(),
                                                                 status: widget
                                                                     .status,
                                                                 staff: widget
@@ -2503,107 +2333,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       if (widget
                                                                               .cloudCall ==
                                                                           true) {
-                                                                        showDialog(
-                                                                            context:
-                                                                                context,
-                                                                            builder:
-                                                                                (BuildContext context) {
-                                                                              return AlertDialog(
-                                                                                scrollable: true,
-                                                                                title: const Text('Choose Call Type'),
-                                                                                content: Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                  children: [
-                                                                                    InkWell(
-                                                                                      onTap: () async {
-                                                                                        Common.showProgressDialog(context, "Loading..");
-                                                                                        CloudCallModel object1 = await HttpService.addCloudCall(widget.token, items[index].callMasterId.toString(), items[index].contactNumber1);
-                                                                                        if (object1.data == true) {
-                                                                                          if (context.mounted) {
-                                                                                            Navigator.push(
-                                                                                              context,
-                                                                                              MaterialPageRoute(
-                                                                                                  builder: (context) => ViewLeads(
-                                                                                                        widget.token!,
-                                                                                                        widget.editLead,
-                                                                                                        widget.deleteLead,
-                                                                                                        widget.cloudCall,
-                                                                                                        pageName: widget.pageName,
-                                                                                                        status: widget.status,
-                                                                                                        staff: widget.staff,
-                                                                                                        isCalled: widget.isCalled,
-                                                                                                        fromDate: widget.fromDate,
-                                                                                                        toDate: widget.toDate,
-                                                                                                        category: widget.category,
-                                                                                                      )),
-                                                                                            );
-                                                                                          }
-                                                                                        } else {
-                                                                                          Common.toastMessaage(object1.message, Colors.red);
-                                                                                          if (context.mounted) Navigator.pop(context);
-                                                                                        }
-                                                                                      },
-                                                                                      child: SizedBox(
-                                                                                        height: 50,
-                                                                                        child: Row(
-                                                                                          children: [
-                                                                                            Container(
-                                                                                              height: 30,
-                                                                                              width: 30,
-                                                                                              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                              child: const Icon(
-                                                                                                Icons.cloud_circle_rounded,
-                                                                                                color: Colors.black,
-                                                                                              ),
-                                                                                            ),
-                                                                                            const SizedBox(
-                                                                                              width: 20,
-                                                                                            ),
-                                                                                            const Text(
-                                                                                              'Cloud Call',
-                                                                                              style: TextStyle(fontSize: 18),
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                    const SizedBox(
-                                                                                      height: 10,
-                                                                                    ),
-                                                                                    InkWell(
-                                                                                      onTap: () async {
-                                                                                        // String url = 'tel:+${items[index].contactNumber1}';
-                                                                                        // await launchUrl(Uri.parse(url));
-                                                                                        bool? res = await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
-                                                                                      },
-                                                                                      child: SizedBox(
-                                                                                          height: 50,
-                                                                                          child: Row(
-                                                                                            children: [
-                                                                                              Container(
-                                                                                                height: 30,
-                                                                                                width: 30,
-                                                                                                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
-                                                                                                child: const Icon(
-                                                                                                  Icons.call,
-                                                                                                  color: Colors.black,
-                                                                                                ),
-                                                                                              ),
-                                                                                              const SizedBox(
-                                                                                                width: 20,
-                                                                                              ),
-                                                                                              const Text(
-                                                                                                'Phone Call',
-                                                                                                style: TextStyle(fontSize: 18),
-                                                                                              ),
-                                                                                            ],
-                                                                                          )),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              );
-                                                                            });
+                                                                        chooseCallDialog(
+                                                                            context,
+                                                                            index);
                                                                       } else {
                                                                         // String
                                                                         // url =
@@ -2829,6 +2561,103 @@ class _ViewLeadsState extends State<ViewLeads> {
                 ),
               )),
     );
+  }
+
+  Future<dynamic> chooseCallDialog(BuildContext context, int index) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Choose Call Type'),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    CloudCallModel object1 = await HttpService.addCloudCall(
+                        widget.token,
+                        items[index].callMasterId.toString(),
+                        items[index].contactNumber1);
+                    if (object1.data == true) {
+                      if (context.mounted) {
+                        Common.toastMessaage(object1.message, Colors.green);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      Common.toastMessaage(object1.message, Colors.red);
+                      if (context.mounted) Navigator.pop(context);
+                    }
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Icon(
+                            Icons.cloud_circle_rounded,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        const Text(
+                          'Cloud Call',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                InkWell(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    // String url = 'tel:+${items[index].contactNumber1}';
+                    // await launchUrl(Uri.parse(url));
+                    bool? res = await FlutterPhoneDirectCaller.callNumber(
+                        '+${items[index].contactNumber1}');
+                  },
+                  child: SizedBox(
+                      height: 50,
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(5)),
+                            child: const Icon(
+                              Icons.call,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          const Text(
+                            'Phone Call',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ],
+                      )),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   Widget _buildLoaderListItem() {

@@ -547,10 +547,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                             scrollable: true,
                                             title: const Text('Call Response'),
                                             content: SizedBox(
-                                              height: MediaQuery.of(context)
-                                                      .size
-                                                      .height *
-                                                  .32,
+                                     
                                               width: MediaQuery.of(context)
                                                       .size
                                                       .height *
@@ -671,9 +668,6 @@ class _EditFollowupState extends State<EditFollowup> {
                                       scrollable: true,
                                       title: const Text('Lead Category'),
                                       content: SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .2,
                                         width:
                                             MediaQuery.of(context).size.height *
                                                 .8,
@@ -774,10 +768,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                               title: const Text(
                                                   'Lead Sub Category'),
                                               content: SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .12,
+                                             
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .height *

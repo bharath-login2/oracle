@@ -405,7 +405,6 @@ class _AddLeadsState extends State<AddLeads> {
                                                               .start,
                                                       children: [
                                                         SizedBox(
-                                                          height: MediaQuery.of(context).size.height*.32,
                                                           width: MediaQuery.of(context).size.height*.8,
                                                           child: ListView.builder(
                                                             shrinkWrap: true,
@@ -549,7 +548,6 @@ class _AddLeadsState extends State<AddLeads> {
                                               title:
                                                   const Text('Lead Category'),
                                               content: SizedBox(
-                                                height:MediaQuery.of(context).size.height *.18,
                                                 width:MediaQuery.of(context).size.width *.8,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
@@ -867,10 +865,6 @@ class _AddLeadsState extends State<AddLeads> {
                                                         .size
                                                         .width *
                                                     .8,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .25,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!

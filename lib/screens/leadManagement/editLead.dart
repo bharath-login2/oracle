@@ -641,9 +641,6 @@ class _EditLeadState extends State<EditLead> {
                                     scrollable: true,
                                     title: const Text('Assign Staff'),
                                     content: SizedBox(
-                                      height:
-                                          MediaQuery.of(context).size.height *
-                                              .32,
                                       width:
                                           MediaQuery.of(context).size.height *
                                               .8,
