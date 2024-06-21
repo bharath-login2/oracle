@@ -56,7 +56,7 @@ class _RenewalListState extends State<RenewalList> {
   String clientId = "";
   bool isLoading = true;
   int page = 1;
-  int pageSize = 20;
+  int pageSize = 10;
   String daysToExpire = "";
   List filteredNames = [];
   List selectedIds = [];
@@ -240,7 +240,7 @@ class _RenewalListState extends State<RenewalList> {
   }
 
   void _onLoadMore() {
-    if (items.length + 20 == page * pageSize &&
+    if (items.length + 10 == page * pageSize &&
         itemPositionsListener.itemPositions.value.last.index ==
             items.length - 1) {
       getList();
@@ -376,6 +376,8 @@ class _RenewalListState extends State<RenewalList> {
         ),
         body: RefreshIndicator(
             onRefresh: (() async {
+              page=1;
+              items.clear();
               getList();
             }),
             child: isLoading == true
@@ -394,7 +396,7 @@ class _RenewalListState extends State<RenewalList> {
                                   itemScrollController: itemScrollController,
                                   itemPositionsListener: itemPositionsListener,
                                   itemCount: items.length +
-                                      (items.length + 20 == page * pageSize
+                                      (items.length + 10 == page * pageSize
                                           ? 1
                                           : 0),
                                   initialScrollIndex: 0,

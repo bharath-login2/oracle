@@ -227,17 +227,7 @@ class _CallLogsState extends State<CallLogs> {
                                                 Common.toastMessaage(
                                                     delete.message,
                                                     Colors.green);
-                                                if (context.mounted) {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            CallLogs(
-                                                                widget.token,
-                                                                widget.name,
-                                                                widget.userId)),
-                                                  );
-                                                }
+                                                getData();
                                               } else {
                                                 Common.toastMessaage(
                                                     delete.message, Colors.red);
