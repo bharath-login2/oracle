@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
-import 'package:login2/screens/renewal_mannagement/add_customer.dart';
-import 'package:login2/screens/renewal_mannagement/add_new_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/hidden_clients.dart';
 import 'package:login2/screens/renewal_mannagement/payment_reports.dart';
+import 'package:login2/screens/renewal_mannagement/quck_renewal.dart';
 import 'package:login2/widgets/renewal_grid_widget.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_list.dart';
 import 'package:login2/service/service.dart';
@@ -195,8 +195,8 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Current Month",
                                       searchKey: "current_month",
                                       searchMonth: "",
-                                      renewed:int.parse (dashboard!
-                                  .data.currentMonthData.paidCount),
+                                      renewed: int.parse(dashboard!
+                                          .data.currentMonthData.paidCount),
                                     ),
                                   ));
                             },
@@ -226,8 +226,8 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Next Month",
                                       searchKey: "next_month",
                                       searchMonth: "",
-                                      renewed:int.parse (dashboard!
-                                  .data.nextMonthData.paidCount),
+                                      renewed: int.parse(dashboard!
+                                          .data.nextMonthData.paidCount),
                                     ),
                                   ));
                             },
@@ -256,8 +256,8 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Current Year",
                                       searchKey: "current_year",
                                       searchMonth: "",
-                                      renewed:int.parse (dashboard!
-                                  .data.allData.paidCount),
+                                      renewed: int.parse(
+                                          dashboard!.data.allData.paidCount),
                                     ),
                                   ));
                             },
@@ -283,8 +283,8 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Expired",
                                       searchMonth: "",
                                       searchKey: "expired",
-                                      renewed:int.parse (dashboard!
-                                  .data.expiredData.paidCount),
+                                      renewed: int.parse(dashboard!
+                                          .data.expiredData.paidCount),
                                     ),
                                   ));
                             },
@@ -367,7 +367,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                                     .monthReport[index]
                                                     .searchMonth
                                                     .toString(),
-                                                    renewed:0,
+                                                renewed: 0,
                                               ),
                                             ));
                                       },
@@ -757,17 +757,69 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
             backgroundColor: Colors.blue.shade700,
             foregroundColor: Colors.white,
             onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddNewRenewalScreen(),
-                  ));
+              showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      scrollable: true,
+                      content: Column(
+                        children: [
+                          SizedBox(
+                              height: 100,
+                              width: 200,
+                              child: Padding(
+                                padding: const EdgeInsets.all(30.0),
+                                child: Image.asset("assets/main/bill_logo.png"),
+                              )),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              GestureDetector(
+                                  onTap: () async {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const QuickRenewal(),
+                                        ));
+                                  },
+                                  child: Container(
+                                      height: 50,
+                                      width: 100,
+                                      decoration: BoxDecoration(
+                                          color: Colors.green.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: const Center(
+                                          child: Text('Quick\nInsert')))),
+                              GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const CustomRenewal(),
+                                        ));
+                                  },
+                                  child: Container(
+                                      height: 50,
+                                      width: 100,
+                                      decoration: BoxDecoration(
+                                          color: Colors.green.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: const Center(
+                                          child:
+                                              Text('Custom\nRenewal'))))
+                            ],
+                          )
+                        ],
+                      ),
+                    );
+                  });
             },
-            label: Row(
-              children: [
-                const Icon(Icons.add),
-                Text(" Renewal")
-              ],
+            label: const Row(
+              children: [Icon(Icons.add), Text(" Renewal")],
             )),
       ),
     );

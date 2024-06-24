@@ -68,7 +68,6 @@ class _ViewLeadsState extends State<ViewLeads> {
   DateTime? fromdate;
   DateTime? todate;
   var outputFormat = DateFormat('dd-MM-yyyy');
-  dynamic category;
   dynamic status;
   dynamic staff;
   dynamic priority;
@@ -121,6 +120,8 @@ class _ViewLeadsState extends State<ViewLeads> {
   String multiBranch = '';
   String phoneCallLogPermission = '';
   bool timeOut = false;
+  List checkedCategoryItems = [];
+  List checkedCategoryItemsName = [];
 
   @override
   void initState() {
@@ -137,33 +138,32 @@ class _ViewLeadsState extends State<ViewLeads> {
     //print(widget.fromDate.toString());
     // fromdate = DateTime.parse(widget.fromDate.toString());
     // todate = DateTime.parse(widget.toDate.toString());
-    status = widget.status;
-    category = widget.category;
+    status = widget.status == "-1" ? "1" : widget.status;
     staff = widget.staff;
     if (isCalled == false) {
       isCalled = widget.isCalled!;
     }
     if (widget.pageName == "Followup Leads") {
       isCalled = false;
-    }
-    if (widget.pageName == "Closed Leads" ||
+      fromdate = DateTime.now();
+    } else if (widget.pageName == "Closed Leads" ||
         widget.pageName == "Total Called" ||
         widget.pageName == "Rejected Leads") {
       fromdate = DateTime.parse(widget.fromDate.toString());
       todate = DateTime.now();
     }
-    getData('desc', true);
+    getData('desc', true, widget.pageName == "Total Called" ? "-1" : status);
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
         if (items.length < viewLeads!.data.totalLeads) {
-          getData('desc', false);
+          getData('desc', false, status);
         }
       }
     });
   }
 
-  void getData(sort, isFirst) async {
+  void getData(sort, isFirst, status1) async {
     //print('scrollIndex1:${widget.scrollToIndex}');
     setState(() {
       timeOut = false;
@@ -216,8 +216,8 @@ class _ViewLeadsState extends State<ViewLeads> {
               widget.token,
               fromdate ?? "",
               todate ?? "",
-              category,
-              status,
+              checkedCategoryItems,
+              status1,
               staff,
               isCalled,
               priority,
@@ -264,7 +264,7 @@ class _ViewLeadsState extends State<ViewLeads> {
       onRefresh: () async {
         items.clear();
         page = 1;
-        getData('desc', true);
+        getData('desc', false, status);
         return;
       },
       child: result == true && timeOut == false
@@ -519,9 +519,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                   page = 1;
                                                                   items.clear();
                                                                   getData(
-                                                                    'desc',
-                                                                    true,
-                                                                  );
+                                                                      'desc',
+                                                                      false,
+                                                                      status);
                                                                 }
                                                               } else {
                                                                 Common.toastMessaage(
@@ -702,9 +702,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                   page = 1;
                                                                   items.clear();
                                                                   getData(
-                                                                    'desc',
-                                                                    true,
-                                                                  );
+                                                                      'desc',
+                                                                      false,
+                                                                      status);
                                                                 }
                                                               } else {
                                                                 Common.toastMessaage(
@@ -989,7 +989,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                               Colors.grey,
                                                                         ),
                                                                         counterText: "",
-                                                                        hintText: 'From Date',
+                                                                        hintText: 'To Date',
                                                                         isDense: true,
                                                                         border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
                                                                     initialValue:
@@ -1065,69 +1065,265 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                               const SizedBox(
                                                                 height: 5,
                                                               ),
-                                                              FormField<String>(
-                                                                builder:
-                                                                    (FormFieldState<
-                                                                            String>
-                                                                        state) {
-                                                                  return Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.43,
-                                                                    decoration: BoxDecoration(
-                                                                        border: Border.all(
-                                                                            color: Colors
-                                                                                .grey.shade900,
-                                                                            width:
-                                                                                0),
-                                                                        color: Colors
-                                                                            .white,
-                                                                        borderRadius: const BorderRadius
-                                                                            .all(
-                                                                            Radius.circular(5))),
-                                                                    child:
-                                                                        DropdownButtonHideUnderline(
-                                                                      child: DropdownButton<
-                                                                          String>(
-                                                                        isExpanded:
-                                                                            true,
-                                                                        hint:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.only(left: 20),
-                                                                          child:
-                                                                              Text('category'),
-                                                                        ),
-                                                                        value:
-                                                                            category,
-                                                                        items: commonDetails!
-                                                                            .data
-                                                                            .leadCategory
-                                                                            .map((data) {
-                                                                          return DropdownMenuItem(
-                                                                            value:
-                                                                                data.leadCategoryId.toString(),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(left: 20),
-                                                                              child: Text(data.leadCategory.toString()),
-                                                                            ),
-                                                                          );
-                                                                        }).toList(),
-                                                                        onChanged:
-                                                                            (newValue) {
+                                                               InkWell(
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        scrollable: true,
+                                        title: const Text('Lead Category'),
+                                        content: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .32,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .8,
+                                          child: ListView.builder(
+                                            shrinkWrap: true,
+                                            itemCount: commonDetails!
+                                                .data.leadCategory.length,
+                                            itemBuilder: (context, ind) {
+                                              return CheckboxListTile(
+                                                title: SizedBox(
+                                                  width: 200,
+                                                  child: Text(
+                                                    commonDetails!
+                                                        .data
+                                                        .leadCategory[ind]
+                                                        .leadCategory
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        fontSize: 14),
+                                                  ),
+                                                ),
+                                                value: checkedCategoryItems
+                                                        .contains(commonDetails!
+                                                            .data
+                                                            .leadCategory[ind]
+                                                            .leadCategoryId
+                                                            .toString())
+                                                    ? true
+                                                    : false,
+                                                onChanged: (bool? value) {
+                                                  if (value == true) {
+                                                    setState(() {
+                                                      checkedCategoryItems.add(
+                                                          commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategoryId
+                                                              .toString());
+                                                      checkedCategoryItemsName
+                                                          .add(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategory
+                                                              .toString());
+
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  } else {
+                                                    setState(() {
+                                                      checkedCategoryItems
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategoryId
+                                                              .toString());
+                                                      checkedCategoryItemsName
+                                                          .remove(commonDetails!
+                                                              .data
+                                                              .leadCategory[ind]
+                                                              .leadCategory
+                                                              .toString());
+
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    });
+                                                  }
+                                                },
+                                                controlAffinity:
+                                                    ListTileControlAffinity
+                                                        .leading,
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    });
+                              },
+                              child: Container(
+                                width: MediaQuery.of(context).size.width * .43,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  border: Border.all(),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: checkedCategoryItems.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 10, top: 15, bottom: 10),
+                                        child: Text('Lead Category'))
+                                    : Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 40),
+                                        child: SizedBox(
+                                          height: 35,
+                                          child: ListView.builder(
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount:
+                                                checkedCategoryItemsName.length,
+                                            itemBuilder: (context, i) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 5, right: 5),
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    setState(() {});
+                                                  },
+                                                  child: Row(
+                                                    children: [
+                                                      Container(
+                                                        height: 35,
+                                                        decoration: BoxDecoration(
+                                                            border: Border.all(
+                                                                color:
+                                                                    Colors.grey,
+                                                                width: 0),
+                                                            color: Colors.white,
+                                                            borderRadius: const BorderRadius
+                                                                .only(
+                                                                topLeft: Radius
+                                                                    .circular(
+                                                                        6),
+                                                                bottomLeft: Radius
+                                                                    .circular(
+                                                                        6))),
+                                                        child: Center(
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        10),
+                                                                child: Text(
+                                                                  checkedCategoryItemsName[
+                                                                      i],
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    color: Colors
+                                                                        .black,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      context) {
+                                                                return AlertDialog(
+                                                                  title: const Text(
+                                                                      'Please Confirm'),
+                                                                  content:
+                                                                      const Text(
+                                                                          'Are you sure to Remove this Number?'),
+                                                                  actions: [
+                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () async {
                                                                           setState(
                                                                               () {
-                                                                            category =
-                                                                                newValue;
+                                                                            checkedCategoryItemsName.remove(checkedCategoryItemsName[i]);
+                                                                            checkedCategoryItems.remove(checkedCategoryItems[i]);
                                                                           });
+                                                                          // if (checkedItemsName.length > 1) {
+                                                                          //   setState(() {
+                                                                          //     checkedItemsName.remove(checkedItemsName[i]);
+                                                                          //     checkedItems.remove(checkedItems[i]);
+                                                                          //   });
+                                                                          // }
+                                                                          // else {
+                                                                          //   ScaffoldMessenger.of(context).showSnackBar(
+                                                                          //     const SnackBar(
+                                                                          //       content: Text('Minimum 1 Number required'),
+                                                                          //       backgroundColor: Colors.redAccent,
+                                                                          //       elevation: 10,
+                                                                          //       behavior: SnackBarBehavior.floating,
+                                                                          //       margin: EdgeInsets.all(10),
+                                                                          //     ),
+                                                                          //   );
+                                                                          // }
+                                                                          Navigator.of(context)
+                                                                              .pop();
                                                                         },
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              ),
+                                                                        child: const Text(
+                                                                            'Yes')),
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No'))
+                                                                  ],
+                                                                );
+                                                              });
+                                                        },
+                                                        child: Container(
+                                                          height: 35,
+                                                          width: 30,
+                                                          decoration: BoxDecoration(
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  width: 0),
+                                                              color: Colors.grey
+                                                                  .shade100,
+                                                              borderRadius: const BorderRadius
+                                                                  .only(
+                                                                  topRight: Radius
+                                                                      .circular(
+                                                                          6),
+                                                                  bottomRight: Radius
+                                                                      .circular(
+                                                                          6))),
+                                                          child: const Icon(
+                                                            Icons.close,
+                                                            color: Colors.red,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                         
                                                             ],
                                                           ),
                                                           const SizedBox(
@@ -1431,8 +1627,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                               items.clear();
                                                               page = 1;
                                                               pageSize = 20;
-                                                              getData(
-                                                                  'desc', true);
+                                                              getData('desc',
+                                                                  true, status);
                                                               Navigator.of(
                                                                       context,
                                                                       rootNavigator:
@@ -1608,10 +1804,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                           ).then((value) {
                                             items.clear();
                                             page = 1;
-                                            getData(
-                                              'desc',
-                                              true,
-                                            );
+                                            getData('desc', true, status);
                                           });
                                         } else {
                                           if (viewLeads!.data.callPermission ==
@@ -1684,8 +1877,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             ).then((r) {
                                                               items.clear();
                                                               page = 1;
-                                                              getData(
-                                                                  'desc', true);
+                                                              getData('desc',
+                                                                  true, status);
                                                               // itemPositionsListener
                                                               //     .itemPositions
                                                               //     .addListener(
@@ -1815,7 +2008,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                   ).then((r) {
                                                     items.clear();
                                                     page = 1;
-                                                    getData('desc', true);
+                                                    getData(
+                                                        'desc', true, status);
                                                     // itemPositionsListener
                                                     //     .itemPositions
                                                     //     .addListener(() {
@@ -2315,7 +2509,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                                       ).then((r) {
                                                                                         items.clear();
                                                                                         page = 1;
-                                                                                        getData('desc', true);
+                                                                                        getData('desc', true, status);
                                                                                         // itemPositionsListener.itemPositions.addListener(() {
                                                                                         //   if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
                                                                                         //     if (items.length < viewLeads!.data!.totalLeads!) {
@@ -2532,7 +2726,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                       onTap: () {
                         page = 1;
                         items.clear();
-                        getData('desc', true);
+                        getData('desc', true, status);
                       },
                       child: SizedBox(
                         width: 120,
