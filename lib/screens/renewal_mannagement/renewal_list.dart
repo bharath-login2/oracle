@@ -88,7 +88,7 @@ class _RenewalListState extends State<RenewalList> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = detailsResponse!.data.customers
+    filteredNames = detailsResponse!.data.customer
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -96,8 +96,8 @@ class _RenewalListState extends State<RenewalList> {
   getDetails() async {
     detailsResponse = await HttpService.getRenewalDetails();
     if (detailsResponse != null) {
-      filteredNames = detailsResponse!.data.customers;
-      filteredProducts = detailsResponse!.data.renewalProducts;
+      filteredNames = detailsResponse!.data.customer;
+      filteredProducts = detailsResponse!.data.products;
     }
   }
 
@@ -113,7 +113,7 @@ class _RenewalListState extends State<RenewalList> {
   void filterProducts(
     String query,
   ) {
-    filteredProducts = detailsResponse!.data.renewalProducts
+    filteredProducts = detailsResponse!.data.products
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();

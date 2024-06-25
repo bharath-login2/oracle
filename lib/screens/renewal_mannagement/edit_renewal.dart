@@ -79,8 +79,8 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
     detailsResponse = await HttpService.getRenewalDetails();
 
     if (detailsResponse != null && detailsResponse!.status == true) {
-      filteredNames = detailsResponse!.data.customers;
-      filteredProducts = detailsResponse!.data.renewalProducts;
+      filteredNames = detailsResponse!.data.customer;
+      filteredProducts = detailsResponse!.data.products;
       filteredTemplates = detailsResponse!.data.template;
 
       setState(() {
@@ -96,7 +96,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = detailsResponse!.data.customers
+    filteredNames = detailsResponse!.data.customer
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -104,7 +104,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   void filterProducts(
     String query,
   ) {
-    filteredProducts = detailsResponse!.data.renewalProducts
+    filteredProducts = detailsResponse!.data.products
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();

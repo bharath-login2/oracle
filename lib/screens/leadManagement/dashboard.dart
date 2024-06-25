@@ -375,7 +375,11 @@ class _DashboardState extends State<Dashboard> {
       },
       child: RefreshIndicator(
         onRefresh: () async {
+          setState(() {
+            leadDashboard = null;
+          });
           getData(widget.token, fromdate, todate);
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => Dashboard(widget.token),));
           return;
         },
         child: result == true && timeOut == false

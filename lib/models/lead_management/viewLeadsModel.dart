@@ -2,7 +2,6 @@
 //
 //     final viewLeadsModel = viewLeadsModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ViewLeadsModel viewLeadsModelFromJson(String str) => ViewLeadsModel.fromJson(json.decode(str));

@@ -615,51 +615,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       labelStyle:
                                           TextStyle(color: Colors.grey)),
                                 ),
-                                const SizedBox(height: 14.0),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Checkbox(
-                                        fillColor: createInvoice == true
-                                            ? const MaterialStatePropertyAll(
-                                                Colors.blue)
-                                            : const MaterialStatePropertyAll(
-                                                Colors.white),
-                                        checkColor: Colors.white,
-                                        value: createInvoice,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            createInvoice = value!;
-                                            if (createInvoice == false) {
-                                              isPaid = value;
-                                            }
-                                          });
-                                        }),
-                                    const Text("Create Invoice")
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Checkbox(
-                                        fillColor: isPaid == true
-                                            ? const MaterialStatePropertyAll(
-                                                Colors.blue)
-                                            : const MaterialStatePropertyAll(
-                                                Colors.white),
-                                        checkColor: Colors.white,
-                                        value: isPaid,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isPaid = value!;
-                                            if (isPaid == true) {
-                                              createInvoice = value;
-                                            }
-                                          });
-                                        }),
-                                    const Text("Paid")
-                                  ],
-                                ),
                                 const SizedBox(height: 20.0),
                                 Container(
                                   height: 40,
@@ -1289,51 +1244,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       labelStyle:
                                           TextStyle(color: Colors.grey)),
                                 ),
-                                const SizedBox(height: 14.0),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Checkbox(
-                                        fillColor: createInvoice == true
-                                            ? const MaterialStatePropertyAll(
-                                                Colors.blue)
-                                            : const MaterialStatePropertyAll(
-                                                Colors.white),
-                                        checkColor: Colors.white,
-                                        value: createInvoice,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            createInvoice = value!;
-                                            if (createInvoice == false) {
-                                              isPaid = value;
-                                            }
-                                          });
-                                        }),
-                                    const Text("Create Invoice")
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Checkbox(
-                                        fillColor: isPaid == true
-                                            ? const MaterialStatePropertyAll(
-                                                Colors.blue)
-                                            : const MaterialStatePropertyAll(
-                                                Colors.white),
-                                        checkColor: Colors.white,
-                                        value: isPaid,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isPaid = value!;
-                                            if (isPaid == true) {
-                                              createInvoice = value;
-                                            }
-                                          });
-                                        }),
-                                    const Text("Paid")
-                                  ],
-                                ),
+                              
                                 const SizedBox(height: 20.0),
                                 Container(
                                   height: 40,

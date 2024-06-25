@@ -48,7 +48,7 @@ class _HiddenCilientsScreenState extends State<HiddenCilientsScreen> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = detailsResponse!.data.customers
+    filteredNames = detailsResponse!.data.customer
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -56,7 +56,7 @@ class _HiddenCilientsScreenState extends State<HiddenCilientsScreen> {
   getDetails() async {
     detailsResponse = await HttpService.getRenewalDetails();
     if (detailsResponse != null) {
-      filteredNames = detailsResponse!.data.customers;
+      filteredNames = detailsResponse!.data.customer;
     }
   }
 

@@ -1418,6 +1418,7 @@ class _AllReportState extends State<AllReport> {
                   ),
                 ),
                 child: Material(
+                  color: Colors.white,
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
@@ -2186,7 +2187,7 @@ class _AllReportState extends State<AllReport> {
                                           height: MediaQuery.of(context)
                                                   .size
                                                   .height *
-                                              .32,
+                                              .23,
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .height *

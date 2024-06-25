@@ -38,7 +38,7 @@ class _PaymentReportState extends State<PaymentReport> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = detailsResponse!.data.customers
+    filteredNames = detailsResponse!.data.customer
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -46,7 +46,7 @@ class _PaymentReportState extends State<PaymentReport> {
   getDetails() async {
     detailsResponse = await HttpService.getRenewalDetails();
     if (detailsResponse != null) {
-      filteredNames = detailsResponse!.data.customers;
+      filteredNames = detailsResponse!.data.customer;
     }
   }
 

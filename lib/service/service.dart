@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
@@ -42,7 +39,6 @@ import 'package:login2/models/renewal/rivert_client.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
-import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/commonsettingsModel.dart';
@@ -304,7 +300,7 @@ class HttpService {
 /* Lead Management  Starts Here..*/
   static Future leadDashboard(
       token, fromDate, toDate, fromDate1, toDate1) async {
-        log(token);
+    log(token);
     var params = {
       "token": token,
       "fromDate": fromDate,
@@ -410,41 +406,11 @@ class HttpService {
     }
   }
 
-  static Future viewLeads(
-      token,
-      fromdate,
-      todate,
-      category,
-      status,
-      staff,
-      isCalled,
-      priority,
-      sort,
-      page,
-      pageSize,
-      isFirst,
-      leadType,
-      branchId) async {
-    var params = {
-      "token": token,
-      "fromDate": fromdate,
-      "toDate": todate,
-      "leadCategoryId": category ?? "",
-      "callResultId": status,
-      "staffId": staff ?? "",
-      "isCalled": isCalled,
-      "priority": priority ?? "",
-      "sort": sort,
-      "page": page,
-      "pageSize": pageSize,
-      "isFirst": isFirst,
-      "leadType": leadType ?? "",
-      "branchId": branchId ?? ""
-    };
+  static Future viewLeads(body) async {
     try {
-      var result = await _dio.get("${await Config.getUrl()}view_lead_report",
+      var result = await _dio.post("${await Config.getUrl()}view_lead_report",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
-          queryParameters: params);
+          data: jsonEncode(body));
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
@@ -1175,7 +1141,6 @@ class HttpService {
   }
 
   static Future viewStaffs(token) async {
-    print(token);
     var formData = FormData.fromMap({
       "token": token,
     });
@@ -2201,8 +2166,6 @@ class HttpService {
   }
 
   static Future invoiceReceptList(token, invoiceId) async {
-    print(token);
-    print(invoiceId);
     var formData = FormData.fromMap({'token': token, 'invoice_id': invoiceId});
     try {
       var result = await _dio.post(
@@ -2275,6 +2238,7 @@ class HttpService {
   static Future fetchPostOffice(postalCode) async {
     try {
       var result =
+          // ignore: prefer_interpolation_to_compose_strings
           await _dio.get("https://api.postalpincode.in/pincode/" + postalCode);
       PostalCodeModel model = PostalCodeModel.fromJson(result.data[0]);
       return model;
@@ -2321,7 +2285,6 @@ class HttpService {
       "token": token,
       "receipt_id": receiptId,
     };
-    print(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}getReceiptById",
           queryParameters: params);
@@ -2523,7 +2486,6 @@ class HttpService {
 
   static Future callResultReasonLiat(token, callResultId) async {
     var params = {"token": token, "callResultId": callResultId};
-    print(params);
     try {
       var result = await _dio.get(
           "${await Config.getUrl()}get_lead_result_reasons",
@@ -2594,7 +2556,7 @@ class HttpService {
       } else {}
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2607,13 +2569,12 @@ class HttpService {
 
       CampaignsListModel campaignsListModel =
           CampaignsListModel.fromJson(response.data);
-      print('response: ');
-      print(response);
+
       return campaignsListModel;
 
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2622,13 +2583,6 @@ class HttpService {
     contryCode,
     contaCtNumber,
   ) async {
-    var body = {
-      "contact_name": contactName,
-      'country_code': contryCode,
-      'contact_number': contaCtNumber,
-      "token": await Common.getSharedPref("token"),
-    };
-    print(body);
     var formData = FormData.fromMap({
       "contact_name": contactName,
       'country_code': contryCode,
@@ -2660,7 +2614,6 @@ class HttpService {
             "token": await Common.getSharedPref("token"),
           });
       if (response.statusCode == 200) {
-        print(response.data);
         OfficialMessageModel officialMessageModel =
             OfficialMessageModel.fromJson(response.data);
         return officialMessageModel;
@@ -2685,9 +2638,7 @@ class HttpService {
             CampaignsOfficialMessageModel.fromJson(response.data);
         return officialMessageModel;
       } else if (response.statusCode == 500) {
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
@@ -2731,17 +2682,6 @@ class HttpService {
 
   static sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type) async {
-    var body = {
-      "group_id": groupId,
-      'format': format,
-      'template_name': templateName,
-      'language': language,
-      'template': template,
-      'fileName': fileName,
-      'type': type,
-      'is_file': isFile,
-      "token": await Common.getSharedPref("token"),
-    };
     var formData = FormData.fromMap({
       "group_id": groupId,
       'format': format,
@@ -2759,11 +2699,7 @@ class HttpService {
           "${await Config.getUrl()}sendTemplatewhatsappMessage",
           data: formData);
 
-      print("Response status code: ${response.statusCode}");
-      print("Response data: ${response.data}");
-
       if (response.statusCode == 200) {
-        print("Success");
         SendTemplateMesaageModel sendTemplateMesaageModel =
             SendTemplateMesaageModel.fromJson(response.data);
         return sendTemplateMesaageModel;
@@ -2793,23 +2729,15 @@ class HttpService {
       var response = await _dio.post("${await Config.getUrl()}sendMessage",
           data: formData);
 
-      print("Response status code: ${response.statusCode}");
-      print("Response data: ${response.data}");
-
       if (response.statusCode == 200) {
-        print("Success");
         SendMesaageModel sendMesaageModel =
             SendMesaageModel.fromJson(response.data);
         return sendMesaageModel;
       } else if (response.statusCode == 500) {
-        print('Error 500');
-        print("000000");
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2825,22 +2753,15 @@ class HttpService {
       var response = await _dio.post("${await Config.getUrl()}sendMessageFiles",
           data: formData);
 
-      print("Response status code: ${response.statusCode}");
-      print("Response data: ${response.data}");
-
       if (response.statusCode == 200) {
         SendMesaageModel sendMesaageModel =
             SendMesaageModel.fromJson(response.data);
         return sendMesaageModel;
       } else if (response.statusCode == 500) {
-        print('Error 500');
-        print("000000");
-      } else {
-        print('Error');
-      }
+      } else {}
       // isLoading.value = false;
     } catch (e) {
-      print("Exception: $e");
+      // print("Exception: $e");
     } finally {}
   }
 
@@ -2849,7 +2770,6 @@ class HttpService {
       "token": await Common.getSharedPref("token"),
       "fileType": format
     };
-    print(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}getMediaFiles",
           queryParameters: params);
@@ -2895,7 +2815,6 @@ class HttpService {
     var params = {
       "token": await Common.getSharedPref("token"),
     };
-    print(params);
     try {
       var result = await _dio.get(
           "${await Config.getUrl()}official_whatsapp_config",
@@ -3153,7 +3072,6 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}isInvoiceExists",
           data: formData);
-      print(result);
       AddInvoiceCheckModel model = AddInvoiceCheckModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -3236,8 +3154,7 @@ class HttpService {
       "token": await Common.getSharedPref('token'),
     });
     try {
-      var result = await _dio.post(
-          "${await Config.getUrl()}getRenewalAddingDetails",
+      var result = await _dio.post("${await Config.getUrl()}getAddRenewalData",
           data: formData);
       if (result.statusCode == 200) {
         RenewalDetailslModel response =
@@ -3639,7 +3556,7 @@ class HttpService {
       "template_type": templateType,
       "template_name": templateName,
       "template_id": templateId,
-      "medium": "official" ,
+      "medium": "official",
       "customer_id": customerId,
       "message_content": messageContent
     });
