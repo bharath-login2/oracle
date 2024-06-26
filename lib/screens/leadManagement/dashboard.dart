@@ -1799,7 +1799,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                 setState(() {
                                                                                   data.remove(data);
                                                                                 });
-
+                                                                                getStaffwise();
                                                                                 getData(widget.token, fromdate, todate);
                                                                                 Navigator.of(context, rootNavigator: true).pop();
                                                                               },
@@ -6058,7 +6058,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                             setState(() {
                                                                                               data.remove(data);
                                                                                             });
-
+                                                                                            getStaffwise();
                                                                                             getData(widget.token, fromdate, todate);
                                                                                             Navigator.of(context, rootNavigator: true).pop();
                                                                                           },

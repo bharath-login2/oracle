@@ -254,7 +254,7 @@ class HttpService {
     }
   }
 
-  static Future login(username, pass, firebaseToken) async {
+  static Future login(String username,String  pass,String firebaseToken) async {
     var params = {
       "phoneNumber": username,
       "password": pass,
@@ -263,8 +263,11 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}login",
           queryParameters: params);
-      LoginModel model = LoginModel.fromJson(result.data);
-      return model;
+
+      if (result.statusCode == 200) {
+        LoginModel model = LoginModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }

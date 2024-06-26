@@ -92,9 +92,9 @@ class _LoginState extends State<Login> {
             _loading = true;
           });
 
-          LoginModel object = await HttpService.login(
-              username.text, password.text, firebaseToken);
-          if (object.status == true) {
+          LoginModel? object = await HttpService.login(
+              username.text, password.text, firebaseToken!);
+          if (object!.status == true) {
             UserPermissionModel object1 =
                 await HttpService.userPermissionCheck(object.data!.token);
             if (object1.status == true) {
@@ -208,6 +208,9 @@ class _LoginState extends State<Login> {
         timeOut = true;
       });
     }
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override

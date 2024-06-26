@@ -1,59 +1,134 @@
-import '../../models/pushNotificationModel.dart';
+import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
+import 'package:login2/core/common.dart';
+import '../models/pushNotificationModel.dart';
+import 'leadManagement/leadDetails.dart';
+import 'officialWhatsapp/chatScreen.dart';
+
 class FirebaseServices {
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
-  final initializationSettings = const  InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'));
-  Future<String?> get token => FirebaseMessaging.instance.getToken();
-  void init(BuildContext context) {
+  String? token;
+  bool? editLead;
+  bool? deleteLead;
+  bool? cloudCall;
+  String? navigation;
+  String? detailId;
+  final FlutterLocalNotificationsPlugin notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  Future<void> init(BuildContext context) async {
     _initNotification(context);
+    await FirebaseMessaging.instance.requestPermission();
   }
+
   void _initNotification(BuildContext context) {
-    flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        // onSelectNotification: (String? payload) async {
-        //   if (payload != null) {
-        //     Navigator.push(
-        //       context,
-        //       MaterialPageRoute(
-        //           builder: (context) => Login()),
-        //     );
-        //   }
-        // }
-        );
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      final fbNotification = PushNotificationModel.fromJson(
-          Map<String, dynamic>.from(message.data));
-      var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-          'Login2', 'Login2',
-          importance: Importance.max,
-          priority: Priority.high,
-          ticker: fbNotification.message,
-        //sound: const RawResourceAndroidNotificatio¿nSound('abc'),
-      );
-      var platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
-      await flutterLocalNotificationsPlugin.show(
-          fbNotification.notificationId ?? 0,
-          fbNotification.title,
-          fbNotification.message,
-          platformChannelSpecifics,
-          payload: fbNotification.toString());
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showNotification(message);
     });
+
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-
-      print('aaa');
-
+      onNotificationTap(message, context);
     });
-    FirebaseMessaging.instance.requestPermission();
+
+
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
-  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    print('cc');
 
+  void _showNotification(RemoteMessage message) async {
+    final notification =
+        PushNotificationModel.fromJson(message.data); // Parse data
+
+ try {  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      message.notification!.android!.channelId??"Login2",
+      message.notification!.android!.channelId ??"Login2",
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: notification.message,
+      channelShowBadge: true,
+      
+      icon: '@mipmap/ic_launcher',
+    );
+    var platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await notificationsPlugin.show(
+      notification.notificationId ?? 0,
+      notification.title,
+      notification.message,
+      platformChannelSpecifics,
+      payload: notification.toString(),
+      
+    );}catch(e){
+      log(e.toString());
+    }
   }
 
+  void onNotificationTap(RemoteMessage message, BuildContext context) async {
+    token = await Common.getSharedPref("token");
+    detailId = message.data['detail_id'];
+    navigation = message.data['navigation'];
+    if (message.data['edit_lead'] == 'true') {
+      editLead = true;
+    } else {
+      editLead = false;
+    }
+    if (message.data['delete_lead'] == 'true') {
+      deleteLead = true;
+    } else {
+      deleteLead = false;
+    }
+    if (message.data['cloud_call'] == 'true') {
+      cloudCall = true;
+    } else {
+      cloudCall = false;
+    }
+
+    if (navigation == 'whatsapp') {
+      Get.to(()=>ChatScreen(
+                groupId: detailId.toString(),
+              ));
+        // Navigator.push(
+        //     context,
+        //     MaterialPageRoute(
+        //       builder: (context) => ChatScreen(
+        //         groupId: detailId.toString(),
+        //       ),
+        //     ));
+      
+    } else {
+      Get.to(()=>LeadDetails(
+                token!,
+                editLead!,
+                deleteLead!,
+                cloudCall!,
+                detailId!,
+                pageName: 'notification',
+              ));
+        // Navigator.push(
+        //     context,
+        //     MaterialPageRoute(
+        //       builder: (context) => LeadDetails(
+        //         token!,
+        //         editLead!,
+        //         deleteLead!,
+        //         cloudCall!,
+        //         detailId!,
+        //         pageName: 'notification',
+        //       ),
+        //     ));
+      
+    }
+  }
+
+  Future<void> _firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    log("onMessageOpenedApp: $message");
+  }
 }

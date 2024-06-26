@@ -225,7 +225,7 @@ class _ViewLeadsState extends State<ViewLeads> {
               if (fromdate == null) "fromDate": "",
               if (todate == null) "toDate": "",
               "callResultId": status1,
-              //  == "-1" ? "" : status1,
+              //status1 == "-1" ? "" : status1,
               "leadCategoryId": checkedCategoryItems,
               "callResponseId": checkedResponseItems,
               "staffId": checkedAssignedStaffItems,
@@ -238,6 +238,7 @@ class _ViewLeadsState extends State<ViewLeads> {
               "leadType": widget.leadType ?? "",
               "branchId": branch ?? ""
             };
+            log(body.toString());
             viewLeads = await HttpService.viewLeads(body);
           } catch (e) {
             log(e.toString());
@@ -2159,7 +2160,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                               )
                             : const SizedBox(),
                         Visibility(
-                          visible: widget.pageName == "Total Called",
+                          visible: widget.pageName == "Total Called------",
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,

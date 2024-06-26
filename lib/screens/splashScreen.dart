@@ -7,6 +7,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
+import 'package:login2/screens/pushNotificationChannel.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
 import '../../models/loginCheckModel.dart';
@@ -40,11 +42,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
   // ignore: unused_field
   StreamSubscription<Uri>? _linkSubscription;
+  String? navigation;
+  final firebaseServices = FirebaseServices();
 
   @override
   void initState() {
     super.initState();
-
+    firebaseServices.init(context);
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      setState(() {
+        navigation = message.data['navigation'];
+      });
+    });
     handleAsync();
     getData();
   }
@@ -266,26 +275,30 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   routeTOHomePage() async {
-    String? token = await Common.getSharedPref("token");
-    if (token != null) {
-      LoginCheckModel loginCheck =
-          await HttpService.loginCheck(token, firebaseToken);
-      if (loginCheck.data == true) {
-        initDeepLinks();
+    if (navigation == null)  {
+      String? token = await Common.getSharedPref("token");
+      if (token != null) {
+        LoginCheckModel loginCheck =
+            await HttpService.loginCheck(token, firebaseToken);
+        if (loginCheck.data == true) {
+          initDeepLinks();
+        } else {
+          Common.toastMessaage('Token Expired', Colors.red);
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const Login()),
+                (Route<dynamic> route) => false);
+          }
+        }
       } else {
-        Common.toastMessaage('Token Expired', Colors.red);
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const Login()),
               (Route<dynamic> route) => false);
         }
       }
-    } else {
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const Login()),
-            (Route<dynamic> route) => false);
-      }
+    }else{
+      
     }
   }
 }

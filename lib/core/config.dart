@@ -14,7 +14,7 @@ class Config {
       baseUrl = url.toString() + api;
     } else {
       baseUrl =
-          'https://myaccount.login2.in/app/index.php/Mobile_app_api_ios_v3/';
+          'https://myaccount.login2.in/index.php/Mobile_app_api_ios_v3/';
     }
     return baseUrl;
   }
