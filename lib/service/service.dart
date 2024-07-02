@@ -3169,7 +3169,7 @@ class HttpService {
     }
   }
 
-  static Future postRenewal(
+  static Future postExistingQuick(
       renewalProducts,
       clientId,
       cost,
@@ -3180,7 +3180,8 @@ class HttpService {
       branchId,
       isPaid,
       actualCost,
-      createInvoice) async {
+      createInvoice,
+      checkIdVal) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_product": jsonEncode(renewalProducts),
@@ -3193,8 +3194,10 @@ class HttpService {
       "branch_id": branchId ?? "",
       "is_paid": isPaid,
       "actual_cost": actualCost,
-      "create_invoice": createInvoice
+      "create_invoice": createInvoice,
+      "check_id_val":checkIdVal
     });
+    
     try {
       var result = await _dio.post(
           "${await Config.getUrl()}postexistingCustomerRenewal",
@@ -3208,7 +3211,7 @@ class HttpService {
     }
   }
 
-  static Future postCustomer(
+  static Future postNewQuick(
       isPaid,
       branchId,
       countryCode,
@@ -3230,7 +3233,9 @@ class HttpService {
       email,
       actualCost,
       createInvoice,
-      templateId) async {
+      templateId,
+      checkIdVal
+      ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "is_paid": isPaid,
@@ -3254,7 +3259,8 @@ class HttpService {
       "cost": cost,
       "email_id ": email,
       "actual_cost": actualCost,
-      "create_invoice": createInvoice
+      "create_invoice": createInvoice,
+      "check_id_val":checkIdVal
     });
     try {
       var result = await _dio.post(
@@ -3268,6 +3274,105 @@ class HttpService {
       log("error: $e");
     }
   }
+  
+  static Future postExistingCustom(
+      renewalProducts,
+      clientId,
+      cost,
+      templateId,
+      startDate,
+      endDate,
+      remarks,
+      branchId,
+      actualCost,
+      checkIdVal) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_product": jsonEncode(renewalProducts),
+      "client_id": clientId,
+      "cost": cost,
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "remarks": remarks,
+      "branch_id": branchId ?? "",
+      "actual_cost": actualCost,
+      "check_id_val":checkIdVal
+
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postexistingCustomerRenewal",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postNewCustom(
+      branchId,
+      countryCode,
+      contactNo,
+      whatsappCountryCode,
+      whatsappContactNo,
+      clientName,
+      address1,
+      address2,
+      address3,
+      postOffice,
+      pincode,
+      gstNum,
+      remarks,
+      products,
+      startDate,
+      endDate,
+      cost,
+      email,
+      actualCost,
+      templateId,
+      checkIdVal
+      ) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "branch_id": branchId ?? "",
+      "country_code": countryCode,
+      "contact_no": contactNo,
+      "whatsapp_country_code": whatsappCountryCode,
+      "whatsapp_contact_no": whatsappContactNo,
+      "client_name": clientName,
+      "address": address1,
+      "address2": address2,
+      "address3": address3,
+      "post_office": postOffice,
+      "pincode": pincode,
+      "gst_num": gstNum,
+      "remarks": remarks,
+      "renewal_product": jsonEncode(products),
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "cost": cost,
+      "email_id ": email,
+      "actual_cost": actualCost,
+      "check_id_val":checkIdVal
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postNewCustomerRenewal",
+          data: formData);
+      if (result.statusCode == 200) {
+        AddCustomerModel response = AddCustomerModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
 
   static Future renewalList(page, pageSize, clientId, fromDate, toDate,
       daysToExpire, String searchKey, searchMonth, String expireIn) async {

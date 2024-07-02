@@ -170,9 +170,8 @@ class _RenewalListState extends State<RenewalList> {
       });
     } else {
       Common.toastMessaage(template!.message, Colors.red);
-        Navigator.pop(context);        
-        setState(() {
-        });
+      Navigator.pop(context);
+      setState(() {});
     }
   }
 
@@ -1046,6 +1045,7 @@ class _RenewalListState extends State<RenewalList> {
                     ),
                   ),
                   child: Material(
+                    color: Colors.white,
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
@@ -1059,6 +1059,7 @@ class _RenewalListState extends State<RenewalList> {
                           ),
                           const SizedBox(height: 20),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -1120,9 +1121,6 @@ class _RenewalListState extends State<RenewalList> {
                                     ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(
-                                width: 12,
                               ),
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.start,

@@ -133,7 +133,12 @@ class _ViewLeadsState extends State<ViewLeads> {
     // TODO: implement initState
     super.initState();
     // Set up animation controller
-
+    if (widget.staff != null) {
+      checkedAssignedStaffItems.add(widget.staff);
+    }
+    if (widget.category != null) {
+      checkedCategoryItems.add(widget.category);
+    }
     if (widget.page != null) {
       page = widget.page! - 1;
     }
@@ -143,7 +148,7 @@ class _ViewLeadsState extends State<ViewLeads> {
     //print(widget.fromDate.toString());
     // fromdate = DateTime.parse(widget.fromDate.toString());
     // todate = DateTime.parse(widget.toDate.toString());
-    status = widget.status == "-1" ? "1" : widget.status;
+    status = widget.status == "0" ? null : widget.status;
     staff = widget.staff;
     if (isCalled == false) {
       isCalled = widget.isCalled!;
@@ -157,7 +162,7 @@ class _ViewLeadsState extends State<ViewLeads> {
       fromdate = DateTime.parse(widget.fromDate.toString());
       todate = DateTime.now();
     }
-    getData('desc', true, widget.pageName == "Total Called" ? "-1" : status);
+    getData('desc', true, status);
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
@@ -2160,7 +2165,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                               )
                             : const SizedBox(),
                         Visibility(
-                          visible: widget.pageName == "Total Called------",
+                          visible: widget.pageName == "Total Called",
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,

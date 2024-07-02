@@ -2,7 +2,6 @@
 //
 //     final renewalDetailslModel = renewalDetailslModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 RenewalDetailslModel renewalDetailslModelFromJson(String str) => RenewalDetailslModel.fromJson(json.decode(str));
@@ -126,6 +125,7 @@ class Product {
     String productName;
     String sellingPrice;
     String taxPercent;
+    String noOfDays;
     String taxAmount;
 
     Product({
@@ -133,6 +133,7 @@ class Product {
         required this.productName,
         required this.sellingPrice,
         required this.taxPercent,
+        required this.noOfDays,
         required this.taxAmount,
     });
 
@@ -141,6 +142,7 @@ class Product {
         productName: json["product_name"],
         sellingPrice: json["selling_price"],
         taxPercent: json["tax_percent"],
+        noOfDays: json["no_of_days"],
         taxAmount: json["tax_amount"],
     );
 
@@ -149,6 +151,7 @@ class Product {
         "product_name": productName,
         "selling_price": sellingPrice,
         "tax_percent": taxPercent,
+        "no_of_days": noOfDays,
         "tax_amount": taxAmount,
     };
 }

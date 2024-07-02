@@ -24,7 +24,6 @@ class FirebaseServices {
   }
 
   void _initNotification(BuildContext context) {
-
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       _showNotification(message);
     });
@@ -32,7 +31,6 @@ class FirebaseServices {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       onNotificationTap(message, context);
     });
-
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -44,28 +42,27 @@ class FirebaseServices {
 
   void _showNotification(RemoteMessage message) async {
     final notification =
-        PushNotificationModel.fromJson(message.data); // Parse data
-
- try {  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      message.notification!.android!.channelId??"Login2",
-      message.notification!.android!.channelId ??"Login2",
-      importance: Importance.max,
-      priority: Priority.high,
-      ticker: notification.message,
-      channelShowBadge: true,
-      
-      icon: '@mipmap/ic_launcher',
-    );
-    var platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await notificationsPlugin.show(
-      notification.notificationId ?? 0,
-      notification.title,
-      notification.message,
-      platformChannelSpecifics,
-      payload: notification.toString(),
-      
-    );}catch(e){
+        PushNotificationModel.fromJson(message.data); 
+    try {
+      var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        message.notification!.android!.channelId ?? "Login2",
+        message.notification!.android!.channelId ?? "Login2",
+        importance: Importance.max,
+        priority: Priority.high,
+        ticker: notification.message,
+        channelShowBadge: true,
+        icon: '@mipmap/ic_launcher',
+      );
+      var platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
+      await notificationsPlugin.show(
+        notification.notificationId ?? 0,
+        notification.title,
+        notification.message,
+        platformChannelSpecifics,
+        payload: notification.toString(),
+      );
+    } catch (e) {
       log(e.toString());
     }
   }
@@ -91,39 +88,18 @@ class FirebaseServices {
     }
 
     if (navigation == 'whatsapp') {
-      Get.to(()=>ChatScreen(
-                groupId: detailId.toString(),
-              ));
-        // Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (context) => ChatScreen(
-        //         groupId: detailId.toString(),
-        //       ),
-        //     ));
-      
+      Get.to(() => ChatScreen(
+            groupId: detailId.toString(),
+          ));
     } else {
-      Get.to(()=>LeadDetails(
-                token!,
-                editLead!,
-                deleteLead!,
-                cloudCall!,
-                detailId!,
-                pageName: 'notification',
-              ));
-        // Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (context) => LeadDetails(
-        //         token!,
-        //         editLead!,
-        //         deleteLead!,
-        //         cloudCall!,
-        //         detailId!,
-        //         pageName: 'notification',
-        //       ),
-        //     ));
-      
+      Get.to(() => LeadDetails(
+            token!,
+            editLead!,
+            deleteLead!,
+            cloudCall!,
+            detailId!,
+            pageName: 'notification',
+          ));
     }
   }
 

@@ -47,7 +47,7 @@ import '../fileManager/fileManagerList.dart';
 import '../officialWhatsapp/chatHomeScreen.dart';
 import '../userManagement/staffDashboard.dart';
 import '../userManagement/viewUsers.dart';
-import 'leadNotificationPage.dart';
+import 'notification_page.dart';
 
 // ignore: must_be_immutable
 class Dashboard extends StatefulWidget {
@@ -466,7 +466,7 @@ class _DashboardState extends State<Dashboard> {
                                               context,
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      LeadNotificationPage(
+                                                      NotificationPage(
                                                           widget.token,
                                                           createLeadCategory1,
                                                           updateLeadCategory1,
@@ -508,18 +508,7 @@ class _DashboardState extends State<Dashboard> {
                                                             minWidth: 12,
                                                             minHeight: 12,
                                                           ),
-                                                          child: Text(
-                                                            notificationCount
-                                                                .toString(),
-                                                            style:
-                                                                const TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 8,
-                                                            ),
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                          ),
+                                                         
                                                         ),
                                                       )
                                                     : const SizedBox()
@@ -4068,8 +4057,10 @@ class _DashboardState extends State<Dashboard> {
                                                                               .toString(),
                                                                       toDate: todate
                                                                           .toString(),
+                                                                      leadType:
+                                                                          "-1",
                                                                       status:
-                                                                          '-1')),
+                                                                          '0')),
                                                             ).then((r) {
                                                               getData(
                                                                   widget.token,
@@ -4375,7 +4366,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                   onTap: () {
                                                                                                                     Navigator.push(
                                                                                                                       context,
-                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '-1', staff: object1.data!.staffLeads![i].staffId.toString())),
+                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '0', leadType: "-1", staff: object1.data!.staffLeads![i].staffId.toString())),
                                                                                                                     ).then((r) {
                                                                                                                       getData(widget.token, fromdate, todate);
                                                                                                                       if (loadmore == true) {
@@ -4464,7 +4455,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                   onTap: () {
                                                                                                                     Navigator.push(
                                                                                                                       context,
-                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '-1', category: object1.data!.categoryLeads![i].categoryId.toString())),
+                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: '0', leadType: "-1", category: object1.data!.categoryLeads![i].categoryId.toString())),
                                                                                                                     ).then((r) {
                                                                                                                       getData(widget.token, fromdate, todate);
                                                                                                                       if (loadmore == true) {
@@ -4553,7 +4544,7 @@ class _DashboardState extends State<Dashboard> {
                                                                                                                   onTap: () {
                                                                                                                     Navigator.push(
                                                                                                                       context,
-                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, deleteLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), status: object1.data!.statusLeads![i].statusId.toString())),
+                                                                                                                      MaterialPageRoute(builder: (context) => ViewLeads(widget.token, deleteLeadPermission1, deleteLeadPermission1, cloudCallPermission1, pageName: 'Total Called', fromDate: fromdate.toString(), toDate: todate.toString(), leadType: "-1", status: object1.data!.statusLeads![i].statusId.toString())),
                                                                                                                     ).then((r) {
                                                                                                                       getData(widget.token, fromdate, todate);
                                                                                                                       if (loadmore == true) {

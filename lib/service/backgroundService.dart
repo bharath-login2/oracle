@@ -83,16 +83,11 @@ void onStart(ServiceInstance service) async {
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (service is AndroidServiceInstance) {
-      // ! to show notification
-      // service.setForegroundNotificationInfo(
-      //   title: 'TEST NAME',
-      //   content: 'Listen for calls..',
-      // );
+  
     }
     showWindow();
     isWindowActive();
-    // callBackFunction(tag)
-    // SystemAlertWindow.registerOnClickListener(callBackFunction);
+   
     service.invoke('update');
   });
 }
@@ -174,17 +169,16 @@ void showWindow() async {
 
       case PhoneStateStatus.CALL_INCOMING:
       case PhoneStateStatus.CALL_STARTED:
-        // Show overlay
-        //   if (await FlutterOverlayWindow.isActive()) return;
+   
         Map<String, dynamic> body1 = {
           "token": await Common.getSharedPref("token"),
-          'phoneNumber': status1.number!.replaceAll(RegExp('[^0-9]'), ''),
+          'phoneNumber': status1.number,
         };
 
         BackgroundModel object = await HttpService.backgroundData(body1);
-        log('openAppLeadId${object.data!.callMasterId}');
+        log('openAppLeadId${object.data.callMasterId}');
         await Common.saveSharedPref(
-            "openAppLeadId", object.data!.callMasterId.toString());
+            "openAppLeadId", object.data.callMasterId.toString());
         SystemWindowHeader header = SystemWindowHeader(
             title: SystemWindowText(
                 text: "Incoming Call", fontSize: 12, textColor: Colors.black45),
@@ -197,7 +191,7 @@ void showWindow() async {
             decoration: SystemWindowDecoration(startColor: Colors.blue),
             button: SystemWindowButton(
                 text: SystemWindowText(
-                    text: object.data!.clientName.toString(),
+                    text: object.data.clientName.toString(),
                     fontSize: 16,
                     textColor: Colors.black,
                     fontWeight: FontWeight.BOLD),
@@ -209,7 +203,7 @@ void showWindow() async {
             buttons: [
               SystemWindowButton(
                 text: SystemWindowText(
-                    text: object.data!.createdDate.toString(),
+                    text: object.data.createdDate.toString(),
                     fontSize: 11,
                     textColor: Colors.black),
                 tag: "date",
@@ -271,7 +265,7 @@ void showWindow() async {
                 ),
                 EachColumn(
                   text: SystemWindowText(
-                      text: object.data!.leadCategory.toString(),
+                      text: object.data.leadCategory.toString(),
                       fontSize: 14,
                       textColor: Colors.black,
                       fontWeight: FontWeight.BOLD),
@@ -291,7 +285,7 @@ void showWindow() async {
                 ),
                 EachColumn(
                   text: SystemWindowText(
-                      text: object.data!.lastCalledDate.toString(),
+                      text: object.data.lastCalledDate.toString(),
                       fontSize: 14,
                       textColor: Colors.black,
                       fontWeight: FontWeight.BOLD),
@@ -312,7 +306,7 @@ void showWindow() async {
                 ),
                 EachColumn(
                   text: SystemWindowText(
-                      text: object.data!.remark.toString(),
+                      text: object.data.remark.toString(),
                       fontSize: 14,
                       textColor: Colors.black,
                       fontWeight: FontWeight.BOLD),
@@ -333,7 +327,7 @@ void showWindow() async {
                 ),
                 EachColumn(
                   text: SystemWindowText(
-                      text: object.data!.status.toString(),
+                      text: object.data.status.toString(),
                       fontSize: 14,
                       textColor: Colors.black,
                       fontWeight: FontWeight.BOLD),
@@ -448,28 +442,9 @@ void showWindow() async {
   }
 }
 
-// void showFormWindow() async {
-//   //  if (await FlutterOverlayWindow.isActive()) return;
-//   await FlutterOverlayWindow.showOverlay(
-//     enableDrag: true,
-//     overlayTitle: "X-SLAYER",
-//     overlayContent: 'Overlay Enabled',
-//     flag: OverlayFlag.defaultFlag,
-//     visibility: NotificationVisibility.visibilityPublic,
-//     positionGravity: PositionGravity.auto,
-//     height:800,
-//     width: WindowSize.matchParent,
-//   );
-// }
+
 
 void onDeviceReboot() {
   log('Device has rebooted!');
 }
 
-// void openAppAndNavigate() async {
-//   try {
-//     await platform.invokeMethod('openAppAndNavigate');
-//   } on PlatformException catch (e) {
-//     log("Error: ${e.message}");
-//   }
-// }

@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:developer';
+
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +9,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/branchListModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/renewal/add_customer_model.dart';
+import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
@@ -22,32 +25,41 @@ class _QuickRenewalState extends State<QuickRenewal> {
   final existingFormKey = GlobalKey<FormState>();
   final newFormKey = GlobalKey<FormState>();
   RenewalDetailslModel? detailsResponse;
-  AddCustomerModel? postResponse;
+  PostRenewalModel? postExistingResponse;
+  AddCustomerModel? postNewResponse;
   bool isLoading = true;
-  List filteredProducts = [];
+  List<Product> filteredProducts = [];
   List filteredNames = [];
-  String customerId = "";
+  String customerIdExisting = "";
+  String customerIdNew = "";
   String productDuration = "";
   DateTime? selectedValue;
-  bool isPaid = false;
-  bool createInvoice = false;
+  bool isPaidExisting = false;
+  bool isPaidNew = false;
+  bool createInvoiceExisting = false;
+  bool createInvoiceNew = false;
   BranchListModel? branchList;
   String multiBranch = "true";
-  dynamic branch;
-  String phCode = "91";
-  String whCode = "91";
-  List products = [];
+  dynamic branchExisting;
+  dynamic branchNew;
+  String phCodeNew = "91";
+  String whCodeNew = "91";
+  List productsExisting = [];
+  List productsNew = [];
   List productName = [];
-  double totalProductCost = 0;
+  double totalProductCostExisting = 0;
+  double totalProductCostNew = 0;
   bool uploading = false;
   bool isExists = false;
   IsCustomerExistModel? isExist;
-  List filteredTemplates = [];
-  String templateId = "";
+  List<Template> filteredTemplates = [];
+  String templateIdExisting = "";
+  String templateIdNew = "";
   String typeDuration = "";
 
-  TextEditingController customerName = TextEditingController();
-  TextEditingController number = TextEditingController();
+  TextEditingController customerNameNew = TextEditingController();
+  TextEditingController customerNameExisting = TextEditingController();
+  TextEditingController numberNew = TextEditingController();
   TextEditingController whatsappNumber = TextEditingController();
   TextEditingController address1 = TextEditingController();
   TextEditingController address2 = TextEditingController();
@@ -56,11 +68,16 @@ class _QuickRenewalState extends State<QuickRenewal> {
   TextEditingController postOffice = TextEditingController();
   TextEditingController gstNumber = TextEditingController();
   TextEditingController typeName = TextEditingController();
-  TextEditingController startDate = TextEditingController();
-  TextEditingController endDate = TextEditingController();
-  TextEditingController productCost = TextEditingController();
-  TextEditingController remindMe = TextEditingController();
-  TextEditingController remark = TextEditingController();
+  TextEditingController startDateExisting = TextEditingController();
+  TextEditingController startDateNew = TextEditingController();
+  TextEditingController endDateExisting = TextEditingController();
+  TextEditingController endDateNew = TextEditingController();
+  TextEditingController productCostExisting = TextEditingController();
+  TextEditingController productCostNew = TextEditingController();
+  TextEditingController remindMeNew = TextEditingController();
+  TextEditingController remindMeExisting = TextEditingController();
+  TextEditingController remarkExisting = TextEditingController();
+  TextEditingController remarkNew = TextEditingController();
   TextEditingController email = TextEditingController();
 
   getBranch() async {
@@ -71,7 +88,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
   }
 
   isCustomerExists() async {
-    isExist = await HttpService.isCustomerExists("", number.text);
+    isExist = await HttpService.isCustomerExists("", numberNew.text);
     if (isExist != null) {
       isExists = isExist!.data;
     }
@@ -88,7 +105,6 @@ class _QuickRenewalState extends State<QuickRenewal> {
       filteredProducts = detailsResponse!.data.products;
       filteredTemplates = detailsResponse!.data.template;
       await getBranch();
-
       setState(() {
         isLoading = false;
       });
@@ -125,66 +141,89 @@ class _QuickRenewalState extends State<QuickRenewal> {
         .toList();
   }
 
-  postRenewal() async {
-    postResponse = await HttpService.postRenewal(
-        products,
-        customerId,
-        productCost.text,
-        templateId,
-        startDate.text,
-        endDate.text,
-        remark.text,
-        branch,
-        isPaid,
-        totalProductCost,
-        createInvoice);
+  postExisting() async {
+    try {
+      postExistingResponse = await HttpService.postExistingQuick(
+          productsExisting,
+          customerIdExisting,
+          productCostExisting.text,
+          templateIdExisting,
+          startDateExisting.text,
+          endDateExisting.text,
+          remarkExisting.text,
+          branchExisting,
+          isPaidExisting,
+          totalProductCostExisting,
+          createInvoiceExisting,
+          detailsResponse!.data.checkId);
 
-    if (postResponse != null && postResponse!.status == true) {
-      Common.toastMessaage(postResponse!.message, Colors.green);
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const RenewalDashboard(),
-          ));
-    } else {
-      Common.toastMessaage(postResponse!.message, Colors.red);
+      if (postExistingResponse != null &&
+          postExistingResponse!.status == true) {
+        Common.toastMessaage(postExistingResponse!.message, Colors.green);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RenewalDashboard(),
+            ));
+      } else {
+        Common.toastMessaage(postExistingResponse!.message, Colors.red);
+        setState(() {
+          uploading = false;
+        });
+      }
+    } catch (e) {
+      log("error: $e");
+      Common.toastMessaage("Something went wrong..!", Colors.red);
+      setState(() {
+        uploading = false;
+      });
     }
   }
 
-  postCustomer() async {
-    postResponse = await HttpService.postCustomer(
-        isPaid,
-        branch,
-        phCode,
-        number.text,
-        whCode,
-        whatsappNumber.text,
-        customerName.text,
-        address1.text,
-        address2.text,
-        address3.text,
-        postOffice.text,
-        pinCode.text,
-        gstNumber.text,
-        remark.text,
-        products,
-        startDate.text,
-        endDate.text,
-        productCost.text,
-        email.text,
-        totalProductCost,
-        createInvoice,
-        templateId);
-
-    if (postResponse != null && postResponse!.status == true) {
-      Common.toastMessaage(postResponse!.message, Colors.green);
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const RenewalDashboard(),
-          ));
-    } else {
-      Common.toastMessaage(postResponse!.message, Colors.red);
+  postNew() async {
+    try {
+      postNewResponse = await HttpService.postNewQuick(
+          isPaidNew,
+          branchNew,
+          phCodeNew,
+          numberNew.text,
+          whCodeNew,
+          whatsappNumber.text,
+          customerNameNew.text,
+          address1.text,
+          address2.text,
+          address3.text,
+          postOffice.text,
+          pinCode.text,
+          gstNumber.text,
+          remarkNew.text,
+          productsNew,
+          startDateNew.text,
+          endDateNew.text,
+          productCostNew.text,
+          email.text,
+          totalProductCostNew,
+          createInvoiceNew,
+          templateIdNew,
+          detailsResponse!.data.checkId);
+      if (postNewResponse != null && postNewResponse!.status == true) {
+        Common.toastMessaage(postNewResponse!.message, Colors.green);
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RenewalDashboard(),
+            ));
+      } else {
+        Common.toastMessaage(postNewResponse!.message, Colors.red);
+        setState(() {
+          uploading = false;
+        });
+      }
+    } catch (e) {
+      Common.toastMessaage("Something went wrong..!", Colors.red);
+      setState(() {
+        uploading = false;
+      });
     }
   }
 
@@ -245,7 +284,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: SingleChildScrollView(
                           child: Form(
-                            key: newFormKey,
+                            key: existingFormKey,
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,10 +293,10 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   height: 16,
                                 ),
                                 TextFormField(
-                                  controller: customerName,
+                                  controller: customerNameExisting,
                                   readOnly: true,
                                   onTap: (() {
-                                    dropDialogNew(context, "Customers");
+                                    dropDialogExisting(context, "Customers");
                                   }),
                                   validator: (value) {
                                     if (value!.isEmpty) {
@@ -280,7 +319,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 const SizedBox(height: 14.0),
                                 GestureDetector(
                                   onTap: () {
-                                    dropDialogNew(context, "Products");
+                                    dropDialogExisting(context, "Products");
                                   },
                                   child: Container(
                                     width:
@@ -290,7 +329,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       border: Border.all(),
                                       borderRadius: BorderRadius.circular(5),
                                     ),
-                                    child: products.isEmpty
+                                    child: productsExisting.isEmpty
                                         ? const Row(
                                             children: [
                                               SizedBox(width: 10),
@@ -395,14 +434,14 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                             onPressed:
                                                                                 () async {
                                                                               productName.remove(productName[i]);
-                                                                              products.removeAt(i);
-                                                                              totalProductCost = 0;
+                                                                              productsExisting.removeAt(i);
+                                                                              totalProductCostExisting = 0;
 
-                                                                              for (int ind = 0; ind < products.length; ind++) {
-                                                                                totalProductCost += double.parse((await products[ind])["prd_cost"]);
+                                                                              for (int ind = 0; ind < productsExisting.length; ind++) {
+                                                                                totalProductCostExisting += double.parse((await productsExisting[ind])["prd_cost"]);
                                                                               }
-                                                                              productCost.text = (totalProductCost).toString();
-                                                                              print(products.length);
+                                                                              productCostExisting.text = (totalProductCostExisting).toString();
+                                                                              print(productsExisting.length);
                                                                               setState(() {});
 
                                                                               Navigator.of(context).pop();
@@ -458,10 +497,10 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 ),
                                 multiBranch == 'true'
                                     ? DropdownButtonFormField(
-                                        value: branch,
+                                        value: branchExisting,
                                         onChanged: (value) async {
                                           setState(() {
-                                            branch = value.toString();
+                                            branchExisting = value.toString();
                                           });
                                         },
                                         items: branchList!.data!.map((data) {
@@ -490,7 +529,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                     : const SizedBox(),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: startDate,
+                                  controller: startDateExisting,
                                   readOnly: true,
                                   onTap: () async {
                                     selectedValue = await showDatePicker(
@@ -500,13 +539,15 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       lastDate: DateTime(2100),
                                     );
                                     setState(() {
-                                      startDate.text = DateFormat('dd-MM-yyyy')
-                                          .format(selectedValue!);
+                                      startDateExisting.text =
+                                          DateFormat('dd-MM-yyyy')
+                                              .format(selectedValue!);
                                       final endValue = selectedValue!.add(
                                           Duration(
                                               days: int.parse(typeDuration)));
-                                      endDate.text = DateFormat('dd-MM-yyyy')
-                                          .format(endValue);
+                                      endDateExisting.text =
+                                          DateFormat('dd-MM-yyyy')
+                                              .format(endValue);
                                     });
                                   },
                                   validator: (value) {
@@ -537,8 +578,9 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       firstDate: DateTime(2000),
                                       lastDate: DateTime(2100),
                                     );
-                                    endDate.text = DateFormat('dd-MM-yyyy')
-                                        .format(selectedEndDate!);
+                                    endDateExisting.text =
+                                        DateFormat('dd-MM-yyyy')
+                                            .format(selectedEndDate!);
                                   },
                                   validator: (value) {
                                     if (value!.isEmpty) {
@@ -547,7 +589,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                     return null;
                                   },
                                   readOnly: true,
-                                  controller: endDate,
+                                  controller: endDateExisting,
                                   decoration: const InputDecoration(
                                       labelText: 'End Date *',
                                       prefixIcon: Icon(Icons.calendar_month,
@@ -562,7 +604,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: productCost,
+                                  controller: productCostExisting,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return "Please Enter Project Cost";
@@ -584,10 +626,10 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 const SizedBox(height: 14.0),
                                 TextFormField(
                                   onTap: () {
-                                    dropDialogNew(context, "Template");
+                                    dropDialogExisting(context, "Template");
                                   },
                                   readOnly: true,
-                                  controller: remindMe,
+                                  controller: remindMeExisting,
                                   decoration: const InputDecoration(
                                       labelText: 'Remind Template *',
                                       prefixIcon: Icon(Icons.notifications,
@@ -602,7 +644,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: remark,
+                                  controller: remarkExisting,
                                   decoration: const InputDecoration(
                                       labelText: 'Remarks',
                                       prefixIcon: Icon(Icons.description,
@@ -620,18 +662,19 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Checkbox(
-                                        fillColor: createInvoice == true
+                                        fillColor: createInvoiceExisting == true
                                             ? const MaterialStatePropertyAll(
                                                 Colors.blue)
                                             : const MaterialStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
-                                        value: createInvoice,
+                                        value: createInvoiceExisting,
                                         onChanged: (value) {
                                           setState(() {
-                                            createInvoice = value!;
-                                            if (createInvoice == false) {
-                                              isPaid = value;
+                                            createInvoiceExisting = value!;
+                                            if (createInvoiceExisting ==
+                                                false) {
+                                              isPaidExisting = value;
                                             }
                                           });
                                         }),
@@ -642,18 +685,18 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Checkbox(
-                                        fillColor: isPaid == true
+                                        fillColor: isPaidExisting == true
                                             ? const MaterialStatePropertyAll(
                                                 Colors.blue)
                                             : const MaterialStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
-                                        value: isPaid,
+                                        value: isPaidExisting,
                                         onChanged: (value) {
                                           setState(() {
-                                            isPaid = value!;
-                                            if (isPaid == true) {
-                                              createInvoice = value;
+                                            isPaidExisting = value!;
+                                            if (isPaidExisting == true) {
+                                              createInvoiceExisting = value;
                                             }
                                           });
                                         }),
@@ -672,13 +715,13 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   child: RawMaterialButton(
                                     onPressed: () {
                                       if (uploading == false) {
-                                        if (newFormKey.currentState!
+                                        if (existingFormKey.currentState!
                                                 .validate() &&
-                                            products.isNotEmpty) {
+                                            productsExisting.isNotEmpty) {
                                           setState(() {
                                             uploading = true;
                                           });
-                                          postRenewal();
+                                          postExisting();
                                         } else {
                                           Common.toastMessaage(
                                               "Please fill all required fields",
@@ -719,14 +762,14 @@ class _QuickRenewalState extends State<QuickRenewal> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: SingleChildScrollView(
                           child: Form(
-                            key: existingFormKey,
+                            key: newFormKey,
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const SizedBox(height: 16.0),
                                 TextFormField(
-                                  controller: customerName,
+                                  controller: customerNameNew,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return "Please Enter Customer Name";
@@ -748,7 +791,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 const SizedBox(height: 14.0),
                                 TextFormField(
                                   keyboardType: TextInputType.phone,
-                                  controller: number,
+                                  controller: numberNew,
                                   onChanged: ((value) {
                                     if (value.length == 10) {
                                       isCustomerExists();
@@ -775,13 +818,13 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                               // optional. Shows phone code before the country name.
                                               onSelect: (Country country) {
                                                 setState(() {
-                                                  phCode = country.phoneCode;
+                                                  phCodeNew = country.phoneCode;
                                                 });
                                               },
                                             );
                                           },
                                           child: Text(
-                                            "+ $phCode",
+                                            "+ $phCodeNew",
                                             style: const TextStyle(
                                                 color: Colors.black),
                                           )),
@@ -812,12 +855,12 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                               // optional. Shows phone code before the country name.
                                               onSelect: (Country country) {
                                                 setState(() {
-                                                  whCode = country.phoneCode;
+                                                  whCodeNew = country.phoneCode;
                                                 });
                                               },
                                             );
                                           },
-                                          child: Text("+ $whCode",
+                                          child: Text("+ $whCodeNew",
                                               style: const TextStyle(
                                                   color: Colors.black))),
                                     ),
@@ -833,7 +876,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 const SizedBox(height: 14.0),
                                 GestureDetector(
                                   onTap: () {
-                                    dropDialogExisting(context, "Products");
+                                    dropDialogNew(context, "Products");
                                   },
                                   child: Container(
                                     width:
@@ -843,7 +886,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       border: Border.all(),
                                       borderRadius: BorderRadius.circular(5),
                                     ),
-                                    child: products.isEmpty
+                                    child: productsNew.isEmpty
                                         ? const Row(
                                             children: [
                                               SizedBox(width: 10),
@@ -948,14 +991,14 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                             onPressed:
                                                                                 () async {
                                                                               productName.remove(productName[i]);
-                                                                              products.removeAt(i);
-                                                                              totalProductCost = 0;
+                                                                              productsNew.removeAt(i);
+                                                                              totalProductCostNew = 0;
 
-                                                                              for (int ind = 0; ind < products.length; ind++) {
-                                                                                totalProductCost += double.parse((await products[ind])["prd_cost"]);
+                                                                              for (int ind = 0; ind < productsNew.length; ind++) {
+                                                                                totalProductCostNew += double.parse((await productsNew[ind])["prd_cost"]);
                                                                               }
-                                                                              productCost.text = (totalProductCost).toString();
-                                                                              print(products.length);
+                                                                              productCostNew.text = (totalProductCostNew).toString();
+                                                                              print(productsNew.length);
                                                                               setState(() {});
 
                                                                               Navigator.of(context).pop();
@@ -1038,10 +1081,10 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                         padding:
                                             const EdgeInsets.only(top: 14.0),
                                         child: DropdownButtonFormField(
-                                          value: branch,
+                                          value: branchNew,
                                           onChanged: (value) async {
                                             setState(() {
-                                              branch = value.toString();
+                                              branchNew = value.toString();
                                             });
                                           },
                                           items: branchList!.data!.map((data) {
@@ -1071,7 +1114,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                     : const SizedBox(),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: startDate,
+                                  controller: startDateNew,
                                   readOnly: true,
                                   onTap: () async {
                                     selectedValue = await showDatePicker(
@@ -1081,13 +1124,14 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       lastDate: DateTime(2100),
                                     );
                                     setState(() {
-                                      startDate.text = DateFormat('dd-MM-yyyy')
-                                          .format(selectedValue!);
+                                      startDateNew.text =
+                                          DateFormat('dd-MM-yyyy')
+                                              .format(selectedValue!);
                                       final endValue = selectedValue!.add(
                                           Duration(
                                               days:
                                                   int.parse(productDuration)));
-                                      endDate.text = DateFormat('dd-MM-yyyy')
+                                      endDateNew.text = DateFormat('dd-MM-yyyy')
                                           .format(endValue);
                                     });
                                   },
@@ -1119,7 +1163,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                       firstDate: DateTime(2000),
                                       lastDate: DateTime(2100),
                                     );
-                                    endDate.text = DateFormat('dd-MM-yyyy')
+                                    endDateNew.text = DateFormat('dd-MM-yyyy')
                                         .format(selectedEndDate!);
                                   },
                                   validator: (value) {
@@ -1129,7 +1173,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                     return null;
                                   },
                                   readOnly: true,
-                                  controller: endDate,
+                                  controller: endDateNew,
                                   decoration: const InputDecoration(
                                       labelText: 'End Date *',
                                       prefixIcon: Icon(Icons.calendar_month,
@@ -1144,7 +1188,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: productCost,
+                                  controller: productCostNew,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return "Please Enter Project Cost";
@@ -1258,10 +1302,10 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 const SizedBox(height: 14.0),
                                 TextFormField(
                                   onTap: () {
-                                    dropDialogExisting(context, "Template");
+                                    dropDialogNew(context, "Template");
                                   },
                                   readOnly: true,
-                                  controller: remindMe,
+                                  controller: remindMeNew,
                                   decoration: const InputDecoration(
                                       labelText: 'Remind Template',
                                       prefixIcon: Icon(Icons.notifications,
@@ -1276,7 +1320,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: remark,
+                                  controller: remarkNew,
                                   decoration: const InputDecoration(
                                       labelText: 'Remarks',
                                       prefixIcon: Icon(Icons.description,
@@ -1294,18 +1338,18 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Checkbox(
-                                        fillColor: createInvoice == true
+                                        fillColor: createInvoiceNew == true
                                             ? const MaterialStatePropertyAll(
                                                 Colors.blue)
                                             : const MaterialStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
-                                        value: createInvoice,
+                                        value: createInvoiceNew,
                                         onChanged: (value) {
                                           setState(() {
-                                            createInvoice = value!;
-                                            if (createInvoice == false) {
-                                              isPaid = value;
+                                            createInvoiceNew = value!;
+                                            if (createInvoiceNew == false) {
+                                              isPaidNew = value;
                                             }
                                           });
                                         }),
@@ -1316,18 +1360,18 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     Checkbox(
-                                        fillColor: isPaid == true
+                                        fillColor: isPaidNew == true
                                             ? const MaterialStatePropertyAll(
                                                 Colors.blue)
                                             : const MaterialStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
-                                        value: isPaid,
+                                        value: isPaidNew,
                                         onChanged: (value) {
                                           setState(() {
-                                            isPaid = value!;
-                                            if (isPaid == true) {
-                                              createInvoice = value;
+                                            isPaidNew = value!;
+                                            if (isPaidNew == true) {
+                                              createInvoiceNew = value;
                                             }
                                           });
                                         }),
@@ -1346,13 +1390,13 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   child: RawMaterialButton(
                                     onPressed: () {
                                       if (uploading == false) {
-                                        if (existingFormKey.currentState!
+                                        if (newFormKey.currentState!
                                                 .validate() &&
-                                            products.isNotEmpty) {
+                                            productsNew.isNotEmpty) {
                                           setState(() {
                                             uploading = true;
                                           });
-                                          postCustomer();
+                                          postNew();
                                         } else {
                                           Common.toastMessaage(
                                               "Please fill all required fields",
@@ -1390,7 +1434,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
     );
   }
 
-  Future<dynamic> dropDialogExisting(BuildContext context, String title) {
+  Future<dynamic> dropDialogNew(BuildContext context, String title) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -1449,36 +1493,37 @@ class _QuickRenewalState extends State<QuickRenewal> {
                       return ListTile(
                         onTap: (() async {
                           if (title == "Template") {
-                            remindMe.text =
+                            remindMeNew.text =
                                 filteredTemplates[index].templateName;
-                            templateId = filteredTemplates[index].templateId;
+                            templateIdNew = filteredTemplates[index].id;
                           } else {
                             productDuration = filteredProducts[index].noOfDays;
 
-                            if (startDate.text.isNotEmpty) {
+                            if (startDateNew.text.isNotEmpty) {
                               final endValue = selectedValue!.add(
                                   Duration(days: int.parse(productDuration)));
-                              endDate.text =
+                              endDateNew.text =
                                   DateFormat('dd-MM-yyyy').format(endValue);
                             }
 
                             if (productName.contains(
                                 filteredProducts[index].productName)) {
                             } else {
-                              products.add({
+                              productsNew.add({
                                 "prd_id": filteredProducts[index].id,
-                                "prd_cost": filteredProducts[index].totalAmount
+                                "prd_cost": filteredProducts[index].sellingPrice
                               });
                               productName
                                   .add(filteredProducts[index].productName);
                             }
-                            totalProductCost = 0;
+                            totalProductCostNew = 0;
 
-                            for (int i = 0; i < products.length; i++) {
-                              totalProductCost +=
-                                  double.parse((await products[i])["prd_cost"]);
+                            for (int i = 0; i < productsNew.length; i++) {
+                              totalProductCostNew += double.parse(
+                                  (await productsNew[i])["prd_cost"]);
                             }
-                            productCost.text = (totalProductCost).toString();
+                            productCostNew.text =
+                                (totalProductCostNew).toString();
                           }
 
                           Navigator.pop(context);
@@ -1509,7 +1554,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
     );
   }
 
-  Future<dynamic> dropDialogNew(BuildContext context, String title) {
+  Future<dynamic> dropDialogExisting(BuildContext context, String title) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -1574,39 +1619,40 @@ class _QuickRenewalState extends State<QuickRenewal> {
                       return ListTile(
                         onTap: () async {
                           if (title == "Customers") {
-                            customerName.text = filteredNames[index].name;
-                            customerId = filteredNames[index].id;
+                            customerNameExisting.text =
+                                filteredNames[index].name;
+                            customerIdExisting = filteredNames[index].id;
                           } else if (title == "Template") {
-                            remindMe.text =
+                            remindMeExisting.text =
                                 filteredTemplates[index].templateName;
-                            templateId = filteredTemplates[index].templateId;
+                            templateIdExisting = filteredTemplates[index].id;
                           } else {
                             typeDuration = filteredProducts[index].noOfDays;
 
-                            if (startDate.text.isNotEmpty) {
+                            if (startDateExisting.text.isNotEmpty) {
                               final endValue = selectedValue!
                                   .add(Duration(days: int.parse(typeDuration)));
-                              endDate.text =
+                              endDateExisting.text =
                                   DateFormat('dd-MM-yyyy').format(endValue);
                             }
-
                             if (productName.contains(
                                 filteredProducts[index].productName)) {
                             } else {
-                              products.add({
+                              productsExisting.add({
                                 "prd_id": filteredProducts[index].id,
-                                "prd_cost": filteredProducts[index].totalAmount
+                                "prd_cost": filteredProducts[index].sellingPrice
                               });
                               productName
                                   .add(filteredProducts[index].productName);
                             }
-                            totalProductCost = 0;
+                            totalProductCostExisting = 0;
 
-                            for (int i = 0; i < products.length; i++) {
-                              totalProductCost +=
-                                  double.parse((await products[i])["prd_cost"]);
+                            for (int i = 0; i < productsExisting.length; i++) {
+                              totalProductCostExisting += double.parse(
+                                  (await productsExisting[i])["prd_cost"]);
                             }
-                            productCost.text = (totalProductCost).toString();
+                            productCostExisting.text =
+                                (totalProductCostExisting).toString();
                           }
                           Navigator.pop(context);
                           setState(() {});

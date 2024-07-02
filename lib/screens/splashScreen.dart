@@ -8,7 +8,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
-import 'package:login2/screens/pushNotificationChannel.dart';
+import 'package:login2/screens/push_notification_channel.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
 import '../../models/loginCheckModel.dart';
