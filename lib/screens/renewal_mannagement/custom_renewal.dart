@@ -77,6 +77,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController email = TextEditingController();
   TextEditingController invoiceDate = TextEditingController();
   TextEditingController invoiceNumber = TextEditingController();
+  TextEditingController productNameExisting = TextEditingController();
+  TextEditingController productNameNew = TextEditingController();
+  TextEditingController productQuantity = TextEditingController(text: '10');
 
   getBranch() async {
     multiBranch = await Common.getSharedPref("multiBranch");
@@ -311,7 +314,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                   ),
                                 ),
                                 const SizedBox(height: 14.0),
-                                   TextFormField(
+                                TextFormField(
                                   controller: invoiceNumber,
                                   readOnly: true,
                                   decoration: const InputDecoration(
@@ -327,9 +330,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                   ),
                                 ),
                                 const SizedBox(height: 14.0),
-                                   TextFormField(
+                                TextFormField(
                                   controller: invoiceDate,
-                                onTap: () async {
+                                  onTap: () async {
                                     selectedValue = await showDatePicker(
                                       context: context,
                                       initialDate: DateTime.now(),
@@ -351,193 +354,14 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                   },
                                   decoration: const InputDecoration(
                                     labelText: 'Invoice Date',
-                                    prefixIcon:
-                                        Icon(Icons.calendar_month, color: Colors.grey),
+                                    prefixIcon: Icon(Icons.calendar_month,
+                                        color: Colors.grey),
                                     border: OutlineInputBorder(),
                                     focusedBorder: OutlineInputBorder(
                                       borderSide:
                                           BorderSide(color: Colors.grey),
                                     ),
                                     labelStyle: TextStyle(color: Colors.grey),
-                                  ),
-                                ),
-                                const SizedBox(height: 14.0),
-                                GestureDetector(
-                                  onTap: () {
-                                    dropDialogExisting(context, "Products");
-                                  },
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * 1,
-                                    height: 65,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: productsExisting.isEmpty
-                                        ? const Row(
-                                            children: [
-                                              SizedBox(width: 10),
-                                              Icon(
-                                                Icons.shopping_cart,
-                                                color: Colors.grey,
-                                              ),
-                                              SizedBox(width: 10),
-                                              Text(
-                                                'Products *',
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.grey),
-                                              ),
-                                            ],
-                                          )
-                                        : Row(
-                                            children: [
-                                              const SizedBox(width: 10),
-                                              const Icon(
-                                                Icons.shopping_cart,
-                                                color: Colors.grey,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              SizedBox(
-                                                height: 45,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .8,
-                                                child: ListView.builder(
-                                                  scrollDirection:
-                                                      Axis.horizontal,
-                                                  itemCount: productName.length,
-                                                  itemBuilder: (context, i) {
-                                                    return Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 5,
-                                                              right: 5),
-                                                      child: Row(
-                                                        children: [
-                                                          Container(
-                                                            height: 45,
-                                                            decoration: BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    width: 0),
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius: const BorderRadius
-                                                                    .only(
-                                                                    topLeft: Radius
-                                                                        .circular(
-                                                                            6),
-                                                                    bottomLeft:
-                                                                        Radius.circular(
-                                                                            6))),
-                                                            child: Center(
-                                                              child: Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  Padding(
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            10),
-                                                                    child: Text(
-                                                                      productName[
-                                                                          i],
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          InkWell(
-                                                            onTap: () {
-                                                              showDialog(
-                                                                  context:
-                                                                      context,
-                                                                  builder:
-                                                                      (BuildContext
-                                                                          context) {
-                                                                    return AlertDialog(
-                                                                      title: const Text(
-                                                                          'Please Confirm'),
-                                                                      content:
-                                                                          const Text(
-                                                                              'Are you sure to Remove this Number?'),
-                                                                      actions: [
-                                                                        // The "Yes" button
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () async {
-                                                                              productName.remove(productName[i]);
-                                                                              productsExisting.removeAt(i);
-                                                                              totalProductCostExisting = 0;
-
-                                                                              for (int ind = 0; ind < productsExisting.length; ind++) {
-                                                                                totalProductCostExisting += double.parse((await productsExisting[ind])["prd_cost"]);
-                                                                              }
-                                                                              productCostExisting.text = (totalProductCostExisting).toString();
-                                                                              print(productsExisting.length);
-                                                                              setState(() {});
-
-                                                                              Navigator.of(context).pop();
-                                                                            },
-                                                                            child:
-                                                                                const Text('Yes')),
-                                                                        TextButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              Navigator.of(context).pop();
-                                                                            },
-                                                                            child:
-                                                                                const Text('No'))
-                                                                      ],
-                                                                    );
-                                                                  });
-                                                            },
-                                                            child: Container(
-                                                              height: 45,
-                                                              width: 40,
-                                                              decoration: BoxDecoration(
-                                                                  border: Border.all(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      width: 0),
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade100,
-                                                                  borderRadius: const BorderRadius
-                                                                      .only(
-                                                                      topRight:
-                                                                          Radius.circular(
-                                                                              6),
-                                                                      bottomRight:
-                                                                          Radius.circular(
-                                                                              6))),
-                                                              child: const Icon(
-                                                                Icons.close,
-                                                                color:
-                                                                    Colors.red,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            ],
-                                          ),
                                   ),
                                 ),
                                 multiBranch == 'true'
@@ -572,6 +396,200 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                         ),
                                       )
                                     : const SizedBox(),
+                                const SizedBox(height: 14.0),
+                                const Text(
+                                  "Add Products",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                                TextFormField(
+                                  controller: productNameExisting,
+                                  readOnly: true,
+                                  onTap: (() {
+                                    dropDialogExisting(context, "Products");
+                                  }),
+                                  // validator: (value) {
+                                  //   if (value!.isEmpty) {
+                                  //     return "Please Add Customer";
+                                  //   }
+                                  //   return null;
+                                  // },
+                                  decoration: const InputDecoration(
+                                    labelText: 'Products *',
+                                    prefixIcon:
+                                        Icon(Icons.person, color: Colors.grey),
+                                    border: OutlineInputBorder(),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.grey),
+                                    ),
+                                    labelStyle: TextStyle(color: Colors.grey),
+                                  ),
+                                ),
+                                const SizedBox(height: 14.0),
+                                Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                    controller: productCostExisting,
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return "Please Enter Project Cost";
+                                      }
+                                      return null;
+                                    },
+                                    decoration: const InputDecoration(
+                                        labelText: 'Rate *',
+                                        prefixIcon: Icon(Icons.currency_rupee,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey)),
+                                                                      ),
+                                  ),
+                                Expanded(
+                                  child:  Row(
+                                        children: <Widget>[
+                                          Expanded(
+                                            flex: 1,
+                                            child: TextFormField(
+                                              textAlign: TextAlign.center,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    const EdgeInsets.all(8.0),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          5.0),
+                                                ),
+                                              ),
+                                              controller: productQuantity,
+                                              keyboardType: const TextInputType
+                                                  .numberWithOptions(
+                                                decimal: false,
+                                                signed: true,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 38.0,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: <Widget>[
+                                                Container(
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    border: Border(
+                                                      bottom: BorderSide(
+                                                        width: 0.5,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: InkWell(
+                                                    child: const Icon(
+                                                      Icons.arrow_drop_up,
+                                                      size: 18.0,
+                                                    ),
+                                                    onTap: () {
+                                                      int currentValue =
+                                                          int.parse(
+                                                              productQuantity.text);
+                                                      setState(() {
+                                                        currentValue++;
+                                                        productQuantity.text =
+                                                            (currentValue)
+                                                                .toString(); // incrementing value
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  child: const Icon(
+                                                    Icons.arrow_drop_down,
+                                                    size: 18.0,
+                                                  ),
+                                                  onTap: () {
+                                                    int currentValue =
+                                                        int.parse(
+                                                            productQuantity.text);
+                                                    setState(() {
+                                                      currentValue--;
+                                                      productQuantity
+                                                          .text = (currentValue >
+                                                                  0
+                                                              ? currentValue
+                                                              : 0)
+                                                          .toString(); // decrementing value
+                                                    });
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                   
+                                ),
+                                ],
+                                ),
+                                const SizedBox(height: 14.0),
+                                 Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                    controller: productCostExisting,
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return "Please Enter Project Cost";
+                                      }
+                                      return null;
+                                    },
+                                    decoration: const InputDecoration(
+                                        labelText: 'Rate *',
+                                        prefixIcon: Icon(Icons.currency_rupee,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey)),
+                                                                      ),
+                                  ),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: productCostExisting,
+                                    validator: (value) {
+                                      if (value!.isEmpty) {
+                                        return "Please Enter Project Cost";
+                                      }
+                                      return null;
+                                    },
+                                    decoration: const InputDecoration(
+                                        labelText: 'Project Cost *',
+                                        prefixIcon: Icon(Icons.currency_rupee,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey)),
+                                  ),
+                                ),
+                                ],
+                                ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
                                   controller: startDateExisting,
@@ -702,7 +720,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       labelStyle:
                                           TextStyle(color: Colors.grey)),
                                 ),
-                               const SizedBox(height: 20.0),
+                                const SizedBox(height: 20.0),
                                 Container(
                                   height: 40,
                                   width: double.maxFinite,

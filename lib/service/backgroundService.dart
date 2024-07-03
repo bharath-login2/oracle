@@ -10,9 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/service/service.dart';
 import 'package:phone_state/phone_state.dart';
-import 'package:system_alert_window/system_alert_window.dart';
+// import 'package:system_alert_window/system_alert_window.dart';
 import '../core/common.dart';
 import '../models/backgroundModel.dart';
 import '../models/callLogUploadPermissionModel.dart';
@@ -21,6 +22,8 @@ import '../models/callLogs/callLogUploadModel.dart';
 PhoneState status1 = PhoneState.nothing();
 
 Future<void> initService() async {
+  // OverlayController controller =
+  //     Get.put(OverlayController());
   final service = FlutterBackgroundService();
   await service.configure(
     iosConfiguration: IosConfiguration(),
@@ -54,12 +57,10 @@ Future<void> setAsBackgroundService() async {
 
 @pragma("vm:entry-point")
 void onStart(ServiceInstance service) async {
-  if (Platform.isAndroid) {
-    
-  }
+  if (Platform.isAndroid) {}
   DartPluginRegistrant.ensureInitialized();
   setStream();
-  SystemAlertWindow.registerOnClickListener(callBack);
+  // SystemAlertWindow.registerOnClickListener(callBack);
   if (service is AndroidServiceInstance) {
     service.on('reboot').listen((event) {
       onDeviceReboot();
@@ -82,12 +83,10 @@ void onStart(ServiceInstance service) async {
   }
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
-    if (service is AndroidServiceInstance) {
-  
-    }
+    if (service is AndroidServiceInstance) {}
     showWindow();
     isWindowActive();
-   
+
     service.invoke('update');
   });
 }
@@ -96,7 +95,6 @@ void onStart(ServiceInstance service) async {
 Future<void> callBack(String tag) async {
   WidgetsFlutterBinding.ensureInitialized();
   const MethodChannel _appChannel = MethodChannel('app_channel');
-
 
   switch (tag) {
     case "open_button":
@@ -107,19 +105,21 @@ Future<void> callBack(String tag) async {
           data: Uri.encodeFull('example1://gizmos1/'),
           package: 'com.android.chrome');
       intent.launch();
-      SystemAlertWindow.closeSystemWindow(
-          prefMode: SystemWindowPrefMode.OVERLAY);
+      // SystemAlertWindow.closeSystemWindow(
+      //     prefMode: SystemWindowPrefMode.OVERLAY);
       break;
     case "close_button":
       await Common.saveSharedPref("openAppLeadId", '0');
-      SystemAlertWindow.closeSystemWindow(
-          prefMode: SystemWindowPrefMode.OVERLAY);
+      // SystemAlertWindow.closeSystemWindow(
+      //     prefMode: SystemWindowPrefMode.OVERLAY);
 
       break;
     default:
       log("OnClick event of $tag");
   }
 }
+
+
 
 bool isActive = false;
 bool uploadCall = false;
@@ -156,7 +156,7 @@ void isWindowActive() async {
 
     default:
       isActive = false;
-       doUpload = true;
+      doUpload = true;
     // showTextFieldWindow = false;
   }
 }
@@ -169,193 +169,207 @@ void showWindow() async {
 
       case PhoneStateStatus.CALL_INCOMING:
       case PhoneStateStatus.CALL_STARTED:
-   
         Map<String, dynamic> body1 = {
           "token": await Common.getSharedPref("token"),
           'phoneNumber': status1.number,
         };
 
         BackgroundModel object = await HttpService.backgroundData(body1);
+
         log('openAppLeadId${object.data.callMasterId}');
         await Common.saveSharedPref(
             "openAppLeadId", object.data.callMasterId.toString());
-        SystemWindowHeader header = SystemWindowHeader(
-            title: SystemWindowText(
-                text: "Incoming Call", fontSize: 12, textColor: Colors.black45),
-            padding: SystemWindowPadding.setSymmetricPadding(12, 12),
-            subTitle: SystemWindowText(
-                text: "${status1.number}",
-                fontSize: 16,
-                fontWeight: FontWeight.BOLD,
-                textColor: Colors.black87),
-            decoration: SystemWindowDecoration(startColor: Colors.blue),
-            button: SystemWindowButton(
-                text: SystemWindowText(
-                    text: object.data.clientName.toString(),
-                    fontSize: 16,
-                    textColor: Colors.black,
-                    fontWeight: FontWeight.BOLD),
-                tag: "personal_btn",
-                decoration: SystemWindowDecoration(startColor: Colors.blue)),
-            buttonPosition: ButtonPosition.TRAILING);
+     
 
-        SystemWindowFooter footer = SystemWindowFooter(
-            buttons: [
-              SystemWindowButton(
-                text: SystemWindowText(
-                    text: object.data.createdDate.toString(),
-                    fontSize: 11,
-                    textColor: Colors.black),
-                tag: "date",
-                width: 0,
-                padding: SystemWindowPadding(right: 10, bottom: 10, top: 10),
-                height: SystemWindowButton.WRAP_CONTENT,
-                decoration: SystemWindowDecoration(
-                  startColor: Colors.grey.shade200,
-                  endColor: Colors.grey.shade200,
-                ),
-                margin: SystemWindowMargin(right: 25),
-              ),
-              SystemWindowButton(
-                text: SystemWindowText(
-                    text: "Close", fontSize: 12, textColor: Colors.white),
-                tag: "close_button",
-                width: 0,
-                padding:
-                    SystemWindowPadding(left: 10, right: 10, bottom: 7, top: 7),
-                height: 40,
-                decoration: SystemWindowDecoration(
-                    startColor: Colors.red,
-                    endColor: Colors.red,
-                    borderWidth: 0,
-                    borderRadius: 10),
-                margin: SystemWindowMargin(right: 10),
-              ),
-              SystemWindowButton(
-                text: SystemWindowText(
-                    text: "Open", fontSize: 12, textColor: Colors.white),
-                tag: "open_button",
-                width: 0,
-                padding:
-                    SystemWindowPadding(left: 10, right: 10, bottom: 7, top: 7),
-                height: 40,
-                decoration: SystemWindowDecoration(
-                    startColor: Colors.green,
-                    endColor: Colors.green,
-                    borderWidth: 0,
-                    borderRadius: 10),
-              ),
-            ],
-            padding: SystemWindowPadding(right: 16, bottom: 12, top: 10),
-            decoration:
-                SystemWindowDecoration(startColor: Colors.grey.shade200),
-            buttonsPosition: ButtonPosition.CENTER);
+        // SystemWindowHeader header = SystemWindowHeader(
+        //     title: SystemWindowText(
+        //         text: "Incoming Call", fontSize: 12, textColor: Colors.black45),
+        //     padding: SystemWindowPadding.setSymmetricPadding(12, 12),
+        //     subTitle: SystemWindowText(
+        //         text: "${status1.number}",
+        //         fontSize: 16,
+        //         fontWeight: FontWeight.BOLD,
+        //         textColor: Colors.black87),
+        //     decoration: SystemWindowDecoration(startColor: Colors.blue),
+        //     button: SystemWindowButton(
+        //         text: SystemWindowText(
+        //             text: object.data.clientName.toString(),
+        //             fontSize: 16,
+        //             textColor: Colors.black,
+        //             fontWeight: FontWeight.BOLD),
+        //         tag: "personal_btn",
+        //         decoration: SystemWindowDecoration(startColor: Colors.blue)),
+        //     buttonPosition: ButtonPosition.TRAILING);
 
-        SystemWindowBody body = SystemWindowBody(
-          rows: [
-            EachRow(
-              columns: [
-                EachColumn(
-                  text: SystemWindowText(
-                    text: "Category",
-                    fontSize: 14,
-                    textColor: Colors.black,
-                  ),
-                  padding: SystemWindowPadding(right: 70),
-                ),
-                EachColumn(
-                  text: SystemWindowText(
-                      text: object.data.leadCategory.toString(),
-                      fontSize: 14,
-                      textColor: Colors.black,
-                      fontWeight: FontWeight.BOLD),
-                ),
-              ],
-              gravity: ContentGravity.LEFT,
-            ),
-            EachRow(
-              columns: [
-                EachColumn(
-                  text: SystemWindowText(
-                    text: "Last Update Date",
-                    fontSize: 14,
-                    textColor: Colors.black,
-                  ),
-                  padding: SystemWindowPadding(right: 20),
-                ),
-                EachColumn(
-                  text: SystemWindowText(
-                      text: object.data.lastCalledDate.toString(),
-                      fontSize: 14,
-                      textColor: Colors.black,
-                      fontWeight: FontWeight.BOLD),
-                ),
-              ],
-              gravity: ContentGravity.LEFT,
-              padding: SystemWindowPadding(top: 10),
-            ),
-            EachRow(
-              columns: [
-                EachColumn(
-                  text: SystemWindowText(
-                    text: "Last Remark",
-                    fontSize: 14,
-                    textColor: Colors.black,
-                  ),
-                  padding: SystemWindowPadding(right: 50),
-                ),
-                EachColumn(
-                  text: SystemWindowText(
-                      text: object.data.remark.toString(),
-                      fontSize: 14,
-                      textColor: Colors.black,
-                      fontWeight: FontWeight.BOLD),
-                ),
-              ],
-              gravity: ContentGravity.LEFT,
-              padding: SystemWindowPadding(top: 10),
-            ),
-            EachRow(
-              columns: [
-                EachColumn(
-                  text: SystemWindowText(
-                    text: "Last Status",
-                    fontSize: 14,
-                    textColor: Colors.black,
-                  ),
-                  padding: SystemWindowPadding(right: 50),
-                ),
-                EachColumn(
-                  text: SystemWindowText(
-                      text: object.data.status.toString(),
-                      fontSize: 14,
-                      textColor: Colors.black,
-                      fontWeight: FontWeight.BOLD),
-                ),
-              ],
-              gravity: ContentGravity.LEFT,
-              padding: SystemWindowPadding(top: 10),
-            ),
-          ],
-          padding: SystemWindowPadding(left: 16, right: 16, bottom: 5, top: 12),
-          decoration: SystemWindowDecoration(startColor: Colors.grey.shade200),
+        // SystemWindowFooter footer = SystemWindowFooter(
+        //     buttons: [
+        //       SystemWindowButton(
+        //         text: SystemWindowText(
+        //             text: object.data.createdDate.toString(),
+        //             fontSize: 11,
+        //             textColor: Colors.black),
+        //         tag: "date",
+        //         width: 0,
+        //         padding: SystemWindowPadding(right: 10, bottom: 10, top: 10),
+        //         height: SystemWindowButton.WRAP_CONTENT,
+        //         decoration: SystemWindowDecoration(
+        //           startColor: Colors.grey.shade200,
+        //           endColor: Colors.grey.shade200,
+        //         ),
+        //         margin: SystemWindowMargin(right: 25),
+        //       ),
+        //       SystemWindowButton(
+        //         text: SystemWindowText(
+        //             text: "Close", fontSize: 12, textColor: Colors.white),
+        //         tag: "close_button",
+        //         width: 0,
+        //         padding:
+        //             SystemWindowPadding(left: 10, right: 10, bottom: 7, top: 7),
+        //         height: 40,
+        //         decoration: SystemWindowDecoration(
+        //             startColor: Colors.red,
+        //             endColor: Colors.red,
+        //             borderWidth: 0,
+        //             borderRadius: 10),
+        //         margin: SystemWindowMargin(right: 10),
+        //       ),
+        //       SystemWindowButton(
+        //         text: SystemWindowText(
+        //             text: "Open", fontSize: 12, textColor: Colors.white),
+        //         tag: "open_button",
+        //         width: 0,
+        //         padding:
+        //             SystemWindowPadding(left: 10, right: 10, bottom: 7, top: 7),
+        //         height: 40,
+        //         decoration: SystemWindowDecoration(
+        //             startColor: Colors.green,
+        //             endColor: Colors.green,
+        //             borderWidth: 0,
+        //             borderRadius: 10),
+        //       ),
+        //     ],
+        //     padding: SystemWindowPadding(right: 16, bottom: 12, top: 10),
+        //     decoration:
+        //         SystemWindowDecoration(startColor: Colors.grey.shade200),
+        //     buttonsPosition: ButtonPosition.CENTER);
+
+        // SystemWindowBody body = SystemWindowBody(
+        //   rows: [
+        //     EachRow(
+        //       columns: [
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //             text: "Category",
+        //             fontSize: 14,
+        //             textColor: Colors.black,
+        //           ),
+        //           padding: SystemWindowPadding(right: 70),
+        //         ),
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //               text: object.data.leadCategory.toString(),
+        //               fontSize: 14,
+        //               textColor: Colors.black,
+        //               fontWeight: FontWeight.BOLD),
+        //         ),
+        //       ],
+        //       gravity: ContentGravity.LEFT,
+        //     ),
+        //     EachRow(
+        //       columns: [
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //             text: "Last Update Date",
+        //             fontSize: 14,
+        //             textColor: Colors.black,
+        //           ),
+        //           padding: SystemWindowPadding(right: 20),
+        //         ),
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //               text: object.data.lastCalledDate.toString(),
+        //               fontSize: 14,
+        //               textColor: Colors.black,
+        //               fontWeight: FontWeight.BOLD),
+        //         ),
+        //       ],
+        //       gravity: ContentGravity.LEFT,
+        //       padding: SystemWindowPadding(top: 10),
+        //     ),
+        //     EachRow(
+        //       columns: [
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //             text: "Last Remark",
+        //             fontSize: 14,
+        //             textColor: Colors.black,
+        //           ),
+        //           padding: SystemWindowPadding(right: 50),
+        //         ),
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //               text: object.data.remark.toString(),
+        //               fontSize: 14,
+        //               textColor: Colors.black,
+        //               fontWeight: FontWeight.BOLD),
+        //         ),
+        //       ],
+        //       gravity: ContentGravity.LEFT,
+        //       padding: SystemWindowPadding(top: 10),
+        //     ),
+        //     EachRow(
+        //       columns: [
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //             text: "Last Status",
+        //             fontSize: 14,
+        //             textColor: Colors.black,
+        //           ),
+        //           padding: SystemWindowPadding(right: 50),
+        //         ),
+        //         EachColumn(
+        //           text: SystemWindowText(
+        //               text: object.data.status.toString(),
+        //               fontSize: 14,
+        //               textColor: Colors.black,
+        //               fontWeight: FontWeight.BOLD),
+        //         ),
+        //       ],
+        //       gravity: ContentGravity.LEFT,
+        //       padding: SystemWindowPadding(top: 10),
+        //     ),
+        //   ],
+        //   padding: SystemWindowPadding(left: 16, right: 16, bottom: 5, top: 12),
+        //   decoration: SystemWindowDecoration(startColor: Colors.grey.shade200),
+        // );
+        // SystemAlertWindow.showSystemWindow(
+        //     height: 250,
+        //     width: 340,
+        //     header: header,
+        //     body: body,
+        //     footer: footer,
+        //     margin: SystemWindowMargin(top: 100, bottom: 0),
+        //     gravity: SystemWindowGravity.TOP,
+        //     notificationTitle: "Incoming Call",
+        //     notificationBody: "+1 646 980 4741",
+        //     prefMode: SystemWindowPrefMode.OVERLAY);
+        if (await FlutterOverlayWindow.isActive()) return;
+        await FlutterOverlayWindow.showOverlay(
+          enableDrag: true,
+          overlayTitle: "Login2 pro",
+          overlayContent: 'Overlay Enabled',
+          flag: OverlayFlag.defaultFlag,
+          visibility: NotificationVisibility.visibilityPublic,
+          positionGravity: PositionGravity.auto,
+          height: 500,
+          width: WindowSize.matchParent,
+          startPosition: const OverlayPosition(0, 0),
         );
-        SystemAlertWindow.showSystemWindow(
-            height: 250,
-            width: 340,
-            header: header,
-            body: body,
-            footer: footer,
-            margin: SystemWindowMargin(top: 100, bottom: 0),
-            gravity: SystemWindowGravity.TOP,
-            notificationTitle: "Incoming Call",
-            notificationBody: "+1 646 980 4741",
-            prefMode: SystemWindowPrefMode.OVERLAY);
 
         break;
 
       case PhoneStateStatus.CALL_ENDED:
-      log('~~ CALL_ENDED ~~~');
+        log('~~ CALL_ENDED ~~~');
         if (uploadCall == false && doUpload == true) {
           log('~~~~~~~~~~ UPLOADING ~~~~~~~~~~~');
           doUpload = false;
@@ -375,7 +389,7 @@ void showWindow() async {
             if (sortedLogs.isNotEmpty) {
               var lastCall = sortedLogs.first;
               var callType = lastCall.callType
-                  .toString() 
+                  .toString()
                   .substring(lastCall.callType.toString().indexOf('.') + 1);
               //  log(callType);
               if (perm.data!.outgoing == true && callType == 'outgoing') {
@@ -436,15 +450,12 @@ void showWindow() async {
         }
         uploadCall = true;
         break;
-        
+
       default:
     }
   }
 }
 
-
-
 void onDeviceReboot() {
   log('Device has rebooted!');
 }
-

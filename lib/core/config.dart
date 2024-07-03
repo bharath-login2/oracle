@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:system_alert_window/system_alert_window.dart';
+
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 
 import 'common.dart';
 
@@ -20,7 +21,7 @@ class Config {
   }
 
   static requestPermission() async {
-    SystemWindowPrefMode prefMode = SystemWindowPrefMode.OVERLAY;
-    await SystemAlertWindow.requestPermissions(prefMode: prefMode);
+    final bool? res =
+                    await FlutterOverlayWindow.requestPermission();
   }
 }

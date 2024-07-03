@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/screens/myApp.dart';
+import 'package:login2/screens/overlay/overlay.dart';
 import 'package:login2/service/backgroundService.dart';
+import 'package:phone_state/phone_state.dart';
 import 'package:workmanager/workmanager.dart';
 
 MethodChannel _channel = const MethodChannel('onreBootInitFunctionChannel');
@@ -39,6 +41,34 @@ void callbackDispatcher() {
       return true;
     }
   });
+}
+
+PhoneState status1 = PhoneState.nothing();
+String number ="";
+
+void setStream() {
+  PhoneState.stream.listen((event) {
+    if (event != null) {
+      status1 = event;
+      if(status1.number != null){
+        number = status1.number.toString();
+      }
+    }
+  });
+}
+
+@pragma("vm:entry-point")
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  setStream();
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: TrueCallerOverlay(
+        number: status1.number.toString(),
+      ),
+    ),
+  );
 }
 
 Future<void> main() async {
