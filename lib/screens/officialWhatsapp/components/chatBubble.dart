@@ -107,7 +107,7 @@ Widget chatBubble(msg, context
                           width: double.infinity,
                           decoration: const BoxDecoration(
                               color: Colors.white),
-                          child:  Column(
+                          child:  const Column(
                             crossAxisAlignment:
                             CrossAxisAlignment.start,
                             children: [

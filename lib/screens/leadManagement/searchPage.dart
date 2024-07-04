@@ -1,6 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
-import 'package:login2/screens/leadManagement/addFollowup.dart';
+import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/lead_management/cloudCallModel.dart';

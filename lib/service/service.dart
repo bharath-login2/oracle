@@ -149,6 +149,7 @@ import '../models/lead_management/createFolderModel.dart';
 import '../models/lead_management/deleteFolderAndFileModel.dart';
 import '../models/lead_management/deleteLeadMileStoneModel.dart';
 import '../models/lead_management/deleteLeadVoiceModel.dart';
+import '../models/lead_management/delete_notification.dart';
 import '../models/lead_management/editLeadSubCategoryModel.dart';
 import '../models/lead_management/leadCategoryStaffWiseModel.dart';
 import '../models/lead_management/leadDeatailsModelAdd.dart';
@@ -254,7 +255,8 @@ class HttpService {
     }
   }
 
-  static Future login(String username,String  pass,String firebaseToken) async {
+  static Future login(
+      String username, String pass, String firebaseToken) async {
     var params = {
       "phoneNumber": username,
       "password": pass,
@@ -2370,6 +2372,24 @@ class HttpService {
     }
   }
 
+  static Future deleteNotification(token, String notificaionId) async {
+    var params = {
+      "token": token,
+      "notification_id": notificaionId,
+    };
+
+    try {
+      var result = await _dio.get("${await Config.getUrl()}delete_notification",
+          queryParameters: params);
+      if (result.statusCode == 200) {
+        DeleteNotification model = DeleteNotification.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future readLeadNotification(token, notificationId) async {
     var params = {
       "token": token,
@@ -3195,9 +3215,9 @@ class HttpService {
       "is_paid": isPaid,
       "actual_cost": actualCost,
       "create_invoice": createInvoice,
-      "check_id_val":checkIdVal
+      "check_id_val": checkIdVal
     });
-    
+
     try {
       var result = await _dio.post(
           "${await Config.getUrl()}postexistingCustomerRenewal",
@@ -3234,8 +3254,7 @@ class HttpService {
       actualCost,
       createInvoice,
       templateId,
-      checkIdVal
-      ) async {
+      checkIdVal) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "is_paid": isPaid,
@@ -3260,7 +3279,7 @@ class HttpService {
       "email_id ": email,
       "actual_cost": actualCost,
       "create_invoice": createInvoice,
-      "check_id_val":checkIdVal
+      "check_id_val": checkIdVal
     });
     try {
       var result = await _dio.post(
@@ -3274,18 +3293,9 @@ class HttpService {
       log("error: $e");
     }
   }
-  
-  static Future postExistingCustom(
-      renewalProducts,
-      clientId,
-      cost,
-      templateId,
-      startDate,
-      endDate,
-      remarks,
-      branchId,
-      actualCost,
-      checkIdVal) async {
+
+  static Future postExistingCustom(renewalProducts, clientId, cost, templateId,
+      startDate, endDate, remarks, branchId, actualCost, checkIdVal) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_product": jsonEncode(renewalProducts),
@@ -3297,8 +3307,7 @@ class HttpService {
       "remarks": remarks,
       "branch_id": branchId ?? "",
       "actual_cost": actualCost,
-      "check_id_val":checkIdVal
-
+      "check_id_val": checkIdVal
     });
     try {
       var result = await _dio.post(
@@ -3334,8 +3343,7 @@ class HttpService {
       email,
       actualCost,
       templateId,
-      checkIdVal
-      ) async {
+      checkIdVal) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "branch_id": branchId ?? "",
@@ -3358,7 +3366,7 @@ class HttpService {
       "cost": cost,
       "email_id ": email,
       "actual_cost": actualCost,
-      "check_id_val":checkIdVal
+      "check_id_val": checkIdVal
     });
     try {
       var result = await _dio.post(
@@ -3372,7 +3380,6 @@ class HttpService {
       log("error: $e");
     }
   }
-
 
   static Future renewalList(page, pageSize, clientId, fromDate, toDate,
       daysToExpire, String searchKey, searchMonth, String expireIn) async {

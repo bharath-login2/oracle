@@ -5,7 +5,7 @@ import '../../core/common.dart';
 import '../../screens/authentication/login.dart';
 import '../../screens/bottomNavigationBar.dart';
 import '../../screens/homePage.dart';
-import '../../screens/leadManagement/addLeads.dart';
+import 'leadManagement/add_leads.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/settings/whatsappSettings.dart';
 import 'package:flutter/material.dart';

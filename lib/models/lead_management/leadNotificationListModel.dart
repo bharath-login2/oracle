@@ -1,65 +1,57 @@
+// To parse this JSON data, do
+//
+//     final leadNotificationListModel = leadNotificationListModelFromJson(jsonString);
+
+import 'dart:convert';
+
+LeadNotificationListModel leadNotificationListModelFromJson(String str) =>
+    LeadNotificationListModel.fromJson(json.decode(str));
+
 class LeadNotificationListModel {
-  bool? status;
-  bool? message;
-  List<Data>? data;
+  bool status;
+  bool message;
+  List<Datum> data;
 
-  LeadNotificationListModel({this.status, this.message, this.data});
+  LeadNotificationListModel({
+    required this.status,
+    required this.message,
+    required this.data,
+  });
 
-  LeadNotificationListModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    message = json['message'];
-    if (json['data'] != null) {
-      data = <Data>[];
-      json['data'].forEach((v) {
-        data!.add(Data.fromJson(v));
-      });
-    }
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['status'] = status;
-    data['message'] = message;
-    if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
+  factory LeadNotificationListModel.fromJson(Map<String, dynamic> json) =>
+      LeadNotificationListModel(
+        status: json["status"],
+        message: json["message"],
+        data: List<Datum>.from(json["data"].map((x) => Datum.fromJson(x))),
+      );
 }
 
-class Data {
-  String? notificationId;
-  String? title;
-  String? content;
-  String? leadMasterId;
-  String? dateTime;
-  bool? isRead;
+class Datum {
+  String notificationId;
+  String title;
+  String content;
+  String id;
+  dynamic dateTime;
+  bool isRead;
+  String type;
 
-  Data(
-      {this.notificationId,
-        this.title,
-        this.content,
-        this.leadMasterId,
-        this.dateTime,
-        this.isRead});
+  Datum({
+    required this.notificationId,
+    required this.title,
+    required this.content,
+    required this.id,
+    required this.dateTime,
+    required this.isRead,
+    required this.type,
+  });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    notificationId = json['notification_id'];
-    title = json['title'];
-    content = json['content'];
-    leadMasterId = json['lead_master_id'];
-    dateTime = json['date_time'];
-    isRead = json['is_read'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['notification_id'] = notificationId;
-    data['title'] = title;
-    data['content'] = content;
-    data['lead_master_id'] = leadMasterId;
-    data['date_time'] = dateTime;
-    data['is_read'] = isRead;
-    return data;
-  }
+  factory Datum.fromJson(Map<String, dynamic> json) => Datum(
+        notificationId: json["notification_id"],
+        title: json["title"],
+        content: json["content"],
+        id: json["id"],
+        dateTime: json["date_time"],
+        isRead: json["is_read"],
+        type: json["type"],
+      );
 }

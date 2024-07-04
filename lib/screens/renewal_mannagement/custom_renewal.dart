@@ -68,8 +68,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController startDateNew = TextEditingController();
   TextEditingController endDateExisting = TextEditingController();
   TextEditingController endDateNew = TextEditingController();
-  TextEditingController productCostExisting = TextEditingController();
-  TextEditingController productCostNew = TextEditingController();
+  TextEditingController totalCostExisting = TextEditingController();
+  TextEditingController totalCostNew = TextEditingController();
   TextEditingController remindMeNew = TextEditingController();
   TextEditingController remindMeExisting = TextEditingController();
   TextEditingController remarkExisting = TextEditingController();
@@ -79,7 +79,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController invoiceNumber = TextEditingController();
   TextEditingController productNameExisting = TextEditingController();
   TextEditingController productNameNew = TextEditingController();
-  TextEditingController productQuantity = TextEditingController(text: '10');
+  TextEditingController prodRateExisting = TextEditingController();
+  TextEditingController prodTaxExisting = TextEditingController();
+  TextEditingController prodAmountExisting = TextEditingController();
+  TextEditingController prodRateNew = TextEditingController();
+  TextEditingController prodTaxNew = TextEditingController();
+  TextEditingController prodAmountNew = TextEditingController();
+  TextEditingController prodDetailsExisting = TextEditingController();
+  TextEditingController prodDetailsNew = TextEditingController();
+  TextEditingController productQuantity = TextEditingController(text: '1');
 
   getBranch() async {
     multiBranch = await Common.getSharedPref("multiBranch");
@@ -147,7 +155,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
       postExistingResponse = await HttpService.postExistingCustom(
           productsExisting,
           customerIdExisting,
-          productCostExisting.text,
+          totalCostExisting.text,
           templateIdExisting,
           startDateExisting.text,
           endDateExisting.text,
@@ -198,7 +206,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           productsNew,
           startDateNew.text,
           endDateNew.text,
-          productCostNew.text,
+          totalCostNew.text,
           email.text,
           totalProductCostNew,
           templateIdNew,
@@ -404,6 +412,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18),
                                 ),
+                                const SizedBox(height: 5.0),
                                 TextFormField(
                                   controller: productNameExisting,
                                   readOnly: true,
@@ -417,7 +426,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                   //   return null;
                                   // },
                                   decoration: const InputDecoration(
-                                    labelText: 'Products *',
+                                    labelText: 'Product *',
                                     prefixIcon:
                                         Icon(Icons.person, color: Colors.grey),
                                     border: OutlineInputBorder(),
@@ -430,39 +439,87 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                    controller: productCostExisting,
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Please Enter Project Cost";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                        labelText: 'Rate *',
-                                        prefixIcon: Icon(Icons.currency_rupee,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                                                      ),
-                                  ),
-                                Expanded(
-                                  child:  Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: prodRateExisting,
+                                        validator: (value) {
+                                          if (value!.isEmpty) {
+                                            return "Please Enter Project Cost";
+                                          }
+                                          return null;
+                                        },
+                                        decoration: const InputDecoration(
+                                            labelText: 'Rate *',
+                                            prefixIcon: Icon(
+                                                Icons.currency_rupee,
+                                                color: Colors.grey),
+                                            border: OutlineInputBorder(),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey),
+                                            ),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey)),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    Expanded(
+                                      child: Row(
                                         children: <Widget>[
+                                          GestureDetector(
+                                            onTap: () {
+                                              int currentValue = int.parse(
+                                                  productQuantity.text);
+                                              setState(() {
+                                                currentValue--;
+                                                productQuantity
+                                                    .text = (currentValue > 0
+                                                        ? currentValue
+                                                        : 0)
+                                                    .toString(); // decrementing value
+                                              });
+                                            },
+                                            child: Container(
+                                              height: 45,
+                                              width: 30,
+                                              decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.grey),
+                                                  borderRadius:
+                                                      const BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(
+                                                                  8),
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  8))),
+                                              child: const Center(
+                                                  child: Icon(
+                                                Icons.arrow_left,
+                                                size: 30,
+                                              )),
+                                            ),
+                                          ),
                                           Expanded(
                                             flex: 1,
                                             child: TextFormField(
                                               textAlign: TextAlign.center,
                                               decoration: InputDecoration(
+                                                labelText: "Quantity",
+                                                focusedBorder:
+                                                    const OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey),
+                                                ),
+                                                labelStyle: const TextStyle(
+                                                    color: Colors.grey),
                                                 contentPadding:
-                                                    const EdgeInsets.all(8.0),
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8.0,
+                                                        vertical: 14),
                                                 border: OutlineInputBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(
@@ -477,120 +534,196 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                               ),
                                             ),
                                           ),
-                                          SizedBox(
-                                            height: 38.0,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: <Widget>[
-                                                Container(
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    border: Border(
-                                                      bottom: BorderSide(
-                                                        width: 0.5,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  child: InkWell(
-                                                    child: const Icon(
-                                                      Icons.arrow_drop_up,
-                                                      size: 18.0,
-                                                    ),
-                                                    onTap: () {
-                                                      int currentValue =
-                                                          int.parse(
-                                                              productQuantity.text);
-                                                      setState(() {
-                                                        currentValue++;
-                                                        productQuantity.text =
-                                                            (currentValue)
-                                                                .toString(); // incrementing value
-                                                      });
-                                                    },
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  child: const Icon(
-                                                    Icons.arrow_drop_down,
-                                                    size: 18.0,
-                                                  ),
-                                                  onTap: () {
-                                                    int currentValue =
-                                                        int.parse(
-                                                            productQuantity.text);
-                                                    setState(() {
-                                                      currentValue--;
-                                                      productQuantity
-                                                          .text = (currentValue >
-                                                                  0
-                                                              ? currentValue
-                                                              : 0)
-                                                          .toString(); // decrementing value
-                                                    });
-                                                  },
-                                                ),
-                                              ],
+                                          GestureDetector(
+                                            onTap: () {
+                                              int currentValue = int.parse(
+                                                  productQuantity.text);
+                                              setState(() {
+                                                currentValue++;
+                                                productQuantity.text =
+                                                    (currentValue)
+                                                        .toString(); // incrementing value
+                                              });
+                                            },
+                                            child: Container(
+                                              height: 45,
+                                              width: 30,
+                                              decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.grey),
+                                                  borderRadius:
+                                                      const BorderRadius.only(
+                                                          bottomRight:
+                                                              Radius.circular(
+                                                                  8),
+                                                          topRight:
+                                                              Radius.circular(
+                                                                  8))),
+                                              child: const Center(
+                                                  child: Icon(
+                                                Icons.arrow_right,
+                                                size: 30,
+                                              )),
                                             ),
                                           ),
                                         ],
                                       ),
-                                   
-                                ),
-                                ],
-                                ),
-                                const SizedBox(height: 14.0),
-                                 Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                    controller: productCostExisting,
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Please Enter Project Cost";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                        labelText: 'Rate *',
-                                        prefixIcon: Icon(Icons.currency_rupee,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                                                      ),
-                                  ),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: productCostExisting,
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Please Enter Project Cost";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                        labelText: 'Project Cost *',
-                                        prefixIcon: Icon(Icons.currency_rupee,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                ),
-                                ],
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 14.0),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: prodTaxExisting,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Tax(in %)',
+                                            prefixIcon: Icon(Icons.percent,
+                                                color: Colors.grey),
+                                            border: OutlineInputBorder(),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey),
+                                            ),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey)),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: prodAmountExisting,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Amount',
+                                            prefixIcon: Icon(
+                                                Icons.currency_rupee,
+                                                color: Colors.grey),
+                                            border: OutlineInputBorder(),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey),
+                                            ),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14.0),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        maxLines: 2,
+                                        controller: prodDetailsExisting,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Details',
+                                            prefixIcon: Icon(Icons.receipt_long,
+                                                color: Colors.grey),
+                                            border: OutlineInputBorder(),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey),
+                                            ),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey)),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (productName.contains(
+                                            productNameExisting.text)) {
+                                          Common.toastMessaage(
+                                              'Already Added', Colors.red);
+                                        } else {
+                                          productsExisting.add({
+                                            "prd_id":
+                                                productNameExisting,
+                                                "prd_name":
+                                                productNameExisting.text,
+                                            "prd_rate":
+                                                prodRateExisting.text,
+                                            "prd_qty":
+                                                productQuantity.text,
+                                            "prd_tax": prodTaxExisting.text,
+                                            "prd_amount":prodAmountExisting.text,
+                                            "prd_details":prodDetailsExisting.text
+                                          });
+                                          productName
+                                              .add(productNameExisting.text);
+                                              setState(() {
+                                              });
+                                        }
+                                      },
+                                      child: Container(
+                                        height: 50,
+                                        width: 100,
+                                        decoration: BoxDecoration(
+                                            color: Colors.green,
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                        child: const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add,
+                                              color: Colors.white,
+                                            ),
+                                            Text(
+                                              " Add",
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                const SizedBox(height: 14.0),
+                                ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: productsExisting.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16.0, horizontal: 8.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  .65,
+                                              child: Text(
+                                                  " ${index + 1}   ${productsExisting[index]["prd_name"]}   Qty:${productsExisting[index]["prd_qty"]}"),
+                                            ),
+                                            InkWell(
+                                                onTap: () {
+                                                  productsExisting
+                                                      .removeAt(index);
+                                                  setState(() {});
+                                                },
+                                                child: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                ))
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                const SizedBox(height: 25.0),
                                 TextFormField(
                                   controller: startDateExisting,
                                   readOnly: true,
@@ -667,7 +800,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: productCostExisting,
+                                  controller: totalCostExisting,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return "Please Enter Project Cost";
@@ -709,7 +842,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 TextFormField(
                                   controller: remarkExisting,
                                   decoration: const InputDecoration(
-                                      labelText: 'Remarks',
+                                      labelText: 'productsExisting',
                                       prefixIcon: Icon(Icons.description,
                                           color: Colors.grey),
                                       border: OutlineInputBorder(),
@@ -1014,7 +1147,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                                                               for (int ind = 0; ind < productsNew.length; ind++) {
                                                                                 totalProductCostNew += double.parse((await productsNew[ind])["prd_cost"]);
                                                                               }
-                                                                              productCostNew.text = (totalProductCostNew).toString();
+                                                                              totalCostNew.text = (totalProductCostNew).toString();
                                                                               print(productsNew.length);
                                                                               setState(() {});
 
@@ -1205,7 +1338,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 ),
                                 const SizedBox(height: 14.0),
                                 TextFormField(
-                                  controller: productCostNew,
+                                  controller: totalCostNew,
                                   validator: (value) {
                                     if (value!.isEmpty) {
                                       return "Please Enter Project Cost";
@@ -1339,7 +1472,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 TextFormField(
                                   controller: remarkNew,
                                   decoration: const InputDecoration(
-                                      labelText: 'Remarks',
+                                      labelText: 'productsExisting',
                                       prefixIcon: Icon(Icons.description,
                                           color: Colors.grey),
                                       border: OutlineInputBorder(),
@@ -1494,7 +1627,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               totalProductCostNew += double.parse(
                                   (await productsNew[i])["prd_cost"]);
                             }
-                            productCostNew.text =
+                            totalCostNew.text =
                                 (totalProductCostNew).toString();
                           }
 
@@ -1599,32 +1732,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 filteredTemplates[index].templateName;
                             templateIdExisting = filteredTemplates[index].id;
                           } else {
-                            typeDuration = filteredProducts[index].noOfDays;
-
-                            if (startDateExisting.text.isNotEmpty) {
-                              final endValue = selectedValue!
-                                  .add(Duration(days: int.parse(typeDuration)));
-                              endDateExisting.text =
-                                  DateFormat('dd-MM-yyyy').format(endValue);
-                            }
-                            if (productName.contains(
-                                filteredProducts[index].productName)) {
-                            } else {
-                              productsExisting.add({
-                                "prd_id": filteredProducts[index].id,
-                                "prd_cost": filteredProducts[index].sellingPrice
-                              });
-                              productName
-                                  .add(filteredProducts[index].productName);
-                            }
-                            totalProductCostExisting = 0;
-
-                            for (int i = 0; i < productsExisting.length; i++) {
-                              totalProductCostExisting += double.parse(
-                                  (await productsExisting[i])["prd_cost"]);
-                            }
-                            productCostExisting.text =
-                                (totalProductCostExisting).toString();
+                            productNameExisting.text =
+                                filteredProducts[index].productName;
                           }
                           Navigator.pop(context);
                           setState(() {});

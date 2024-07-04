@@ -1,20 +1,15 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_utils/get_utils.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/addLeadModel.dart';
 import '../../models/lead_management/checkLeadPhoneNumberModel.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
-import '../../screens/homePage.dart';
-import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
-import 'leadDetails.dart';
 
 // ignore: must_be_immutable
 class AddLeads extends StatefulWidget {
@@ -92,9 +87,20 @@ class _AddLeadsState extends State<AddLeads> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    clientName.text = widget.clientName ?? "";
+    contactNo.text = trimPlus91(widget.phoneNumber ?? "");
     getData();
+  }
+
+  String trimPlus91(String mobileNumber) {
+    if (mobileNumber.startsWith('+91')) {
+      return mobileNumber.substring(3);
+    } else if (mobileNumber.startsWith('91')) {
+      return mobileNumber.substring(2);
+    } else {
+      return mobileNumber;
+    }
   }
 
   getData() async {
@@ -405,8 +411,13 @@ class _AddLeadsState extends State<AddLeads> {
                                                               .start,
                                                       children: [
                                                         SizedBox(
-                                                          width: MediaQuery.of(context).size.height*.8,
-                                                          child: ListView.builder(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height *
+                                                              .8,
+                                                          child:
+                                                              ListView.builder(
                                                             shrinkWrap: true,
                                                             itemCount:
                                                                 commonDetails!
@@ -548,7 +559,10 @@ class _AddLeadsState extends State<AddLeads> {
                                               title:
                                                   const Text('Lead Category'),
                                               content: SizedBox(
-                                                width:MediaQuery.of(context).size.width *.8,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .8,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!
@@ -594,8 +608,9 @@ class _AddLeadsState extends State<AddLeads> {
                                                               .leadCategory[ind]
                                                               .leadCategory
                                                               .toString(),
-                                                          style: const TextStyle(
-                                                              fontSize: 18),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
                                                         ),
                                                       ),
                                                     );
@@ -651,23 +666,21 @@ class _AddLeadsState extends State<AddLeads> {
                                                         itemCount:
                                                             leadSubTypeList!
                                                                 .data!.length,
-                                                        itemBuilder:
-                                                            (context, subIndex) {
+                                                        itemBuilder: (context,
+                                                            subIndex) {
                                                           return InkWell(
                                                             onTap: () {
                                                               setState(() {
-                                                                leadSubType =
-                                                                    leadSubTypeList!
-                                                                        .data![
-                                                                            subIndex]
-                                                                        .leadSubCategory
-                                                                        .toString();
-                                                                leadSubTypeId =
-                                                                    leadSubTypeList!
-                                                                        .data![
-                                                                            subIndex]
-                                                                        .leadSubCategoryId
-                                                                        .toString();
+                                                                leadSubType = leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategory
+                                                                    .toString();
+                                                                leadSubTypeId = leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategoryId
+                                                                    .toString();
                                                                 Navigator.pop(
                                                                     context,
                                                                     true);
@@ -730,8 +743,14 @@ class _AddLeadsState extends State<AddLeads> {
                                               scrollable: true,
                                               title: const Text('Priority'),
                                               content: SizedBox(
-                                                height: MediaQuery.of(context).size.height*.18,
-                                                          width: MediaQuery.of(context).size.height*.8,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .18,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .8,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!
@@ -764,8 +783,9 @@ class _AddLeadsState extends State<AddLeads> {
                                                               .priority[ind]
                                                               .priority
                                                               .toString(),
-                                                          style: const TextStyle(
-                                                              fontSize: 18),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
                                                         ),
                                                       ),
                                                     );

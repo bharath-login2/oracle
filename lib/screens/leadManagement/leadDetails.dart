@@ -39,12 +39,12 @@ import '../../models/lead_management/renameFolderModel.dart';
 import '../../models/lead_management/unsetReminderModel.dart';
 import '../../models/lead_management/updateReminderSetings.dart';
 import '../../models/lead_management/uploadAudioRecoed.dart';
-import '../../screens/leadManagement/addFollowup.dart';
+import 'add_followup.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/leadManagement/editFollowup.dart';
 import '../../screens/leadManagement/editLead.dart';
 import '../../service/service.dart';
-import 'addLeads.dart';
+import 'add_leads.dart';
 import 'audio_controller.dart';
 import 'docViewWebView.dart';
 import 'imageUploadController.dart';
@@ -838,35 +838,33 @@ class _LeadDetailsState extends State<LeadDetails> {
                                     ),
                                   ),
                                 ),
-                                // secondaryBackground: Container(
-                                //   color: Colors.amber,
-                                //   child: const Align(
-                                //     alignment: Alignment.centerRight,
-                                //     child: Row(
-                                //       mainAxisAlignment: MainAxisAlignment.end,
-                                //       children: <Widget>[
-                                //         Icon(
-                                //           Icons.transfer_within_a_station,
-                                //           color: Colors.black,
-                                //         ),
-                                //         SizedBox(
-                                //           width: 20,
-                                //         ),
-                                //         Text(
-                                //           "Lead to Client",
-                                //           style: TextStyle(
-                                //             color: Colors.black,
-                                //             fontWeight: FontWeight.w700,
-                                //           ),
-                                //           textAlign: TextAlign.right,
-                                //         ),
-                                //         SizedBox(
-                                //           width: 20,
-                                //         ),
-                                //       ],
-                                //     ),
-                                //   ),
-                                // ),
+                                secondaryBackground: Container(
+                                  color: Colors.blue,
+                                  child: const Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                        ),
+                                      
+                                        Text(
+                                          " Add Followup",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                        SizedBox(
+                                          width: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 confirmDismiss: (direction) async {
                                   if (direction ==
                                       DismissDirection.startToEnd) {
@@ -943,206 +941,46 @@ class _LeadDetailsState extends State<LeadDetails> {
                                         await launch(url);
                                       }
                                     }
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => AddFollowup(
+                                              widget.token,
+                                              widget.editLead,
+                                              widget.deleteLead,
+                                              widget.cloudCall,
+                                              widget.callMasterId,
+                                              pageName: widget.pageName,
+                                              status: widget.status,
+                                              staff: widget.staff,
+                                              isCalled: widget.isCalled,
+                                              fromDate: widget.fromDate,
+                                              toDate: widget.toDate,
+                                              category: widget.category,
+                                              leadType: leadDetails!
+                                                  .data!.leadCategory,
+                                              leadTypeId: leadDetails!
+                                                  .data!.leadCategoryId,
+                                              leadSubType: leadDetails!
+                                                  .data!.leadSubCategory,
+                                              leadSubTypeId: leadDetails!
+                                                  .data!.leadSubCategoryId,
+                                              priority:
+                                                  leadDetails!.data!.priority,
+                                              priorityId:
+                                                  leadDetails!.data!.priorityId,
+                                              cost: leadDetails!.data!.cost,
+                                              address:
+                                                  leadDetails!.data!.address,
+                                              searchKey:
+                                                  widget.searchKey.toString(),
+                                              leadType1: widget.leadType)),
+                                    ).then((r) {
+                                      getData();
+                                    });
                                   }
-                                  // else {
-                                  //   showGeneralDialog(
-                                  //     barrierLabel: "showGeneralDialog",
-                                  //     barrierDismissible: true,
-                                  //     barrierColor:
-                                  //         Colors.black.withOpacity(0.6),
-                                  //     transitionDuration:
-                                  //         const Duration(milliseconds: 400),
-                                  //     context: context,
-                                  //     pageBuilder: (context, _, __) {
-                                  //       return StatefulBuilder(
-                                  //           builder: (context, setState) {
-                                  //         return Align(
-                                  //           alignment: Alignment.center,
-                                  //           child: IntrinsicHeight(
-                                  //             child: Padding(
-                                  //               padding: const EdgeInsets.only(
-                                  //                   left: 10, right: 10),
-                                  //               child: Container(
-                                  //                 width: double.maxFinite,
-                                  //                 clipBehavior: Clip.antiAlias,
-                                  //                 padding:
-                                  //                     const EdgeInsets.all(16),
-                                  //                 decoration:
-                                  //                     const BoxDecoration(
-                                  //                   color: Colors.white,
-                                  //                   borderRadius:
-                                  //                       BorderRadius.only(
-                                  //                     topLeft:
-                                  //                         Radius.circular(10),
-                                  //                     topRight:
-                                  //                         Radius.circular(10),
-                                  //                     bottomRight:
-                                  //                         Radius.circular(10),
-                                  //                     bottomLeft:
-                                  //                         Radius.circular(10),
-                                  //                   ),
-                                  //                 ),
-                                  //                 child: Material(
-                                  //                   child: Column(
-                                  //                     mainAxisAlignment:
-                                  //                         MainAxisAlignment
-                                  //                             .start,
-                                  //                     crossAxisAlignment:
-                                  //                         CrossAxisAlignment
-                                  //                             .start,
-                                  //                     children: [
-                                  //                       const SizedBox(
-                                  //                           height: 10),
-                                  //                       const Text(
-                                  //                         'Please  Confirm',
-                                  //                         style: TextStyle(
-                                  //                           fontSize: 18,
-                                  //                           fontWeight:
-                                  //                               FontWeight.w500,
-                                  //                         ),
-                                  //                       ),
-                                  //                       const SizedBox(
-                                  //                           height: 10),
-                                  //                       const Text(
-                                  //                         'Are you sure to convert this lead into a customer?',
-                                  //                         style: TextStyle(
-                                  //                           fontSize: 15,
-                                  //                           fontWeight:
-                                  //                               FontWeight.w400,
-                                  //                         ),
-                                  //                       ),
-                                  //                       CheckboxListTile(
-                                  //                           title: const Text(
-                                  //                               'Add  custom fields'),
-                                  //                           value:
-                                  //                               addCustomeFeild,
-                                  //                           // initial value of the checkbox
-                                  //                           onChanged:
-                                  //                               (bool? value) {
-                                  //                             setState(() {
-                                  //                               addCustomeFeild =
-                                  //                                   value!;
-                                  //                             });
-                                  //                           },
-                                  //                           controlAffinity:
-                                  //                               ListTileControlAffinity
-                                  //                                   .leading),
-                                  //                       const SizedBox(
-                                  //                         height: 10,
-                                  //                       ),
-                                  //                       Container(
-                                  //                         height: 40,
-                                  //                         width:
-                                  //                             double.maxFinite,
-                                  //                         decoration:
-                                  //                             const BoxDecoration(
-                                  //                           color: Color(
-                                  //                               0xFF3375e0),
-                                  //                           borderRadius:
-                                  //                               BorderRadius
-                                  //                                   .all(Radius
-                                  //                                       .circular(
-                                  //                                           8)),
-                                  //                         ),
-                                  //                         child:
-                                  //                             RawMaterialButton(
-                                  //                           onPressed:
-                                  //                               () async {
-                                  //                             Common.showProgressDialog(
-                                  //                                 context,
-                                  //                                 "Loading..");
-                                  //                             LeadConvertToClientModel
-                                  //                                 convertToClient =
-                                  //                                 await HttpService.leadConvertToClient(
-                                  //                                     widget
-                                  //                                         .token,
-                                  //                                     widget
-                                  //                                         .callMasterId,
-                                  //                                     addCustomeFeild);
-                                  //                             if (convertToClient
-                                  //                                     .status ==
-                                  //                                 true) {
-                                  //                               Common.toastMessaage(
-                                  //                                   convertToClient
-                                  //                                       .message,
-                                  //                                   Colors
-                                  //                                       .green);
-                                  //                               if (context
-                                  //                                   .mounted) {
-                                  //                                 Navigator
-                                  //                                     .push(
-                                  //                                   context,
-                                  //                                   MaterialPageRoute(
-                                  //                                       builder: (context) =>
-                                  //                                           LeadDetails(
-                                  //                                             widget.token,
-                                  //                                             widget.editLead,
-                                  //                                             widget.deleteLead,
-                                  //                                             widget.cloudCall,
-                                  //                                             callMasterId,
-                                  //                                             pageName: widget.pageName,
-                                  //                                             status: widget.status,
-                                  //                                             staff: widget.staff,
-                                  //                                             isCalled: widget.isCalled,
-                                  //                                             fromDate: widget.fromDate,
-                                  //                                             toDate: widget.toDate,
-                                  //                                             category: widget.category,
-                                  //                                             searchKey: widget.searchKey,
-                                  //                                             leadType: widget.leadType,
-                                  //                                           )),
-                                  //                                 );
-                                  //                               }
-                                  //                             } else {
-                                  //                               Common.toastMessaage(
-                                  //                                   convertToClient
-                                  //                                       .message,
-                                  //                                   Colors.red);
-                                  //                               if (context
-                                  //                                   .mounted) {
-                                  //                                 Navigator.of(
-                                  //                                         context,
-                                  //                                         rootNavigator:
-                                  //                                             true)
-                                  //                                     .pop();
-                                  //                               }
-                                  //                             }
-                                  //                           },
-                                  //                           child: const Center(
-                                  //                             child: Text(
-                                  //                               'Continue',
-                                  //                               style:
-                                  //                                   TextStyle(
-                                  //                                 color: Colors
-                                  //                                     .white,
-                                  //                                 fontWeight:
-                                  //                                     FontWeight
-                                  //                                         .w500,
-                                  //                               ),
-                                  //                             ),
-                                  //                           ),
-                                  //                         ),
-                                  //                       ),
-                                  //                     ],
-                                  //                   ),
-                                  //                 ),
-                                  //               ),
-                                  //             ),
-                                  //           ),
-                                  //         );
-                                  //       });
-                                  //     },
-                                  //     transitionBuilder:
-                                  //         (_, animation1, __, child) {
-                                  //       return SlideTransition(
-                                  //         position: Tween(
-                                  //           begin: const Offset(0, 1),
-                                  //           end: const Offset(0, 0),
-                                  //         ).animate(animation1),
-                                  //         child: child,
-                                  //       );
-                                  //     },
-                                  //   );
-                                  // }
+
                                   return null;
                                 },
                                 child: Container(

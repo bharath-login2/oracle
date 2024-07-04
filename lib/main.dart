@@ -48,13 +48,11 @@ String number ="";
 
 void setStream() {
   PhoneState.stream.listen((event) {
-    if (event != null) {
-      status1 = event;
-      if(status1.number != null){
-        number = status1.number.toString();
-      }
+    status1 = event;
+    if(status1.number != null){
+      number = status1.number.toString();
     }
-  });
+    });
 }
 
 @pragma("vm:entry-point")

@@ -22,7 +22,7 @@ import '../../models/loginCheckModel.dart';
 import '../../screens/authentication/login.dart';
 import '../../screens/bottomNavigationBar.dart';
 import '../../screens/drawerScreen.dart';
-import '../../screens/leadManagement/addLeads.dart';
+import 'add_leads.dart';
 import '../../screens/leadManagement/callHistoryPage.dart';
 import '../../screens/leadManagement/searchPage.dart';
 import '../../screens/leadManagement/viewLeadCategory.dart';
