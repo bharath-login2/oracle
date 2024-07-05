@@ -41,7 +41,9 @@ class Data {
     List<PaymentStatus> paymentStatus;
     List<Customer> paymentMethods;
     List<Template> template;
+    List<Staff> staff;
     List<Product> products;
+    List<dynamic> branch;
 
     Data({
         required this.invoiceNumber,
@@ -52,7 +54,9 @@ class Data {
         required this.paymentStatus,
         required this.paymentMethods,
         required this.template,
+        required this.staff,
         required this.products,
+        required this.branch,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -64,7 +68,9 @@ class Data {
         paymentStatus: List<PaymentStatus>.from(json["payment_status"].map((x) => PaymentStatus.fromJson(x))),
         paymentMethods: List<Customer>.from(json["payment_methods"].map((x) => Customer.fromJson(x))),
         template: List<Template>.from(json["template"].map((x) => Template.fromJson(x))),
+        staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
         products: List<Product>.from(json["products"].map((x) => Product.fromJson(x))),
+        branch: List<dynamic>.from(json["branch"].map((x) => x)),
     );
 
     Map<String, dynamic> toJson() => {
@@ -76,7 +82,9 @@ class Data {
         "payment_status": List<dynamic>.from(paymentStatus.map((x) => x.toJson())),
         "payment_methods": List<dynamic>.from(paymentMethods.map((x) => x.toJson())),
         "template": List<dynamic>.from(template.map((x) => x.toJson())),
+        "staff": List<dynamic>.from(staff.map((x) => x.toJson())),
         "products": List<dynamic>.from(products.map((x) => x.toJson())),
+        "branch": List<dynamic>.from(branch.map((x) => x)),
     };
 }
 
@@ -153,6 +161,26 @@ class Product {
         "tax_percent": taxPercent,
         "no_of_days": noOfDays,
         "tax_amount": taxAmount,
+    };
+}
+
+class Staff {
+    String userId;
+    String staffName;
+
+    Staff({
+        required this.userId,
+        required this.staffName,
+    });
+
+    factory Staff.fromJson(Map<String, dynamic> json) => Staff(
+        userId: json["user_id"],
+        staffName: json["staff_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "user_id": userId,
+        "staff_name": staffName,
     };
 }
 

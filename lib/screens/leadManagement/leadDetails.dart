@@ -7622,6 +7622,7 @@ class _AudioItemState extends State<AudioItem> {
                                 children: [
                                   GestureDetector(
                                     onTap: () async {
+                                      log(widget.resourceUrl);
                                       isPlaying == false
                                           ? audioPlayer.play(
                                               UrlSource(widget.resourceUrl))

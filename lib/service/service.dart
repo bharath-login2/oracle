@@ -3294,20 +3294,51 @@ class HttpService {
     }
   }
 
-  static Future postExistingCustom(renewalProducts, clientId, cost, templateId,
-      startDate, endDate, remarks, branchId, actualCost, checkIdVal) async {
+  static Future postExistingCustom(
+      renewalProducts,
+      clientId,
+      templateId,
+      startDate,
+      endDate,
+      remarks,
+      branchId,
+      actualCost,
+      checkIdVal,
+      invoiceNum,
+      invoiceDate,
+      invoiceSl,
+      subTotal,
+      tax,
+      discount,
+      shipping,
+      totalAmount,
+      paidAmount,
+      payStatus,
+      payMethod,
+      collectedStaff) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-      "renewal_product": jsonEncode(renewalProducts),
+      "product_details": jsonEncode(renewalProducts),
       "client_id": clientId,
-      "cost": cost,
-      "template_id": templateId,
+      "reminder_template": templateId,
       "start_date": startDate,
       "end_date": endDate,
       "remarks": remarks,
       "branch_id": branchId ?? "",
       "actual_cost": actualCost,
-      "check_id_val": checkIdVal
+      "check_id_val": checkIdVal,
+      "invoice_number": invoiceNum,
+      "invoice_date": invoiceDate,
+      "invoice_sl_number": invoiceSl,
+      "sub_total": subTotal,
+      "estimated_tax": tax,
+      "discount_amount": discount,
+      "shipping_amount": shipping,
+      "total_amount_paid": totalAmount,
+      "amount_paid_customer": paidAmount,
+      "payment_status": payStatus,
+      "payment_method": payMethod,
+      "collected_staff": collectedStaff,
     });
     try {
       var result = await _dio.post(
