@@ -849,7 +849,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                           Icons.add,
                                           color: Colors.white,
                                         ),
-                                      
                                         Text(
                                           " Add Followup",
                                           style: TextStyle(
@@ -1850,6 +1849,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     deleteLead:
                                                         widget.deleteLead,
                                                     cloudCall: widget.cloudCall,
+                                                    address: leadDetails!
+                                                        .data!.address,
                                                   ),
                                                 ),
                                               ).then((r) {

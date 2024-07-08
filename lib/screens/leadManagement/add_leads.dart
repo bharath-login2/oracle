@@ -24,6 +24,7 @@ class AddLeads extends StatefulWidget {
   bool? deleteLead;
   bool? cloudCall;
   String? countryCode;
+  String? address;
 
   AddLeads(this.token,
       {super.key,
@@ -36,7 +37,8 @@ class AddLeads extends StatefulWidget {
       this.editLead,
       this.deleteLead,
       this.cloudCall,
-      this.countryCode});
+      this.countryCode,
+      this.address});
 
   @override
   State<AddLeads> createState() => _AddLeadsState();
@@ -90,6 +92,7 @@ class _AddLeadsState extends State<AddLeads> {
     super.initState();
     clientName.text = widget.clientName ?? "";
     contactNo.text = trimPlus91(widget.phoneNumber ?? "");
+    address.text = widget.address ?? "";
     getData();
   }
 
