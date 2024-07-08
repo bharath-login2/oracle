@@ -29,29 +29,29 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
         '{"isDarkModeString": "$isDarkModeString", "address": "$address", "flavors": "$flavors"}';
     FlutterOverlayWindow.shareData(data);
   }
-PhoneState status1 = PhoneState.nothing();
+
+  PhoneState status1 = PhoneState.nothing();
   @override
   void initState() {
     super.initState();
-     setStream();
+    setStream();
     FlutterOverlayWindow.overlayListener.listen((event) {
-    log(widget.number);
-      setState(() {
-      });
+      log(widget.number);
+      setState(() {});
     });
-   
   }
- void setStream() {
-  PhoneState.stream.listen((event) {
-    if (event != null) {
-      status1 = event;
-      if(status1.number != null){
-        number1 = status1.number.toString();
-        getOverlayDetails(number1);
+
+  void setStream() {
+    PhoneState.stream.listen((event) {
+      if (event != null) {
+        status1 = event;
+        if (status1.number != null) {
+          number1 = status1.number.toString();
+          getOverlayDetails(number1);
+        }
       }
-    }
-  });
-}
+    });
+  }
 
   getOverlayDetails(number) async {
     Map<String, dynamic> body1 = {
@@ -60,13 +60,11 @@ PhoneState status1 = PhoneState.nothing();
     };
 
     BackgroundModel object = await HttpService.backgroundData(body1);
-    if (object.status == true) {
-      name = object.data.clientName;
-      category = object.data.leadCategory;
-      lastcall = object.data.lastCalledDate;
-      number1 = number;
-      setState(() {});
-    }
+    name = object.data.clientName;
+    category = object.data.leadCategory;
+    lastcall = object.data.lastCalledDate;
+    number1 = number;
+    setState(() {});
   }
 
   @override
@@ -92,9 +90,7 @@ PhoneState status1 = PhoneState.nothing();
           ),
           child: GestureDetector(
             onTap: () {
-              FlutterOverlayWindow.getOverlayPosition().then((value) {
-                log("Overlay Position: $value");
-              });
+              FlutterOverlayWindow.getOverlayPosition().then((value) {});
             },
             child: Stack(
               children: [

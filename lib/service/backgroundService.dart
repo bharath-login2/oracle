@@ -119,8 +119,6 @@ Future<void> callBack(String tag) async {
   }
 }
 
-
-
 bool isActive = false;
 bool uploadCall = false;
 bool doUpload = true;
@@ -168,18 +166,7 @@ void showWindow() async {
         break;
 
       case PhoneStateStatus.CALL_INCOMING:
-      case PhoneStateStatus.CALL_STARTED:
-        Map<String, dynamic> body1 = {
-          "token": await Common.getSharedPref("token"),
-          'phoneNumber': status1.number,
-        };
-
-        BackgroundModel object = await HttpService.backgroundData(body1);
-
-        log('openAppLeadId${object.data.callMasterId}');
-        await Common.saveSharedPref(
-            "openAppLeadId", object.data.callMasterId.toString());
-     
+        // case PhoneStateStatus.CALL_STARTED:
 
         // SystemWindowHeader header = SystemWindowHeader(
         //     title: SystemWindowText(
@@ -353,7 +340,9 @@ void showWindow() async {
         //     notificationTitle: "Incoming Call",
         //     notificationBody: "+1 646 980 4741",
         //     prefMode: SystemWindowPrefMode.OVERLAY);
-        if (await FlutterOverlayWindow.isActive()) return;
+        if (await FlutterOverlayWindow.isActive()) {
+          await FlutterOverlayWindow.closeOverlay();
+        }
         await FlutterOverlayWindow.showOverlay(
           enableDrag: true,
           overlayTitle: "Login2 pro",

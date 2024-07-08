@@ -84,7 +84,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController startDateNew = TextEditingController();
   TextEditingController endDateExisting = TextEditingController();
   TextEditingController endDateNew = TextEditingController();
- 
+
   TextEditingController remindMeNew = TextEditingController();
   TextEditingController remindMeExisting = TextEditingController();
   TextEditingController remarkExisting = TextEditingController();
@@ -356,7 +356,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   controller: customerNameNew,
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Enter Customer Name";
+                      return "Enter Customer Name";
                     }
                     return null;
                   },
@@ -381,7 +381,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   }),
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Enter Customer Number";
+                      return "Enter Customer Number";
                     } else if (isExists == true) {
                       return "This number is Already Exists";
                     }
@@ -537,7 +537,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                                       (BuildContext context) {
                                                     return AlertDialog(
                                                       title: const Text(
-                                                          'Please Confirm'),
+                                                          'Confirm'),
                                                       content: const Text(
                                                           'Are you sure to Remove this Number?'),
                                                       actions: [
@@ -563,7 +563,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                                                         (await productsNew[ind])[
                                                                             "prd_cost"]);
                                                               }
-                                                              
+
                                                               print(productsNew
                                                                   .length);
                                                               setState(() {});
@@ -693,7 +693,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Select Start Date";
+                      return "Select Start Date";
                     }
                     return null;
                   },
@@ -721,7 +721,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Select End Date";
+                      return "Select End Date";
                     }
                     return null;
                   },
@@ -864,7 +864,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                           postNew();
                         } else {
                           Common.toastMessaage(
-                              "Please fill all required fields", Colors.red);
+                              "Fill all required fields", Colors.red);
                         }
                       }
                       if (isExists == true) {
@@ -915,7 +915,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   }),
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Add Customer";
+                      return "Add Customer";
                     }
                     return null;
                   },
@@ -1019,12 +1019,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   onTap: (() {
                     dropDialogExisting(context, "Products");
                   }),
-                  // validator: (value) {
-                  //   if (value!.isEmpty) {
-                  //     return "Please Add Customer";
-                  //   }
-                  //   return null;
-                  // },
                   decoration: const InputDecoration(
                     labelText: 'Product *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
@@ -1042,12 +1036,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         keyboardType: TextInputType.number,
                         controller: prodRateExisting,
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Please Enter Project Cost";
-                          }
-                          return null;
-                        },
                         onChanged: (val) {
                           calculateTotalExisting();
                         },
@@ -1480,6 +1468,12 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 ),
                 const SizedBox(height: 25.0),
                 DropdownButtonFormField(
+                  validator: (val) {
+                    if (val == "" || val == null) {
+                      return "Add payment status";
+                    }
+                    return null;
+                  },
                   value: payStatExisting,
                   onChanged: (value) async {
                     payStatExisting = value.toString();
@@ -1511,6 +1505,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   child: Column(
                     children: [
                       TextFormField(
+                        validator: (value) {
+                          if (payStatExisting == "partial") {
+                            if (value == "") {
+                              return "Enter Amount";
+                            }
+                          }
+                          return null;
+                        },
+                        readOnly: payStatExisting != "partial" ? true : false,
                         keyboardType: TextInputType.number,
                         controller: totalPaidAmountExisting,
                         decoration: const InputDecoration(
@@ -1525,6 +1528,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                       const SizedBox(height: 14.0),
                       DropdownButtonFormField(
+                        validator: (value) {
+                          if (payStatExisting == "partial" ||
+                              payStatExisting == "paid") {
+                            if (value == "" || value == null) {
+                              return "Select a payment method";
+                            }
+                          }
+                          return null;
+                        },
                         value: payMethodExisting,
                         onChanged: (value) async {
                           setState(() {
@@ -1553,6 +1565,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                       const SizedBox(height: 14.0),
                       DropdownButtonFormField(
+                        validator: (value) {
+                          if (payStatExisting == "partial" ||
+                              payStatExisting == "paid") {
+                            if (value == "" || value == null) {
+                              return "Select a staff";
+                            }
+                          }
+                          return null;
+                        },
                         value: collectedExisting,
                         onChanged: (value) async {
                           setState(() {
@@ -1604,7 +1625,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Select Start Date";
+                      return "Select Start Date";
                     }
                     return null;
                   },
@@ -1632,7 +1653,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   validator: (value) {
                     if (value!.isEmpty) {
-                      return "Please Select End Date";
+                      return "Select End Date";
                     }
                     return null;
                   },
@@ -1648,7 +1669,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                       labelStyle: TextStyle(color: Colors.grey)),
                 ),
-               const SizedBox(height: 14.0),
+                const SizedBox(height: 14.0),
                 TextFormField(
                   onTap: () {
                     dropDialogExisting(context, "Template");
@@ -1695,7 +1716,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                           postExisting();
                         } else {
                           Common.toastMessaage(
-                              "Please fill all required fields", Colors.red);
+                              "Fill all required fields", Colors.red);
                         }
                       }
                     },
@@ -1810,7 +1831,6 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               totalProductCostNew += double.parse(
                                   (await productsNew[i])["prd_cost"]);
                             }
-                          
                           }
 
                           Navigator.pop(context);
@@ -2020,7 +2040,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
             .toString();
         setState(() {});
       } else {
-        Common.toastMessaage('Please add a product', Colors.red);
+        Common.toastMessaage('Add a product', Colors.red);
       }
     }
   }
