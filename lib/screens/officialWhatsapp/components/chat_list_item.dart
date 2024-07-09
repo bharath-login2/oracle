@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../chatScreen.dart';
 import '../colorConst.dart';
 
-Widget messageBubble(context, chatListModel) {
+Widget chatListItem(context, items) {
   return Column(
     children: [
       ListTile(
@@ -15,7 +15,7 @@ Widget messageBubble(context, chatListModel) {
               context,
               MaterialPageRoute(
                 builder: (context) => ChatScreen(
-                  groupId: chatListModel.groupId,
+                  groupId: items.groupId,
                 ),
               ));
         },
@@ -25,13 +25,13 @@ Widget messageBubble(context, chatListModel) {
           decoration: BoxDecoration(
               image: DecorationImage(
                 fit: BoxFit.cover,
-                image: NetworkImage(chatListModel.profilePic),
+                image: NetworkImage(items.profilePic),
               ),
               border: Border.all(),
               borderRadius: BorderRadius.circular(30)),
         ),
         title: Text(
-          chatListModel.groupName,
+          items.groupName,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -39,7 +39,7 @@ Widget messageBubble(context, chatListModel) {
         ),
         subtitle: Row(
           children: [
-            chatListModel.fromMe == true
+            items.fromMe == true
                 ? const Icon(
                     Icons.done_all,
                     size: 18,
@@ -52,7 +52,7 @@ Widget messageBubble(context, chatListModel) {
             SizedBox(
                 width: MediaQuery.of(context).size.width * 0.3,
                 child: Text(
-                  chatListModel.lastMessage,
+                  items.lastMessage,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 )),
@@ -62,7 +62,7 @@ Widget messageBubble(context, chatListModel) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              chatListModel.lastMsgTime,
+              items.lastMsgTime,
               style: TextStyle(fontSize: 10, color: Colors.grey[400]),
             ),
             const SizedBox(

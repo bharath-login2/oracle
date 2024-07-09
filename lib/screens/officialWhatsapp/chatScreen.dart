@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,10 +10,12 @@ import 'package:intl/intl.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
-import '../../models/officialWhatsapp/officialMessageModel.dart';
+import '../../models/officialWhatsapp/official_message_model.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
 import '../../models/officialWhatsapp/sendTemplateMesaageModel.dart';
 import '../../models/officialWhatsapp/templateContentModel.dart';
@@ -38,6 +41,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List list = [];
+    final ItemScrollController itemScrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
+  List<Message> items = [];
+  int page = 1;
+  int pageSize = 20;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
   MediaModel? mediaDetails;
@@ -98,18 +107,16 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       },
       child: Scaffold(
-        appBar: officialMessageModel == null && templateModel == null
-            ? null
-            : AppBar(
+        appBar:  AppBar(
                 titleSpacing: 0,
                 automaticallyImplyLeading: false,
                 title: Container(
                   padding: EdgeInsets.zero, // Set padding to zero
-                  child: Row(
+                  child:officialMessageModel == null&& templateModel == null? const SizedBox():  Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Row(
+                     Row(
                         children: [
                           const SizedBox(
                             width: 5,
@@ -154,81 +161,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       InkWell(
                         onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                content: SizedBox(
-                                  height: 220,
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        height: 100,
-                                        width: 100,
-                                        decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                                officialMessageModel!
-                                                    .profilePhoto),
-                                          ),
-                                          color: ColorConstant.grey,
-                                          borderRadius:
-                                              BorderRadius.circular(60),
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 22,
-                                      ),
-                                      Text(
-                                        officialMessageModel!.groupName,
-                                        style: const TextStyle(
-                                          color: ColorConstant.black,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 5,
-                                      ),
-                                      Text(
-                                        officialMessageModel!.phoneNumber,
-                                        style: const TextStyle(
-                                          color: ColorConstant.black,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Created By :${officialMessageModel!.createdBy}",
-                                        style: const TextStyle(
-                                          color: ColorConstant.black,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
-                                        style: const TextStyle(
-                                          color: ColorConstant.black,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('close'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
+                                     },
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width * 0.5,
                           child: Text(
@@ -382,9 +315,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           child: officialMessageModel == null && templateModel == null
-              ? const Center(
-                  child: CircularProgressIndicator(),
-                )
+              ? buildLoaderListItem()
               : SingleChildScrollView(
                   reverse: true,
                   child: Column(
@@ -414,7 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   "PRODUCT_LIST" ||
                               officialMessageModel!
                                       .messages[index].messageText.format ==
-                                  "DOCUMENT"||
+                                  "DOCUMENT" ||
                               officialMessageModel!
                                       .messages[index].messageText.format ==
                                   "RENEW") {
@@ -432,7 +363,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
         ),
         bottomSheet: officialMessageModel == null && templateModel == null
-            ? null
+            ? Container(
+              height: 70,
+              color: Colors.grey.shade100,
+            )
             : Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: SizedBox(
@@ -920,7 +854,17 @@ class _ChatScreenState extends State<ChatScreen> {
                             .messages[index].messageText.format,
                       ),
                     ));
-              } else {}
+              } else if (officialMessageModel!
+                      .messages[index].messageText.format ==
+                  'LOCATION') {
+                double latitude = double.parse(officialMessageModel!
+                    .messages[index].messageText.latitude
+                    .toString());
+                double longitude = double.parse(officialMessageModel!
+                    .messages[index].messageText.longitude
+                    .toString());
+                launchGoogleMaps(latitude, longitude);
+              }
             },
             child: Row(
               mainAxisAlignment:
@@ -1142,7 +1086,27 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'TEXT'
                             ? const EdgeInsets.only(left: 0)
                             : const EdgeInsets.only(left: 5),
-                        child: Text(
+                        child:officialMessageModel!
+                                    .messages[index].messageText.format ==
+                                'LOCATION'?const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(36.0),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.location_on,size: 80,color: Colors.red,),
+                                        
+                                        Text(
+                          "Tap to view",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.red
+                          ),
+                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ): Text(
                           officialMessageModel!
                               .messages[index].messageText.messageBody,
                           style: const TextStyle(
@@ -1752,7 +1716,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: 1,
+                          itemCount: officialMessageModel!.messages[index]
+                                            .messageText.buttons.length,
                           itemBuilder: (context, i) {
                             return Column(
                               children: [
@@ -3182,5 +3147,96 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       },
     );
+  }
+Widget buildLoaderListItem() {
+    return Shimmer.fromColors(
+        enabled: true,
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Column(
+              //   mainAxisSize: MainAxisSize.min,
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     Container(
+              //       width: double.infinity,
+              //       height: 60.0,
+              //       color: Colors.white,
+              //     ),
+                 
+              //   ],
+              // ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height*.8,
+                  child: ListView.builder(
+                      itemCount: 2,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, i) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 8.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    width: 250.0,
+                                    height: 150.0,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(25),
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10,),
+                               Row(
+                                mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 250.0,
+                                    height: 115.0,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(25),
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                ),
+              ),
+              // const SizedBox(height: 16.0),
+              //  Container(
+              //       width: double.infinity,
+              //       height: 60.0,
+              //       color: Colors.white,
+              //     ),
+            ],
+          ),
+        ));
+  }
+  Future<void> launchGoogleMaps(double latitude, double longitude) async {
+    final url =
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      throw 'Could not launch Google Maps.';
+    }
   }
 }

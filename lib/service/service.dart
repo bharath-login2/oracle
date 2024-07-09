@@ -170,7 +170,7 @@ import '../models/officialWhatsapp/addContactModel.dart';
 import '../models/officialWhatsapp/campaignsListModel.dart';
 import '../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
 import '../models/officialWhatsapp/mediaModel.dart';
-import '../models/officialWhatsapp/officialMessageModel.dart';
+import '../models/officialWhatsapp/official_message_model.dart';
 import '../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
 import '../models/officialWhatsapp/sendMesaageModel.dart';
 import '../models/officialWhatsapp/sendTemplateMesaageModel.dart';
@@ -2565,12 +2565,14 @@ class HttpService {
     }
   }
 
-  static fetchChatList(searchKey) async {
+  static fetchChatList(searchKey, page, pageSize) async {
     try {
       var response = await _dio
           .get("${await Config.getUrl()}official_whatsapp", queryParameters: {
         "searchKey": searchKey,
         "token": await Common.getSharedPref("token"),
+        "page": page,
+        "page_size": pageSize,
       });
       if (response.statusCode == 200) {
         ChatListModel chatListModel = ChatListModel.fromJson(response.data);

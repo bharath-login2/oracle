@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
-import '../../models/officialWhatsapp/officialMessageModel.dart';
+import '../../models/officialWhatsapp/official_message_model.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
 import '../../models/officialWhatsapp/sendTemplateMesaageModel.dart';
 import '../../models/officialWhatsapp/templateContentModel.dart';

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:login2/screens/officialWhatsapp/components/campaignsComponent.dart';
+import 'package:login2/screens/officialWhatsapp/components/chat_list_item.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/officialWhatsapp/ChatListModel.dart';
 import '../../models/officialWhatsapp/campaignsListModel.dart';
@@ -10,7 +14,6 @@ import 'addContact.dart';
 import 'clientListScreen.dart';
 import 'colorConst.dart';
 import 'components/tab_bar.dart';
-import 'components/tab_bar_view.dart';
 
 // ignore: must_be_immutable
 class ChatHomeScreen extends StatefulWidget {
@@ -25,7 +28,12 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   bool isLoading = true;
   bool isSearch = false;
-
+  final ItemScrollController itemScrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
+  List<ChatData> items = [];
+  int page = 1;
+  int pageSize = 20;
   TextEditingController nameTextController = TextEditingController();
   TextEditingController searchController = TextEditingController();
   TextEditingController numberTextController = TextEditingController();
@@ -38,6 +46,14 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   @override
   void initState() {
     chats('');
+    itemPositionsListener.itemPositions.addListener(() {
+      if (itemPositionsListener.itemPositions.value.last.index ==
+          items.length - 1) {
+        if (items.length < chatListModel!.data.length) {
+          chats('');
+        }
+      }
+    });
     chatCampaignsList('');
     getOfficialConfigaration();
     super.initState();
@@ -98,13 +114,13 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                 color: ColorConstant.barGreen),
                                             padding: const EdgeInsets.only(
                                                 right: 10),
-                                            height: 70,
+                                            height: 60,
                                             child: Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 12,
-                                                  right: 12,
-                                                  top: 8,
-                                                  bottom: 8),
+                                                left: 12,
+                                                right: 12,
+                                                top: 12,
+                                              ),
                                               child: Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
@@ -125,7 +141,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                         context)
                                                                     .size
                                                                     .width *
-                                                                0.7,
+                                                                0.75,
                                                             child:
                                                                 TextFormField(
                                                               autofocus: true,
@@ -183,42 +199,78 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                             ),
                                                           ),
                                                   ),
-                                                  Row(
-                                                    children: [
-                                                      GestureDetector(
-                                                        onTap: () {
-                                                          setState(() {
-                                                            isSearch =
-                                                                !isSearch;
-                                                          });
-                                                        },
-                                                      ),
-                                                      // const SizedBox(
-                                                      //   width: 8,
-                                                      // ),
-                                                      // GestureDetector(
-                                                      //   onTap: () {},
-                                                      //   child: const Icon(
-                                                      //     Icons.more_vert,
-                                                      //     color: Colors.white,
-                                                      //   ),
-                                                      // ),
-                                                    ],
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        isSearch = !isSearch;
+                                                      });
+                                                    },
+                                                    child: const Icon(
+                                                      Icons.search,
+                                                      color: Colors.white,
+                                                    ),
                                                   ),
                                                 ],
                                               ),
                                             ),
                                           ),
                                           tabbar(),
-                                          tabbarView(chatListModel,
-                                              campaignsListModel),
+                                          Expanded(
+                                            child: TabBarView(
+                                              children: [
+                                                Container(
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 5),
+                                                    child: RefreshIndicator(
+                                                      onRefresh: () async {
+                                                        chats("");
+                                                      },
+                                                      child:
+                                                          ScrollablePositionedList
+                                                              .builder(
+                                                        initialScrollIndex: 0,
+                                                        itemScrollController:
+                                                            itemScrollController,
+                                                        itemCount: items
+                                                                .length +
+                                                            (isLoading ? 1 : 0),
+                                                        itemBuilder:
+                                                            (context, index) {
+                                                          if (index ==
+                                                              items.length) {
+                                                            // When reaching the end of the list, show a loader
+                                                            return buildLoaderListItem();
+                                                          }
+                                                          return chatListItem(
+                                                              context, items[index]);
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: campaignsComponent(
+                                                      campaignsListModel),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
                                 )
-                              : const Center(
-                                  child: CircularProgressIndicator()))
+                              : buildLoaderListItem())
                       : Scaffold(
                           body: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -312,14 +364,20 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                             ),
                           ),
                         ))
-              : const Scaffold(body: Center(child: CircularProgressIndicator(color: Colors.grey,)),)),
+              : Scaffold(
+                  body: buildLoaderListItem(),
+                )),
     );
   }
 
   chats(search) async {
-    chatListModel = await HttpService.fetchChatList(search);
+    chatListModel = await HttpService.fetchChatList(search, page, pageSize);
     if (chatListModel != null) {
-      setState(() {});
+      setState(() {
+        items.addAll(chatListModel!.data);
+        page++;
+        isLoading = false;
+      });
     }
   }
 
@@ -328,5 +386,90 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     if (campaignsListModel != null) {
       setState(() {});
     }
+  }
+
+  Widget buildLoaderListItem() {
+    return Shimmer.fromColors(
+        enabled: true,
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 120.0,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * .8,
+                  child: ListView.builder(
+                      itemCount: 10,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, i) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 10.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 50.0,
+                                height: 50.0,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12.0),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                      margin:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                    ),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                      margin:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                    ),
+                                    Container(
+                                      width: 100.0,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        );
+                      }),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+            ],
+          ),
+        ));
   }
 }

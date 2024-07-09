@@ -3,7 +3,7 @@ import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
 import '../../../models/officialWhatsapp/campaignsListModel.dart';
 import '../../../service/service.dart';
 import 'campaignsBubble.dart';
-import 'messageBubble.dart';
+import 'chat_list_item.dart';
 
 const ChatHomeScreen homeScreen = ChatHomeScreen();
 

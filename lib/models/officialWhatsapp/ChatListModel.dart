@@ -9,7 +9,7 @@ ChatListModel chatListModelFromJson(String str) => ChatListModel.fromJson(json.d
 String chatListModelToJson(ChatListModel data) => json.encode(data.toJson());
 
 class ChatListModel {
-  List<Datum> data;
+  List<ChatData> data;
   bool message;
   bool status;
 
@@ -20,7 +20,7 @@ class ChatListModel {
   });
 
   factory ChatListModel.fromJson(Map<String, dynamic> json) => ChatListModel(
-    data: List<Datum>.from(json["data"].map((x) => Datum.fromJson(x))),
+    data: List<ChatData>.from(json["data"].map((x) => ChatData.fromJson(x))),
     message: json["message"],
     status: json["status"],
   );
@@ -32,7 +32,7 @@ class ChatListModel {
   };
 }
 
-class Datum {
+class ChatData {
   String groupId;
   String profilePic;
   String groupName;
@@ -43,7 +43,7 @@ class Datum {
   String lastMessage;
   bool fromMe;
 
-  Datum({
+  ChatData({
     required this.groupId,
     required this.profilePic,
     required this.groupName,
@@ -55,7 +55,7 @@ class Datum {
     required this.fromMe,
   });
 
-  factory Datum.fromJson(Map<String, dynamic> json) => Datum(
+  factory ChatData.fromJson(Map<String, dynamic> json) => ChatData(
     groupId: json["group_id"],
     profilePic: json["profile_pic"],
     groupName: json["group_name"],

@@ -1,7 +1,7 @@
 // ignore_for_file: file_names, must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:login2/models/officialWhatsapp/officialMessageModel.dart';
+import 'package:login2/models/officialWhatsapp/official_message_model.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/officialWhatsapp/order_details.dart';
 
@@ -52,7 +52,7 @@ class _ViewItemsState extends State<ViewItems> {
                 onTap: () {},
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.5,
-                  child:  Text(
+                  child: Text(
                     widget.title,
                     style: const TextStyle(
                         color: Colors.white,
@@ -119,12 +119,14 @@ class _ViewItemsState extends State<ViewItems> {
                             Text(
                               overflow: TextOverflow.ellipsis,
                               widget.data[index].options[i].productDescription,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
                               overflow: TextOverflow.ellipsis,
                               widget.data[index].options[i].productSellingPrice,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

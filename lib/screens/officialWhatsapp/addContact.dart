@@ -11,6 +11,15 @@ import 'colorConst.dart';
 
 addContactPopUp(context, nameController, numberController) {
   String code = '91';
+  String trimPlus91(String mobileNumber) {
+    if (mobileNumber.startsWith('+91')) {
+      return mobileNumber.substring(3);
+    } else if (mobileNumber.startsWith('91')) {
+      return mobileNumber.substring(2);
+    } else {
+      return mobileNumber;
+    }
+  }
   showDialog(
     context: context,
     builder: (context) {
@@ -106,7 +115,8 @@ addContactPopUp(context, nameController, numberController) {
                     final PhoneContact contact =
                     await FlutterContactPicker.pickPhoneContact();
                     if (contact != null) {
-                      String number = contact.phoneNumber!.number.toString();
+
+                      String number = trimPlus91(contact.phoneNumber!.number.toString());
                       String name = contact.fullName!;
                       numberController.text = number.replaceAll(' ', '');
                       nameController.text = name;
@@ -129,7 +139,7 @@ addContactPopUp(context, nameController, numberController) {
                           SizedBox(
                             width: 5,
                           ),
-                          Text('Select number from Contact')
+                          Text('Select number from Contacts')
                         ],
                       ),
                     ),
@@ -187,4 +197,5 @@ addContactPopUp(context, nameController, numberController) {
       });
     },
   );
+  
 }
