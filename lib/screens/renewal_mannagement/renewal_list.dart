@@ -71,7 +71,7 @@ class _RenewalListState extends State<RenewalList> {
   String renClientId = "";
   List productName = [];
   double productCost = 0;
-  List items = [];
+  List<ListElement> items = [];
   String fromDate = "";
   String toDate = "";
   bool createInvoice = false;
@@ -806,8 +806,8 @@ class _RenewalListState extends State<RenewalList> {
                                                                   items[index]
                                                                       .id,
                                                                   "Renew Details",
-                                                                  items[index]
-                                                                      .noOfDays,
+                                                                  "10"
+                                                                    ,
                                                                   items[index]
                                                                       .cost);
                                                             },
@@ -842,31 +842,14 @@ class _RenewalListState extends State<RenewalList> {
                                                             Navigator.push(
                                                                 context,
                                                                 MaterialPageRoute(
-                                                                    builder:
-                                                                        (context) =>
-                                                                            EditRenewalScreen(
-                                                                              callback: (() {
-                                                                                getList();
-                                                                              }),
-                                                                              id: items[index].id,
-                                                                              custId: items[index].clientId,
-                                                                              custName: items[index].clientName,
-                                                                              products: items[index].productId,
-
-                                                                              startDate: items[index].startDate,
-                                                                              endDate: items[index].endDate,
-                                                                              projectCost: items[index].cost,
-                                                                              remindMe: items[index].templateName,
-                                                                              remark: items[index].remarks,
-                                                                              isPaid: "",
-                                                                              templateId: items[index].templateId,
-                                                                              //  items[
-                                                                              //         index]
-                                                                              //     .isPaid,
-                                                                              invoiceId: items[index].invoiceId,
-                                                                              // branch: items[index]
-                                                                              // .,
-                                                                            )));
+                                                                    builder: (context) =>
+                                                                        EditRenewalScreen(
+                                                                          id: items[index]
+                                                                              .id,
+                                                                              invoiceId: items[index]
+                                                                      .invoiceId,
+                                                                        ))).then(
+                                                                getList());
                                                           },
                                                           child: Container(
                                                             decoration: BoxDecoration(

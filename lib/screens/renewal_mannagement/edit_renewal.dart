@@ -11,34 +11,13 @@ import 'package:login2/service/service.dart';
 
 class EditRenewalScreen extends StatefulWidget {
   String id;
-  String custId;
-  String custName;
-  List<ProductId> products;
-  String startDate;
-  String endDate;
-  String projectCost;
-  String remindMe;
-  String remark;
-  final VoidCallback callback;
-  dynamic isPaid;
   dynamic invoiceId;
-  String templateId;
-
   EditRenewalScreen(
       {super.key,
       required this.id,
-      required this.custId,
-      required this.custName,
-      required this.products,
-      required this.startDate,
-      required this.endDate,
-      required this.projectCost,
-      required this.remindMe,
-      required this.remark,
-      required this.callback,
-      required this.isPaid,
+    
       required this.invoiceId,
-      required this.templateId});
+     });
 
   @override
   State<EditRenewalScreen> createState() => _EditRenewalScreenState();
@@ -150,17 +129,17 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   @override
   void initState() {
     getRenewalDetails();
-    customerId = widget.custId;
-    customerName.text = widget.custName;
-    startDate.text = widget.startDate;
-    endDate.text = widget.endDate;
-    productCost.text = widget.projectCost;
-    remindMe.text = widget.remindMe;
-    remark.text = widget.remark;
-    products = widget.products;
-    isPaid = widget.isPaid == "" ? false : true;
-    createInvoice = widget.isPaid == "" ? false : true;
-    templateId = widget.templateId;
+    // customerId = widget.custId;
+    // customerName.text = widget.custName;
+    // startDate.text = widget.startDate;
+    // endDate.text = widget.endDate;
+    // productCost.text = widget.projectCost;
+    // remindMe.text = widget.remindMe;
+    // remark.text = widget.remark;
+    // products = widget.products;
+    // isPaid = widget.isPaid == "" ? false : true;
+    // createInvoice = widget.isPaid == "" ? false : true;
+    // templateId = widget.templateId;
     for (int i = 0; i < products.length; i++) {
       productName.add(products[i].prdName);
     }

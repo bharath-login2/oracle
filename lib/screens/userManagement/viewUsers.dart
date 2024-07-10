@@ -313,23 +313,10 @@ class _ViewUsersState extends State<ViewUsers> {
                                                           value: 2,
                                                           child: Text(
                                                               'List Designation')),
-
                                                       const PopupMenuItem<int>(
                                                           value: 4,
                                                           child:
                                                               Text('Add User')),
-                                                      // const PopupMenuItem<int>(
-                                                      //     value: 5,
-                                                      //     child: Text(
-                                                      //         'Clients')),
-                                                      // const PopupMenuItem<int>(
-                                                      //     value: 6,
-                                                      //     child: Text(
-                                                      //         'Invoice')),
-                                                      // const PopupMenuItem<int>(
-                                                      //     value: 7,
-                                                      //     child: Text(
-                                                      //         'Receipts')),
                                                     ];
                                                   },
                                                   onSelected: (value) {
@@ -843,7 +830,9 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                               'true' &&
                                                                           viewStaff!.data!.staffList![i].deletePermission ==
                                                                               true
-                                                                      ? deleteDialog(context, i)
+                                                                      ? deleteDialog(
+                                                                          context,
+                                                                          i)
                                                                       : _permissionDialogue(
                                                                           context,
                                                                           'Delete User');
@@ -1087,67 +1076,40 @@ class _ViewUsersState extends State<ViewUsers> {
 
   Future<dynamic> deleteDialog(BuildContext context, int i) {
     return showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Please Confirm'),
-                                                    content: const Text(
-                                                        'Are you sure to Delete?'),
-                                                    actions: [
-                                                      // The "Yes" button
-                                                      TextButton(
-                                                          onPressed:
-                                                              () async {
-                                                            DeleteStaffModel
-                                                                delete =
-                                                                await HttpService.deleteStaff(
-                                                                    widget
-                                                                        .token,
-                                                                    viewStaff!
-                                                                        .data!
-                                                                        .staffList![
-                                                                            i]
-                                                                        .staffId);
-                                                            if (delete.data ==
-                                                                true) {
-                                                              Common.toastMessaage(
-                                                                  delete
-                                                                      .message,
-                                                                  Colors
-                                                                      .green);
-                                                              if (mounted) {
-                                                                getData();
-                                                                Navigator
-                                                                    .pop(context);
-                                                              }
-                                                            } else {
-                                                              Common.toastMessaage(
-                                                                  delete
-                                                                      .message,
-                                                                  Colors.red);
-                                                              if (mounted) {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop();
-                                                              }
-                                                            }
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child: const Text(
-                                                              'No'))
-                                                    ],
-                                                  );
-                                                });
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Please Confirm'),
+            content: const Text('Are you sure to Delete?'),
+            actions: [
+              // The "Yes" button
+              TextButton(
+                  onPressed: () async {
+                    DeleteStaffModel delete = await HttpService.deleteStaff(
+                        widget.token, viewStaff!.data!.staffList![i].staffId);
+                    if (delete.data == true) {
+                      Common.toastMessaage(delete.message, Colors.green);
+                      if (mounted) {
+                        getData();
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      Common.toastMessaage(delete.message, Colors.red);
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  },
+                  child: const Text('Yes')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No'))
+            ],
+          );
+        });
   }
 
   void _permissionDialogue(BuildContext context, title) {
@@ -1169,7 +1131,6 @@ class _ViewUsersState extends State<ViewUsers> {
           );
         });
   }
-
 
   void _upgrade(BuildContext context) {
     showDialog(

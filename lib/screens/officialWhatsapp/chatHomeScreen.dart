@@ -42,21 +42,25 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   OfficialWhatsappConfigeModel? officialWhatsAppConfigure;
 
   String token = '';
+  int add = 1;
 
   @override
   void initState() {
     chats('');
-    itemPositionsListener.itemPositions.addListener(() {
-      if (itemPositionsListener.itemPositions.value.last.index ==
-          items.length - 1) {
-        if (items.length < chatListModel!.data.length) {
-          chats('');
-        }
-      }
-    });
+    itemPositionsListener.itemPositions.addListener(_onLoadMore);
     chatCampaignsList('');
     getOfficialConfigaration();
     super.initState();
+  }
+
+  void _onLoadMore() {
+    if (items.length + 20 == page * pageSize &&
+        itemPositionsListener.itemPositions.value.last.index ==
+            items.length - 1 &&
+        page > add) {
+      chats('');
+      add++;
+    }
   }
 
   getOfficialConfigaration() async {
@@ -149,6 +153,9 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                   searchController,
                                                               onChanged:
                                                                   (value) {
+                                                                page = 1;
+                                                                add = 1;
+                                                                items.clear();
                                                                 chats(
                                                                     searchController
                                                                         .text);
@@ -229,6 +236,9 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                         horizontal: 5),
                                                     child: RefreshIndicator(
                                                       onRefresh: () async {
+                                                        page = 1;
+                                                        add = 1;
+                                                        items.clear();
                                                         chats("");
                                                       },
                                                       child:
@@ -237,18 +247,26 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                         initialScrollIndex: 0,
                                                         itemScrollController:
                                                             itemScrollController,
+                                                        itemPositionsListener:
+                                                            itemPositionsListener,
                                                         itemCount: items
                                                                 .length +
-                                                            (isLoading ? 1 : 0),
+                                                            (items.length +
+                                                                        20 ==
+                                                                    page *
+                                                                        pageSize
+                                                                ? 1
+                                                                : 0),
                                                         itemBuilder:
                                                             (context, index) {
                                                           if (index ==
                                                               items.length) {
                                                             // When reaching the end of the list, show a loader
-                                                            return buildLoaderListItem();
+                                                            return scrollShimmer();
                                                           }
                                                           return chatListItem(
-                                                              context, items[index]);
+                                                              context,
+                                                              items[index]);
                                                         },
                                                       ),
                                                     ),
@@ -470,6 +488,103 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
               const SizedBox(height: 16.0),
             ],
           ),
+        ));
+  }
+
+  Widget scrollShimmer() {
+    return Shimmer.fromColors(
+        enabled: true,
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 50.0,
+                    height: 50.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: 100.0,
+                          height: 10.0,
+                          color: Colors.white,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 50.0,
+                    height: 50.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 10.0,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                        ),
+                        Container(
+                          width: 100.0,
+                          height: 10.0,
+                          color: Colors.white,
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
         ));
   }
 }

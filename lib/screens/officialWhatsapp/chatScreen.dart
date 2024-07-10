@@ -41,12 +41,10 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List list = [];
-    final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+
   List<Message> items = [];
   int page = 1;
-  int pageSize = 20;
+  int pageSize = 10;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
   MediaModel? mediaDetails;
@@ -71,6 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     getchat(widget.groupId);
+    getTemplates();
     super.initState();
   }
 
@@ -78,14 +77,14 @@ class _ChatScreenState extends State<ChatScreen> {
     isLoading = true;
     officialMessageModel = await HttpService.officialMessage(groupId);
     if (officialMessageModel != null) {
-      getTemplates();
-      setState(() {});
+      setState(() {
+        items.addAll(officialMessageModel!.messages);
+      });
     }
   }
 
   @override
   void dispose() {
-    // Ensure disposing of the VideoPlayerController to free up resources.
     _controller.dispose();
 
     super.dispose();
@@ -107,729 +106,726 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       },
       child: Scaffold(
-        appBar:  AppBar(
-                titleSpacing: 0,
-                automaticallyImplyLeading: false,
-                title: Container(
-                  padding: EdgeInsets.zero, // Set padding to zero
-                  child:officialMessageModel == null&& templateModel == null? const SizedBox():  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                     Row(
+          appBar: AppBar(
+            titleSpacing: 0,
+            automaticallyImplyLeading: false,
+            title: Container(
+                padding: EdgeInsets.zero, // Set padding to zero
+                child: officialMessageModel != null &&
+                        templateModel != null
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ChatHomeScreen(),
-                                  ));
-                            },
-                            child: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              viewCartBottomSheet("", "");
-                            },
-                            child: Container(
-                              height: 40,
-                              width: 40,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image: NetworkImage(
-                                        officialMessageModel!.profilePhoto)),
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      InkWell(
-                        onTap: () {
-                                     },
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.5,
-                          child: Text(
-                            officialMessageModel!.groupName,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                backgroundColor: ColorConstant.barGreen,
-                actions: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 8, right: 8, bottom: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        getchat(widget.groupId);
-                        setState(() {});
-                      },
-                      child: const Icon(
-                        Icons.refresh,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GestureDetector(
-                      onTap: () {
-                        showMenu(
-                          color: ColorConstant.white,
-                          context: context,
-                          position: const RelativeRect.fromLTRB(
-                              1000.0, 0.0, 1000.0, 0.0),
-                          items: [
-                            const PopupMenuItem<String>(
-                              value: '1',
-                              child: Text('Profile'),
-                            ),
-                            const PopupMenuItem<String>(
-                              value: '2',
-                              child: Text('Refresh'),
-                            ),
-                          ],
-                        ).then((value) {
-                          if (value != null) {
-                            if (value == '1') {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    content: SizedBox(
-                                      height: 220,
-                                      child: Column(
-                                        children: [
-                                          Container(
-                                            height: 100,
-                                            width: 100,
-                                            decoration: BoxDecoration(
-                                              image: DecorationImage(
-                                                image: NetworkImage(
-                                                    officialMessageModel!
-                                                        .profilePhoto),
-                                              ),
-                                              color: ColorConstant.grey,
-                                              borderRadius:
-                                                  BorderRadius.circular(60),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 22,
-                                          ),
-                                          Text(
-                                            officialMessageModel!.groupName,
-                                            style: const TextStyle(
-                                              color: ColorConstant.black,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 5,
-                                          ),
-                                          Text(
-                                            officialMessageModel!.phoneNumber,
-                                            style: const TextStyle(
-                                              color: ColorConstant.black,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Created By :${officialMessageModel!.createdBy}",
-                                            style: const TextStyle(
-                                              color: ColorConstant.black,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          Text(
-                                            "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
-                                            style: const TextStyle(
-                                              color: ColorConstant.black,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('close'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            } else if (value == '2') {
-                              getchat(widget.groupId);
-                              setState(() {});
-                            }
-                          }
-                        });
-                      },
-                      child: const Icon(
-                        Icons.more_vert_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-        body: Container(
-          height: MediaQuery.of(context).size.height,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-          decoration: const BoxDecoration(
-            color: ColorConstant.backgroundColor,
-            image: DecorationImage(
-              fit: BoxFit.fill,
-              image: AssetImage('assets/main/officialBackground.png'),
-            ),
-          ),
-          child: officialMessageModel == null && templateModel == null
-              ? buildLoaderListItem()
-              : SingleChildScrollView(
-                  reverse: true,
-                  child: Column(
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: officialMessageModel!.messages.length,
-                        itemBuilder: (context, index) {
-                          _controller = VideoPlayerController.networkUrl(
-                            Uri.parse(
-                              officialMessageModel!
-                                  .messages[index].messageText.url,
-                            ),
-                          );
-
-                          _initializeVideoPlayerFuture =
-                              _controller.initialize();
-                          if (officialMessageModel!
-                                      .messages[index].messageText.format ==
-                                  "LIST" ||
-                              officialMessageModel!
-                                      .messages[index].messageText.format ==
-                                  "PRODUCT_LIST" ||
-                              officialMessageModel!
-                                      .messages[index].messageText.format ==
-                                  "DOCUMENT" ||
-                              officialMessageModel!
-                                      .messages[index].messageText.format ==
-                                  "RENEW") {
-                            return chatWidget2(index, context);
-                          } else {
-                            return chatWidget1(index, context);
-                          }
-                        },
-                      ),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.09,
-                      )
-                    ],
-                  ),
-                ),
-        ),
-        bottomSheet: officialMessageModel == null && templateModel == null
-            ? Container(
-              height: 70,
-              color: Colors.grey.shade100,
-            )
-            : Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: officialMessageModel!.canSend == true
-                      ? SizedBox(
-                          height: 60,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
+                          Row(
                             children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.2),
-                                          spreadRadius: 1,
-                                          blurRadius: 1,
-                                          offset: const Offset(1, 1),
-                                        )
-                                      ],
-                                      // color: Colors.white,
-                                      borderRadius: BorderRadius.circular(25)),
-                                  child: TextFormField(
-                                    onChanged: (value) {
-                                      isTyped = true;
-                                      setState(() {});
-                                    },
-                                    style: const TextStyle(
-                                      color: ColorConstant.black,
-                                    ),
-                                    controller: messageController,
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.all(12),
-                                      hintStyle:
-                                          const TextStyle(color: Colors.grey),
-                                      hintText: 'Message',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(25),
-                                        borderSide: BorderSide
-                                            .none, // Set the border color to none
-                                      ),
-                                      suffixIcon: Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 15),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const SizedBox(
-                                              width: 20,
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                showGeneralDialog(
-                                                  barrierLabel:
-                                                      "showGeneralDialog",
-                                                  barrierDismissible: true,
-                                                  barrierColor: Colors.black
-                                                      .withOpacity(0.6),
-                                                  transitionDuration:
-                                                      const Duration(
-                                                          milliseconds: 400),
-                                                  context: context,
-                                                  pageBuilder:
-                                                      (context, _, __) {
-                                                    return StatefulBuilder(
-                                                      builder:
-                                                          (context, setState) {
-                                                        return Align(
-                                                            alignment: Alignment
-                                                                .bottomCenter,
-                                                            child:
-                                                                IntrinsicHeight(
-                                                              child: Container(
-                                                                width: double
-                                                                    .maxFinite,
-                                                                clipBehavior: Clip
-                                                                    .antiAlias,
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        16),
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .only(
-                                                                    topLeft: Radius
-                                                                        .circular(
-                                                                            16),
-                                                                    topRight: Radius
-                                                                        .circular(
-                                                                            16),
-                                                                  ),
-                                                                ),
-                                                                child: Material(
-                                                                    child:
-                                                                        Column(
-                                                                  children: [
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                    Row(
-                                                                      children: [
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () async {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => ListFileManager('document', widget.groupId),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                          child:
-                                                                              Column(
-                                                                            children: [
-                                                                              Container(
-                                                                                height: 50.0,
-                                                                                width: 50.0,
-                                                                                decoration: const BoxDecoration(
-                                                                                  image: DecorationImage(
-                                                                                    image: AssetImage('assets/icons/doc.png'),
-                                                                                    fit: BoxFit.fill,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.23,
-                                                                                child: const Center(
-                                                                                  child: Text(
-                                                                                    'Docs',
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => ListFileManager('video', widget.groupId),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                          child:
-                                                                              Column(
-                                                                            children: [
-                                                                              Container(
-                                                                                height: 50.0,
-                                                                                width: 50.0,
-                                                                                decoration: const BoxDecoration(
-                                                                                  image: DecorationImage(
-                                                                                    image: AssetImage('assets/icons/mp4.png'),
-                                                                                    fit: BoxFit.fill,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.22,
-                                                                                child: const Center(
-                                                                                  child: Text(
-                                                                                    'Video',
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => ListFileManager('image', widget.groupId),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                          child:
-                                                                              Column(
-                                                                            children: [
-                                                                              Container(
-                                                                                height: 50.0,
-                                                                                width: 50.0,
-                                                                                decoration: const BoxDecoration(
-                                                                                  image: DecorationImage(
-                                                                                    image: AssetImage('assets/icons/picture.png'),
-                                                                                    fit: BoxFit.fill,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.22,
-                                                                                child: const Center(
-                                                                                  child: Text(
-                                                                                    'Gallery',
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder: (context) => ListFileManager('audio', widget.groupId),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                          child:
-                                                                              Column(
-                                                                            children: [
-                                                                              Container(
-                                                                                height: 50.0,
-                                                                                width: 50.0,
-                                                                                decoration: const BoxDecoration(
-                                                                                  image: DecorationImage(
-                                                                                    image: AssetImage('assets/icons/audio.png'),
-                                                                                    fit: BoxFit.fill,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.22,
-                                                                                child: const Center(
-                                                                                  child: Text(
-                                                                                    'Audio',
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              )
-                                                                            ],
-                                                                          ),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                  ],
-                                                                )),
-                                                              ),
-                                                            ));
-                                                      },
-                                                    );
-                                                  },
-                                                  transitionBuilder: (_,
-                                                      animation1, __, child) {
-                                                    return SlideTransition(
-                                                      position: Tween(
-                                                        begin:
-                                                            const Offset(0, 1),
-                                                        end: const Offset(0, 0),
-                                                      ).animate(animation1),
-                                                      child: child,
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: const Icon(
-                                                Icons.attach_file,
-                                                color: ColorConstant.grey,
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 15,
-                                            ),
-                                            GestureDetector(
-                                              onTap: () async {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      scrollable: true,
-                                                      title: const Text(
-                                                          'Select Source'),
-                                                      content: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          TextButton(
-                                                            onPressed:
-                                                                () async {
-                                                              await pickedImage(
-                                                                  context,
-                                                                  ImageSource
-                                                                      .camera);
-                                                              if (userImage ==
-                                                                  null) {
-                                                              } else {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ImageViewScreen(
-                                                                        image:
-                                                                            userImage,
-                                                                        val:
-                                                                            '1',
-                                                                        groupId:
-                                                                            widget.groupId,
-                                                                      ),
-                                                                    ));
-                                                              }
-                                                            },
-                                                            child: const Text(
-                                                                "Camera"),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed:
-                                                                () async {
-                                                              await pickedImage(
-                                                                  context,
-                                                                  ImageSource
-                                                                      .gallery);
-                                                              if (userImage ==
-                                                                  null) {
-                                                              } else {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ImageViewScreen(
-                                                                        image:
-                                                                            userImage,
-                                                                        val:
-                                                                            '1',
-                                                                        groupId:
-                                                                            widget.groupId,
-                                                                      ),
-                                                                    ));
-                                                              }
-                                                            },
-                                                            child: const Text(
-                                                                "Gallery"),
-                                                          ),
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.pop(
-                                                                  context);
-                                                            },
-                                                            child: const Text(
-                                                                "Cancel"),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: const Icon(
-                                                Icons.camera_alt,
-                                                color: ColorConstant.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ChatHomeScreen(),
+                                      ));
+                                },
+                                child: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
                                 ),
                               ),
                               const SizedBox(
                                 width: 5,
                               ),
-                              CircleAvatar(
-                                radius: 25,
-                                backgroundColor: ColorConstant.barGreen,
-                                child: IconButton(
-                                    color: const Color.fromARGB(
-                                        255, 255, 255, 255),
-                                    onPressed: () async {
-                                      if (list.isNotEmpty) {
-                                        isImage = true;
-                                      }
-                                      await sendingMessage(
-                                          widget.groupId,
-                                          messageController.text,
-                                          list,
-                                          isImage);
-                                      messageController.clear();
-                                      setState(() {});
-                                    },
-                                    icon: isTyped == false &&
-                                            messageController.text.isEmpty
-                                        ? const Icon(Icons.mic)
-                                        : const Icon(Icons.send)),
+                              GestureDetector(
+                                onTap: () {
+                                  // viewCartBottomSheet("", "");
+                                },
+                                child: Container(
+                                  height: 40,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: NetworkImage(
+                                            officialMessageModel!
+                                                .profilePhoto)),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            templateDialog(context);
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.5,
+                              child: Text(
+                                officialMessageModel!.groupName,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox()),
+            backgroundColor: ColorConstant.barGreen,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    getchat(widget.groupId);
+                    setState(() {});
+                  },
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: GestureDetector(
+                  onTap: () {
+                    showMenu(
+                      color: ColorConstant.white,
+                      context: context,
+                      position:
+                          const RelativeRect.fromLTRB(1000.0, 0.0, 1000.0, 0.0),
+                      items: [
+                        const PopupMenuItem<String>(
+                          value: '1',
+                          child: Text('Profile'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: '2',
+                          child: Text('Refresh'),
+                        ),
+                      ],
+                    ).then((value) {
+                      if (value != null) {
+                        if (value == '1') {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                content: SizedBox(
+                                  height: 220,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        height: 100,
+                                        width: 100,
+                                        decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(
+                                                officialMessageModel!
+                                                    .profilePhoto),
+                                          ),
+                                          color: ColorConstant.grey,
+                                          borderRadius:
+                                              BorderRadius.circular(60),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 22,
+                                      ),
+                                      Text(
+                                        officialMessageModel!.groupName,
+                                        style: const TextStyle(
+                                          color: ColorConstant.black,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      Text(
+                                        officialMessageModel!.phoneNumber,
+                                        style: const TextStyle(
+                                          color: ColorConstant.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Created By :${officialMessageModel!.createdBy}",
+                                        style: const TextStyle(
+                                          color: ColorConstant.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
+                                        style: const TextStyle(
+                                          color: ColorConstant.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('close'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } else if (value == '2') {
+                          getchat(widget.groupId);
+                          setState(() {});
+                        }
+                      }
+                    });
+                  },
+                  child: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          body: Container(
+            height: MediaQuery.of(context).size.height,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+            decoration: const BoxDecoration(
+              color: ColorConstant.backgroundColor,
+              image: DecorationImage(
+                fit: BoxFit.fill,
+                image: AssetImage('assets/main/officialBackground.png'),
+              ),
+            ),
+            child: items != [] && templateModel == null
+                ? buildLoaderListItem()
+                : SingleChildScrollView(
+                    reverse: true,
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            _controller = VideoPlayerController.networkUrl(
+                              Uri.parse(
+                                items[index].messageText.url,
+                              ),
+                            );
+                            _initializeVideoPlayerFuture =
+                                _controller.initialize();
+                            if (items[index].messageText.format == "LIST" ||
+                                items[index].messageText.format ==
+                                    "PRODUCT_LIST" ||
+                                items[index].messageText.format == "DOCUMENT" ||
+                                items[index].messageText.format == "RENEW") {
+                              return chatWidget2(index, context);
+                            } else {
+                              return chatWidget1(index, context);
+                            }
                           },
-                          child: SizedBox(
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.09,
+                        )
+                      ],
+                    ),
+                  ),
+          ),
+          bottomSheet: officialMessageModel != null && templateModel != null
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: officialMessageModel!.canSend == true
+                        ? SizedBox(
                             height: 60,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: ColorConstant.white,
-                                    border: Border.all(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 1,
+                                            blurRadius: 1,
+                                            offset: const Offset(1, 1),
+                                          )
+                                        ],
+                                        // color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(25)),
+                                    child: TextFormField(
+                                      onChanged: (value) {
+                                        isTyped = true;
+                                        setState(() {});
+                                      },
+                                      style: const TextStyle(
+                                        color: ColorConstant.black,
+                                      ),
+                                      controller: messageController,
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.all(12),
+                                        hintStyle:
+                                            const TextStyle(color: Colors.grey),
+                                        hintText: 'Message',
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          borderSide: BorderSide
+                                              .none, // Set the border color to none
+                                        ),
+                                        suffixIcon: Padding(
+                                          padding:
+                                              const EdgeInsets.only(right: 15),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const SizedBox(
+                                                width: 20,
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  showGeneralDialog(
+                                                    barrierLabel:
+                                                        "showGeneralDialog",
+                                                    barrierDismissible: true,
+                                                    barrierColor: Colors.black
+                                                        .withOpacity(0.6),
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 400),
+                                                    context: context,
+                                                    pageBuilder:
+                                                        (context, _, __) {
+                                                      return StatefulBuilder(
+                                                        builder: (context,
+                                                            setState) {
+                                                          return Align(
+                                                              alignment: Alignment
+                                                                  .bottomCenter,
+                                                              child:
+                                                                  IntrinsicHeight(
+                                                                child:
+                                                                    Container(
+                                                                  width: double
+                                                                      .maxFinite,
+                                                                  clipBehavior:
+                                                                      Clip.antiAlias,
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          16),
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .only(
+                                                                      topLeft: Radius
+                                                                          .circular(
+                                                                              16),
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              16),
+                                                                    ),
+                                                                  ),
+                                                                  child:
+                                                                      Material(
+                                                                          child:
+                                                                              Column(
+                                                                    children: [
+                                                                      const SizedBox(
+                                                                          height:
+                                                                              20),
+                                                                      Row(
+                                                                        children: [
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => ListFileManager('document', widget.groupId),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Column(
+                                                                              children: [
+                                                                                Container(
+                                                                                  height: 50.0,
+                                                                                  width: 50.0,
+                                                                                  decoration: const BoxDecoration(
+                                                                                    image: DecorationImage(
+                                                                                      image: AssetImage('assets/icons/doc.png'),
+                                                                                      fit: BoxFit.fill,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  height: 3,
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width: MediaQuery.of(context).size.width * 0.23,
+                                                                                  child: const Center(
+                                                                                    child: Text(
+                                                                                      'Docs',
+                                                                                      overflow: TextOverflow.ellipsis,
+                                                                                    ),
+                                                                                  ),
+                                                                                )
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => ListFileManager('video', widget.groupId),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Column(
+                                                                              children: [
+                                                                                Container(
+                                                                                  height: 50.0,
+                                                                                  width: 50.0,
+                                                                                  decoration: const BoxDecoration(
+                                                                                    image: DecorationImage(
+                                                                                      image: AssetImage('assets/icons/mp4.png'),
+                                                                                      fit: BoxFit.fill,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  height: 3,
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width: MediaQuery.of(context).size.width * 0.22,
+                                                                                  child: const Center(
+                                                                                    child: Text(
+                                                                                      'Video',
+                                                                                      overflow: TextOverflow.ellipsis,
+                                                                                    ),
+                                                                                  ),
+                                                                                )
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => ListFileManager('image', widget.groupId),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Column(
+                                                                              children: [
+                                                                                Container(
+                                                                                  height: 50.0,
+                                                                                  width: 50.0,
+                                                                                  decoration: const BoxDecoration(
+                                                                                    image: DecorationImage(
+                                                                                      image: AssetImage('assets/icons/picture.png'),
+                                                                                      fit: BoxFit.fill,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  height: 3,
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width: MediaQuery.of(context).size.width * 0.22,
+                                                                                  child: const Center(
+                                                                                    child: Text(
+                                                                                      'Gallery',
+                                                                                      overflow: TextOverflow.ellipsis,
+                                                                                    ),
+                                                                                  ),
+                                                                                )
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => ListFileManager('audio', widget.groupId),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                            child:
+                                                                                Column(
+                                                                              children: [
+                                                                                Container(
+                                                                                  height: 50.0,
+                                                                                  width: 50.0,
+                                                                                  decoration: const BoxDecoration(
+                                                                                    image: DecorationImage(
+                                                                                      image: AssetImage('assets/icons/audio.png'),
+                                                                                      fit: BoxFit.fill,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  height: 3,
+                                                                                ),
+                                                                                SizedBox(
+                                                                                  width: MediaQuery.of(context).size.width * 0.22,
+                                                                                  child: const Center(
+                                                                                    child: Text(
+                                                                                      'Audio',
+                                                                                      overflow: TextOverflow.ellipsis,
+                                                                                    ),
+                                                                                  ),
+                                                                                )
+                                                                              ],
+                                                                            ),
+                                                                          )
+                                                                        ],
+                                                                      ),
+                                                                      const SizedBox(
+                                                                          height:
+                                                                              20),
+                                                                    ],
+                                                                  )),
+                                                                ),
+                                                              ));
+                                                        },
+                                                      );
+                                                    },
+                                                    transitionBuilder: (_,
+                                                        animation1, __, child) {
+                                                      return SlideTransition(
+                                                        position: Tween(
+                                                          begin: const Offset(
+                                                              0, 1),
+                                                          end: const Offset(
+                                                              0, 0),
+                                                        ).animate(animation1),
+                                                        child: child,
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                  Icons.attach_file,
+                                                  color: ColorConstant.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                width: 15,
+                                              ),
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return AlertDialog(
+                                                        scrollable: true,
+                                                        title: const Text(
+                                                            'Select Source'),
+                                                        content: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            TextButton(
+                                                              onPressed:
+                                                                  () async {
+                                                                await pickedImage(
+                                                                    context,
+                                                                    ImageSource
+                                                                        .camera);
+                                                                if (userImage ==
+                                                                    null) {
+                                                                } else {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                ImageViewScreen(
+                                                                          image:
+                                                                              userImage,
+                                                                          val:
+                                                                              '1',
+                                                                          groupId:
+                                                                              widget.groupId,
+                                                                        ),
+                                                                      ));
+                                                                }
+                                                              },
+                                                              child: const Text(
+                                                                  "Camera"),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed:
+                                                                  () async {
+                                                                await pickedImage(
+                                                                    context,
+                                                                    ImageSource
+                                                                        .gallery);
+                                                                if (userImage ==
+                                                                    null) {
+                                                                } else {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                ImageViewScreen(
+                                                                          image:
+                                                                              userImage,
+                                                                          val:
+                                                                              '1',
+                                                                          groupId:
+                                                                              widget.groupId,
+                                                                        ),
+                                                                      ));
+                                                                }
+                                                              },
+                                                              child: const Text(
+                                                                  "Gallery"),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                    context);
+                                                              },
+                                                              child: const Text(
+                                                                  "Cancel"),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                  Icons.camera_alt,
+                                                  color: ColorConstant.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                CircleAvatar(
+                                  radius: 25,
+                                  backgroundColor: ColorConstant.barGreen,
+                                  child: IconButton(
+                                      color: const Color.fromARGB(
+                                          255, 255, 255, 255),
+                                      onPressed: () async {
+                                        if (list.isNotEmpty) {
+                                          isImage = true;
+                                        }
+                                        await sendingMessage(
+                                            widget.groupId,
+                                            messageController.text,
+                                            list,
+                                            isImage);
+                                        messageController.clear();
+                                        setState(() {});
+                                      },
+                                      icon: isTyped == false &&
+                                              messageController.text.isEmpty
+                                          ? const Icon(Icons.mic)
+                                          : const Icon(Icons.send)),
+                                ),
+                              ],
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: () {
+                              templateDialog(context);
+                            },
+                            child: SizedBox(
+                              height: 60,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: ColorConstant.white,
+                                      border: Border.all(
+                                          color: ColorConstant.barGreen,
+                                          width: 2.5),
+                                      borderRadius: BorderRadius.circular(12)),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.sticky_note_2_outlined,
                                         color: ColorConstant.barGreen,
-                                        width: 2.5),
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.sticky_note_2_outlined,
-                                      color: ColorConstant.barGreen,
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      'Send Template',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: ColorConstant.barGreen),
-                                    )
-                                  ],
+                                      ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        'Send Template',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: ColorConstant.barGreen),
+                                      )
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                ),
-              ),
-      ),
+                  ),
+                )
+              : Container(
+                  height: 70,
+                  color: Colors.grey.shade100,
+                )),
     );
   }
 
@@ -840,8 +836,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           GestureDetector(
             onTap: () {
-              if (officialMessageModel!.messages[index].messageText.format ==
-                  'VIDEO') {
+              if (items[index].messageText.format == 'VIDEO') {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -867,10 +862,9 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             },
             child: Row(
-              mainAxisAlignment:
-                  officialMessageModel!.messages[index].fromMe == true
-                      ? MainAxisAlignment.end
-                      : MainAxisAlignment.start,
+              mainAxisAlignment: items[index].fromMe == true
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
               children: [
                 const SizedBox(
                   width: 10,
@@ -892,7 +886,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         offset: const Offset(-1, 1),
                       )
                     ],
-                    color: officialMessageModel!.messages[index].fromMe == false
+                    color: items[index].fromMe == false
                         ? ColorConstant.white
                         : ColorConstant.greenChat,
                     // doc['uid'] == auth.currentUser!.uid
@@ -946,9 +940,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ),
                             )
-                          : officialMessageModel!
-                                      .messages[index].messageText.format ==
-                                  'VIDEO'
+                          : items[index].messageText.format == 'VIDEO'
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 5),
                                   child: Container(
@@ -1058,12 +1050,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                         ),
                                       ))
-                                  : officialMessageModel!.messages[index]
-                                              .messageText.format ==
-                                          'TEXT'
-                                      ? officialMessageModel!.messages[index]
-                                                  .messageText.url ==
-                                              ''
+                                  : items[index].messageText.format == 'TEXT'
+                                      ? items[index].messageText.url == ''
                                           ? const SizedBox()
                                           : Padding(
                                               padding: const EdgeInsets.only(
@@ -1086,34 +1074,38 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'TEXT'
                             ? const EdgeInsets.only(left: 0)
                             : const EdgeInsets.only(left: 5),
-                        child:officialMessageModel!
+                        child: officialMessageModel!
                                     .messages[index].messageText.format ==
-                                'LOCATION'?const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(36.0),
-                                    child: Column(
-                                      children: [
-                                        Icon(Icons.location_on,size: 80,color: Colors.red,),
-                                        
-                                        Text(
-                          "Tap to view",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.red
-                          ),
-                        ),
-                                      ],
-                                    ),
+                                'LOCATION'
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(36.0),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 80,
+                                        color: Colors.red,
+                                      ),
+                                      Text(
+                                        "Tap to view",
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.red),
+                                      ),
+                                    ],
                                   ),
-                                ): Text(
-                          officialMessageModel!
-                              .messages[index].messageText.messageBody,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                                ),
+                              )
+                            : Text(
+                                officialMessageModel!
+                                    .messages[index].messageText.messageBody,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
                       ),
                       officialMessageModel!
                                   .messages[index].messageText.footer ==
@@ -1132,7 +1124,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            officialMessageModel!.messages[index].sentTime,
+                            items[index].sentTime,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -1142,9 +1134,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           const SizedBox(
                             width: 5,
                           ),
-                          officialMessageModel!.messages[index].fromMe == true
-                              ? officialMessageModel!.messages[index].status ==
-                                      'send'
+                          items[index].fromMe == true
+                              ? items[index].status == 'send'
                                   ? const Icon(
                                       Icons.check,
                                       color: ColorConstant.grey,
@@ -1195,10 +1186,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         .messages[index].messageText.buttons.length ==
                     2
                 ? Row(
-                    mainAxisAlignment:
-                        officialMessageModel!.messages[index].fromMe == true
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
+                    mainAxisAlignment: items[index].fromMe == true
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     children: [
                       Container(
                         height: 40,
@@ -1250,10 +1240,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   )
                 : Row(
-                    mainAxisAlignment:
-                        officialMessageModel!.messages[index].fromMe == true
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
+                    mainAxisAlignment: items[index].fromMe == true
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.644,
@@ -1285,8 +1274,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      officialMessageModel!.messages[index]
-                                          .messageText.buttons[indexC].text,
+                                      items[index]
+                                          .messageText
+                                          .buttons[indexC]
+                                          .text,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -1314,8 +1305,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             GestureDetector(
               onTap: () {
-                if (officialMessageModel!.messages[index].messageText.format ==
-                    "DOCUMENT") {
+                if (items[index].messageText.format == "DOCUMENT") {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1331,10 +1321,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
               },
               child: Row(
-                mainAxisAlignment:
-                    officialMessageModel!.messages[index].fromMe == true
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
+                mainAxisAlignment: items[index].fromMe == true
+                    ? MainAxisAlignment.end
+                    : MainAxisAlignment.start,
                 children: [
                   const SizedBox(
                     width: 10,
@@ -1349,10 +1338,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           offset: const Offset(-1, 1),
                         )
                       ],
-                      color:
-                          officialMessageModel!.messages[index].fromMe == false
-                              ? ColorConstant.white
-                              : ColorConstant.greenChat,
+                      color: items[index].fromMe == false
+                          ? ColorConstant.white
+                          : ColorConstant.greenChat,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     constraints: const BoxConstraints(
@@ -1363,8 +1351,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: officialMessageModel!
-                                      .messages[index].messageText.format ==
+                          child: items[index].messageText.format ==
                                   "PRODUCT_LIST"
                               ? Container(
                                   decoration: BoxDecoration(
@@ -1486,9 +1473,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                         ),
                                       ))
-                                  : officialMessageModel!.messages[index]
-                                              .messageText.format ==
-                                          ""
+                                  : items[index].messageText.format == ""
                                       ? Container(
                                           decoration: BoxDecoration(
                                               color: officialMessageModel!
@@ -1631,15 +1616,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        officialMessageModel!.messages[index]
-                                            .messageText.messageBody,
+                                        items[index].messageText.messageBody,
                                         style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold),
                                       ),
-                                      officialMessageModel!.messages[index]
-                                                  .messageText.footer ==
-                                              ""
+                                      items[index].messageText.footer == ""
                                           ? const SizedBox()
                                           : Text(
                                               officialMessageModel!
@@ -1660,7 +1642,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              officialMessageModel!.messages[index].sentTime,
+                              items[index].sentTime,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -1670,7 +1652,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             const SizedBox(
                               width: 5,
                             ),
-                            officialMessageModel!.messages[index].fromMe == true
+                            items[index].fromMe == true
                                 ? officialMessageModel!
                                             .messages[index].status ==
                                         'send'
@@ -1716,25 +1698,32 @@ class _ChatScreenState extends State<ChatScreen> {
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: officialMessageModel!.messages[index]
-                                            .messageText.buttons.length,
+                          itemCount: items[index].messageText.buttons.length,
                           itemBuilder: (context, i) {
                             return Column(
                               children: [
                                 const Divider(),
                                 GestureDetector(
                                   onTap: () {
-                                    if (officialMessageModel!.messages[index]
-                                            .messageText.buttons[i].text ==
+                                    if (items[index]
+                                            .messageText
+                                            .buttons[i]
+                                            .text ==
                                         "Product List") {
                                       selectOptionBottomSheet(
-                                          officialMessageModel!.messages[index]
-                                              .messageText.buttons[i].text,
-                                          officialMessageModel!.messages[index]
-                                              .messageText.buttons[i].data);
+                                          items[index]
+                                              .messageText
+                                              .buttons[i]
+                                              .text,
+                                          items[index]
+                                              .messageText
+                                              .buttons[i]
+                                              .data);
                                     }
-                                    if (officialMessageModel!.messages[index]
-                                            .messageText.buttons[i].text ==
+                                    if (items[index]
+                                            .messageText
+                                            .buttons[i]
+                                            .text ==
                                         "View items") {
                                       Navigator.push(
                                           context,
@@ -1761,8 +1750,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     decoration: const BoxDecoration(),
                                     child: Center(
                                         child: Text(
-                                      officialMessageModel!.messages[index]
-                                          .messageText.buttons[i].text,
+                                      items[index].messageText.buttons[i].text,
                                       style: const TextStyle(
                                           fontSize: 14,
                                           color: Colors.blue,
@@ -3148,7 +3136,8 @@ class _ChatScreenState extends State<ChatScreen> {
       },
     );
   }
-Widget buildLoaderListItem() {
+
+  Widget buildLoaderListItem() {
     return Shimmer.fromColors(
         enabled: true,
         baseColor: Colors.grey.shade300,
@@ -3168,19 +3157,20 @@ Widget buildLoaderListItem() {
               //       height: 60.0,
               //       color: Colors.white,
               //     ),
-                 
+
               //   ],
               // ),
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height*.8,
+                  height: MediaQuery.of(context).size.height * .8,
                   child: ListView.builder(
                       itemCount: 2,
                       physics: const NeverScrollableScrollPhysics(),
                       itemBuilder: (context, i) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 8.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 8.0),
                           child: Column(
                             children: [
                               Row(
@@ -3198,8 +3188,10 @@ Widget buildLoaderListItem() {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10,),
-                               Row(
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Row(
                                 mainAxisSize: MainAxisSize.max,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -3230,6 +3222,7 @@ Widget buildLoaderListItem() {
           ),
         ));
   }
+
   Future<void> launchGoogleMaps(double latitude, double longitude) async {
     final url =
         'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';

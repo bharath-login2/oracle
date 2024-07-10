@@ -2571,8 +2571,8 @@ class HttpService {
           .get("${await Config.getUrl()}official_whatsapp", queryParameters: {
         "searchKey": searchKey,
         "token": await Common.getSharedPref("token"),
-        "page": page,
-        "page_size": pageSize,
+        "pageNo": page,
+        "pageSize": pageSize,
       });
       if (response.statusCode == 200) {
         ChatListModel chatListModel = ChatListModel.fromJson(response.data);
@@ -3344,7 +3344,7 @@ class HttpService {
     });
     try {
       var result = await _dio.post(
-          "${await Config.getUrl()}postexistingCustomerRenewal",
+          "${await Config.getUrl()}postExistingCustomRenewal",
           data: formData);
       if (result.statusCode == 200) {
         PostRenewalModel response = PostRenewalModel.fromJson(result.data);
@@ -3369,14 +3369,26 @@ class HttpService {
       pincode,
       gstNum,
       remarks,
-      products,
+      renewalProducts,
       startDate,
       endDate,
       cost,
       email,
       actualCost,
       templateId,
-      checkIdVal) async {
+      checkIdVal,
+      invoiceNum,
+      invoiceDate,
+      invoiceSl,
+      subTotal,
+      tax,
+      discount,
+      shipping,
+      totalAmount,
+      paidAmount,
+      payStatus,
+      payMethod,
+      collectedStaff) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "branch_id": branchId ?? "",
@@ -3392,18 +3404,28 @@ class HttpService {
       "pincode": pincode,
       "gst_num": gstNum,
       "remarks": remarks,
-      "renewal_product": jsonEncode(products),
+      "product_details": jsonEncode(renewalProducts),
       "template_id": templateId,
       "start_date": startDate,
       "end_date": endDate,
-      "cost": cost,
       "email_id ": email,
       "actual_cost": actualCost,
-      "check_id_val": checkIdVal
+      "check_id_val": checkIdVal,
+      "invoice_number": invoiceNum,
+      "invoice_date": invoiceDate,
+      "invoice_sl_number": invoiceSl,
+      "sub_total": subTotal,
+      "estimated_tax": tax,
+      "discount_amount": discount,
+      "shipping_amount": shipping,
+      "total_amount_paid": totalAmount,
+      "amount_paid_customer": paidAmount,
+      "payment_status": payStatus,
+      "payment_method": payMethod,
+      "collected_staff": collectedStaff,
     });
     try {
-      var result = await _dio.post(
-          "${await Config.getUrl()}postNewCustomerRenewal",
+      var result = await _dio.post("${await Config.getUrl()}postCustomRenewal",
           data: formData);
       if (result.statusCode == 200) {
         AddCustomerModel response = AddCustomerModel.fromJson(result.data);
@@ -3497,43 +3519,6 @@ class HttpService {
       log("error: $e");
     }
   }
-
-  // static Future deleteType(String rowId) async {
-  //   var formData = FormData.fromMap(
-  //       {"token": await Common.getSharedPref('token'), "row_id": rowId});
-  //   try {
-  //     var result =
-  //         await _dio.post("${await Config.getUrl()}deleteType", data: formData);
-  //     if (result.statusCode == 200) {
-  //       HideModel response = HideModel.fromJson(result.data);
-  //       return response;
-  //     }
-  //   } on Exception {
-  //     return null;
-  //   }
-  // }
-
-  // static Future updateType(String rowId, String type, String cost,
-  //     String noOfDays, String remindMe) async {
-  //   var formData = FormData.fromMap({
-  //     "token": await Common.getSharedPref('token'),
-  //     "row_id": rowId,
-  //     "type_name": type,
-  //     "total_cost": cost,
-  //     "no_of_days": noOfDays,
-  //     "remind_before_days": remindMe
-  //   });
-  //   try {
-  //     var result =
-  //         await _dio.post("${await Config.getUrl()}updateType", data: formData);
-  //     if (result.statusCode == 200) {
-  //       PostTypeModel response = PostTypeModel.fromJson(result.data);
-  //       return response;
-  //     }
-  //   } on Exception {
-  //     return null;
-  //   }
-  // }
 
   static Future hiddenList(
       page, pageSize, clientId, fromDate, toDate, daysToExpire) async {
