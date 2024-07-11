@@ -2630,13 +2630,15 @@ class HttpService {
     } finally {}
   }
 
-  static officialMessage(groupId) async {
+  static officialMessage(groupId, page, pageSize) async {
     try {
       var response = await _dio.get(
           "${await Config.getUrl()}official_whatsapp_messages",
           queryParameters: {
             "group_id": groupId,
             "token": await Common.getSharedPref("token"),
+            "pageNo": page,
+            "pageSize": pageSize,
           });
       if (response.statusCode == 200) {
         OfficialMessageModel officialMessageModel =

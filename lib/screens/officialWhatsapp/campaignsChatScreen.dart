@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
@@ -2073,5 +2074,88 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
     }
   }
 
-
+  Widget buildLoaderListItem() {
+    return Shimmer.fromColors(
+        enabled: true,
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 120.0,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * .8,
+                  child: ListView.builder(
+                      itemCount: 10,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, i) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 10.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 50.0,
+                                height: 50.0,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12.0),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                      margin:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                    ),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                      margin:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                    ),
+                                    Container(
+                                      width: 100.0,
+                                      height: 10.0,
+                                      color: Colors.white,
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        );
+                      }),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+            ],
+          ),
+        ));
+  }
 }

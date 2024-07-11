@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'dart:developer';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -44,7 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   List<Message> items = [];
   int page = 1;
-  int pageSize = 10;
+  int pageSize = 30;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
   MediaModel? mediaDetails;
@@ -61,37 +62,50 @@ class _ChatScreenState extends State<ChatScreen> {
   bool buttonStatus = false;
   SendMesaageModel? sendMessageModel;
   bool isImage = false;
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   late Future<void> _initializeVideoPlayerFuture;
   File? video;
   bool listFiles = false;
-
+  int add = 1;
+  final ItemScrollController itemScrollController = ItemScrollController();
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
   @override
   void initState() {
     getchat(widget.groupId);
+    itemPositionsListener.itemPositions.addListener(_onLoadMore);
     getTemplates();
     super.initState();
   }
 
+  void _onLoadMore() {
+    if (items.length + 30 == page * pageSize &&
+        itemPositionsListener.itemPositions.value.last.index == items.length &&
+        page > add) {
+      getchat(widget.groupId);
+      add++;
+    }
+  }
+
   getchat(groupId) async {
     isLoading = true;
-    officialMessageModel = await HttpService.officialMessage(groupId);
+    officialMessageModel =
+        await HttpService.officialMessage(groupId, page, pageSize);
     if (officialMessageModel != null) {
       setState(() {
         items.addAll(officialMessageModel!.messages);
+        page++;
       });
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-
+    _controller!.dispose();
     super.dispose();
   }
-
+  
   final imageHelper = ImageHelper();
-
   TextEditingController messageController = TextEditingController();
 
   @override
@@ -111,8 +125,7 @@ class _ChatScreenState extends State<ChatScreen> {
             automaticallyImplyLeading: false,
             title: Container(
                 padding: EdgeInsets.zero, // Set padding to zero
-                child: officialMessageModel != null &&
-                        templateModel != null
+                child: officialMessageModel != null && templateModel != null
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -184,6 +197,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
                 child: GestureDetector(
                   onTap: () {
+                    page = 1;
+                    add = 1;
+                    items.clear();
                     getchat(widget.groupId);
                     setState(() {});
                   },
@@ -316,41 +332,57 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             child: items != [] && templateModel == null
                 ? buildLoaderListItem()
-                : SingleChildScrollView(
-                    reverse: true,
-                    child: Column(
-                      children: [
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: items.length,
+                : Column(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * .8,
+                        child: ScrollablePositionedList.builder(
+                          reverse: true,
+                          initialScrollIndex: 0,
+                          itemScrollController: itemScrollController,
+                          itemPositionsListener: itemPositionsListener,
+                          itemCount: items.length +
+                              (items.length + 30 == page * pageSize ? 1 : 0),
                           itemBuilder: (context, index) {
-                            _controller = VideoPlayerController.networkUrl(
-                              Uri.parse(
-                                items[index].messageText.url,
-                              ),
-                            );
-                            _initializeVideoPlayerFuture =
-                                _controller.initialize();
-                            if (items[index].messageText.format == "LIST" ||
-                                items[index].messageText.format ==
-                                    "PRODUCT_LIST" ||
-                                items[index].messageText.format == "DOCUMENT" ||
-                                items[index].messageText.format == "RENEW") {
-                              return chatWidget2(index, context);
+                            if (index < items.length &&
+                                items[index].messageText.format == "VIDEO") {
+                              _controller = VideoPlayerController.networkUrl(
+                                Uri.parse(
+                                  items[index].messageText.url,
+                                ),
+                              );
+                              _initializeVideoPlayerFuture =
+                                  _controller!.initialize();
+                            }
+
+                            if (index == items.length) {
+                              return scrollShimmer();
                             } else {
-                              return chatWidget1(index, context);
+                              if (items[index].messageText.format == "LIST" ||
+                                  items[index].messageText.format ==
+                                      "PRODUCT_LIST" ||
+                                  items[index].messageText.format ==
+                                      "DOCUMENT" ||
+                                  items[index].messageText.format == "RENEW") {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                      bottom: index == 0 ? 40.0 : 0.0,
+                                      top: 4.0),
+                                  child: chatWidget2(index, context),
+                                );
+                              } else {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                      bottom: index == 0 ? 40.0 : 0.0,
+                                      top: 4.0),
+                                  child: chatWidget1(index, context),
+                                );
+                              }
                             }
                           },
                         ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.09,
-                        )
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
           ),
           bottomSheet: officialMessageModel != null && templateModel != null
@@ -841,23 +873,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ViewerScreen(
-                        myUrl: officialMessageModel!
-                            .messages[index].messageText.url,
-                        type: officialMessageModel!
-                            .messages[index].messageText.format,
-                        title: officialMessageModel!
-                            .messages[index].messageText.format,
+                        myUrl: items[index].messageText.url,
+                        type: items[index].messageText.format,
+                        title: items[index].messageText.format,
                       ),
                     ));
-              } else if (officialMessageModel!
-                      .messages[index].messageText.format ==
-                  'LOCATION') {
-                double latitude = double.parse(officialMessageModel!
-                    .messages[index].messageText.latitude
-                    .toString());
-                double longitude = double.parse(officialMessageModel!
-                    .messages[index].messageText.longitude
-                    .toString());
+              } else if (items[index].messageText.format == 'LOCATION') {
+                double latitude =
+                    double.parse(items[index].messageText.latitude.toString());
+                double longitude =
+                    double.parse(items[index].messageText.longitude.toString());
                 launchGoogleMaps(latitude, longitude);
               }
             },
@@ -870,9 +895,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   width: 10,
                 ),
                 Container(
-                  padding: officialMessageModel!
-                              .messages[index].messageText.format ==
-                          'TEXT'
+                  padding: items[index].messageText.format == 'TEXT'
                       ? const EdgeInsets.only(
                           left: 12, right: 12, bottom: 4, top: 12)
                       : const EdgeInsets.only(
@@ -901,21 +924,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      officialMessageModel!
-                                  .messages[index].messageText.format ==
-                              'IMAGE'
+                      items[index].messageText.format == 'IMAGE'
                           ? GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => ViewerScreen(
-                                        myUrl: officialMessageModel!
-                                            .messages[index].messageText.url,
-                                        type: officialMessageModel!
-                                            .messages[index].messageText.format,
-                                        title: officialMessageModel!
-                                            .messages[index].messageText.format,
+                                        myUrl: items[index].messageText.url,
+                                        type: items[index].messageText.format,
+                                        title: items[index].messageText.format,
                                       ),
                                     ));
                               },
@@ -930,10 +948,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       image: DecorationImage(
                                         fit: BoxFit.fitWidth,
                                         image: NetworkImage(
-                                            officialMessageModel!
-                                                .messages[index]
-                                                .messageText
-                                                .url),
+                                            items[index].messageText.url),
                                       ),
                                     ),
                                   ),
@@ -962,7 +977,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                               // If the VideoPlayerController has finished initialization, use
                                               // the data it provides to limit the aspect ratio of the video.
                                               return AspectRatio(
-                                                aspectRatio: _controller
+                                                aspectRatio: _controller!
                                                     .value.aspectRatio,
                                                 // Use the VideoPlayer widget to display the video.
                                                 child: Stack(
@@ -972,7 +987,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                           BorderRadius.circular(
                                                               8),
                                                       child: VideoPlayer(
-                                                          _controller),
+                                                          _controller!),
                                                     ),
                                                     const Center(
                                                       child: Icon(
@@ -999,9 +1014,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ),
                                   ),
                                 )
-                              : officialMessageModel!
-                                          .messages[index].messageText.format ==
-                                      'DOCUMENT'
+                              : items[index].messageText.format == 'DOCUMENT'
                                   ? Container(
                                       width: MediaQuery.of(context).size.width *
                                           0.7,
@@ -1038,8 +1051,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   child: SizedBox(
                                                 width: 120,
                                                 child: Text(
-                                                  officialMessageModel!
-                                                      .messages[index]
+                                                  items[index]
                                                       .messageText
                                                       .fileName,
                                                   overflow:
@@ -1057,10 +1069,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                               padding: const EdgeInsets.only(
                                                   bottom: 4),
                                               child: Text(
-                                                officialMessageModel!
-                                                    .messages[index]
-                                                    .messageText
-                                                    .url,
+                                                items[index].messageText.url,
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.bold,
@@ -1069,14 +1078,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                             )
                                       : const SizedBox(),
                       Padding(
-                        padding: officialMessageModel!
-                                    .messages[index].messageText.format ==
-                                'TEXT'
+                        padding: items[index].messageText.format == 'TEXT'
                             ? const EdgeInsets.only(left: 0)
                             : const EdgeInsets.only(left: 5),
-                        child: officialMessageModel!
-                                    .messages[index].messageText.format ==
-                                'LOCATION'
+                        child: items[index].messageText.format == 'LOCATION'
                             ? const Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(36.0),
@@ -1099,23 +1104,19 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               )
                             : Text(
-                                officialMessageModel!
-                                    .messages[index].messageText.messageBody,
+                                items[index].messageText.messageBody,
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
                       ),
-                      officialMessageModel!
-                                  .messages[index].messageText.footer ==
-                              ""
+                      items[index].messageText.footer == ""
                           ? const SizedBox()
                           : Padding(
                               padding: const EdgeInsets.only(top: 5, bottom: 3),
                               child: Text(
-                                officialMessageModel!
-                                    .messages[index].messageText.footer,
+                                items[index].messageText.footer,
                                 style: const TextStyle(
                                     fontSize: 12, color: ColorConstant.grey),
                               ),
@@ -1141,25 +1142,19 @@ class _ChatScreenState extends State<ChatScreen> {
                                       color: ColorConstant.grey,
                                       size: 18,
                                     )
-                                  : officialMessageModel!
-                                              .messages[index].status ==
-                                          'delivered'
+                                  : items[index].status == 'delivered'
                                       ? const Icon(
                                           Icons.done_all_sharp,
                                           color: ColorConstant.grey,
                                           size: 18,
                                         )
-                                      : officialMessageModel!
-                                                  .messages[index].status ==
-                                              'read'
+                                      : items[index].status == 'read'
                                           ? const Icon(
                                               Icons.done_all_sharp,
                                               color: ColorConstant.messageSeen,
                                               size: 18,
                                             )
-                                          : officialMessageModel!
-                                                      .messages[index].status ==
-                                                  'failed'
+                                          : items[index].status == 'failed'
                                               ? const Icon(
                                                   Icons.access_time_rounded,
                                                   color: ColorConstant.grey,
@@ -1182,9 +1177,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Padding(
             padding:
                 const EdgeInsets.only(bottom: 5, right: 8, left: 8, top: 5),
-            child: officialMessageModel!
-                        .messages[index].messageText.buttons.length ==
-                    2
+            child: items[index].messageText.buttons.length == 2
                 ? Row(
                     mainAxisAlignment: items[index].fromMe == true
                         ? MainAxisAlignment.end
@@ -1206,8 +1199,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             color: Colors.white),
                         child: Center(
                           child: Text(
-                            officialMessageModel!
-                                .messages[index].messageText.buttons[1].text,
+                            items[index].messageText.buttons[1].text,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -1231,8 +1223,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             color: Colors.white),
                         child: Center(
                           child: Text(
-                            officialMessageModel!
-                                .messages[index].messageText.buttons[0].text,
+                            items[index].messageText.buttons[0].text,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -1246,47 +1237,52 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.644,
-                        child: ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: officialMessageModel!
-                              .messages[index].messageText.buttons.length,
-                          itemBuilder: (context, indexC) {
-                            return GestureDetector(
-                              onTap: () async {},
-                              child: Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: Container(
-                                  height: 40,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.5,
-                                  decoration: BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.5),
-                                        spreadRadius: 2,
-                                        blurRadius: 2,
-                                        offset: const Offset(1, 1),
+                        child: items[index].messageText.buttons.isEmpty
+                            ? const SizedBox()
+                            : ListView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount:
+                                    items[index].messageText.buttons.length,
+                                itemBuilder: (context, indexC) {
+                                  return GestureDetector(
+                                    onTap: () async {},
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Container(
+                                        height: 40,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
+                                        decoration: BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.grey.withOpacity(0.5),
+                                              spreadRadius: 2,
+                                              blurRadius: 2,
+                                              offset: const Offset(1, 1),
+                                            ),
+                                          ],
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          color: Colors.white,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            items[index]
+                                                .messageText
+                                                .buttons[indexC]
+                                                .text,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
                                       ),
-                                    ],
-                                    borderRadius: BorderRadius.circular(5),
-                                    color: Colors.white,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      items[index]
-                                          .messageText
-                                          .buttons[indexC]
-                                          .text,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ],
                   ),
@@ -1310,12 +1306,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ViewerScreen(
-                          myUrl: officialMessageModel!
-                              .messages[index].messageText.url,
-                          type: officialMessageModel!
-                              .messages[index].messageText.format,
-                          title: officialMessageModel!
-                              .messages[index].messageText.format,
+                          myUrl: items[index].messageText.url,
+                          type: items[index].messageText.format,
+                          title: items[index].messageText.format,
                         ),
                       ));
                 }
@@ -1355,9 +1348,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   "PRODUCT_LIST"
                               ? Container(
                                   decoration: BoxDecoration(
-                                      color: officialMessageModel!
-                                                  .messages[index].fromMe ==
-                                              false
+                                      color: items[index].fromMe == false
                                           ? Colors.grey.shade200
                                           : ColorConstant.greenChatlight,
                                       borderRadius: BorderRadius.circular(8)),
@@ -1373,11 +1364,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                         decoration: BoxDecoration(
                                             color: Colors.white,
                                             image: DecorationImage(
-                                                image: NetworkImage(
-                                                    officialMessageModel!
-                                                        .messages[index]
-                                                        .messageText
-                                                        .url)),
+                                                image: NetworkImage(items[index]
+                                                    .messageText
+                                                    .url)),
                                             borderRadius:
                                                 const BorderRadius.only(
                                               bottomLeft: Radius.circular(8),
@@ -1396,8 +1385,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              officialMessageModel!
-                                                  .messages[index]
+                                              items[index]
                                                   .messageText
                                                   .headerText,
                                               overflow: TextOverflow.ellipsis,
@@ -1406,8 +1394,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
-                                              officialMessageModel!
-                                                  .messages[index]
+                                              items[index]
                                                   .messageText
                                                   .headerSubText,
                                               overflow: TextOverflow.ellipsis,
@@ -1422,9 +1409,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ],
                                   ),
                                 )
-                              : officialMessageModel!
-                                          .messages[index].messageText.format ==
-                                      'DOCUMENT'
+                              : items[index].messageText.format == 'DOCUMENT'
                                   ? Container(
                                       width: MediaQuery.of(context).size.width *
                                           0.7,
@@ -1461,8 +1446,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                   child: SizedBox(
                                                 width: 120,
                                                 child: Text(
-                                                  officialMessageModel!
-                                                      .messages[index]
+                                                  items[index]
                                                       .messageText
                                                       .fileName,
                                                   overflow:
@@ -1476,13 +1460,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                   : items[index].messageText.format == ""
                                       ? Container(
                                           decoration: BoxDecoration(
-                                              color: officialMessageModel!
-                                                          .messages[index]
-                                                          .fromMe ==
-                                                      false
-                                                  ? Colors.grey.shade200
-                                                  : ColorConstant
-                                                      .greenChatlight,
+                                              color:
+                                                  items[index].fromMe == false
+                                                      ? Colors.grey.shade200
+                                                      : ColorConstant
+                                                          .greenChatlight,
                                               borderRadius:
                                                   BorderRadius.circular(8)),
                                           child: Row(
@@ -1548,9 +1530,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.only(left: 14.0),
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width * .5,
-                            child: officialMessageModel!
-                                        .messages[index].messageText.format ==
-                                    "paid"
+                            child: items[index].messageText.format == "paid"
                                 ? const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
@@ -1624,10 +1604,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       items[index].messageText.footer == ""
                                           ? const SizedBox()
                                           : Text(
-                                              officialMessageModel!
-                                                  .messages[index]
-                                                  .messageText
-                                                  .footer,
+                                              items[index].messageText.footer,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                   fontSize: 13,
@@ -1653,35 +1630,26 @@ class _ChatScreenState extends State<ChatScreen> {
                               width: 5,
                             ),
                             items[index].fromMe == true
-                                ? officialMessageModel!
-                                            .messages[index].status ==
-                                        'send'
+                                ? items[index].status == 'send'
                                     ? const Icon(
                                         Icons.check,
                                         color: ColorConstant.grey,
                                         size: 18,
                                       )
-                                    : officialMessageModel!
-                                                .messages[index].status ==
-                                            'delivered'
+                                    : items[index].status == 'delivered'
                                         ? const Icon(
                                             Icons.done_all_sharp,
                                             color: ColorConstant.grey,
                                             size: 18,
                                           )
-                                        : officialMessageModel!
-                                                    .messages[index].status ==
-                                                'read'
+                                        : items[index].status == 'read'
                                             ? const Icon(
                                                 Icons.done_all_sharp,
                                                 color:
                                                     ColorConstant.messageSeen,
                                                 size: 18,
                                               )
-                                            : officialMessageModel!
-                                                        .messages[index]
-                                                        .status ==
-                                                    'failed'
+                                            : items[index].status == 'failed'
                                                 ? const Icon(
                                                     Icons.access_time_rounded,
                                                     color: ColorConstant.grey,
@@ -1729,19 +1697,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => ViewItems(
-                                              title: officialMessageModel!
-                                                  .messages[index]
+                                              title: items[index]
                                                   .messageText
                                                   .buttons[i]
                                                   .text,
-                                              data: officialMessageModel!
-                                                  .messages[index]
+                                              data: items[index]
                                                   .messageText
                                                   .buttons[i]
                                                   .data,
-                                              i: officialMessageModel!
-                                                  .messages[index]
-                                                  .toString(),
+                                              i: items[index].toString(),
                                             ),
                                           ));
                                     }
@@ -3148,18 +3112,6 @@ class _ChatScreenState extends State<ChatScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.max,
             children: [
-              // Column(
-              //   mainAxisSize: MainAxisSize.min,
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Container(
-              //       width: double.infinity,
-              //       height: 60.0,
-              //       color: Colors.white,
-              //     ),
-
-              //   ],
-              // ),
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: SizedBox(
@@ -3212,15 +3164,54 @@ class _ChatScreenState extends State<ChatScreen> {
                       }),
                 ),
               ),
-              // const SizedBox(height: 16.0),
-              //  Container(
-              //       width: double.infinity,
-              //       height: 60.0,
-              //       color: Colors.white,
-              //     ),
             ],
           ),
         ));
+  }
+
+  Widget scrollShimmer() {
+    return Shimmer.fromColors(
+      enabled: true,
+      baseColor: Colors.grey.shade300,
+      highlightColor: Colors.grey.shade100,
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                width: 250.0,
+                height: 150.0,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                width: 250.0,
+                height: 115.0,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> launchGoogleMaps(double latitude, double longitude) async {
