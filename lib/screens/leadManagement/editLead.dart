@@ -757,8 +757,8 @@ class _EditLeadState extends State<EditLead> {
                                               .8,
                                       child: ListView.builder(
                                         shrinkWrap: true,
-                                        itemCount: commonDetails!
-                                            .data.priority.length,
+                                        itemCount:
+                                            commonDetails!.data.priority.length,
                                         itemBuilder: (context, ind) {
                                           return InkWell(
                                             onTap: () {
@@ -767,13 +767,11 @@ class _EditLeadState extends State<EditLead> {
                                                     commonDetails!.data
                                                         .priority[ind].priority
                                                         .toString();
-                                                priority = commonDetails!.data
-                                                    .priority[ind].priority
+                                                priority = commonDetails!
+                                                    .data.priority[ind].priority
                                                     .toString();
-                                                priorityId = commonDetails!
-                                                    .data
-                                                    .priority[ind]
-                                                    .priorityId
+                                                priorityId = commonDetails!.data
+                                                    .priority[ind].priorityId
                                                     .toString();
                                                 Navigator.pop(context, true);
                                               });
@@ -781,8 +779,8 @@ class _EditLeadState extends State<EditLead> {
                                             child: SizedBox(
                                               height: 50,
                                               child: Text(
-                                                commonDetails!.data
-                                                    .priority[ind].priority
+                                                commonDetails!
+                                                    .data.priority[ind].priority
                                                     .toString(),
                                                 style: const TextStyle(
                                                     fontSize: 18),
@@ -846,17 +844,18 @@ class _EditLeadState extends State<EditLead> {
                       height: 20,
                     ),
                     ListView.builder(
-                        shrinkWrap: true,
-                        physics: const ScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return Column(
-                            children: [
-                              decriptionUi(index),
-                            ],
-                          );
-                        },
-                        itemCount: leadDetailsAdditional!
-                            .data!.additionalFields!.length),
+                      itemCount:
+                          leadDetailsAdditional!.data!.additionalFields!.length,
+                      shrinkWrap: true,
+                      physics: const ScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return Column(
+                          children: [
+                            decriptionUi(index),
+                          ],
+                        );
+                      },
+                    ),
                     InkWell(
                       onTap: () async {
                         if (globalKey.currentState!.validate()) {
@@ -1003,7 +1002,7 @@ class _EditLeadState extends State<EditLead> {
                   contentPadding:
                       const EdgeInsets.only(left: 10, top: 2, bottom: 2),
                   labelText:
-                      commonDetails!.data.additionalFields[index].fieldName,
+                      leadDetailsAdditional!.data!.additionalFields![index].name,
                   fillColor: Colors.white,
                   filled: true,
                   prefixIcon: const Icon(Icons.arrow_drop_down_circle,

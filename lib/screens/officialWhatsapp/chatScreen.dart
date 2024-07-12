@@ -104,7 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller!.dispose();
     super.dispose();
   }
-  
+
   final imageHelper = ImageHelper();
   TextEditingController messageController = TextEditingController();
 
@@ -1795,850 +1795,867 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                     templateSelected == true
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 10),
-                              templateContentModel!.data.format == 'VIDEO'
-                                  ? Column(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return StatefulBuilder(builder:
-                                                    (context, setState) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Select Source'),
-                                                    content: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        TextButton(
-                                                          onPressed: () async {
-                                                            // Get.back();
-                                                            Navigator.pop(
-                                                                context);
-                                                            await pickTemplateImage(
-                                                                context,
-                                                                ImageSource
-                                                                    .camera);
-                                                            dropDownHeight =
-                                                                510;
-                                                            setState(() {});
-                                                          },
-                                                          child: const Text(
-                                                              "Camera"),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () async {
-                                                            // Get.back();
-                                                            Navigator.pop(
-                                                                context);
-                                                            await pickTemplateImage(
-                                                                context,
-                                                                ImageSource
-                                                                    .gallery);
-                                                            dropDownHeight =
-                                                                510;
-                                                            setState(() {});
-                                                          },
-                                                          child: const Text(
-                                                              "Gallery"),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            // Get.back();
-                                                          },
-                                                          child: const Text(
-                                                              "Cancel"),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                });
-                                              },
-                                            );
-                                          },
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.7,
-                                            decoration: BoxDecoration(
-                                              border: Border.all(),
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.2,
-                                                    child: templateImage == ''
-                                                        ? const Text('Upload ')
-                                                        : Container(
-                                                            height: 80,
-                                                            width: 100,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  ColorConstant
-                                                                      .white,
-                                                              image:
-                                                                  DecorationImage(
+                        ? SizedBox(
+                            height: 550,
+                            width: 550,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 10),
+                                templateContentModel!.data.format == 'VIDEO'
+                                    ? Column(
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return StatefulBuilder(
+                                                      builder:
+                                                          (context, setState) {
+                                                    return AlertDialog(
+                                                      scrollable: true,
+                                                      title: const Text(
+                                                          'Select Source'),
+                                                      content: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                () async {
+                                                              // Get.back();
+                                                              Navigator.pop(
+                                                                  context);
+                                                              await pickTemplateImage(
+                                                                  context,
+                                                                  ImageSource
+                                                                      .camera);
+                                                              dropDownHeight =
+                                                                  510;
+                                                              setState(() {});
+                                                            },
+                                                            child: const Text(
+                                                                "Camera"),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed:
+                                                                () async {
+                                                              // Get.back();
+                                                              Navigator.pop(
+                                                                  context);
+                                                              await pickTemplateImage(
+                                                                  context,
+                                                                  ImageSource
+                                                                      .gallery);
+                                                              dropDownHeight =
+                                                                  510;
+                                                              setState(() {});
+                                                            },
+                                                            child: const Text(
+                                                                "Gallery"),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              // Get.back();
+                                                            },
+                                                            child: const Text(
+                                                                "Cancel"),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  });
+                                                },
+                                              );
+                                            },
+                                            child: Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.7,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(),
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                              ),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.2,
+                                                      child: templateImage == ''
+                                                          ? const Text(
+                                                              'Upload ')
+                                                          : Container(
+                                                              height: 80,
+                                                              width: 100,
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color:
+                                                                    ColorConstant
+                                                                        .white,
                                                                 image:
-                                                                    FileImage(
-                                                                  File(
-                                                                      templateImage),
+                                                                    DecorationImage(
+                                                                  image:
+                                                                      FileImage(
+                                                                    File(
+                                                                        templateImage),
+                                                                  ),
                                                                 ),
                                                               ),
+                                                              // Add your image widget here
                                                             ),
-                                                            // Add your image widget here
+                                                    ),
+                                                    Column(
+                                                      children: [
+                                                        Container(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: ColorConstant
+                                                                .grey,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        3),
                                                           ),
-                                                  ),
-                                                  Column(
-                                                    children: [
-                                                      Container(
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: ColorConstant
-                                                              .grey,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(3),
-                                                        ),
-                                                        child: const Padding(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                  4.0),
-                                                          child: Text(
-                                                            'Choose file',
-                                                            style: TextStyle(
-                                                              fontSize: 11,
+                                                          child: const Padding(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    4.0),
+                                                            child: Text(
+                                                              'Choose file',
+                                                              style: TextStyle(
+                                                                fontSize: 11,
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      Text(
-                                                        templateImage == ''
-                                                            ? '*No file selected'
-                                                            : '',
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black,
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                ],
+                                                        Text(
+                                                          templateImage == ''
+                                                              ? '*No file selected'
+                                                              : '',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.black,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        mediaDetails != null
-                                            ? SizedBox(
-                                                height: 110,
-                                                child: ListView.builder(
-                                                    scrollDirection:
-                                                        Axis.horizontal,
-                                                    shrinkWrap: true,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 5,
-                                                        vertical: 1),
-                                                    itemCount: mediaDetails!
-                                                        .data!.length,
-                                                    itemBuilder:
-                                                        (BuildContext context,
-                                                            int i) {
-                                                      return GestureDetector(
-                                                        onTap: () {
-                                                          templateImage =
-                                                              mediaDetails!
-                                                                  .data![i].url
-                                                                  .toString();
-                                                          setState(() {});
-                                                        },
-                                                        child: Container(
-                                                          constraints:
-                                                              const BoxConstraints(
-                                                            maxHeight: 81,
-                                                          ),
-                                                          child: Column(
-                                                            children: [
-                                                              Container(
-                                                                constraints:
-                                                                    const BoxConstraints(
-                                                                  minHeight: 60,
-                                                                  minWidth: 60,
-                                                                  maxHeight: 70,
-                                                                  maxWidth: 70,
-                                                                ),
-                                                                decoration:
-                                                                    const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .rectangle,
-                                                                  image: DecorationImage(
-                                                                      fit: BoxFit
-                                                                          .fill,
-                                                                      image: AssetImage(
-                                                                          'assets/icons/mp4.png')),
-                                                                  // image: AssetImage(
-                                                                  //     'assets/images/img.jpeg')),
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 4,
-                                                              ),
-                                                              SizedBox(
-                                                                width: 60,
-                                                                child: Text(
-                                                                  mediaDetails!
-                                                                      .data![i]
-                                                                      .fileName
-                                                                      .toString(),
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: const TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }),
-                                              )
-                                            : const SizedBox()
-                                      ],
-                                    )
-                                  : templateContentModel!.data.format == 'IMAGE'
-                                      ? Column(
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return StatefulBuilder(
-                                                        builder: (context,
-                                                            setState) {
-                                                      return AlertDialog(
-                                                        scrollable: true,
-                                                        title: const Text(
-                                                            'Select Source'),
-                                                        content: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            TextButton(
-                                                              onPressed:
-                                                                  () async {
-                                                                // Get.back();
-                                                                Navigator.pop(
-                                                                    context);
-                                                                await pickTemplateImage(
-                                                                    context,
-                                                                    ImageSource
-                                                                        .camera);
-                                                                dropDownHeight =
-                                                                    510;
-                                                                setState(() {});
-                                                              },
-                                                              child: const Text(
-                                                                  "Camera"),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          mediaDetails != null
+                                              ? SizedBox(
+                                                  height: 110,
+                                                  child: ListView.builder(
+                                                      scrollDirection:
+                                                          Axis.horizontal,
+                                                      shrinkWrap: true,
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 5,
+                                                          vertical: 1),
+                                                      itemCount: mediaDetails!
+                                                          .data!.length,
+                                                      itemBuilder:
+                                                          (BuildContext context,
+                                                              int i) {
+                                                        return GestureDetector(
+                                                          onTap: () {
+                                                            templateImage =
+                                                                mediaDetails!
+                                                                    .data![i]
+                                                                    .url
+                                                                    .toString();
+                                                            setState(() {});
+                                                          },
+                                                          child: Container(
+                                                            constraints:
+                                                                const BoxConstraints(
+                                                              maxHeight: 81,
                                                             ),
-                                                            TextButton(
-                                                              onPressed:
-                                                                  () async {
-                                                                // Get.back();
-                                                                Navigator.pop(
-                                                                    context);
-                                                                await pickTemplateImage(
-                                                                    context,
-                                                                    ImageSource
-                                                                        .gallery);
-                                                                dropDownHeight =
-                                                                    510;
-                                                                setState(() {});
-                                                              },
-                                                              child: const Text(
-                                                                  "Gallery"),
-                                                            ),
-                                                            TextButton(
-                                                              onPressed: () {
-                                                                // Get.back();
-                                                              },
-                                                              child: const Text(
-                                                                  "Cancel"),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    });
-                                                  },
-                                                );
-                                              },
-                                              child: Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.7,
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(),
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
-                                                ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.2,
-                                                        child:
-                                                            templateImage == ''
-                                                                ? const Text(
-                                                                    'Upload ')
-                                                                : Container(
-                                                                    height: 80,
-                                                                    width: 100,
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: ColorConstant
-                                                                          .white,
-                                                                      image:
-                                                                          DecorationImage(
-                                                                        image:
-                                                                            FileImage(
-                                                                          File(
-                                                                              templateImage),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    // Add your image widget here
-                                                                  ),
-                                                      ),
-                                                      Column(
-                                                        children: [
-                                                          Container(
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  ColorConstant
-                                                                      .grey,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          3),
-                                                            ),
-                                                            child:
-                                                                const Padding(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(4.0),
-                                                              child: Text(
-                                                                'Choose file',
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 11,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            templateImage == ''
-                                                                ? '*No file selected1'
-                                                                : '',
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 12,
-                                                              color:
-                                                                  Colors.black,
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            mediaDetails != null
-                                                ? SizedBox(
-                                                    height: 110,
-                                                    child: ListView.builder(
-                                                        scrollDirection:
-                                                            Axis.horizontal,
-                                                        shrinkWrap: true,
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 5,
-                                                                vertical: 1),
-                                                        itemCount: mediaDetails!
-                                                            .data!.length,
-                                                        itemBuilder:
-                                                            (BuildContext
-                                                                    context,
-                                                                int i) {
-                                                          return GestureDetector(
-                                                            onTap: () {
-                                                              templateImage =
-                                                                  mediaDetails!
-                                                                      .data![i]
-                                                                      .url
-                                                                      .toString();
-                                                              setState(() {});
-                                                            },
-                                                            child: Container(
-                                                              constraints:
-                                                                  const BoxConstraints(
-                                                                maxHeight: 81,
-                                                              ),
-                                                              child: Column(
-                                                                children: [
-                                                                  Container(
-                                                                    constraints:
-                                                                        const BoxConstraints(
-                                                                      minHeight:
-                                                                          60,
-                                                                      minWidth:
-                                                                          60,
-                                                                      maxHeight:
-                                                                          70,
-                                                                      maxWidth:
-                                                                          70,
-                                                                    ),
-                                                                    decoration:
-                                                                        const BoxDecoration(
-                                                                      shape: BoxShape
-                                                                          .rectangle,
-                                                                      image: DecorationImage(
-                                                                          fit: BoxFit
-                                                                              .fill,
-                                                                          image:
-                                                                              AssetImage('assets/icons/picture.png')),
-                                                                      // image: AssetImage(
-                                                                      //     'assets/images/img.jpeg')),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    height: 4,
-                                                                  ),
-                                                                  SizedBox(
-                                                                    width: 60,
-                                                                    child: Text(
-                                                                      mediaDetails!
-                                                                          .data![
-                                                                              i]
-                                                                          .fileName
-                                                                          .toString(),
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      style: const TextStyle(
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }),
-                                                  )
-                                                : const SizedBox()
-                                          ],
-                                        )
-                                      : templateContentModel!.data.format ==
-                                              'DOCUMENT'
-                                          ? Column(
-                                              children: [
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (BuildContext
-                                                          context) {
-                                                        return StatefulBuilder(
-                                                            builder: (context,
-                                                                setState) {
-                                                          return AlertDialog(
-                                                            scrollable: true,
-                                                            title: const Text(
-                                                                'Select Source'),
-                                                            content: Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
+                                                            child: Column(
                                                               children: [
-                                                                TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    // Get.back();
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                    await pickTemplateImage(
-                                                                        context,
-                                                                        ImageSource
-                                                                            .camera);
-                                                                    dropDownHeight =
-                                                                        510;
-                                                                    setState(
-                                                                        () {});
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Camera"),
+                                                                Container(
+                                                                  constraints:
+                                                                      const BoxConstraints(
+                                                                    minHeight:
+                                                                        60,
+                                                                    minWidth:
+                                                                        60,
+                                                                    maxHeight:
+                                                                        70,
+                                                                    maxWidth:
+                                                                        70,
+                                                                  ),
+                                                                  decoration:
+                                                                      const BoxDecoration(
+                                                                    shape: BoxShape
+                                                                        .rectangle,
+                                                                    image: DecorationImage(
+                                                                        fit: BoxFit
+                                                                            .fill,
+                                                                        image: AssetImage(
+                                                                            'assets/icons/mp4.png')),
+                                                                    // image: AssetImage(
+                                                                    //     'assets/images/img.jpeg')),
+                                                                  ),
                                                                 ),
-                                                                TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    // Get.back();
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                    await pickTemplateImage(
-                                                                        context,
-                                                                        ImageSource
-                                                                            .gallery);
-                                                                    dropDownHeight =
-                                                                        510;
-                                                                    setState(
-                                                                        () {});
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Gallery"),
+                                                                const SizedBox(
+                                                                  height: 4,
                                                                 ),
-                                                                TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    // Get.back();
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Cancel"),
+                                                                SizedBox(
+                                                                  width: 60,
+                                                                  child: Text(
+                                                                    mediaDetails!
+                                                                        .data![
+                                                                            i]
+                                                                        .fileName
+                                                                        .toString(),
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: const TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold),
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ),
-                                                          );
-                                                        });
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.7,
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8),
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.2,
-                                                            child: templateImage ==
-                                                                    ''
-                                                                ? const Text(
-                                                                    'Upload ')
-                                                                : Container(
-                                                                    height: 80,
-                                                                    width: 100,
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: ColorConstant
-                                                                          .white,
-                                                                      image:
-                                                                          DecorationImage(
-                                                                        image:
-                                                                            FileImage(
-                                                                          File(
-                                                                              templateImage),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    // Add your image widget here
-                                                                  ),
                                                           ),
-                                                          Column(
+                                                        );
+                                                      }),
+                                                )
+                                              : const SizedBox()
+                                        ],
+                                      )
+                                    : templateContentModel!.data.format ==
+                                            'IMAGE'
+                                        ? Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return StatefulBuilder(
+                                                          builder: (context,
+                                                              setState) {
+                                                        return AlertDialog(
+                                                          scrollable: true,
+                                                          title: const Text(
+                                                              'Select Source'),
+                                                          content: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
                                                             children: [
-                                                              Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color:
-                                                                      ColorConstant
-                                                                          .grey,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              3),
-                                                                ),
-                                                                child:
-                                                                    const Padding(
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              4.0),
-                                                                  child: Text(
-                                                                    'Choose file',
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontSize:
-                                                                          11,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              Text(
-                                                                templateImage ==
-                                                                        ''
-                                                                    ? '*No file selected1'
-                                                                    : '',
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 12,
-                                                                  color: Colors
-                                                                      .black,
-                                                                ),
-                                                              )
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  height: 10,
-                                                ),
-                                                mediaDetails != null
-                                                    ? SizedBox(
-                                                        height: 110,
-                                                        child: ListView.builder(
-                                                            scrollDirection:
-                                                                Axis.horizontal,
-                                                            shrinkWrap: true,
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                                    horizontal:
-                                                                        5,
-                                                                    vertical:
-                                                                        1),
-                                                            itemCount:
-                                                                mediaDetails!
-                                                                    .data!
-                                                                    .length,
-                                                            itemBuilder:
-                                                                (BuildContext
-                                                                        context,
-                                                                    int i) {
-                                                              return GestureDetector(
-                                                                onTap: () {
-                                                                  templateImage =
-                                                                      mediaDetails!
-                                                                          .data![
-                                                                              i]
-                                                                          .url
-                                                                          .toString();
+                                                              TextButton(
+                                                                onPressed:
+                                                                    () async {
+                                                                  // Get.back();
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  await pickTemplateImage(
+                                                                      context,
+                                                                      ImageSource
+                                                                          .camera);
+                                                                  dropDownHeight =
+                                                                      510;
                                                                   setState(
                                                                       () {});
                                                                 },
-                                                                child:
-                                                                    Container(
-                                                                  constraints:
-                                                                      const BoxConstraints(
-                                                                    maxHeight:
-                                                                        81,
-                                                                  ),
-                                                                  child: Column(
-                                                                    children: [
-                                                                      Container(
-                                                                        constraints:
-                                                                            const BoxConstraints(
-                                                                          minHeight:
-                                                                              60,
-                                                                          minWidth:
-                                                                              60,
-                                                                          maxHeight:
-                                                                              70,
-                                                                          maxWidth:
-                                                                              70,
-                                                                        ),
-                                                                        decoration:
-                                                                            const BoxDecoration(
-                                                                          shape:
-                                                                              BoxShape.rectangle,
-                                                                          image: DecorationImage(
-                                                                              fit: BoxFit.fill,
-                                                                              image: AssetImage('assets/icons/doc.png')),
-                                                                          // image: AssetImage(
-                                                                          //     'assets/images/img.jpeg')),
+                                                                child: const Text(
+                                                                    "Camera"),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed:
+                                                                    () async {
+                                                                  // Get.back();
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  await pickTemplateImage(
+                                                                      context,
+                                                                      ImageSource
+                                                                          .gallery);
+                                                                  dropDownHeight =
+                                                                      510;
+                                                                  setState(
+                                                                      () {});
+                                                                },
+                                                                child: const Text(
+                                                                    "Gallery"),
+                                                              ),
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  // Get.back();
+                                                                },
+                                                                child: const Text(
+                                                                    "Cancel"),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      });
+                                                    },
+                                                  );
+                                                },
+                                                child: Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.7,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.2,
+                                                          child:
+                                                              templateImage ==
+                                                                      ''
+                                                                  ? const Text(
+                                                                      'Upload ')
+                                                                  : Container(
+                                                                      height:
+                                                                          80,
+                                                                      width:
+                                                                          100,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        color: ColorConstant
+                                                                            .white,
+                                                                        image:
+                                                                            DecorationImage(
+                                                                          image:
+                                                                              FileImage(
+                                                                            File(templateImage),
+                                                                          ),
                                                                         ),
                                                                       ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            4,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            60,
-                                                                        child:
-                                                                            Text(
-                                                                          mediaDetails!
-                                                                              .data![i]
-                                                                              .fileName
-                                                                              .toString(),
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                          style:
-                                                                              const TextStyle(fontWeight: FontWeight.bold),
-                                                                        ),
-                                                                      ),
-                                                                    ],
+                                                                      // Add your image widget here
+                                                                    ),
+                                                        ),
+                                                        Column(
+                                                          children: [
+                                                            Container(
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color:
+                                                                    ColorConstant
+                                                                        .grey,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            3),
+                                                              ),
+                                                              child:
+                                                                  const Padding(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            4.0),
+                                                                child: Text(
+                                                                  'Choose file',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        11,
                                                                   ),
                                                                 ),
-                                                              );
-                                                            }),
-                                                      )
-                                                    : const SizedBox()
-                                              ],
-                                            )
-                                          : templateContentModel!.data.format ==
-                                                  'TEXT'
-                                              ? SizedBox(
-                                                  child: Text(
-                                                    templateContentModel!
-                                                        .data.header,
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              templateImage ==
+                                                                      ''
+                                                                  ? '*No file selected1'
+                                                                  : '',
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontSize: 12,
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                )
-                                              : const SizedBox(),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Container(
-                                height: 250,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: ColorConstant.white),
-                                child: SingleChildScrollView(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      templateContentModel!.data.messageBody,
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Text(
-                                templateContentModel!.data.footer,
-                                style: const TextStyle(
-                                  color: ColorConstant.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              templateContentModel!.data.buttons.isEmpty
-                                  ? const SizedBox()
-                                  : SizedBox(
-                                      height: 50,
-                                      width: MediaQuery.of(context).size.width,
-                                      child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        shrinkWrap: true,
-                                        itemCount: templateContentModel!
-                                            .data.buttons.length,
-                                        itemBuilder: (context, index) {
-                                          return Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.grey
-                                                        .withOpacity(0.2),
-                                                    spreadRadius: 1,
-                                                    blurRadius: 1,
-                                                    offset: const Offset(1, 1),
-                                                  )
-                                                ],
-                                                color: ColorConstant.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(3),
-                                              ),
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8, left: 8, right: 8),
-                                                child: Text(
-                                                  templateContentModel!
-                                                      .data.buttons[index].text,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                              const SizedBox(
+                                                height: 10,
+                                              ),
+                                              mediaDetails != null
+                                                  ? SizedBox(
+                                                      height: 110,
+                                                      child: ListView.builder(
+                                                          scrollDirection:
+                                                              Axis.horizontal,
+                                                          shrinkWrap: true,
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal: 5,
+                                                                  vertical: 1),
+                                                          itemCount:
+                                                              mediaDetails!
+                                                                  .data!.length,
+                                                          itemBuilder:
+                                                              (BuildContext
+                                                                      context,
+                                                                  int i) {
+                                                            return GestureDetector(
+                                                              onTap: () {
+                                                                templateImage =
+                                                                    mediaDetails!
+                                                                        .data![
+                                                                            i]
+                                                                        .url
+                                                                        .toString();
+                                                                setState(() {});
+                                                              },
+                                                              child: Container(
+                                                                constraints:
+                                                                    const BoxConstraints(
+                                                                  maxHeight: 81,
+                                                                ),
+                                                                child: Column(
+                                                                  children: [
+                                                                    Container(
+                                                                      constraints:
+                                                                          const BoxConstraints(
+                                                                        minHeight:
+                                                                            60,
+                                                                        minWidth:
+                                                                            60,
+                                                                        maxHeight:
+                                                                            70,
+                                                                        maxWidth:
+                                                                            70,
+                                                                      ),
+                                                                      decoration:
+                                                                          const BoxDecoration(
+                                                                        shape: BoxShape
+                                                                            .rectangle,
+                                                                        image: DecorationImage(
+                                                                            fit:
+                                                                                BoxFit.fill,
+                                                                            image: AssetImage('assets/icons/picture.png')),
+                                                                        // image: AssetImage(
+                                                                        //     'assets/images/img.jpeg')),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height: 4,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width: 60,
+                                                                      child:
+                                                                          Text(
+                                                                        mediaDetails!
+                                                                            .data![i]
+                                                                            .fileName
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                        style: const TextStyle(
+                                                                            fontWeight:
+                                                                                FontWeight.bold),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            );
+                                                          }),
+                                                    )
+                                                  : const SizedBox()
+                                            ],
+                                          )
+                                        : templateContentModel!.data.format ==
+                                                'DOCUMENT'
+                                            ? Column(
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return StatefulBuilder(
+                                                              builder: (context,
+                                                                  setState) {
+                                                            return AlertDialog(
+                                                              scrollable: true,
+                                                              title: const Text(
+                                                                  'Select Source'),
+                                                              content: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      // Get.back();
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      await pickTemplateImage(
+                                                                          context,
+                                                                          ImageSource
+                                                                              .camera);
+                                                                      dropDownHeight =
+                                                                          510;
+                                                                      setState(
+                                                                          () {});
+                                                                    },
+                                                                    child: const Text(
+                                                                        "Camera"),
+                                                                  ),
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      // Get.back();
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      await pickTemplateImage(
+                                                                          context,
+                                                                          ImageSource
+                                                                              .gallery);
+                                                                      dropDownHeight =
+                                                                          510;
+                                                                      setState(
+                                                                          () {});
+                                                                    },
+                                                                    child: const Text(
+                                                                        "Gallery"),
+                                                                  ),
+                                                                  TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      // Get.back();
+                                                                    },
+                                                                    child: const Text(
+                                                                        "Cancel"),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          });
+                                                        },
+                                                      );
+                                                    },
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.7,
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                      ),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.2,
+                                                              child: templateImage ==
+                                                                      ''
+                                                                  ? const Text(
+                                                                      'Upload ')
+                                                                  : Container(
+                                                                      height:
+                                                                          80,
+                                                                      width:
+                                                                          100,
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        color: ColorConstant
+                                                                            .white,
+                                                                        image:
+                                                                            DecorationImage(
+                                                                          image:
+                                                                              FileImage(
+                                                                            File(templateImage),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      // Add your image widget here
+                                                                    ),
+                                                            ),
+                                                            Column(
+                                                              children: [
+                                                                Container(
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color:
+                                                                        ColorConstant
+                                                                            .grey,
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(3),
+                                                                  ),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets.all(
+                                                                            4.0),
+                                                                    child: Text(
+                                                                      'Choose file',
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            11,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  templateImage ==
+                                                                          ''
+                                                                      ? '*No file selected1'
+                                                                      : '',
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    color: Colors
+                                                                        .black,
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  mediaDetails != null
+                                                      ? SizedBox(
+                                                          height: 110,
+                                                          child:
+                                                              ListView.builder(
+                                                                  scrollDirection: Axis
+                                                                      .horizontal,
+                                                                  shrinkWrap:
+                                                                      true,
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          5,
+                                                                      vertical:
+                                                                          1),
+                                                                  itemCount:
+                                                                      mediaDetails!
+                                                                          .data!
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (BuildContext
+                                                                              context,
+                                                                          int i) {
+                                                                    return GestureDetector(
+                                                                      onTap:
+                                                                          () {
+                                                                        templateImage = mediaDetails!
+                                                                            .data![i]
+                                                                            .url
+                                                                            .toString();
+                                                                        setState(
+                                                                            () {});
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        constraints:
+                                                                            const BoxConstraints(
+                                                                          maxHeight:
+                                                                              81,
+                                                                        ),
+                                                                        child:
+                                                                            Column(
+                                                                          children: [
+                                                                            Container(
+                                                                              constraints: const BoxConstraints(
+                                                                                minHeight: 60,
+                                                                                minWidth: 60,
+                                                                                maxHeight: 70,
+                                                                                maxWidth: 70,
+                                                                              ),
+                                                                              decoration: const BoxDecoration(
+                                                                                shape: BoxShape.rectangle,
+                                                                                image: DecorationImage(fit: BoxFit.fill, image: AssetImage('assets/icons/doc.png')),
+                                                                                // image: AssetImage(
+                                                                                //     'assets/images/img.jpeg')),
+                                                                              ),
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              height: 4,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              width: 60,
+                                                                              child: Text(
+                                                                                mediaDetails!.data![i].fileName.toString(),
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  }),
+                                                        )
+                                                      : const SizedBox()
+                                                ],
+                                              )
+                                            : templateContentModel!
+                                                        .data.format ==
+                                                    'TEXT'
+                                                ? SizedBox(
+                                                    child: Text(
+                                                      templateContentModel!
+                                                          .data.header,
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const SizedBox(),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Container(
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: ColorConstant.white),
+                                  child: SingleChildScrollView(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        templateContentModel!.data.messageBody,
+                                        textAlign: TextAlign.left,
                                       ),
                                     ),
-                            ],
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Text(
+                                  templateContentModel!.data.footer,
+                                  style: const TextStyle(
+                                    color: ColorConstant.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                templateContentModel!.data.buttons.isEmpty
+                                    ? const SizedBox()
+                                    : SizedBox(
+                                        height: 50,
+                                        width:
+                                            MediaQuery.of(context).size.width,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          shrinkWrap: true,
+                                          itemCount: templateContentModel!
+                                              .data.buttons.length,
+                                          itemBuilder: (context, index) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey
+                                                          .withOpacity(0.2),
+                                                      spreadRadius: 1,
+                                                      blurRadius: 1,
+                                                      offset:
+                                                          const Offset(1, 1),
+                                                    )
+                                                  ],
+                                                  color: ColorConstant.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 8,
+                                                          left: 8,
+                                                          right: 8),
+                                                  child: Text(
+                                                    templateContentModel!.data
+                                                        .buttons[index].text,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                              ],
+                            ),
                           )
                         : const SizedBox()
                   ],
@@ -2681,6 +2698,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               templateImage,
                               true,
                               'file_manager');
+                          setState(() {});
                           //---------------------------   //Next video and image sending fuction call here ----------------------------------------------
                         }
                       },
@@ -2801,6 +2819,11 @@ class _ChatScreenState extends State<ChatScreen> {
           dropDownHeight = 470;
           templateSelected = true;
         });
+      } else {
+        setState(() {
+          dropDownHeight = 400;
+          templateSelected = true;
+        });
       }
     } else {
       setState(() {});
@@ -2822,6 +2845,9 @@ class _ChatScreenState extends State<ChatScreen> {
         format, templateName, language, template, fileName, isFile, type);
     if (sendTemplateMessageModel != null &&
         sendTemplateMessageModel!.status == true) {
+      page = 1;
+      add = 1;
+      items.clear();
       await getchat(groupId);
       Navigator.pop(context);
     }
@@ -2831,6 +2857,9 @@ class _ChatScreenState extends State<ChatScreen> {
     sendMessageModel =
         await HttpService.sendMessage(groupId, messageData, fileName, isImage);
     if (sendMessageModel != null && sendMessageModel!.status == true) {
+      page = 1;
+      add = 1;
+      items.clear();
       await getchat(groupId);
       setState(() {});
     }

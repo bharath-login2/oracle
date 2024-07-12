@@ -2734,7 +2734,7 @@ class HttpService {
       } else {}
       // isLoading.value = false;
     } catch (e) {
-      // print("Exception: $e");
+       log("Exception: $e");
     } finally {}
   }
 
@@ -2751,7 +2751,7 @@ class HttpService {
       'is_image': isImage,
       "token": await Common.getSharedPref("token"),
     });
-
+    
     try {
       var response = await _dio.post("${await Config.getUrl()}sendMessage",
           data: formData);
