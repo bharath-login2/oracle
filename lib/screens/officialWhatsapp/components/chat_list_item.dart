@@ -40,11 +40,35 @@ Widget chatListItem(context, items) {
         subtitle: Row(
           children: [
             items.fromMe == true
-                ? const Icon(
-                    Icons.done_all,
-                    size: 18,
-                    color: ColorConstant.messageSeen,
-                  )
+                ? items.msgStatus == 'send'
+                    ? const Icon(
+                        Icons.check,
+                        color: ColorConstant.grey,
+                        size: 18,
+                      )
+                    : items.msgStatus == 'delivered'
+                        ? const Icon(
+                            Icons.done_all_sharp,
+                            color: ColorConstant.grey,
+                            size: 18,
+                          )
+                        : items.msgStatus == 'read'
+                            ? const Icon(
+                                Icons.done_all_sharp,
+                                color: ColorConstant.messageSeen,
+                                size: 18,
+                              )
+                            : items.msgStatus == 'failed'
+                                ? const Icon(
+                                    Icons.access_time_rounded,
+                                    color: Colors.red,
+                                    size: 18,
+                                  )
+                                : const Icon(
+                                    Icons.check,
+                                    color: ColorConstant.grey,
+                                    size: 18,
+                                  )
                 : const SizedBox(),
             const SizedBox(
               width: 5,

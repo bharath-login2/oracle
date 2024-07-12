@@ -41,8 +41,7 @@ class FirebaseServices {
   }
 
   void _showNotification(RemoteMessage message) async {
-    final notification =
-        PushNotificationModel.fromJson(message.data); 
+    final notification = PushNotificationModel.fromJson(message.data);
     try {
       var androidPlatformChannelSpecifics = AndroidNotificationDetails(
         message.notification!.android!.channelId ?? "Login2",
@@ -86,7 +85,6 @@ class FirebaseServices {
     } else {
       cloudCall = false;
     }
-
     if (navigation == 'whatsapp') {
       Get.to(() => ChatScreen(
             groupId: detailId.toString(),

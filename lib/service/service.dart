@@ -2707,7 +2707,7 @@ class HttpService {
     } finally {}
   }
 
-  static sendTemplateMessage(groupId, format, templateName, language, template,
+  static  sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type) async {
     var formData = FormData.fromMap({
       "group_id": groupId,
@@ -2715,9 +2715,9 @@ class HttpService {
       'template_name': templateName,
       'language': language,
       'template': template,
-      'fileName': fileName,
+      'fileName': MultipartFile.fromFile(fileName),
       'type': type,
-      'is_file': isFile,
+      'is_file': isFile.toString(),
       "token": await Common.getSharedPref("token"),
     });
 
