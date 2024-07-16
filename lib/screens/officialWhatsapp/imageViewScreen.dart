@@ -7,14 +7,13 @@ import '../../service/service.dart';
 import 'chatScreen.dart';
 import 'colorConst.dart';
 
-
 class ImageViewScreen extends StatefulWidget {
   ImageViewScreen(
       {super.key,
-        this.listImages,
-        this.image,
-        required this.val,
-        required this.groupId});
+      this.listImages,
+      this.image,
+      required this.val,
+      required this.groupId});
 
   final listImages;
   String? image;
@@ -50,207 +49,193 @@ class _ImageViewScreenState extends State<ImageViewScreen> {
     if (widget.val == '1') {
       viewImage = widget.image;
     }
-    return PopScope(
-      canPop: true,
-      onPopInvoked: (didPop) {
-        widget.image = '';
-        Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(groupId: widget.groupId,),));
-      },
-      child: Scaffold(
-        bottomSheet: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            color: Colors.transparent, // Set the color to transparent
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 1,
-                            blurRadius: 1,
-                            offset: const Offset(1, 1),
-                          )
-                        ],
-                        // color: Colors.white,
-                        borderRadius: BorderRadius.circular(25)),
-                    child: TextFormField(
-                      onChanged: (value) {
-
-                        setState(() {});
-                      },
-                      style: const TextStyle(
-                        color: ColorConstant.black,
-                      ),
-                      controller: messageController,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.all(12),
-                        hintStyle:
-                        const TextStyle(color: Colors.grey),
-                        hintText: 'Message',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide
-                              .none, // Set the border color to none
-                        ),
-
+    return Scaffold(
+      bottomSheet: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          color: Colors.transparent, // Set the color to transparent
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 1,
+                          blurRadius: 1,
+                          offset: const Offset(1, 1),
+                        )
+                      ],
+                      // color: Colors.white,
+                      borderRadius: BorderRadius.circular(25)),
+                  child: TextFormField(
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                    style: const TextStyle(
+                      color: ColorConstant.black,
+                    ),
+                    controller: messageController,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.all(12),
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      hintText: 'Message',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide:
+                            BorderSide.none, // Set the border color to none
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(
-                  width: 5,
-                ),
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: ColorConstant.barGreen,
-                  child: IconButton(
-                    color: const Color.fromARGB(255, 255, 255, 255),
-                    onPressed: () {
-                      if (context.mounted) {
-                        Common.showProgressDialog(
-                            context, "Loading..");
-                      }
-                      sendingMessage(
-                          widget.groupId, messageController.text,viewImage, isImage);
-                      viewImage = '';
-                      widget.image = '';
-
-                    },
-                    icon: const Icon(Icons.send),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            onPressed: () {
-              widget.image = '';
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(groupId: widget.groupId,),));
-            },
-            icon: const Icon(
-              Icons.close,
-              color: ColorConstant.white,
-            ),
-          ),
-          actions: [
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () async {
-                    // await cropImage(viewImage);
-                  },
-                  icon: const Icon(
-                    Icons.crop_rotate_sharp,
-                    color: ColorConstant.white,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.label_important_outline,
-                    color: ColorConstant.white,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.text_fields,
-                    color: ColorConstant.white,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.mode_edit_outline_outlined,
-                    color: ColorConstant.white,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height * 0.7,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                    image: FileImage(
-                      File(viewImage!),
-                    )),
               ),
+              const SizedBox(
+                width: 5,
+              ),
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: ColorConstant.barGreen,
+                child: IconButton(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  onPressed: () {
+                    if (context.mounted) {
+                      Common.showProgressDialog(context, "Loading..");
+                    }
+                    sendingMessage(widget.groupId, messageController.text,
+                        viewImage, isImage);
+                    viewImage = '';
+                    widget.image = '';
+                  },
+                  icon: const Icon(Icons.send),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.close,
+            color: ColorConstant.white,
+          ),
+        ),
+        actions: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: () async {
+                  // await cropImage(viewImage);
+                },
+                icon: const Icon(
+                  Icons.crop_rotate_sharp,
+                  color: ColorConstant.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.label_important_outline,
+                  color: ColorConstant.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.text_fields,
+                  color: ColorConstant.white,
+                ),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.mode_edit_outline_outlined,
+                  color: ColorConstant.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: FileImage(
+                File(viewImage!),
+              )),
             ),
-            SizedBox(
-              height: 70,
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 5, right: 5),
-                  child: widget.val == '2'
-                      ? ListView.builder(
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    itemCount: widget.listImages.length,
-                    itemBuilder: (context, index) {
-                      final xFile = widget.listImages[index];
+          ),
+          SizedBox(
+            height: 70,
+            child: Padding(
+                padding: const EdgeInsets.only(left: 5, right: 5),
+                child: widget.val == '2'
+                    ? ListView.builder(
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemCount: widget.listImages.length,
+                        itemBuilder: (context, index) {
+                          final xFile = widget.listImages[index];
 
-                      // print("image name ${widget.listImages[index]}");
-                      return Padding(
-                        padding: const EdgeInsets.all(1.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            viewImage = xFile.path;
-                            currentPic = index;
-                            setState(() {});
-                          },
-                          child: Container(
-                            height: 68,
-                            width: 76,
-                            decoration: BoxDecoration(
-                              border: currentPic == index
-                                  ? Border.all(
-                                color: ColorConstant.white,
-                              )
-                                  : Border.all(
-                                color: Colors.black,
-                              ),
-                              image: DecorationImage(
-                                image: FileImage(File(xFile.path)),
+                          // print("image name ${widget.listImages[index]}");
+                          return Padding(
+                            padding: const EdgeInsets.all(1.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                viewImage = xFile.path;
+                                currentPic = index;
+                                setState(() {});
+                              },
+                              child: Container(
+                                height: 68,
+                                width: 76,
+                                decoration: BoxDecoration(
+                                  border: currentPic == index
+                                      ? Border.all(
+                                          color: ColorConstant.white,
+                                        )
+                                      : Border.all(
+                                          color: Colors.black,
+                                        ),
+                                  image: DecorationImage(
+                                    image: FileImage(File(xFile.path)),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                      : const SizedBox()),
-            )
-          ],
-        ),
+                          );
+                        },
+                      )
+                    : const SizedBox()),
+          )
+        ],
       ),
     );
   }
 
   sendingMessage(groupId, messageData, fileName, isImage) async {
     sendMessageModel =
-    await HttpService.sendMessage(groupId, messageData, fileName, isImage);
+        await HttpService.sendMessage(groupId, messageData, fileName, isImage);
     if (sendMessageModel != null && sendMessageModel!.status == true) {
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(groupId: widget.groupId,),
-          ));
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
     }
   }
 }

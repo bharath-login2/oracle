@@ -2582,7 +2582,7 @@ class HttpService {
       // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
-    } finally {}
+    }
   }
 
   static fetchCampaignsList(searchKey) async {
@@ -2596,11 +2596,9 @@ class HttpService {
           CampaignsListModel.fromJson(response.data);
 
       return campaignsListModel;
-
-      // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
-    } finally {}
+    }
   }
 
   static addContact(
@@ -2707,7 +2705,7 @@ class HttpService {
     } finally {}
   }
 
-  static  sendTemplateMessage(groupId, format, templateName, language, template,
+  static sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type) async {
     var formData = FormData.fromMap({
       "group_id": groupId,
@@ -2715,7 +2713,9 @@ class HttpService {
       'template_name': templateName,
       'language': language,
       'template': template,
-      'fileName': MultipartFile.fromFile(fileName),
+      'fileName': type == "file_manager"
+          ? fileName
+          : await MultipartFile.fromFile(fileName),
       'type': type,
       'is_file': isFile.toString(),
       "token": await Common.getSharedPref("token"),
@@ -2734,7 +2734,7 @@ class HttpService {
       } else {}
       // isLoading.value = false;
     } catch (e) {
-       log("Exception: $e");
+      log("Exception: $e");
     } finally {}
   }
 
@@ -2751,7 +2751,7 @@ class HttpService {
       'is_image': isImage,
       "token": await Common.getSharedPref("token"),
     });
-    
+
     try {
       var response = await _dio.post("${await Config.getUrl()}sendMessage",
           data: formData);
@@ -3805,7 +3805,7 @@ class HttpService {
       "total_amount": totalAmount,
       "description": description,
       "product_image":
-          productImage == null ? "" : await MultipartFile.fromFile(productImage)
+          productImage == null ? "" : await MultipartFile.fromFile(productImage.toString())
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postProduct",

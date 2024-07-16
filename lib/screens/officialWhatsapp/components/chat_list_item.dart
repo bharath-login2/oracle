@@ -15,7 +15,7 @@ Widget chatListItem(context, items) {
               context,
               MaterialPageRoute(
                 builder: (context) => ChatScreen(
-                  groupId: items.groupId,
+                  groupId: items.groupId,nav: "",
                 ),
               ));
         },

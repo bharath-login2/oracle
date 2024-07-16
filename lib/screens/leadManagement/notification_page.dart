@@ -234,7 +234,9 @@ class _NotificationPageState extends State<NotificationPage> {
                                                         pageName:
                                                             'LeadNotification',
                                                       )),
-                                            ).then(getData());
+                                            ).then((r) {
+                                              getData();
+                                            });
                                           }
                                         } else {
                                           if (context.mounted) {
@@ -246,8 +248,11 @@ class _NotificationPageState extends State<NotificationPage> {
                                                     groupId: leadNotification!
                                                         .data[i].id
                                                         .toString(),
+                                                    nav: "",
                                                   ),
-                                                ));
+                                                )).then((r) {
+                                              getData();
+                                            });
                                           }
                                         }
                                       },

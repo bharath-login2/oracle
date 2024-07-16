@@ -87,7 +87,7 @@ class FirebaseServices {
     }
     if (navigation == 'whatsapp') {
       Get.to(() => ChatScreen(
-            groupId: detailId.toString(),
+            groupId: detailId.toString(),nav: "Notification",
           ));
     } else {
       Get.to(() => LeadDetails(

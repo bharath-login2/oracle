@@ -56,7 +56,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   void _onLoadMore() {
     if (items.length + 20 == page * pageSize &&
         itemPositionsListener.itemPositions.value.last.index ==
-            items.length - 1 &&
+            items.length&&
         page > add) {
       chats('');
       add++;

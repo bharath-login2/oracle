@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -168,11 +169,12 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                                         object.message, Colors.green);
                                     if(mounted){
 
-                                        Navigator.push(
+                                        Navigator.pushReplacement(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ChatScreen( groupId:widget.groupId.toString(),)),
+                                              builder: (context) => ChatScreen( groupId:widget.groupId.toString(), nav: '',)),
                                         );
+                                        Navigator.pop(context);
                                     }
                                   }
                                   else {
