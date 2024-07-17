@@ -1,28 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:dotted_border/dotted_border.dart';
-import 'package:file_picker/file_picker.dart';
+// ignore_for_file: must_be_immutable
+
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/officialWhatsapp/fileSendingScreen.dart';
 import 'package:lottie/lottie.dart';
-import 'package:path/path.dart';
-
-
-import '../../core/common.dart';
-import '../../models/fileManager/deleteFileModel.dart';
-import '../../models/fileManager/fileMagerMOdel.dart';
-import '../../models/fileManager/mainFileManagerPermissionModel.dart';
-import '../../models/fileManager/renameFileModel.dart';
-import '../../models/lead_management/uploadAudioRecoed.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
 import '../../service/service.dart';
-import '../leadManagement/audio_controller.dart';
-import '../leadManagement/docViewWebView.dart';
-import '../leadManagement/imageUploadController.dart';
+
 
 class ListFileManager extends StatefulWidget {
   String? format;

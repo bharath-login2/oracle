@@ -13,17 +13,17 @@ class FileSendingScreen extends StatefulWidget {
   String? documentUrl;
   String? title;
   String? extension;
-  String? groupId;// The URL of the document to view
+  String? groupId; // The URL of the document to view
 
-  FileSendingScreen({super.key, this.documentUrl, this.title, this.extension,this.groupId});
+  FileSendingScreen(
+      {super.key, this.documentUrl, this.title, this.extension, this.groupId});
 
   @override
   State<FileSendingScreen> createState() => _FileSendingScreenState();
 }
 
 class _FileSendingScreenState extends State<FileSendingScreen> {
-
-  bool isLoading=true;
+  bool isLoading = true;
   TextEditingController messageController = TextEditingController();
 
   @override
@@ -33,12 +33,12 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
     return Scaffold(
         appBar: PreferredSize(
           preferredSize:
-          Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+              Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
           child: Container(
             padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
             decoration: const BoxDecoration(
-              gradient:
-              LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+              gradient: LinearGradient(
+                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
             ),
             child: Padding(
               padding: const EdgeInsets.only(
@@ -74,30 +74,39 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                         width: 150,
                         child: Text(
                           widget.title.toString(),
-                          style: const TextStyle(color: Colors.white, fontSize: 18,overflow: TextOverflow.ellipsis),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              overflow: TextOverflow.ellipsis),
                         ),
                       ),
                     ],
                   ),
-
                 ],
               ),
             ),
           ),
         ),
-        body:  Stack(
+        body: Stack(
           children: [
             Stack(
               children: [
                 WebView(
-                  initialUrl: widget.extension=='pdf' || widget.extension=='doc' || widget.extension=='docx'||widget.extension=='ppt'||
-                      widget.extension=='pptx'||widget.extension=='pptm'||widget.extension=='csv'||widget.extension=='xls'||widget.extension=='xlsx'?
-                  'https://docs.google.com/viewer?url=${widget.documentUrl}':widget.documentUrl,
+                  initialUrl: widget.extension == 'pdf' ||
+                          widget.extension == 'doc' ||
+                          widget.extension == 'docx' ||
+                          widget.extension == 'ppt' ||
+                          widget.extension == 'pptx' ||
+                          widget.extension == 'pptm' ||
+                          widget.extension == 'csv' ||
+                          widget.extension == 'xls' ||
+                          widget.extension == 'xlsx'
+                      ? 'https://docs.google.com/viewer?url=${widget.documentUrl}'
+                      : widget.documentUrl,
                   javascriptMode: JavascriptMode.unrestricted,
                   onPageFinished: (finish) {
-                    isLoading=false;
-                    setState(() {
-                    });
+                    isLoading = false;
+                    setState(() {});
                   },
                   // Enable JavaScript if needed
                 ),
@@ -125,7 +134,7 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                                   borderRadius: BorderRadius.circular(25)),
                               child: TextFormField(
                                 onChanged: (value) {
-                                 // isTyped = true;
+                                  // isTyped = true;
                                   setState(() {});
                                 },
                                 style: const TextStyle(
@@ -135,7 +144,7 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(12),
                                   hintStyle:
-                                  const TextStyle(color: Colors.grey),
+                                      const TextStyle(color: Colors.grey),
                                   hintText: 'Message',
                                   filled: true,
                                   fillColor: Colors.white,
@@ -144,7 +153,6 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                                     borderSide: BorderSide
                                         .none, // Set the border color to none
                                   ),
-                            
                                 ),
                               ),
                             ),
@@ -156,35 +164,31 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                             radius: 25,
                             backgroundColor: ColorConstant.barGreen,
                             child: IconButton(
-                                color:
-                                const Color.fromARGB(255, 255, 255, 255),
+                                color: const Color.fromARGB(255, 255, 255, 255),
                                 onPressed: () async {
-
                                   Common.showProgressDialog(
                                       context, "Loading..");
-                                  SendMesaageModel object = await HttpService.sendMessageFile(widget.groupId,messageController.text,widget.documentUrl);
+                                  SendMesaageModel object =
+                                      await HttpService.sendMessageFile(
+                                          widget.groupId,
+                                          messageController.text,
+                                          widget.documentUrl);
                                   if (object.status == true) {
-                                    Navigator.of(context).pop();
                                     Common.toastMessaage(
                                         object.message, Colors.green);
-                                    if(mounted){
-
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => ChatScreen( groupId:widget.groupId.toString(), nav: '',)),
-                                        );
-                                        Navigator.pop(context);
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
                                     }
-                                  }
-                                  else {
+                                  } else {
                                     Common.toastMessaage(
                                         object.message, Colors.red);
                                     if (context.mounted) {
                                       Navigator.pop(context);
                                     }
                                   }
-
                                 },
                                 icon: const Icon(Icons.send)),
                           ),
@@ -195,17 +199,13 @@ class _FileSendingScreenState extends State<FileSendingScreen> {
                 )
               ],
             ),
-            isLoading==true ? Center(
-              child: Lottie.asset('assets/main/loading.json',
-                  fit: BoxFit.fill),
-            )
+            isLoading == true
+                ? Center(
+                    child: Lottie.asset('assets/main/loading.json',
+                        fit: BoxFit.fill),
+                  )
                 : const Stack(),
-
           ],
-        )
-
-    );
+        ));
   }
-
-
 }

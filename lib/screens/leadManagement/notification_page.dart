@@ -206,16 +206,8 @@ class _NotificationPageState extends State<NotificationPage> {
                                             height: 10,
                                           )
                                         : const SizedBox(),
-                                    InkWell(
+                                    GestureDetector(
                                       onTap: () async {
-                                        if (leadNotification!.data[i].isRead ==
-                                            false) {
-                                          await HttpService
-                                              .readLeadNotification(
-                                                  widget.token,
-                                                  leadNotification!
-                                                      .data[i].notificationId);
-                                        }
                                         if (leadNotification!.data[i].type ==
                                             "2") {
                                           if (context.mounted) {
@@ -254,6 +246,14 @@ class _NotificationPageState extends State<NotificationPage> {
                                               getData();
                                             });
                                           }
+                                        }
+                                        if (leadNotification!.data[i].isRead ==
+                                            false) {
+                                          await HttpService
+                                              .readLeadNotification(
+                                                  widget.token,
+                                                  leadNotification!
+                                                      .data[i].notificationId);
                                         }
                                       },
                                       child: Row(
