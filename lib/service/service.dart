@@ -174,7 +174,7 @@ import '../models/officialWhatsapp/official_message_model.dart';
 import '../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
 import '../models/officialWhatsapp/sendMesaageModel.dart';
 import '../models/officialWhatsapp/sendTemplateMesaageModel.dart';
-import '../models/officialWhatsapp/templateContentModel.dart';
+import '../models/officialWhatsapp/template_content_model.dart';
 import '../models/officialWhatsapp/templateModel.dart';
 import '../models/removeUserModel.dart';
 import '../models/resetPasswordModel.dart';

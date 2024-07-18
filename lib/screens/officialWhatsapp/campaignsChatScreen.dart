@@ -11,7 +11,7 @@ import '../../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
 import '../../models/officialWhatsapp/sendTemplateMesaageModel.dart';
-import '../../models/officialWhatsapp/templateContentModel.dart';
+import '../../models/officialWhatsapp/template_content_model.dart';
 import '../../models/officialWhatsapp/templateModel.dart';
 import '../../service/service.dart';
 import 'colorConst.dart';
