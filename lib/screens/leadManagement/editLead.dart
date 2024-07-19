@@ -57,8 +57,10 @@ class _EditLeadState extends State<EditLead> {
   String leadSubTypeId = '';
   String assignStaff = 'Assign Staff';
   String assignStaffId = '';
-  String callResult = 'New';
-  String callResultId = '1';
+  // String callResult = '';
+  // String callResultId = '';
+  // String leadSource = '';
+  // String leadSourceId = '';
   String priority = 'Normal';
   String priorityId = '2';
   TextEditingController clientName = TextEditingController();
@@ -72,6 +74,8 @@ class _EditLeadState extends State<EditLead> {
   TextEditingController leadSubTypeVal = TextEditingController();
   TextEditingController assignUserval = TextEditingController();
   TextEditingController priorityVal = TextEditingController();
+  // TextEditingController callResultVal = TextEditingController();
+  // TextEditingController leadSourceVal = TextEditingController();
   var code = '91';
 
   final List<TextEditingController> _controllers = [];
@@ -122,8 +126,12 @@ class _EditLeadState extends State<EditLead> {
         leadTypeId = leadDetails!.data!.leadCategoryId.toString();
         assignStaff = leadDetails!.data!.staffName.toString();
         assignStaffId = leadDetails!.data!.assignedUserId.toString();
-        callResultId = leadDetails!.data!.callResultId.toString();
-        callResult = leadDetails!.data!.callResult.toString();
+        // callResultId = leadDetails!.data!.callResultId.toString();
+        // callResult = leadDetails!.data!.callResult.toString();
+        // callResultVal.text = leadDetails!.data!.callResult.toString();
+        // leadSourceId = leadDetails!.data!.leadSourceId.toString();
+        // leadSource = leadDetails!.data!.leadSource.toString();
+        // leadSourceVal.text = leadDetails!.data!.leadSource.toString();
         priorityId = leadDetails!.data!.priorityId.toString();
         priority = leadDetails!.data!.priority.toString();
         clientName.text = leadDetails!.data!.clientName.toString();
@@ -843,6 +851,154 @@ class _EditLeadState extends State<EditLead> {
                     const SizedBox(
                       height: 20,
                     ),
+                    // Padding(
+                    //   padding: const EdgeInsets.only(left: 20, right: 20),
+                    //   child: TextFormField(
+                    //     controller: callResultVal,
+                    //     onTap: () {
+                    //       showDialog(
+                    //           context: context,
+                    //           builder: (BuildContext context) {
+                    //             return AlertDialog(
+                    //               scrollable: true,
+                    //               title: const Text('Status'),
+                    //               content: SizedBox(
+                    //                 width:
+                    //                     MediaQuery.of(context).size.width * .8,
+                    //                 child: ListView.builder(
+                    //                   shrinkWrap: true,
+                    //                   itemCount:
+                    //                       commonDetails!.data.callResult.length,
+                    //                   itemBuilder: (context, ind) {
+                    //                     return InkWell(
+                    //                       onTap: () {
+                    //                         setState(() {
+                    //                           callResult = commonDetails!.data
+                    //                               .callResult[ind].callResult
+                    //                               .toString();
+                    //                           callResultId = commonDetails!.data
+                    //                               .callResult[ind].callResultId
+                    //                               .toString();
+                    //                           if (callResultId != '2') {
+                    //                             nextFollowupDate = '';
+                    //                           }
+                    //                           Navigator.pop(context, true);
+                    //                         });
+                    //                       },
+                    //                       child: SizedBox(
+                    //                         height: 50,
+                    //                         child: Text(
+                    //                           commonDetails!.data
+                    //                               .callResult[ind].callResult
+                    //                               .toString(),
+                    //                           style:
+                    //                               const TextStyle(fontSize: 18),
+                    //                         ),
+                    //                       ),
+                    //                     );
+                    //                   },
+                    //                 ),
+                    //               ),
+                    //             );
+                    //           });
+                    //     },
+                    //     maxLines: 1,
+                    //     readOnly: true,
+                    //     decoration: const InputDecoration(
+                    //         contentPadding:
+                    //             EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                    //         labelText: 'Call Result',
+                    //         fillColor: Colors.white,
+                    //         filled: true,
+                    //         prefixIcon: Icon(
+                    //             Icons.arrow_drop_down_circle_outlined,
+                    //             color: Colors.grey),
+                    //         border: OutlineInputBorder(),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.grey),
+                    //         ),
+                    //         labelStyle: TextStyle(color: Colors.grey)),
+                    //   ),
+                    // ),
+
+                    // const SizedBox(
+                    //   height: 20,
+                    // ),
+                    // Padding(
+                    //   padding: const EdgeInsets.only(left: 20, right: 20),
+                    //   child: TextFormField(
+                    //     controller: leadSourceVal,
+                    //     onTap: () {
+                    //       showDialog(
+                    //           context: context,
+                    //           builder: (BuildContext context) {
+                    //             return AlertDialog(
+                    //               scrollable: true,
+                    //               title: const Text('Lead Source'),
+                    //               content: SizedBox(
+                    //                 width:
+                    //                     MediaQuery.of(context).size.width * .7,
+                    //                 child: ListView.builder(
+                    //                   shrinkWrap: true,
+                    //                   itemCount:
+                    //                       commonDetails!.data.leadSource.length,
+                    //                   itemBuilder: (context, ind) {
+                    //                     return InkWell(
+                    //                       onTap: () {
+                    //                         setState(() {
+                    //                           leadSource = commonDetails!.data
+                    //                               .leadSource[ind].leadSource
+                    //                               .toString();
+                    //                           leadSourceId = commonDetails!.data
+                    //                               .leadSource[ind].leadSourceId
+                    //                               .toString();
+                    //                           Navigator.pop(context, true);
+                    //                           leadSourceVal.text =
+                    //                               commonDetails!
+                    //                                   .data
+                    //                                   .leadSource[ind]
+                    //                                   .leadSource
+                    //                                   .toString();
+                    //                         });
+                    //                       },
+                    //                       child: SizedBox(
+                    //                         height: 50,
+                    //                         child: Text(
+                    //                           commonDetails!.data
+                    //                               .leadSource[ind].leadSource
+                    //                               .toString(),
+                    //                           style:
+                    //                               const TextStyle(fontSize: 18),
+                    //                         ),
+                    //                       ),
+                    //                     );
+                    //                   },
+                    //                 ),
+                    //               ),
+                    //             );
+                    //           });
+                    //     },
+                    //     maxLines: 1,
+                    //     readOnly: true,
+                    //     decoration: const InputDecoration(
+                    //         contentPadding:
+                    //             EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                    //         labelText: 'Lead Source',
+                    //         fillColor: Colors.white,
+                    //         filled: true,
+                    //         prefixIcon: Icon(
+                    //             Icons.arrow_drop_down_circle_outlined,
+                    //             color: Colors.grey),
+                    //         border: OutlineInputBorder(),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.grey),
+                    //         ),
+                    //         labelStyle: TextStyle(color: Colors.grey)),
+                    //   ),
+                    // ),
+                    // const SizedBox(
+                    //   height: 20,
+                    // ),
                     ListView.builder(
                       itemCount:
                           leadDetailsAdditional!.data!.additionalFields!.length,
@@ -911,7 +1067,9 @@ class _EditLeadState extends State<EditLead> {
                                       address.text,
                                       remark.text,
                                       descriptions,
-                                      code);
+                                      code,
+                                      // leadSourceId
+                                      );
                               if (object.status == true) {
                                 Common.toastMessaage(
                                     object.message, Colors.green);
@@ -1001,8 +1159,8 @@ class _EditLeadState extends State<EditLead> {
               decoration: InputDecoration(
                   contentPadding:
                       const EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                  labelText:
-                      leadDetailsAdditional!.data!.additionalFields![index].name,
+                  labelText: leadDetailsAdditional!
+                      .data!.additionalFields![index].name,
                   fillColor: Colors.white,
                   filled: true,
                   prefixIcon: const Icon(Icons.arrow_drop_down_circle,

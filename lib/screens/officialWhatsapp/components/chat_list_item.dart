@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../../models/officialWhatsapp/ChatListModel.dart';
 import '../chatScreen.dart';
 import '../colorConst.dart';
 
-Widget chatListItem(context, items) {
+Widget chatListItem(context,ChatData items) {
   return Column(
     children: [
       ListTile(
@@ -15,20 +17,27 @@ Widget chatListItem(context, items) {
               context,
               MaterialPageRoute(
                 builder: (context) => ChatScreen(
-                  groupId: items.groupId,nav: "",
+                  groupId: items.groupId,
+                  nav: "",
                 ),
               ));
         },
-        leading: Container(
-          height: 45,
-          width: 45,
-          decoration: BoxDecoration(
-              image: DecorationImage(
-                fit: BoxFit.cover,
-                image: NetworkImage(items.profilePic),
-              ),
-              border: Border.all(),
-              borderRadius: BorderRadius.circular(30)),
+        leading: GestureDetector(
+          onTap: () {
+            profileDialog(context, items.profilePic, items.groupName,
+                items.phoneNumber);
+          },
+          child: Container(
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+                image: DecorationImage(
+                  fit: BoxFit.cover,
+                  image: NetworkImage(items.profilePic),
+                ),
+                border: Border.all(),
+                borderRadius: BorderRadius.circular(30)),
+          ),
         ),
         title: Text(
           items.groupName,
@@ -96,5 +105,81 @@ Widget chatListItem(context, items) {
         ),
       ),
     ],
+  );
+}
+
+Future<dynamic> profileDialog(BuildContext context, String profilePhoto,
+    String name, String number) {
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        content: SizedBox(
+          height: 200,
+          child: Column(
+            children: [
+              const SizedBox(height: 25,),
+              Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(profilePhoto),
+                  ),
+                  color: ColorConstant.grey,
+                  borderRadius: BorderRadius.circular(60),
+                ),
+              ),
+              const SizedBox(
+                height: 22,
+              ),
+              Text(
+                name,
+                style: const TextStyle(
+                  color: ColorConstant.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(
+                height: 5,
+              ),
+              Text(
+                number,
+                style: const TextStyle(
+                  color: ColorConstant.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              // Text(
+              //   "Created By :$createdBy",
+              //   style: const TextStyle(
+              //     color: ColorConstant.black, 
+              //     fontSize: 14,
+              //     fontWeight: FontWeight.normal,
+              //   ),
+              // ),
+              // Text(
+              //   "Created Date : ${DateFormat('dd-MM-yyyy').format(createdDate)}",
+              //   style: const TextStyle(
+              //     color: ColorConstant.black,
+              //     fontSize: 14,
+              //     fontWeight: FontWeight.normal,
+              //   ),
+              // ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('close'),
+          ),
+        ],
+      );
+    },
   );
 }

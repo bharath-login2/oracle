@@ -488,7 +488,9 @@ class HttpService {
       descriptions,
       code,
       checked,
-      timeBefore) async {
+      timeBefore,
+      // leadSource
+      ) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -507,6 +509,7 @@ class HttpService {
       "additionalFields": jsonEncode(descriptions),
       "reminder": checked,
       "time_before": timeBefore,
+      // "lead_source":leadSource
     });
 
     try {
@@ -797,7 +800,9 @@ class HttpService {
       address,
       remark,
       descriptions,
-      code) async {
+      code,
+      // leadSource
+      ) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -812,7 +817,8 @@ class HttpService {
       'priority': priorityId,
       'call_master_id': callMasterId,
       'country_code': code,
-      "additionalFields": jsonEncode(descriptions)
+      "additionalFields": jsonEncode(descriptions),
+      // "lead_source":leadSource
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}edit_lead_data",
@@ -2706,7 +2712,7 @@ class HttpService {
   }
 
   static sendTemplateMessage(groupId, format, templateName, language, template,
-      fileName, isFile, type) async {
+      fileName, isFile, type,List argList) async {
     var formData = FormData.fromMap({
       "group_id": groupId,
       'format': format,
@@ -2719,6 +2725,7 @@ class HttpService {
       'type': type,
       'is_file': isFile.toString(),
       "token": await Common.getSharedPref("token"),
+      "arg_list": argList
     });
 
     try {

@@ -2119,7 +2119,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
   sendingTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type) async {
     sendTemplateMessageModel = await HttpService.sendTemplateMessage(groupId,
-        format, templateName, language, template, fileName, isFile, type);
+        format, templateName, language, template, fileName, isFile, type,["argument List"]);
     if (sendTemplateMessageModel != null &&
         sendTemplateMessageModel!.status == true) {
       await getchat(groupId);

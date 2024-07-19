@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/screens/officialWhatsapp/components/campaignsComponent.dart';
 import 'package:login2/screens/officialWhatsapp/components/chat_list_item.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -55,8 +56,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   void _onLoadMore() {
     if (items.length + 20 == page * pageSize &&
-        itemPositionsListener.itemPositions.value.last.index ==
-            items.length&&
+        itemPositionsListener.itemPositions.value.last.index == items.length &&
         page > add) {
       chats('');
       add++;
@@ -398,6 +398,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       });
     }
   }
+
+  
 
   chatCampaignsList(search) async {
     campaignsListModel = await HttpService.fetchCampaignsList(search);

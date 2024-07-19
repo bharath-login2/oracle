@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'dart:developer';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -45,8 +46,14 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List list = [];
   final imageHelper = ImageHelper();
-  TextEditingController messageController = TextEditingController();
-  TextEditingController argumentController = TextEditingController();
+  final messageController = TextEditingController();
+  final argumentController = <TextEditingController>[];
+
+  void onTextChanged(String value, int index) {
+    int newIntex = index - 1;
+    argList[newIntex] = value;
+  }
+
   List<Message> items = [];
   List argList = [];
   int page = 1;
@@ -197,6 +204,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             GestureDetector(
                               onTap: () {
                                 // viewCartBottomSheet("", "");
+                                profileDialog(context);
                               },
                               child: Container(
                                 height: 40,
@@ -272,79 +280,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ).then((value) {
                     if (value != null) {
                       if (value == '1') {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              content: SizedBox(
-                                height: 220,
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      height: 100,
-                                      width: 100,
-                                      decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: NetworkImage(
-                                              officialMessageModel!
-                                                  .profilePhoto),
-                                        ),
-                                        color: ColorConstant.grey,
-                                        borderRadius: BorderRadius.circular(60),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 22,
-                                    ),
-                                    Text(
-                                      officialMessageModel!.groupName,
-                                      style: const TextStyle(
-                                        color: ColorConstant.black,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 5,
-                                    ),
-                                    Text(
-                                      officialMessageModel!.phoneNumber,
-                                      style: const TextStyle(
-                                        color: ColorConstant.black,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Created By :${officialMessageModel!.createdBy}",
-                                      style: const TextStyle(
-                                        color: ColorConstant.black,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                    Text(
-                                      "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
-                                      style: const TextStyle(
-                                        color: ColorConstant.black,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('close'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+                        profileDialog(context);
                       } else if (value == '2') {
                         getchat(widget.groupId);
                         setState(() {});
@@ -707,6 +643,82 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
       ),
     );
+  }
+
+  Future<dynamic> profileDialog(BuildContext context) {
+    return showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            content: SizedBox(
+                              height: 220,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 100,
+                                    width: 100,
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        image: NetworkImage(
+                                            officialMessageModel!
+                                                .profilePhoto),
+                                      ),
+                                      color: ColorConstant.grey,
+                                      borderRadius: BorderRadius.circular(60),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 22,
+                                  ),
+                                  Text(
+                                    officialMessageModel!.groupName,
+                                    style: const TextStyle(
+                                      color: ColorConstant.black,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 5,
+                                  ),
+                                  Text(
+                                    officialMessageModel!.phoneNumber,
+                                    style: const TextStyle(
+                                      color: ColorConstant.black,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Created By :${officialMessageModel!.createdBy}",
+                                    style: const TextStyle(
+                                      color: ColorConstant.black,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
+                                    style: const TextStyle(
+                                      color: ColorConstant.black,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('close'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
   }
 
   Future<Object?> attachDialog(BuildContext context) {
@@ -2555,32 +2567,44 @@ class _ChatScreenState extends State<ChatScreen> {
                                 child: Column(
                                   children: [
                                     const Row(
-                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
                                         Text("Arguments :-"),
                                       ],
                                     ),
-                                   for (int i = 1; i < argCount+1; i++) Padding(
-                                     padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                     child: TextFormField(
-                                       controller: argumentController,
-                                       decoration:  InputDecoration(
-                                           contentPadding: const EdgeInsets.only(
-                                               left: 10, top: 2, bottom: 2),
-                                           labelText: "$i",
-                                           fillColor: Colors.white,
-                                           filled: true,
-                                           prefixIcon: const Icon(Icons.arrow_right,
-                                               color: Colors.grey),
-                                           border: const OutlineInputBorder(),
-                                           focusedBorder: const OutlineInputBorder(
-                                             borderSide: BorderSide(
-                                                 color: Colors.grey),
-                                           ),
-                                           labelStyle:
-                                               const TextStyle(color: Colors.grey)),
-                                     ),
-                                   ),
+                                    for (int i = 1; i < argCount + 1; i++)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 2.0),
+                                        child: TextFormField(
+                                          onChanged: (value) {
+                                            onTextChanged(value, i);
+                                            print(argList);
+                                          },
+                                          decoration: InputDecoration(
+                                              contentPadding:
+                                                  const EdgeInsets.only(
+                                                      left: 10,
+                                                      top: 2,
+                                                      bottom: 2),
+                                              labelText: "$i",
+                                              fillColor: Colors.white,
+                                              filled: true,
+                                              prefixIcon: const Icon(
+                                                  Icons.arrow_right,
+                                                  color: Colors.grey),
+                                              border:
+                                                  const OutlineInputBorder(),
+                                              focusedBorder:
+                                                  const OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey),
+                                              ),
+                                              labelStyle: const TextStyle(
+                                                  color: Colors.grey)),
+                                        ),
+                                      ),
                                     const SizedBox(
                                       width: 10,
                                     ),
@@ -2671,6 +2695,7 @@ class _ChatScreenState extends State<ChatScreen> {
             actions: [
               TextButton(
                 onPressed: () {
+                  argList.clear();
                   Navigator.pop(context);
                 },
                 child: const Text('Cancel'),
@@ -2946,6 +2971,7 @@ class _ChatScreenState extends State<ChatScreen> {
     templateContentModel = await HttpService.getTemplateContent(templateId);
     if (templateContentModel != null) {
       argCount = templateContentModel!.data.paramCount;
+      argList = List.generate(argCount, (index) => '');
       if (templateContentModel!.data.format == 'VIDEO') {
         setState(() {
           dropDownHeight = 470;
@@ -2995,7 +3021,8 @@ class _ChatScreenState extends State<ChatScreen> {
         selectedTemp,
         templateImage,
         isFile,
-        type);
+        type,
+        argList);
     if (sendTemplateMessageModel != null &&
         sendTemplateMessageModel!.status == true) {
       page = 1;
@@ -3012,8 +3039,10 @@ class _ChatScreenState extends State<ChatScreen> {
           templateImage = "";
         });
       }
+      argList.clear();
     } else {
       Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);
+      argList.clear();
     }
   }
 

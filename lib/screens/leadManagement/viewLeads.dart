@@ -681,78 +681,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                       InkWell(
                                           onTap: () {
                                             if (widget.deleteLead == true) {
-                                              showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: const Text(
-                                                          'Please Confirm'),
-                                                      content: const Text(
-                                                          'Are you sure to Delete Selected Leads?'),
-                                                      actions: [
-                                                        // The "Yes" button
-                                                        TextButton(
-                                                            onPressed:
-                                                                () async {
-                                                              Map<String,
-                                                                      dynamic>
-                                                                  body = {
-                                                                "token": widget
-                                                                    .token,
-                                                                'leadMasterIds':
-                                                                    selectedIUsers,
-                                                              };
-                                                              BulkDeleteLeadModel
-                                                                  deleteBulk =
-                                                                  await HttpService
-                                                                      .bulkDeleteLead(
-                                                                          body);
-                                                              if (deleteBulk
-                                                                      .data ==
-                                                                  true) {
-                                                                Common.toastMessaage(
-                                                                    deleteBulk
-                                                                        .message,
-                                                                    Colors
-                                                                        .green);
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                  page = 1;
-                                                                  items.clear();
-                                                                  getData(
-                                                                      'desc',
-                                                                      false,
-                                                                      status);
-                                                                }
-                                                              } else {
-                                                                Common.toastMessaage(
-                                                                    deleteBulk
-                                                                        .message,
-                                                                    Colors.red);
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop();
-                                                                }
-                                                              }
-                                                            },
-                                                            child: const Text(
-                                                                'Yes')),
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                'No'))
-                                                      ],
-                                                    );
-                                                  });
+                                              deleteLeadDialog(context);
                                             } else {
                                               Common.toastMessaage(
                                                   "You don't have permission to delete",
@@ -1918,6 +1847,49 @@ class _ViewLeadsState extends State<ViewLeads> {
                 ),
               )),
     );
+  }
+
+  Future<dynamic> deleteLeadDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Please Confirm'),
+            content: const Text('Are you sure to Delete Selected Leads?'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
+              TextButton(
+                  onPressed: () async {
+                    Map<String, dynamic> body = {
+                      "token": widget.token,
+                      'leadMasterIds': selectedIUsers,
+                    };
+                    BulkDeleteLeadModel deleteBulk =
+                        await HttpService.bulkDeleteLead(body);
+                    if (deleteBulk.data == true) {
+                      Common.toastMessaage(deleteBulk.message, Colors.green);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        page = 1;
+                        items.clear();
+                        getData('desc', false, status);
+                      }
+                    } else {
+                      Common.toastMessaage(deleteBulk.message, Colors.red);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  },
+                  child: const Text('Yes')),
+              
+            ],
+          );
+        });
   }
 
   Future<Object?> filtrationSheet(BuildContext context) {
