@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:login2/main.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
@@ -6212,7 +6213,7 @@ class _DashboardState extends State<Dashboard> {
                                                   updateLeadPermission1,
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
-                                                  pageName: 'New Leads',
+                                                  pageName: title,
                                                   fromDate: DateTime(
                                                           DateTime.now().year,
                                                           DateTime.now().month -
@@ -6221,6 +6222,8 @@ class _DashboardState extends State<Dashboard> {
                                                       .toString(),
                                                   toDate: todate.toString(),
                                                   status: status,
+                                                  staffName: object1!.data!
+                                                      .staffLeads![i].staffName,
                                                   staff: object1!.data!
                                                       .staffLeads![i].staffId)),
                                         ).then((r) async {
@@ -6322,7 +6325,6 @@ class _DashboardState extends State<Dashboard> {
                                   double.parse(object1!
                                       .data!.categoryLeads!.length
                                       .toString()),
-                              // 70% height
                               child: MediaQuery.removePadding(
                                 context: context,
                                 removeTop: true,
@@ -6332,75 +6334,78 @@ class _DashboardState extends State<Dashboard> {
                                   itemCount:
                                       object1!.data!.categoryLeads!.length,
                                   itemBuilder: (context, i) {
-                                    return Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 15, right: 15),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                object1!.data!.categoryLeads![i]
-                                                    .categoryName
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
+                                    return InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => ViewLeads(
+                                                  widget.token,
+                                                  updateLeadPermission1,
+                                                  deleteLeadPermission1,
+                                                  cloudCallPermission1,
+                                                  pageName: title,
+                                                  fromDate: DateTime(
+                                                          DateTime.now().year,
+                                                          DateTime.now().month -
+                                                              3,
+                                                          DateTime.now().day)
+                                                      .toString(),
+                                                  toDate: todate.toString(),
+                                                  status: status,
+                                                  categoryName: object1!
+                                                      .data!
+                                                      .categoryLeads![i]
+                                                      .categoryName,
+                                                  category: object1!
+                                                      .data!
+                                                      .categoryLeads![i]
+                                                      .categoryId
+                                                      .toString())),
+                                        ).then((r) {
+                                          getData(
+                                              widget.token, fromdate, todate);
+                                          if (loadmore == true) {
+                                            getStaffwise();
+                                          }
+                                        });
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 15, right: 15),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  object1!
+                                                      .data!
+                                                      .categoryLeads![i]
+                                                      .categoryName
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(
-                                                'Count : ${object1!.data!.categoryLeads![i].categoryCount}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
+                                                Text(
+                                                  'Count : ${object1!.data!.categoryLeads![i].categoryCount}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 15, right: 15, top: 5),
-                                          child: InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ViewLeads(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        pageName: 'New Leads',
-                                                        fromDate: DateTime(
-                                                                DateTime.now()
-                                                                    .year,
-                                                                DateTime.now()
-                                                                        .month -
-                                                                    3,
-                                                                DateTime.now()
-                                                                    .day)
-                                                            .toString(),
-                                                        toDate:
-                                                            todate.toString(),
-                                                        status: '1',
-                                                        category: object1!
-                                                            .data!
-                                                            .categoryLeads![i]
-                                                            .categoryId
-                                                            .toString())),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              });
-                                            },
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 15, right: 15, top: 5),
                                             child: LinearPercentIndicator(
                                               width: MediaQuery.of(context)
                                                       .size
@@ -6423,11 +6428,11 @@ class _DashboardState extends State<Dashboard> {
                                                   : _colors[i],
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(
-                                          height: 15,
-                                        )
-                                      ],
+                                          const SizedBox(
+                                            height: 15,
+                                          )
+                                        ],
+                                      ),
                                     );
                                   },
                                 ),
@@ -6466,77 +6471,78 @@ class _DashboardState extends State<Dashboard> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: object1!.data!.missedLeads!.length,
                                   itemBuilder: (context, i) {
-                                    return Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 15, right: 15),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                object1!.data!.missedLeads![i]
-                                                    .missedstaffName
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
+                                    return InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => ViewLeads(
+                                                  widget.token,
+                                                  updateLeadPermission1,
+                                                  deleteLeadPermission1,
+                                                  cloudCallPermission1,
+                                                  pageName: title,
+                                                  leadType: status,
+                                                  fromDate: DateTime(
+                                                          DateTime.now().year,
+                                                          DateTime.now().month -
+                                                              3,
+                                                          DateTime.now().day)
+                                                      .toString(),
+                                                  toDate: DateTime(
+                                                          DateTime.now().year,
+                                                          DateTime.now().month,
+                                                          DateTime.now().day -
+                                                              1)
+                                                      .toString(),
+                                                  status: status,
+                                                  staff: object1!
+                                                      .data!
+                                                      .missedLeads![i]
+                                                      .missedstaffId
+                                                      .toString())),
+                                        ).then((r) {
+                                          getData(
+                                              widget.token, fromdate, todate);
+                                          if (loadmore == true) {
+                                            getStaffwise();
+                                          }
+                                        });
+                                      },
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 15, right: 15),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  object1!.data!.missedLeads![i]
+                                                      .missedstaffName
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(
-                                                'Count : ${object1!.data!.missedLeads![i].missedstaffCount}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
+                                                Text(
+                                                  'Count : ${object1!.data!.missedLeads![i].missedstaffCount}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 15, right: 15, top: 5),
-                                          child: InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ViewLeads(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        pageName: 'New Leads',
-                                                        leadType: "1",
-                                                        fromDate: DateTime(
-                                                                DateTime.now()
-                                                                    .year,
-                                                                DateTime.now()
-                                                                        .month -
-                                                                    3,
-                                                                DateTime.now()
-                                                                    .day)
-                                                            .toString(),
-                                                        toDate: DateTime(
-                                                                DateTime.now()
-                                                                    .year,
-                                                                DateTime.now()
-                                                                    .month,
-                                                                DateTime.now().day - 1)
-                                                            .toString(),
-                                                        status: '1',
-                                                        staff: object1!.data!.missedLeads![i].missedstaffId.toString())),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              });
-                                            },
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 15, right: 15, top: 5),
                                             child: LinearPercentIndicator(
                                               width: MediaQuery.of(context)
                                                       .size
@@ -6557,11 +6563,11 @@ class _DashboardState extends State<Dashboard> {
                                                   : _colors[i],
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(
-                                          height: 15,
-                                        )
-                                      ],
+                                          const SizedBox(
+                                            height: 15,
+                                          )
+                                        ],
+                                      ),
                                     );
                                   },
                                 ),

@@ -34,6 +34,8 @@ class ViewLeads extends StatefulWidget {
   String? status;
   String? category;
   String? staff;
+  String? categoryName;
+  String? staffName;
   String? pageName;
   bool? isCalled;
   int? scrollToIndex;
@@ -53,7 +55,9 @@ class ViewLeads extends StatefulWidget {
       this.scrollToIndex,
       this.page,
       this.pageSize,
-      this.leadType});
+      this.leadType,
+      this.categoryName,
+      this.staffName});
 
   @override
   State<ViewLeads> createState() => _ViewLeadsState();
@@ -135,9 +139,11 @@ class _ViewLeadsState extends State<ViewLeads> {
     // Set up animation controller
     if (widget.staff != null) {
       checkedAssignedStaffItems.add(widget.staff);
+      checkedAssignedStaffItemsName.add(widget.staffName);
     }
     if (widget.category != null) {
       checkedCategoryItems.add(widget.category);
+      checkedCategoryItemsName.add(widget.categoryName);
     }
     if (widget.page != null) {
       page = widget.page! - 1;
@@ -229,7 +235,7 @@ class _ViewLeadsState extends State<ViewLeads> {
               if (todate != null) "toDate": outputFormat.format(todate!),
               if (fromdate == null) "fromDate": "",
               if (todate == null) "toDate": "",
-              "callResultId": status1,
+              "callResultId": status1 ?? "",
               //status1 == "-1" ? "" : status1,
               "leadCategoryId": checkedCategoryItems,
               "callResponseId": checkedResponseItems,
@@ -272,7 +278,6 @@ class _ViewLeadsState extends State<ViewLeads> {
         isLoading = false;
         timeOut = true;
       });
-
       log("error: $e");
     }
     phoneCallLogPermission =
@@ -313,12 +318,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                           children: [
                             InkWell(
                               onTap: () {
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //       builder: (context) =>
-                                //           Dashboard(widget.token)),
-                                // );
                                 Navigator.pop(context);
                               },
                               child: Container(
@@ -371,42 +370,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                         ),
                         Row(
                           children: [
-                            // InkWell(
-                            //   onTap: () {
-                            //
-                            //     // setState(() {
-                            //     //   isSort = !isSort;
-                            //     //
-                            //     //   // Toggle the sorting order
-                            //     //   if (isSort) {
-                            //     //     items.sort();
-                            //     //   } else {
-                            //     //     items.first.sort((a, b) => b['callMasterId'].compareTo(a['callMasterId']));
-                            //     //   }
-                            //     // });
-                            //     // setState(() {
-                            //     //   isSort == true
-                            //     //       ? getData('ASC', true)
-                            //     //       : getData('desc', true);
-                            //     //   isSort = !isSort;
-                            //     // });
-                            //   },
-                            //   child: const Icon(
-                            //     Icons.swap_calls,
-                            //     color: Colors.white,
-                            //   ),
-                            // ),
-                            // Visibility(
-                            //   visible: selectedIUsers.isEmpty,
-                            //   child: GestureDetector(
-                            //       onTap: () {
-                            //         searchField = !searchField;
-                            //       },
-                            //       child: const Icon(
-                            //         Icons.search_outlined,
-                            //         color: Colors.white,
-                            //       )),
-                            // ),
                             selectedIUsers.isNotEmpty
                                 ? Row(
                                     children: [
@@ -579,109 +542,81 @@ class _ViewLeadsState extends State<ViewLeads> {
                                       const SizedBox(
                                         width: 15,
                                       ),
-                                      // InkWell(
-                                      //     onTap: () {
-                                      //       showDialog(
-                                      //           context: context,
-                                      //           builder:
-                                      //               (BuildContext context) {
-                                      //             return AlertDialog(
-                                      //               title: const Text(
-                                      //                   'Please Confirm'),
-                                      //               content: const Text(
-                                      //                   'Are you sure to Create Contact Group?'),
-                                      //               actions: [
-                                      //                 TextButton(
-                                      //                     onPressed: () async {
-                                      //                       Navigator.push(
-                                      //                         context,
-                                      //                         MaterialPageRoute(
-                                      //                             builder: (context) =>
-                                      //                                 AddBulkContactGroup(
-                                      //                                     widget
-                                      //                                         .token,
-                                      //                                     selectedUserNumbers)),
-                                      //                       );
-                                      //                     },
-                                      //                     child: const Text(
-                                      //                         'Yes')),
-                                      //                 // The "Yes" button
-
-                                      //                 // TextButton(
-                                      //                 //     onPressed: () async {
-                                      //                 //       Map<String, dynamic> body = {
-                                      //                 //         "token": widget.token,
-                                      //                 //         'leadMasterIds': selectedIUsers,
-                                      //                 //         'staffId': transferStaff,
-                                      //                 //       };
-                                      //                 //       BulkTransferLeadsModel transferLead =
-                                      //                 //       await HttpService.bulkDeleteLead(body);
-                                      //                 //       if (deleteBulk.data ==
-                                      //                 //           true) {
-                                      //                 //         Common.toastMessaage(
-                                      //                 //             deleteBulk.message,
-                                      //                 //             Colors.green);
-                                      //                 //         if (context
-                                      //                 //             .mounted) {
-                                      //                 //           Navigator.push(
-                                      //                 //             context,
-                                      //                 //             MaterialPageRoute(
-                                      //                 //                 builder:
-                                      //                 //                     (context) =>
-                                      //                 //                     ViewLeads(
-                                      //                 //                       widget.token!,
-                                      //                 //                       widget.editLead,
-                                      //                 //                       widget.deleteLead,
-                                      //                 //                       widget.cloudCall,
-                                      //                 //                       pageName: widget.pageName,
-                                      //                 //                       status: widget.status,
-                                      //                 //                       staff: widget.staff,
-                                      //                 //                       isCalled: widget.isCalled,
-                                      //                 //                       fromDate: widget.fromDate,
-                                      //                 //                       toDate: widget.toDate,
-                                      //                 //                       category: widget.category,
-                                      //                 //                     )),
-                                      //                 //           );
-                                      //                 //         }
-                                      //                 //       }
-                                      //                 //       else
-                                      //                 //       {
-                                      //                 //         Common.toastMessaage(
-                                      //                 //             deleteBulk.message,
-                                      //                 //             Colors.red);
-                                      //                 //         if (context
-                                      //                 //             .mounted) {
-                                      //                 //           Navigator.of(
-                                      //                 //               context)
-                                      //                 //               .pop();
-                                      //                 //         }
-                                      //                 //       }
-                                      //                 //     },
-                                      //                 //     child:
-                                      //                 //     const Text('Yes')),
-                                      //                 TextButton(
-                                      //                     onPressed: () {
-                                      //                       Navigator.of(
-                                      //                               context)
-                                      //                           .pop();
-                                      //                     },
-                                      //                     child:
-                                      //                         const Text('No'))
-                                      //               ],
-                                      //             );
-                                      //           });
-                                      //     },
-                                      //     child: const Icon(
-                                      //       Icons.group_add,
-                                      //       color: Colors.white,
-                                      //     )),
-                                      // const SizedBox(
-                                      //   width: 10,
-                                      // ),
                                       InkWell(
                                           onTap: () {
                                             if (widget.deleteLead == true) {
-                                              deleteLeadDialog(context);
+                                              showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                          'Please Confirm'),
+                                                      content: const Text(
+                                                          'Are you sure to Delete Selected Leads?'),
+                                                      actions: [
+                                                        // The "Yes" button
+                                                        TextButton(
+                                                            onPressed:
+                                                                () async {
+                                                              Map<String,
+                                                                      dynamic>
+                                                                  body = {
+                                                                "token": widget
+                                                                    .token,
+                                                                'leadMasterIds':
+                                                                    selectedIUsers,
+                                                              };
+                                                              BulkDeleteLeadModel
+                                                                  deleteBulk =
+                                                                  await HttpService
+                                                                      .bulkDeleteLead(
+                                                                          body);
+                                                              if (deleteBulk
+                                                                      .data ==
+                                                                  true) {
+                                                                Common.toastMessaage(
+                                                                    deleteBulk
+                                                                        .message,
+                                                                    Colors
+                                                                        .green);
+                                                                if (context
+                                                                    .mounted) {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  page = 1;
+                                                                  items.clear();
+                                                                  getData(
+                                                                      'desc',
+                                                                      false,
+                                                                      status);
+                                                                }
+                                                              } else {
+                                                                Common.toastMessaage(
+                                                                    deleteBulk
+                                                                        .message,
+                                                                    Colors.red);
+                                                                if (context
+                                                                    .mounted) {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop();
+                                                                }
+                                                              }
+                                                            },
+                                                            child: const Text(
+                                                                'Yes')),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: const Text(
+                                                                'No'))
+                                                      ],
+                                                    );
+                                                  });
                                             } else {
                                               Common.toastMessaage(
                                                   "You don't have permission to delete",
@@ -1847,49 +1782,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                 ),
               )),
     );
-  }
-
-  Future<dynamic> deleteLeadDialog(BuildContext context) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Delete Selected Leads?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No')),
-              TextButton(
-                  onPressed: () async {
-                    Map<String, dynamic> body = {
-                      "token": widget.token,
-                      'leadMasterIds': selectedIUsers,
-                    };
-                    BulkDeleteLeadModel deleteBulk =
-                        await HttpService.bulkDeleteLead(body);
-                    if (deleteBulk.data == true) {
-                      Common.toastMessaage(deleteBulk.message, Colors.green);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        page = 1;
-                        items.clear();
-                        getData('desc', false, status);
-                      }
-                    } else {
-                      Common.toastMessaage(deleteBulk.message, Colors.red);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    }
-                  },
-                  child: const Text('Yes')),
-              
-            ],
-          );
-        });
   }
 
   Future<Object?> filtrationSheet(BuildContext context) {

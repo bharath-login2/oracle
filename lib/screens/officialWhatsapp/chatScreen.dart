@@ -2696,6 +2696,7 @@ class _ChatScreenState extends State<ChatScreen> {
               TextButton(
                 onPressed: () {
                   argList.clear();
+                  argList = List.generate(argCount, (index) => '');
                   Navigator.pop(context);
                 },
                 child: const Text('Cancel'),
@@ -2711,8 +2712,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             buttonStatus = true;
                           });
                         }
-                        if (templateContentModel!.data.format == 'TEXT' &&
-                            templateSelected == true) {
+                        if (templateContentModel!.data.format == 'TEXT' ||
+                            templateContentModel!.data.format == '' &&
+                                templateSelected == true) {
                           await sendingTemplateMessage(false, 'normal');
                         } else {
                           await sendingTemplateMessage(
@@ -3040,10 +3042,9 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
       argList.clear();
+      argList = List.generate(argCount, (index) => '');
     } else {
-      Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);
-      argList.clear();
-    }
+      Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);    }
   }
 
   sendingMessage(groupId, messageData, fileName, isImage) async {

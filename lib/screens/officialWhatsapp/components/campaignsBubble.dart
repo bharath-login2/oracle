@@ -11,7 +11,7 @@ Widget campaignsBubble(context, campaignsListModel) {
           context,
           MaterialPageRoute(
             builder: (context) => CampaignsChatScreen(
-              groupId: campaignsListModel.groupId,
+              groupId: campaignsListModel.groupId, nav: '',
             ),
           ));
     },

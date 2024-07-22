@@ -9,6 +9,7 @@ import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
+import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/models/product_mannagement/delete_category.dart';
 import 'package:login2/models/product_mannagement/delete_product.dart';
 import 'package:login2/models/product_mannagement/delete_subcategory.dart';
@@ -168,7 +169,6 @@ import '../models/lead_management/viewLeadSubCategoryModel.dart';
 import '../models/officialWhatsapp/ChatListModel.dart';
 import '../models/officialWhatsapp/addContactModel.dart';
 import '../models/officialWhatsapp/campaignsListModel.dart';
-import '../models/officialWhatsapp/campaignsOfficialMessageModel.dart';
 import '../models/officialWhatsapp/mediaModel.dart';
 import '../models/officialWhatsapp/official_message_model.dart';
 import '../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
@@ -472,25 +472,25 @@ class HttpService {
   }
 
   static Future addLeads(
-      token,
-      branchId,
-      clientName,
-      leadType,
-      leadSubType,
-      contactNo,
-      staffId,
-      cost,
-      priorityId,
-      address,
-      remark,
-      callResultId,
-      nextFollowupDate,
-      descriptions,
-      code,
-      checked,
-      timeBefore,
-      // leadSource
-      ) async {
+    token,
+    branchId,
+    clientName,
+    leadType,
+    leadSubType,
+    contactNo,
+    staffId,
+    cost,
+    priorityId,
+    address,
+    remark,
+    callResultId,
+    nextFollowupDate,
+    descriptions,
+    code,
+    checked,
+    timeBefore,
+    // leadSource
+  ) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -787,22 +787,22 @@ class HttpService {
   }
 
   static Future editLeads(
-      token,
-      callMasterId,
-      branchId,
-      clientName,
-      leadType,
-      leadSubTypeId,
-      contactNo,
-      staffId,
-      cost,
-      priorityId,
-      address,
-      remark,
-      descriptions,
-      code,
-      // leadSource
-      ) async {
+    token,
+    callMasterId,
+    branchId,
+    clientName,
+    leadType,
+    leadSubTypeId,
+    contactNo,
+    staffId,
+    cost,
+    priorityId,
+    address,
+    remark,
+    descriptions,
+    code,
+    // leadSource
+  ) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -2656,13 +2656,15 @@ class HttpService {
     }
   }
 
-  static officialMessageCampaigns(groupId) async {
+  static officialMessageCampaigns(groupId, page, pageSize) async {
     try {
       var response = await _dio.get(
           "${await Config.getUrl()}get_campaigns_messages",
           queryParameters: {
             "group_id": groupId,
             "token": await Common.getSharedPref("token"),
+            "pageNo": page,
+            "pageSize": pageSize,
           });
       if (response.statusCode == 200) {
         CampaignsOfficialMessageModel officialMessageModel =
@@ -2672,7 +2674,7 @@ class HttpService {
       } else {}
       // isLoading.value = false;
     } catch (e) {
-      // print("Exception: $e");
+      log("Exception: $e");
     } finally {}
   }
 
@@ -2712,23 +2714,23 @@ class HttpService {
   }
 
   static sendTemplateMessage(groupId, format, templateName, language, template,
-      fileName, isFile, type,List argList) async {
-    var formData = FormData.fromMap({
-      "group_id": groupId,
-      'format': format,
-      'template_name': templateName,
-      'language': language,
-      'template': template,
-      'fileName': type == "file_manager"
-          ? fileName
-          : await MultipartFile.fromFile(fileName),
-      'type': type,
-      'is_file': isFile.toString(),
-      "token": await Common.getSharedPref("token"),
-      "arg_list": argList
-    });
-
+      fileName, isFile, type, List argList) async {
     try {
+      log(jsonEncode(argList).toString());
+      var formData = FormData.fromMap({
+        "group_id": groupId,
+        'format': format,
+        'template_name': templateName,
+        'language': language,
+        'template': template,
+        'fileName': type == "file_manager" || isFile == false
+            ? fileName
+            : await MultipartFile.fromFile(fileName),
+        'type': type,
+        'is_file': isFile.toString(),
+        "token": await Common.getSharedPref("token"),
+        "arg_list": jsonEncode(argList)
+      });
       var response = await _dio.post(
           "${await Config.getUrl()}sendTemplatewhatsappMessage",
           data: formData);
@@ -2742,7 +2744,7 @@ class HttpService {
       // isLoading.value = false;
     } catch (e) {
       log("Exception: $e");
-    } finally {}
+    }
   }
 
   static sendMessage(
@@ -3811,8 +3813,9 @@ class HttpService {
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
-      "product_image":
-          productImage == null ? "" : await MultipartFile.fromFile(productImage.toString())
+      "product_image": productImage == null
+          ? ""
+          : await MultipartFile.fromFile(productImage.toString())
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postProduct",
