@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
@@ -1544,13 +1545,16 @@ class HttpService {
       "phoneNumber": phoneNumber,
     };
     try {
+      log("${await Config.getUrl()}verify_phone");
       var result = await _dio.get("${await Config.getUrl()}verify_phone",
           queryParameters: params);
-      VerifyPhoneModel model = VerifyPhoneModel.fromJson(result.data);
-
-      return model;
+      if (result.statusCode == 200) {
+        VerifyPhoneModel model = VerifyPhoneModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
+      Common.toastMessaage("Something went wrong", Colors.red);
     }
   }
 
@@ -2716,7 +2720,7 @@ class HttpService {
   static sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type, List argList) async {
     try {
-      log(jsonEncode(argList).toString());
+      // log(jsonEncode(argList).toString());
       var formData = FormData.fromMap({
         "group_id": groupId,
         'format': format,
@@ -2734,7 +2738,6 @@ class HttpService {
       var response = await _dio.post(
           "${await Config.getUrl()}sendTemplatewhatsappMessage",
           data: formData);
-
       if (response.statusCode == 200) {
         SendTemplateMesaageModel sendTemplateMesaageModel =
             SendTemplateMesaageModel.fromJson(response.data);
@@ -4021,4 +4024,32 @@ class HttpService {
   }
 
   /// product mannagement ///
+
+  /// whatsapp Profile
+
+  static addCampaignContact(
+    String campaignId,
+    String contactName,
+    String countryCode,
+    String contactNumber,
+  ) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "campaign_id": campaignId,
+        "contact_name": contactName,
+        "country_code": countryCode,
+        "contact_number": contactNumber,
+      });
+      var response = await _dio.post(
+          "${await Config.getUrl()}deleteProductSubCategory",
+          data: formData);
+      if (response.statusCode == 200) {
+        TemplateModel templateModel = TemplateModel.fromJson(response.data);
+        return templateModel;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } finally {}
+  }
 }

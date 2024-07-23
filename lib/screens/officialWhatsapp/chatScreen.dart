@@ -13,6 +13,7 @@ import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
+import 'package:login2/screens/officialWhatsapp/whatsapp_profile.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,6 +53,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void onTextChanged(String value, int index) {
     int newIntex = index - 1;
     argList[newIntex] = value;
+    _handleArgChange(value, index);
   }
 
   List<Message> items = [];
@@ -87,6 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ItemPositionsListener.create();
   String token = "";
   int argCount = 0;
+  bool _isValid = false;
   @override
   void initState() {
     // messageListner();
@@ -94,6 +97,14 @@ class _ChatScreenState extends State<ChatScreen> {
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     getTemplates();
     super.initState();
+  }
+
+  void _handleArgChange(String value, int index) {
+    setState(() {
+      argList[index] = value;
+      _isValid =
+          argList.every((element) => element.isNotEmpty); // Check all elements
+    });
   }
 
   messageListner() {
@@ -169,44 +180,58 @@ class _ChatScreenState extends State<ChatScreen> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            GestureDetector(
-                              onTap: () async {
-                                if (widget.nav == "Notification") {
-                                  token = await Common.getSharedPref("token");
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => Dashboard(token),
-                                      ));
-                                } else {
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ChatHomeScreen(),
-                                      ));
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                // viewCartBottomSheet("", "");
-                                profileDialog(context);
-                              },
-                              child: Container(
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        GestureDetector(
+                          onTap: () async {
+                            if (widget.nav == "Notification") {
+                              token = await Common.getSharedPref("token");
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Dashboard(token),
+                                  ));
+                            } else {
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ChatHomeScreen(),
+                                  ));
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WhatsappProfile(
+                                    name: officialMessageModel!.groupName,
+                                    number: officialMessageModel!.phoneNumber,
+                                    profilePic:
+                                        officialMessageModel!.profilePhoto,
+                                    createdBy: officialMessageModel!.createdBy,
+                                    createdDate: officialMessageModel!
+                                        .createdTime
+                                        .toString(),
+                                    groupId:
+                                        officialMessageModel!.campaignId,
+                                  ),
+                                ));
+                          },
+                          child: Row(
+                            children: [
+                              Container(
                                 height: 40,
                                 width: 40,
                                 decoration: BoxDecoration(
@@ -217,24 +242,21 @@ class _ChatScreenState extends State<ChatScreen> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        InkWell(
-                          onTap: () {},
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.5,
-                            child: Text(
-                              officialMessageModel!.groupName,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.5,
+                                child: Text(
+                                  officialMessageModel!.groupName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -243,7 +265,10 @@ class _ChatScreenState extends State<ChatScreen> {
           backgroundColor: ColorConstant.barGreen,
           actions: [
             Padding(
-              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 16,
+              ),
               child: GestureDetector(
                 onTap: () {
                   page = 1;
@@ -254,42 +279,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 child: const Icon(
                   Icons.refresh,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  showMenu(
-                    color: ColorConstant.white,
-                    context: context,
-                    position:
-                        const RelativeRect.fromLTRB(1000.0, 0.0, 1000.0, 0.0),
-                    items: [
-                      const PopupMenuItem<String>(
-                        value: '1',
-                        child: Text('Profile'),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: '2',
-                        child: Text('Refresh'),
-                      ),
-                    ],
-                  ).then((value) {
-                    if (value != null) {
-                      if (value == '1') {
-                        profileDialog(context);
-                      } else if (value == '2') {
-                        getchat(widget.groupId);
-                        setState(() {});
-                      }
-                    }
-                  });
-                },
-                child: const Icon(
-                  Icons.more_vert_rounded,
                   color: Colors.white,
                 ),
               ),
@@ -643,82 +632,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
       ),
     );
-  }
-
-  Future<dynamic> profileDialog(BuildContext context) {
-    return showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            content: SizedBox(
-                              height: 220,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    height: 100,
-                                    width: 100,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                            officialMessageModel!
-                                                .profilePhoto),
-                                      ),
-                                      color: ColorConstant.grey,
-                                      borderRadius: BorderRadius.circular(60),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 22,
-                                  ),
-                                  Text(
-                                    officialMessageModel!.groupName,
-                                    style: const TextStyle(
-                                      color: ColorConstant.black,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    height: 5,
-                                  ),
-                                  Text(
-                                    officialMessageModel!.phoneNumber,
-                                    style: const TextStyle(
-                                      color: ColorConstant.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Created By :${officialMessageModel!.createdBy}",
-                                    style: const TextStyle(
-                                      color: ColorConstant.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Created Date : ${DateFormat('dd-MM-yyyy').format(officialMessageModel!.createdTime)}",
-                                    style: const TextStyle(
-                                      color: ColorConstant.black,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
   }
 
   Future<Object?> attachDialog(BuildContext context) {
@@ -2696,6 +2609,7 @@ class _ChatScreenState extends State<ChatScreen> {
               TextButton(
                 onPressed: () {
                   argList.clear();
+                  _isValid = false;
                   argList = List.generate(argCount, (index) => '');
                   Navigator.pop(context);
                 },
@@ -2707,26 +2621,31 @@ class _ChatScreenState extends State<ChatScreen> {
                         backgroundColor: ColorConstant.black,
                       ),
                       onPressed: () async {
-                        if (mounted) {
-                          setState(() {
-                            buttonStatus = true;
-                          });
-                        }
-                        if (templateContentModel!.data.format == 'TEXT' ||
-                            templateContentModel!.data.format == '' &&
-                                templateSelected == true) {
-                          await sendingTemplateMessage(false, 'normal');
+                        if (argList == [] || _isValid) {
+                          if (mounted) {
+                            setState(() {
+                              buttonStatus = true;
+                            });
+                          }
+                          if (templateContentModel!.data.format == 'TEXT' ||
+                              templateContentModel!.data.format == '' &&
+                                  templateSelected == true) {
+                            await sendingTemplateMessage(false, 'normal');
+                          } else {
+                            await sendingTemplateMessage(
+                                true,
+                                isFilemanager == true
+                                    ? 'file_manager'
+                                    : 'normal');
+                          }
+                          if (mounted) {
+                            setState(() {
+                              buttonStatus = false;
+                            });
+                          }
                         } else {
-                          await sendingTemplateMessage(
-                              true,
-                              isFilemanager == true
-                                  ? 'file_manager'
-                                  : 'normal');
-                        }
-                        if (mounted) {
-                          setState(() {
-                            buttonStatus = false;
-                          });
+                          Common.toastMessaage(
+                              "Arguments canot be empty", Colors.red);
                         }
                       },
                       child: const Text(
@@ -3042,9 +2961,11 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
       argList.clear();
+      _isValid = false;
       argList = List.generate(argCount, (index) => '');
     } else {
-      Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);    }
+      Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);
+    }
   }
 
   sendingMessage(groupId, messageData, fileName, isImage) async {

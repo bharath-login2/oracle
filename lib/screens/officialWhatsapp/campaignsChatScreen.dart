@@ -3,11 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
-import 'package:login2/screens/officialWhatsapp/listFileManager.dart';
-import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -21,9 +18,9 @@ import '../../models/officialWhatsapp/template_content_model.dart';
 import '../../models/officialWhatsapp/templateModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
+import 'whatsapp_profile.dart';
 import 'colorConst.dart';
 import 'components/imageHelper.dart';
-import 'imageViewScreen.dart';
 
 class CampaignsChatScreen extends StatefulWidget {
   const CampaignsChatScreen({
@@ -48,6 +45,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
   void onTextChanged(String value, int index) {
     int newIntex = index - 1;
     argList[newIntex] = value;
+    _handleArgChange(value, index);
   }
 
   List<Message> items = [];
@@ -83,6 +81,8 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
       ItemPositionsListener.create();
   String token = "";
   int argCount = 0;
+  bool _isValid = false; // Flag for validation state
+
   @override
   void initState() {
     // messageListner();
@@ -90,6 +90,14 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     getTemplates();
     super.initState();
+  }
+
+  void _handleArgChange(String value, int index) {
+    setState(() {
+      argList[index] = value;
+      _isValid =
+          argList.every((element) => element.isNotEmpty); // Check all elements
+    });
   }
 
   messageListner() {
@@ -165,71 +173,82 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            GestureDetector(
-                              onTap: () async {
-                                if (widget.nav == "Notification") {
-                                  token = await Common.getSharedPref("token");
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => Dashboard(token),
-                                      ));
-                                } else {
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ChatHomeScreen(),
-                                      ));
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                // viewCartBottomSheet("", "");
-                              },
-                              child: Container(
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        GestureDetector(
+                          onTap: () async {
+                            if (widget.nav == "Notification") {
+                              token = await Common.getSharedPref("token");
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Dashboard(token),
+                                  ));
+                            } else {
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ChatHomeScreen(),
+                                  ));
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WhatsappProfile(
+                                    name: officialMessageModel!.groupName,
+                                    profilePic:
+                                        officialMessageModel!.profilePhoto,
+                                    createdBy: officialMessageModel!.createdBy,
+                                    createdDate:
+                                        officialMessageModel!.createdTime,
+                                    contacts: officialMessageModel!.contats,
+                                    groupId: officialMessageModel!.campaignId,
+                                  ),
+                                ));
+                          },
+                          child: Row(
+                            children: [
+                              Container(
                                 height: 40,
                                 width: 40,
                                 decoration: BoxDecoration(
                                   image: DecorationImage(
                                       image: NetworkImage(
-                                          officialMessageModel!.profilePhoto)),
+                                    officialMessageModel!.profilePhoto,
+                                  )),
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        InkWell(
-                          onTap: () {},
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.5,
-                            child: Text(
-                              officialMessageModel!.groupName,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  overflow: TextOverflow.ellipsis),
-                            ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.5,
+                                child: Text(
+                                  officialMessageModel!.groupName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -238,7 +257,10 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
           backgroundColor: ColorConstant.barGreen,
           actions: [
             Padding(
-              padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 16,
+              ),
               child: GestureDetector(
                 onTap: () {
                   page = 1;
@@ -249,42 +271,6 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                 },
                 child: const Icon(
                   Icons.refresh,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () {
-                  showMenu(
-                    color: ColorConstant.white,
-                    context: context,
-                    position:
-                        const RelativeRect.fromLTRB(1000.0, 0.0, 1000.0, 0.0),
-                    items: [
-                      // const PopupMenuItem<String>(
-                      //   value: '1',
-                      //   child: Text('Profile'),
-                      // ),
-                      const PopupMenuItem<String>(
-                        value: '2',
-                        child: Text('Refresh'),
-                      ),
-                    ],
-                  ).then((value) {
-                    if (value != null) {
-                      if (value == '1') {
-                        // profileDialog(context);
-                      } else if (value == '2') {
-                        getchat(widget.groupId);
-                        setState(() {});
-                      }
-                    }
-                  });
-                },
-                child: const Icon(
-                  Icons.more_vert_rounded,
                   color: Colors.white,
                 ),
               ),
@@ -2091,6 +2077,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
               TextButton(
                 onPressed: () {
                   argList.clear();
+                  _isValid = false;
                   argList = List.generate(argCount, (index) => '');
                   Navigator.pop(context);
                 },
@@ -2102,26 +2089,31 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                         backgroundColor: ColorConstant.black,
                       ),
                       onPressed: () async {
-                        if (mounted) {
-                          setState(() {
-                            buttonStatus = true;
-                          });
-                        }
-                        if (templateContentModel!.data.format == 'TEXT' ||
-                            templateContentModel!.data.format == '' &&
-                                templateSelected == true) {
-                          await sendingTemplateMessage(false, 'normal');
+                        if (argList == [] || _isValid) {
+                          if (mounted) {
+                            setState(() {
+                              buttonStatus = true;
+                            });
+                          }
+                          if (templateContentModel!.data.format == 'TEXT' ||
+                              templateContentModel!.data.format == '' &&
+                                  templateSelected == true) {
+                            await sendingTemplateMessage(false, 'normal');
+                          } else {
+                            await sendingTemplateMessage(
+                                true,
+                                isFilemanager == true
+                                    ? 'file_manager'
+                                    : 'normal');
+                          }
+                          if (mounted) {
+                            setState(() {
+                              buttonStatus = false;
+                            });
+                          }
                         } else {
-                          await sendingTemplateMessage(
-                              true,
-                              isFilemanager == true
-                                  ? 'file_manager'
-                                  : 'normal');
-                        }
-                        if (mounted) {
-                          setState(() {
-                            buttonStatus = false;
-                          });
+                          Common.toastMessaage(
+                              "Argumrnts canot be empty", Colors.red);
                         }
                       },
                       child: const Text(
@@ -2295,6 +2287,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
         });
       }
       argList.clear();
+      _isValid = false;
       argList = List.generate(argCount, (index) => '');
     } else {
       Common.toastMessaage("Something went wrong", Colors.red);

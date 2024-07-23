@@ -458,12 +458,18 @@ class _LoginState extends State<Login> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const ForgotPasswordNumber()),
-                                      );
+                                      if (serverChoose == true) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ForgotPasswordNumber()),
+                                        );
+                                      } else {
+                                        Common.toastMessaage(
+                                            'Choose any one server',
+                                            Colors.red);
+                                      }
                                     },
                                     child: Container(
                                       alignment: Alignment.center,
