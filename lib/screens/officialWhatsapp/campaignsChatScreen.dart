@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
+import 'package:login2/screens/officialWhatsapp/status_view.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -209,16 +210,22 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => WhatsappProfile(
-                                    name: officialMessageModel!.groupName,
+                                    groupName: officialMessageModel!.groupName,
                                     profilePic:
                                         officialMessageModel!.profilePhoto,
                                     createdBy: officialMessageModel!.createdBy,
                                     createdDate:
                                         officialMessageModel!.createdTime,
                                     contacts: officialMessageModel!.contats,
-                                    groupId: officialMessageModel!.campaignId,
+                                    groupId: officialMessageModel!.groupId,
                                   ),
-                                ));
+                                )).then((r) {
+                              page = 1;
+                              add = 1;
+                              items.clear();
+                              getchat(widget.groupId);
+                              setState(() {});
+                            });
                           },
                           child: Row(
                             children: [
@@ -417,429 +424,475 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
   Align chatWidget1(int index, BuildContext context) {
     return Align(
       alignment: Alignment.topRight,
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: () {
-              if (items[index].messageText.format == 'VIDEO') {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ViewerScreen(
-                        myUrl: items[index].messageText.url,
-                        type: items[index].messageText.format,
-                        title: items[index].messageText.format,
+          Column(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (items[index].messageText.format == 'VIDEO') {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ViewerScreen(
+                            myUrl: items[index].messageText.url,
+                            type: items[index].messageText.format,
+                            title: items[index].messageText.format,
+                          ),
+                        ));
+                  } else if (items[index].messageText.format == 'LOCATION') {
+                    double latitude = double.parse(
+                        items[index].messageText.latitude.toString());
+                    double longitude = double.parse(
+                        items[index].messageText.longitude.toString());
+                    launchGoogleMaps(latitude, longitude);
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: items[index].fromMe == true
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Container(
+                      padding: items[index].messageText.format == 'TEXT'
+                          ? const EdgeInsets.only(
+                              left: 12, right: 12, bottom: 4, top: 12)
+                          : const EdgeInsets.only(
+                              left: 4, right: 4, bottom: 5, top: 4),
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 1,
+                            offset: const Offset(-1, 1),
+                          )
+                        ],
+                        color: items[index].fromMe == false
+                            ? ColorConstant.white
+                            : ColorConstant.greenChat,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ));
-              } else if (items[index].messageText.format == 'LOCATION') {
-                double latitude =
-                    double.parse(items[index].messageText.latitude.toString());
-                double longitude =
-                    double.parse(items[index].messageText.longitude.toString());
-                launchGoogleMaps(latitude, longitude);
-              }
-            },
-            child: Row(
-              mainAxisAlignment: items[index].fromMe == true
-                  ? MainAxisAlignment.end
-                  : MainAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  width: 10,
-                ),
-                Container(
-                  padding: items[index].messageText.format == 'TEXT'
-                      ? const EdgeInsets.only(
-                          left: 12, right: 12, bottom: 4, top: 12)
-                      : const EdgeInsets.only(
-                          left: 4, right: 4, bottom: 5, top: 4),
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 1,
-                        offset: const Offset(-1, 1),
-                      )
-                    ],
-                    color: items[index].fromMe == false
-                        ? ColorConstant.white
-                        : ColorConstant.greenChat,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  constraints: const BoxConstraints(
-                    maxWidth: 240,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      items[index].messageText.format == 'IMAGE'
-                          ? GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ViewerScreen(
-                                        myUrl: items[index].messageText.url,
-                                        type: items[index].messageText.format,
-                                        title: items[index].messageText.format,
+                      constraints: const BoxConstraints(
+                        maxWidth: 240,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          items[index].messageText.format == 'IMAGE'
+                              ? GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ViewerScreen(
+                                            myUrl: items[index].messageText.url,
+                                            type:
+                                                items[index].messageText.format,
+                                            title:
+                                                items[index].messageText.format,
+                                          ),
+                                        ));
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 1),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Container(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.35,
+                                        decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                            fit: BoxFit.cover,
+                                            image: NetworkImage(
+                                                items[index].messageText.url),
+                                          ),
+                                        ),
                                       ),
-                                    ));
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 1),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: Container(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.35,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        fit: BoxFit.cover,
-                                        image: NetworkImage(
-                                            items[index].messageText.url),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : items[index].messageText.format == 'VIDEO'
-                              ? Padding(
-                                  padding: const EdgeInsets.only(bottom: 5),
-                                  child: Container(
-                                    margin: const EdgeInsets.only(
-                                        left: 4, right: 4, bottom: 5, top: 4),
-                                    //height: MediaQuery.of(context).size.height * 0.38,
-                                    width: double.infinity,
-                                    decoration: const BoxDecoration(
-                                        color: Colors.white),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        FutureBuilder(
-                                          future: _initializeVideoPlayerFuture,
-                                          builder: (context, snapshot) {
-                                            if (snapshot.connectionState ==
-                                                ConnectionState.done) {
-                                              // If the VideoPlayerController has finished initialization, use
-                                              // the data it provides to limit the aspect ratio of the video.
-                                              return AspectRatio(
-                                                aspectRatio: _controller!
-                                                    .value.aspectRatio,
-                                                // Use the VideoPlayer widget to display the video.
-                                                child: Stack(
-                                                  children: [
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: VideoPlayer(
-                                                          _controller!),
-                                                    ),
-                                                    const Center(
-                                                      child: Icon(
-                                                        Icons.play_circle,
-                                                        color: Colors.white,
-                                                        size: 50.0,
-                                                        semanticLabel: 'Play',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            } else {
-                                              // If the VideoPlayerController is still initializing, show a
-                                              // loading spinner.
-                                              return const Center(
-                                                child:
-                                                    CircularProgressIndicator(),
-                                              );
-                                            }
-                                          },
-                                        )
-                                      ],
                                     ),
                                   ),
                                 )
-                              : items[index].messageText.format == 'DOCUMENT'
-                                  ? Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.7,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Colors.grey.withOpacity(0.2)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 10,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 8, bottom: 8, left: 4),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                height: 70,
-                                                width: 40,
-                                                decoration: const BoxDecoration(
-                                                  image: DecorationImage(
-                                                    fit: BoxFit.fitWidth,
-                                                    image: AssetImage(
-                                                        'assets/icons/doc.png'),
-                                                  ),
-                                                ),
-                                                // Add your image widget here
-                                              ),
-                                              const SizedBox(
-                                                width: 10,
-                                              ),
-                                              Center(
-                                                  child: SizedBox(
-                                                width: 120,
-                                                child: Text(
-                                                  items[index]
-                                                      .messageText
-                                                      .fileName,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              )),
-                                            ],
-                                          ),
-                                        ),
-                                      ))
-                                  : items[index].messageText.format == 'TEXT'
-                                      ? items[index].messageText.url == ''
-                                          ? const SizedBox()
-                                          : Padding(
-                                              padding: const EdgeInsets.only(
-                                                  bottom: 4),
-                                              child: Text(
-                                                items[index].messageText.url,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                              : items[index].messageText.format == 'VIDEO'
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(bottom: 5),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(
+                                            left: 4,
+                                            right: 4,
+                                            bottom: 5,
+                                            top: 4),
+                                        //height: MediaQuery.of(context).size.height * 0.38,
+                                        width: double.infinity,
+                                        decoration: const BoxDecoration(
+                                            color: Colors.white),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            FutureBuilder(
+                                              future:
+                                                  _initializeVideoPlayerFuture,
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState ==
+                                                    ConnectionState.done) {
+                                                  // If the VideoPlayerController has finished initialization, use
+                                                  // the data it provides to limit the aspect ratio of the video.
+                                                  return AspectRatio(
+                                                    aspectRatio: _controller!
+                                                        .value.aspectRatio,
+                                                    // Use the VideoPlayer widget to display the video.
+                                                    child: Stack(
+                                                      children: [
+                                                        ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          child: VideoPlayer(
+                                                              _controller!),
+                                                        ),
+                                                        const Center(
+                                                          child: Icon(
+                                                            Icons.play_circle,
+                                                            color: Colors.white,
+                                                            size: 50.0,
+                                                            semanticLabel:
+                                                                'Play',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                } else {
+                                                  // If the VideoPlayerController is still initializing, show a
+                                                  // loading spinner.
+                                                  return const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  );
+                                                }
+                                              },
                                             )
-                                      : const SizedBox(),
-                      Padding(
-                        padding: items[index].messageText.format == 'TEXT'
-                            ? const EdgeInsets.only(left: 0)
-                            : const EdgeInsets.only(left: 5),
-                        child: items[index].messageText.format == 'LOCATION'
-                            ? const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(36.0),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        size: 80,
-                                        color: Colors.red,
+                                          ],
+                                        ),
                                       ),
-                                      Text(
-                                        "Tap to view",
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.red),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Visibility(
-                                visible:
-                                    items[index].messageText.messageBody != "",
-                                child: Text(
-                                  items[index].messageText.messageBody,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                      ),
-                      items[index].messageText.footer == ""
-                          ? const SizedBox()
-                          : Padding(
-                              padding: const EdgeInsets.only(top: 5, bottom: 3),
-                              child: Text(
-                                items[index].messageText.footer,
-                                style: const TextStyle(
-                                    fontSize: 12, color: ColorConstant.grey),
-                              ),
-                            ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            items[index].sentTime.toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade900,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          items[index].fromMe == true
-                              ? items[index].status == 'send'
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: ColorConstant.grey,
-                                      size: 18,
                                     )
-                                  : items[index].status == 'delivered'
+                                  : items[index].messageText.format ==
+                                          'DOCUMENT'
+                                      ? Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.7,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              color:
+                                                  Colors.grey.withOpacity(0.2)),
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 10,
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8, bottom: 8, left: 4),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    height: 70,
+                                                    width: 40,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      image: DecorationImage(
+                                                        fit: BoxFit.fitWidth,
+                                                        image: AssetImage(
+                                                            'assets/icons/doc.png'),
+                                                      ),
+                                                    ),
+                                                    // Add your image widget here
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 10,
+                                                  ),
+                                                  Center(
+                                                      child: SizedBox(
+                                                    width: 120,
+                                                    child: Text(
+                                                      items[index]
+                                                          .messageText
+                                                          .fileName,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  )),
+                                                ],
+                                              ),
+                                            ),
+                                          ))
+                                      : items[index].messageText.format ==
+                                              'TEXT'
+                                          ? items[index].messageText.url == ''
+                                              ? const SizedBox()
+                                              : Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 4),
+                                                  child: Text(
+                                                    items[index]
+                                                        .messageText
+                                                        .url,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                )
+                                          : const SizedBox(),
+                          Padding(
+                            padding: items[index].messageText.format == 'TEXT'
+                                ? const EdgeInsets.only(left: 0)
+                                : const EdgeInsets.only(left: 5),
+                            child: items[index].messageText.format == 'LOCATION'
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(36.0),
+                                      child: Column(
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            size: 80,
+                                            color: Colors.red,
+                                          ),
+                                          Text(
+                                            "Tap to view",
+                                            style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.red),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Visibility(
+                                    visible:
+                                        items[index].messageText.messageBody !=
+                                            "",
+                                    child: Text(
+                                      items[index].messageText.messageBody,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          items[index].messageText.footer == ""
+                              ? const SizedBox()
+                              : Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 5, bottom: 3),
+                                  child: Text(
+                                    items[index].messageText.footer,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: ColorConstant.grey),
+                                  ),
+                                ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                items[index].sentTime.toString(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade900,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              items[index].fromMe == true
+                                  ? items[index].status == 'send'
                                       ? const Icon(
-                                          Icons.done_all_sharp,
+                                          Icons.check,
                                           color: ColorConstant.grey,
                                           size: 18,
                                         )
-                                      : items[index].status == 'read'
+                                      : items[index].status == 'delivered'
                                           ? const Icon(
                                               Icons.done_all_sharp,
-                                              color: ColorConstant.messageSeen,
+                                              color: ColorConstant.grey,
                                               size: 18,
                                             )
-                                          : items[index].status == 'failed'
+                                          : items[index].status == 'read'
                                               ? const Icon(
-                                                  Icons.access_time_rounded,
-                                                  color: ColorConstant.grey,
+                                                  Icons.done_all_sharp,
+                                                  color:
+                                                      ColorConstant.messageSeen,
                                                   size: 18,
                                                 )
-                                              : const Icon(
-                                                  Icons.check,
-                                                  color: ColorConstant.grey,
-                                                  size: 18,
-                                                )
-                              : const SizedBox()
+                                              : items[index].status == 'failed'
+                                                  ? const Icon(
+                                                      Icons.access_time_rounded,
+                                                      color: ColorConstant.grey,
+                                                      size: 18,
+                                                    )
+                                                  : const Icon(
+                                                      Icons.check,
+                                                      color: ColorConstant.grey,
+                                                      size: 18,
+                                                    )
+                                  : const SizedBox()
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.only(bottom: 5, right: 8, left: 8, top: 5),
-            child: items[index].messageText.buttons.length == 2
-                ? Row(
-                    mainAxisAlignment: items[index].fromMe == true
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 40,
-                        width: MediaQuery.of(context).size.width * 0.3,
-                        decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 2,
-                                blurRadius: 2,
-                                offset: const Offset(1, 1),
-                              )
-                            ],
-                            borderRadius: BorderRadius.circular(5),
-                            color: Colors.white),
-                        child: Center(
-                          child: Text(
-                            items[index].messageText.buttons[1].text,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.only(bottom: 5, right: 8, left: 8, top: 5),
+                child: items[index].messageText.buttons.length == 2
+                    ? Row(
+                        mainAxisAlignment: items[index].fromMe == true
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 40,
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 2,
+                                    offset: const Offset(1, 1),
+                                  )
+                                ],
+                                borderRadius: BorderRadius.circular(5),
+                                color: Colors.white),
+                            child: Center(
+                              child: Text(
+                                items[index].messageText.buttons[1].text,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 12,
-                      ),
-                      Container(
-                        height: 40,
-                        width: MediaQuery.of(context).size.width * 0.3,
-                        decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 2,
-                                blurRadius: 2,
-                                offset: const Offset(1, 1),
-                              )
-                            ],
-                            borderRadius: BorderRadius.circular(5),
-                            color: Colors.white),
-                        child: Center(
-                          child: Text(
-                            items[index].messageText.buttons[0].text,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          const SizedBox(
+                            width: 12,
                           ),
-                        ),
+                          Container(
+                            height: 40,
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 2,
+                                    offset: const Offset(1, 1),
+                                  )
+                                ],
+                                borderRadius: BorderRadius.circular(5),
+                                color: Colors.white),
+                            child: Center(
+                              child: Text(
+                                items[index].messageText.buttons[0].text,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          )
+                        ],
                       )
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: items[index].fromMe == true
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.644,
-                        child: items[index].messageText.buttons.isEmpty
-                            ? const SizedBox()
-                            : ListView.builder(
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                itemCount:
-                                    items[index].messageText.buttons.length,
-                                itemBuilder: (context, indexC) {
-                                  return GestureDetector(
-                                    onTap: () async {},
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Container(
-                                        height: 40,
-                                        width:
-                                            MediaQuery.of(context).size.width *
+                    : Row(
+                        mainAxisAlignment: items[index].fromMe == true
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.644,
+                            child: items[index].messageText.buttons.isEmpty
+                                ? const SizedBox()
+                                : ListView.builder(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    shrinkWrap: true,
+                                    itemCount:
+                                        items[index].messageText.buttons.length,
+                                    itemBuilder: (context, indexC) {
+                                      return GestureDetector(
+                                        onTap: () async {},
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(5.0),
+                                          child: Container(
+                                            height: 40,
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
                                                 0.5,
-                                        decoration: BoxDecoration(
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  Colors.grey.withOpacity(0.5),
-                                              spreadRadius: 2,
-                                              blurRadius: 2,
-                                              offset: const Offset(1, 1),
+                                            decoration: BoxDecoration(
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey
+                                                      .withOpacity(0.5),
+                                                  spreadRadius: 2,
+                                                  blurRadius: 2,
+                                                  offset: const Offset(1, 1),
+                                                ),
+                                              ],
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              color: Colors.white,
                                             ),
-                                          ],
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Colors.white,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            items[index]
-                                                .messageText
-                                                .buttons[indexC]
-                                                .text,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            child: Center(
+                                              child: Text(
+                                                items[index]
+                                                    .messageText
+                                                    .buttons[indexC]
+                                                    .text,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+              ),
+            ],
           ),
+          if (items[index].fromMe == true)
+            GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MessageViewStatus(
+                          groupId: widget.groupId,
+                          messageId: items[index].messageId,
+                        ),
+                      ));
+                },
+                child: const Icon(Icons.more_vert))
         ],
       ),
     );
@@ -850,420 +903,480 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
       alignment: Alignment.topRight,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 8.0),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () {
-                if (items[index].messageText.format == "DOCUMENT") {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ViewerScreen(
-                          myUrl: items[index].messageText.url,
-                          type: items[index].messageText.format,
-                          title: items[index].messageText.format,
+            Column(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (items[index].messageText.format == "DOCUMENT") {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ViewerScreen(
+                              myUrl: items[index].messageText.url,
+                              type: items[index].messageText.format,
+                              title: items[index].messageText.format,
+                            ),
+                          ));
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: items[index].fromMe == true
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
+                    children: [
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.3),
+                              spreadRadius: 1,
+                              blurRadius: 1,
+                              offset: const Offset(-1, 1),
+                            )
+                          ],
+                          color: items[index].fromMe == false
+                              ? ColorConstant.white
+                              : ColorConstant.greenChat,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ));
-                }
-              },
-              child: Row(
-                mainAxisAlignment: items[index].fromMe == true
-                    ? MainAxisAlignment.end
-                    : MainAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          spreadRadius: 1,
-                          blurRadius: 1,
-                          offset: const Offset(-1, 1),
-                        )
-                      ],
-                      color: items[index].fromMe == false
-                          ? ColorConstant.white
-                          : ColorConstant.greenChat,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    constraints: const BoxConstraints(
-                      maxWidth: 240,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: items[index].messageText.format ==
-                                  "PRODUCT_LIST"
-                              ? Container(
-                                  decoration: BoxDecoration(
-                                      color: items[index].fromMe == false
-                                          ? Colors.grey.shade200
-                                          : ColorConstant.greenChatlight,
-                                      borderRadius: BorderRadius.circular(8)),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .09,
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .18,
-                                        decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            image: DecorationImage(
-                                                image: NetworkImage(items[index]
-                                                    .messageText
-                                                    .url)),
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                              bottomLeft: Radius.circular(8),
-                                              topLeft: Radius.circular(8),
-                                            )),
-                                      ),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .3,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              items[index]
-                                                  .messageText
-                                                  .headerText,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            Text(
-                                              items[index]
-                                                  .messageText
-                                                  .headerSubText,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight:
-                                                      FontWeight.normal),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                )
-                              : items[index].messageText.format == 'DOCUMENT'
+                        constraints: const BoxConstraints(
+                          maxWidth: 240,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: items[index].messageText.format ==
+                                      "PRODUCT_LIST"
                                   ? Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.7,
-                                      height: 50,
                                       decoration: BoxDecoration(
+                                          color: items[index].fromMe == false
+                                              ? Colors.grey.shade200
+                                              : ColorConstant.greenChatlight,
                                           borderRadius:
-                                              BorderRadius.circular(5),
-                                          color: Colors.grey.withOpacity(0.2)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 10,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 8, bottom: 8, left: 4),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Container(
-                                                height: 70,
-                                                width: 40,
-                                                decoration: const BoxDecoration(
-                                                  image: DecorationImage(
-                                                    fit: BoxFit.fitWidth,
-                                                    image: AssetImage(
-                                                        'assets/icons/doc.png'),
-                                                  ),
-                                                ),
-                                                // Add your image widget here
-                                              ),
-                                              Center(
-                                                  child: SizedBox(
-                                                width: 120,
-                                                child: Text(
+                                              BorderRadius.circular(8)),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                .09,
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                .18,
+                                            decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                image: DecorationImage(
+                                                    image: NetworkImage(
+                                                        items[index]
+                                                            .messageText
+                                                            .url)),
+                                                borderRadius:
+                                                    const BorderRadius.only(
+                                                  bottomLeft:
+                                                      Radius.circular(8),
+                                                  topLeft: Radius.circular(8),
+                                                )),
+                                          ),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                .3,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
                                                   items[index]
                                                       .messageText
-                                                      .fileName,
+                                                      .headerText,
                                                   overflow:
                                                       TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.bold),
                                                 ),
-                                              )),
-                                              isDownloading == "true"
-                                                  ? const CircularProgressIndicator(
-                                                      color: Colors.black,
-                                                    )
-                                                  : isDownloading == "false"
-                                                      ? const Icon(
-                                                          Icons.download)
-                                                      : const SizedBox(
-                                                          width: 15,
-                                                        )
-                                            ],
-                                          ),
-                                        ),
-                                      ))
-                                  : items[index].messageText.format == ""
+                                                Text(
+                                                  items[index]
+                                                      .messageText
+                                                      .headerSubText,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  : items[index].messageText.format ==
+                                          'DOCUMENT'
                                       ? Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.7,
+                                          height: 50,
                                           decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
                                               color:
-                                                  items[index].fromMe == false
+                                                  Colors.grey.withOpacity(0.2)),
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 10,
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8, bottom: 8, left: 4),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Container(
+                                                    height: 70,
+                                                    width: 40,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      image: DecorationImage(
+                                                        fit: BoxFit.fitWidth,
+                                                        image: AssetImage(
+                                                            'assets/icons/doc.png'),
+                                                      ),
+                                                    ),
+                                                    // Add your image widget here
+                                                  ),
+                                                  Center(
+                                                      child: SizedBox(
+                                                    width: 120,
+                                                    child: Text(
+                                                      items[index]
+                                                          .messageText
+                                                          .fileName,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  )),
+                                                  isDownloading == "true"
+                                                      ? const CircularProgressIndicator(
+                                                          color: Colors.black,
+                                                        )
+                                                      : isDownloading == "false"
+                                                          ? const Icon(
+                                                              Icons.download)
+                                                          : const SizedBox(
+                                                              width: 15,
+                                                            )
+                                                ],
+                                              ),
+                                            ),
+                                          ))
+                                      : items[index].messageText.format == ""
+                                          ? Container(
+                                              decoration: BoxDecoration(
+                                                  color: items[index].fromMe ==
+                                                          false
                                                       ? Colors.grey.shade200
                                                       : ColorConstant
                                                           .greenChatlight,
-                                              borderRadius:
-                                                  BorderRadius.circular(8)),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .09,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .18,
-                                                decoration: const BoxDecoration(
-                                                    color: Colors.red,
-                                                    borderRadius:
-                                                        BorderRadius.only(
-                                                      bottomLeft:
-                                                          Radius.circular(8),
-                                                      topLeft:
-                                                          Radius.circular(8),
-                                                    )),
-                                              ),
-                                              const SizedBox(
-                                                width: 10,
-                                              ),
-                                              SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .3,
-                                                child: const Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "Header",
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                          fontSize: 13,
-                                                          fontWeight:
-                                                              FontWeight.bold),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8)),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            .09,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .18,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                            color: Colors.red,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .only(
+                                                              bottomLeft: Radius
+                                                                  .circular(8),
+                                                              topLeft: Radius
+                                                                  .circular(8),
+                                                            )),
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 10,
+                                                  ),
+                                                  SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .3,
+                                                    child: const Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          "Header",
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        Text(
+                                                          "2 items",
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .normal),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    Text(
-                                                      "2 items",
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight
-                                                              .normal),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      : const SizedBox(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 14.0),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * .5,
-                            child: items[index].messageText.format == "paid"
-                                ? const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Center(
-                                        child: Padding(
-                                          padding: EdgeInsets.symmetric(
-                                              vertical: 25.0),
-                                          child: Text(
-                                            "₹18000/-",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 30,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                      Row(
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          : const SizedBox(),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 14.0),
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width * .5,
+                                child: items[index].messageText.format == "paid"
+                                    ? const Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
                                         children: [
-                                          CircleAvatar(
-                                            radius: 12,
-                                            backgroundColor:
-                                                ColorConstant.barGreen,
-                                            child: Icon(
-                                              Icons.currency_rupee,
-                                              color: Colors.white,
-                                              size: 15,
+                                          Center(
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 25.0),
+                                              child: Text(
+                                                "₹18000/-",
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                    fontSize: 30,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
                                             ),
                                           ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                          Row(
                                             children: [
-                                              Text(
-                                                "send to +91 8592894516",
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                    fontSize: 8,
-                                                    fontWeight:
-                                                        FontWeight.normal),
+                                              CircleAvatar(
+                                                radius: 12,
+                                                backgroundColor:
+                                                    ColorConstant.barGreen,
+                                                child: Icon(
+                                                  Icons.currency_rupee,
+                                                  color: Colors.white,
+                                                  size: 15,
+                                                ),
                                               ),
-                                              Text(
-                                                "Completed",
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                    fontSize: 9,
-                                                    color:
-                                                        ColorConstant.barGreen,
-                                                    fontWeight:
-                                                        FontWeight.normal),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "send to +91 8592894516",
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontSize: 8,
+                                                        fontWeight:
+                                                            FontWeight.normal),
+                                                  ),
+                                                  Text(
+                                                    "Completed",
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontSize: 9,
+                                                        color: ColorConstant
+                                                            .barGreen,
+                                                        fontWeight:
+                                                            FontWeight.normal),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
                                         ],
-                                      ),
-                                    ],
-                                  )
-                                : Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      items[index].messageText.messageBody == ""
-                                          ? const SizedBox()
-                                          : Text(
-                                              items[index]
-                                                  .messageText
-                                                  .messageBody,
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                      items[index].messageText.footer == ""
-                                          ? const SizedBox()
-                                          : Text(
-                                              items[index].messageText.footer,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight:
-                                                      FontWeight.normal),
-                                            ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              items[index].sentTime.toString(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            items[index].fromMe == true
-                                ? items[index].status == 'send'
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: ColorConstant.grey,
-                                        size: 18,
                                       )
-                                    : items[index].status == 'delivered'
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          items[index]
+                                                      .messageText
+                                                      .messageBody ==
+                                                  ""
+                                              ? const SizedBox()
+                                              : Text(
+                                                  items[index]
+                                                      .messageText
+                                                      .messageBody,
+                                                  style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                          items[index].messageText.footer == ""
+                                              ? const SizedBox()
+                                              : Text(
+                                                  items[index]
+                                                      .messageText
+                                                      .footer,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.normal),
+                                                ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  items[index].sentTime.toString(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                items[index].fromMe == true
+                                    ? items[index].status == 'send'
                                         ? const Icon(
-                                            Icons.done_all_sharp,
+                                            Icons.check,
                                             color: ColorConstant.grey,
                                             size: 18,
                                           )
-                                        : items[index].status == 'read'
+                                        : items[index].status == 'delivered'
                                             ? const Icon(
                                                 Icons.done_all_sharp,
-                                                color:
-                                                    ColorConstant.messageSeen,
+                                                color: ColorConstant.grey,
                                                 size: 18,
                                               )
-                                            : items[index].status == 'failed'
+                                            : items[index].status == 'read'
                                                 ? const Icon(
-                                                    Icons.access_time_rounded,
-                                                    color: ColorConstant.grey,
+                                                    Icons.done_all_sharp,
+                                                    color: ColorConstant
+                                                        .messageSeen,
                                                     size: 18,
                                                   )
-                                                : const Icon(
-                                                    Icons.check,
-                                                    color: ColorConstant.grey,
-                                                    size: 18,
-                                                  )
-                                : const SizedBox()
+                                                : items[index].status ==
+                                                        'failed'
+                                                    ? const Icon(
+                                                        Icons
+                                                            .access_time_rounded,
+                                                        color:
+                                                            ColorConstant.grey,
+                                                        size: 18,
+                                                      )
+                                                    : const Icon(
+                                                        Icons.check,
+                                                        color:
+                                                            ColorConstant.grey,
+                                                        size: 18,
+                                                      )
+                                    : const SizedBox()
+                              ],
+                            ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount:
+                                  items[index].messageText.buttons.length,
+                              itemBuilder: (context, i) {
+                                return Column(
+                                  children: [
+                                    const Divider(),
+                                    GestureDetector(
+                                      onTap: () {},
+                                      child: Container(
+                                        decoration: const BoxDecoration(),
+                                        child: Center(
+                                            child: Text(
+                                          items[index]
+                                              .messageText
+                                              .buttons[i]
+                                              .text,
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.w800),
+                                        )),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(
+                              height: 8,
+                            )
                           ],
                         ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: items[index].messageText.buttons.length,
-                          itemBuilder: (context, i) {
-                            return Column(
-                              children: [
-                                const Divider(),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Container(
-                                    decoration: const BoxDecoration(),
-                                    child: Center(
-                                        child: Text(
-                                      items[index].messageText.buttons[i].text,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.w800),
-                                    )),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(
-                          height: 8,
-                        )
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (items[index].fromMe == true)
+              GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MessageViewStatus(
+                            groupId: widget.groupId,
+                            messageId: items[index].messageId,
+                          ),
+                        ));
+                  },
+                  child: const Icon(Icons.more_vert))
           ],
         ),
       ),

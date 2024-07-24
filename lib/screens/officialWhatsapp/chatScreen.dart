@@ -216,7 +216,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => WhatsappProfile(
-                                    name: officialMessageModel!.groupName,
+                                    groupName: officialMessageModel!.groupName,
                                     number: officialMessageModel!.phoneNumber,
                                     profilePic:
                                         officialMessageModel!.profilePhoto,
@@ -224,10 +224,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                     createdDate: officialMessageModel!
                                         .createdTime
                                         .toString(),
-                                    groupId:
-                                        officialMessageModel!.campaignId,
+                                    groupId: officialMessageModel!.groupId,
                                   ),
-                                ));
+                                )).then((v) {
+                              page = 1;
+                              add = 1;
+                              items.clear();
+                              getchat(widget.groupId);
+                              setState(() {});
+                            });
                           },
                           child: Row(
                             children: [

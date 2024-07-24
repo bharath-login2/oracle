@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
-import '../campaignsChatScreen.dart';
 import '../colorConst.dart';
 
 
 Widget campaignsBubble(context, campaignsListModel) {
   return ListTile(
     tileColor: Colors.white,
-    onTap: () {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CampaignsChatScreen(
-              groupId: campaignsListModel.groupId, nav: '',
-            ),
-          ));
-    },
     leading: Container(
       height: 45,
       width: 45,

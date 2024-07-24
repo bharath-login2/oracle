@@ -11,6 +11,8 @@ import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
+import 'package:login2/models/officialWhatsapp/campaign_sample_model.dart';
+import 'package:login2/models/officialWhatsapp/message_view_status.dart';
 import 'package:login2/models/product_mannagement/delete_category.dart';
 import 'package:login2/models/product_mannagement/delete_product.dart';
 import 'package:login2/models/product_mannagement/delete_subcategory.dart';
@@ -4042,14 +4044,107 @@ class HttpService {
         "contact_number": contactNumber,
       });
       var response = await _dio.post(
-          "${await Config.getUrl()}deleteProductSubCategory",
+          "${await Config.getUrl()}add_contact_to_campaign",
           data: formData);
       if (response.statusCode == 200) {
-        TemplateModel templateModel = TemplateModel.fromJson(response.data);
-        return templateModel;
+        CampaignSampleModel addContact =
+            CampaignSampleModel.fromJson(response.data);
+        return addContact;
       } else if (response.statusCode == 500) {
       } else {}
       // isLoading.value = false;
-    } finally {}
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static editGroupName(
+    String groupId,
+    String groupName,
+  ) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "group_id": groupId,
+        "group_name": groupName,
+      });
+      var response = await _dio.post("${await Config.getUrl()}edit_campaign",
+          data: formData);
+      if (response.statusCode == 200) {
+        CampaignSampleModel campaignEdit =
+            CampaignSampleModel.fromJson(response.data);
+        return campaignEdit;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static removeContactCampaign(
+    String id,
+  ) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "id": id,
+      });
+      var response = await _dio.post(
+          "${await Config.getUrl()}remove_contact_from_campaign",
+          data: formData);
+      if (response.statusCode == 200) {
+        CampaignSampleModel removeContact =
+            CampaignSampleModel.fromJson(response.data);
+        return removeContact;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static deleteWhatsAppGroup(
+    String id,
+  ) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "group_id": id,
+      });
+      var response = await _dio.post("${await Config.getUrl()}delete_group",
+          data: formData);
+      if (response.statusCode == 200) {
+        CampaignSampleModel deleteGroup =
+            CampaignSampleModel.fromJson(response.data);
+        return deleteGroup;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static viewMessageStatus(String id, String messageId) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "group_id": id,
+        "message_id": messageId
+      });
+      var response = await _dio
+          .post("${await Config.getUrl()}view_message_status", data: formData);
+      if (response.statusCode == 200) {
+        MessageViewStatusModel getResponse =
+            MessageViewStatusModel.fromJson(response.data);
+        return getResponse;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
   }
 }

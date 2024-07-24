@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:login2/screens/officialWhatsapp/components/campaignsComponent.dart';
+import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
+import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
+import 'package:login2/screens/officialWhatsapp/components/campaignsBubble.dart';
 import 'package:login2/screens/officialWhatsapp/components/chat_list_item.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -11,8 +12,7 @@ import '../../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
 import '../settings/whatsappSettings.dart';
-import 'addContact.dart';
-import 'clientListScreen.dart';
+import 'add_contact.dart';
 import 'colorConst.dart';
 import 'components/tab_bar.dart';
 
@@ -132,12 +132,20 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                 children: [
                                                   GestureDetector(
                                                     onTap: () {
-                                                      Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                ClientListScreen(),
-                                                          ));
+                                                      // Navigator.push(
+                                                      //     context,
+                                                      //     MaterialPageRoute(
+                                                      //       builder: (context) =>
+                                                      //           ClientListScreen(),
+                                                      //     )).then((v){
+                                                      //       page = 1;
+                                                      //           add = 1;
+                                                      //           items.clear();
+                                                      //           chats(
+                                                      //               searchController
+                                                      //                   .text);
+                                                      //           setState(() {});
+                                                      //     });
                                                     },
                                                     child: isSearch == true
                                                         ? SizedBox(
@@ -264,9 +272,30 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                             // When reaching the end of the list, show a loader
                                                             return scrollShimmer();
                                                           }
-                                                          return chatListItem(
-                                                              context,
-                                                              items[index]);
+                                                          return GestureDetector(
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ChatScreen(
+                                                                      groupId: items[
+                                                                              index]
+                                                                          .groupId,
+                                                                      nav: "",
+                                                                    ),
+                                                                  )).then((v) {
+                                                                page = 1;
+                                                                add = 1;
+                                                                items.clear();
+                                                                chats("");
+                                                              });
+                                                            },
+                                                            child: chatListItem(
+                                                                context,
+                                                                items[index]),
+                                                          );
                                                         },
                                                       ),
                                                     ),
@@ -277,8 +306,67 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                       const BoxDecoration(
                                                     color: Colors.white,
                                                   ),
-                                                  child: campaignsComponent(
-                                                      campaignsListModel),
+                                                  child: StatefulBuilder(
+                                                      builder:
+                                                          (context, setState) {
+                                                    return Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 5),
+                                                      child: RefreshIndicator(
+                                                        onRefresh: () async {
+                                                          await Future.delayed(
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      200));
+                                                          CampaignsListModel?
+                                                              campaignsListModel =
+                                                              await HttpService
+                                                                  .fetchCampaignsList(
+                                                                      '');
+                                                          if (campaignsListModel !=
+                                                              null) {
+                                                            setState(() {});
+                                                          }
+                                                        },
+                                                        child: ListView.builder(
+                                                          physics:
+                                                              const BouncingScrollPhysics(),
+                                                          itemCount:
+                                                              campaignsListModel!
+                                                                  .data!.length,
+                                                          itemBuilder:
+                                                              (context, index) {
+                                                            return GestureDetector(
+                                                                onTap: () {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                CampaignsChatScreen(
+                                                                          groupId: campaignsListModel!
+                                                                              .data![index]
+                                                                              .groupId
+                                                                              .toString(),
+                                                                          nav:
+                                                                              '',
+                                                                        ),
+                                                                      )).then((v) {
+                                                                    chatCampaignsList(
+                                                                        '');
+                                                                  });
+                                                                },
+                                                                child: campaignsBubble(
+                                                                    context,
+                                                                    campaignsListModel!
+                                                                            .data![
+                                                                        index]));
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }),
                                                 ),
                                               ],
                                             ),
@@ -398,8 +486,6 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       });
     }
   }
-
-  
 
   chatCampaignsList(search) async {
     campaignsListModel = await HttpService.fetchCampaignsList(search);

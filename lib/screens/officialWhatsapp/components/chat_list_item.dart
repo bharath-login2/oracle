@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 import '../../../models/officialWhatsapp/ChatListModel.dart';
-import '../chatScreen.dart';
 import '../colorConst.dart';
 
 Widget chatListItem(context, ChatData items) {
@@ -12,16 +9,6 @@ Widget chatListItem(context, ChatData items) {
         dense: true,
         contentPadding: const EdgeInsets.only(left: 5, right: 0.0),
         tileColor: Colors.white,
-        onTap: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(
-                  groupId: items.groupId,
-                  nav: "",
-                ),
-              ));
-        },
         leading: GestureDetector(
           onTap: () {},
           child: Container(

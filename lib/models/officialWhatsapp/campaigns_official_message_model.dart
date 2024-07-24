@@ -96,12 +96,14 @@ class Message {
     bool fromMe;
     String sentTime;
     String status;
+    String messageId;
     MessageText messageText;
 
     Message({
         required this.fromMe,
         required this.sentTime,
         required this.status,
+        required this.messageId,
         required this.messageText,
     });
 
@@ -109,6 +111,7 @@ class Message {
         fromMe: json["fromMe"],
         sentTime: json["sentTime"],
         status: json["status"],
+        messageId: json["message_id"],
         messageText: MessageText.fromJson(json["messageText"]),
     );
 
