@@ -1,13 +1,13 @@
-// ignore_for_file: file_names
+// ignore_for_file: file_names, use_build_context_synchronously
 
+// import 'dart:developer';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
@@ -16,8 +16,10 @@ import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:login2/screens/officialWhatsapp/whatsapp_profile.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
+// import 'package:socket_io_client/socket_io_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
 import '../../models/officialWhatsapp/official_message_model.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
@@ -29,6 +31,9 @@ import 'colorConst.dart';
 import 'components/imageHelper.dart';
 import 'imageViewScreen.dart';
 import 'listFileManager.dart';
+// import 'package:web_socket_channel/status.dart' as status;
+
+// const String _serverUrl = 'wss://websocket.login2.co.in:8080';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -50,18 +55,22 @@ class _ChatScreenState extends State<ChatScreen> {
   final messageController = TextEditingController();
   final argumentController = <TextEditingController>[];
 
+  // Socket? socket;
+
   void onTextChanged(String value, int index) {
     int newIntex = index - 1;
     argList[newIntex] = value;
     _handleArgChange(value, index);
   }
 
-  List<Message> items = [];
+  List<ChatMessage> items = [];
+  List<ChatMessage> socketResponse = [];
   List argList = [];
   int page = 1;
   int pageSize = 30;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
+  List<ChatMessage>? socketMessage;
   MediaModel? mediaDetails;
   bool isTyped = false;
   bool isLoading = true;
@@ -90,13 +99,25 @@ class _ChatScreenState extends State<ChatScreen> {
   String token = "";
   int argCount = 0;
   bool _isValid = false;
+  late final WebSocketChannel socket;
+
   @override
   void initState() {
     // messageListner();
     getchat(widget.groupId);
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     getTemplates();
+    socketStream();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (_controller != null) {
+      _controller!.dispose();
+    }
+    socket.sink.close();
+    super.dispose();
   }
 
   void _handleArgChange(String value, int index) {
@@ -107,17 +128,33 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  messageListner() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      String navigation = message.data['navigation'];
-      if (navigation == 'whatsapp') {
-        page = 1;
-        add = 1;
-        items.clear();
-        getchat(widget.groupId);
-      }
+  socketStream() async {
+    final String userId = await Common.getSharedPref("userId");
+    log("userId: $userId");
+    final wsProtocol =
+        (Uri.parse('https://dummy').scheme == 'https') ? 'wss://' : 'ws://';
+    const wsHost = 'websocket.login2.co.in';
+    const wsPort = '8080';
+
+    socket = WebSocketChannel.connect(
+      Uri.parse('$wsProtocol$wsHost:$wsPort'),
+    );
+    socket.sink.add(jsonEncode({'type': 'register', 'userId': userId}));
+    socket.stream.listen((message) {
+      log(message);
+getSocketMerssage();
+      // socketResponse.add(items[0]);
+      // items.insert(0, socketResponse[0]);
     });
   }
+
+  // void _sendMessage() {
+  //   try {
+  //     socket.sink.add("Ansar-login2");
+  //   } catch (e) {
+  //     log(e.toString());
+  //   }
+  // }
 
   void _onLoadMore() {
     if (items.length + 30 == page * pageSize &&
@@ -129,7 +166,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   getchat(groupId) async {
-    isLoading = true;
     officialMessageModel =
         await HttpService.officialMessage(groupId, page, pageSize);
     if (officialMessageModel != null) {
@@ -140,12 +176,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    if (_controller != null) {
-      _controller!.dispose();
+  getSocketMerssage() async {
+    socketMessage = await HttpService.socketChat(widget.groupId);
+    if (socketMessage != null) {
+      setState(() {
+        socketResponse.insertAll(0, socketMessage!);
+      });
     }
-    super.dispose();
   }
 
   @override
@@ -281,6 +318,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   items.clear();
                   getchat(widget.groupId);
                   setState(() {});
+                  // _sendMessage();
                 },
                 child: const Icon(
                   Icons.refresh,

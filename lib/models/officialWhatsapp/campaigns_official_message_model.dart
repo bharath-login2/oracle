@@ -17,7 +17,7 @@ class CampaignsOfficialMessageModel {
     String profilePhoto;
     bool canSend;
     List<Contat> contats;
-    List<Message> messages;
+    List<CampaignMessage> messages;
 
     CampaignsOfficialMessageModel({
         required this.groupId,
@@ -40,7 +40,7 @@ class CampaignsOfficialMessageModel {
         profilePhoto: json["profile_photo"],
         canSend: json["canSend"],
         contats: List<Contat>.from(json["contats"].map((x) => Contat.fromJson(x))),
-        messages: List<Message>.from(json["messages"].map((x) => Message.fromJson(x))),
+        messages: List<CampaignMessage>.from(json["messages"].map((x) => CampaignMessage.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -92,14 +92,14 @@ class Contat {
     };
 }
 
-class Message {
+class CampaignMessage {
     bool fromMe;
     String sentTime;
     String status;
     String messageId;
     MessageText messageText;
 
-    Message({
+    CampaignMessage({
         required this.fromMe,
         required this.sentTime,
         required this.status,
@@ -107,7 +107,7 @@ class Message {
         required this.messageText,
     });
 
-    factory Message.fromJson(Map<String, dynamic> json) => Message(
+    factory CampaignMessage.fromJson(Map<String, dynamic> json) => CampaignMessage(
         fromMe: json["fromMe"],
         sentTime: json["sentTime"],
         status: json["status"],

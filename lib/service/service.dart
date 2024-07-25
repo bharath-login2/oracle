@@ -2684,6 +2684,46 @@ class HttpService {
     } finally {}
   }
 
+  static socketChat(String groupId) async {
+    try {
+      var response = await _dio.get(
+          "${await Config.getUrl()}official_whatsapp_messages",
+          queryParameters: {
+            "group_id": groupId,
+            "token": await Common.getSharedPref("token"),
+          });
+      if (response.statusCode == 200) {
+        List<ChatMessage> socket =
+            ChatMessage.fromJson(response.data) as List<ChatMessage>;
+        return socket;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
+  static socketCampaign(String groupId) async {
+    try {
+      var response = await _dio.get(
+          "${await Config.getUrl()}official_whatsapp_messages",
+          queryParameters: {
+            "group_id": groupId,
+            "token": await Common.getSharedPref("token"),
+          });
+      if (response.statusCode == 200) {
+        List<CampaignMessage> socket =
+            CampaignMessage.fromJson(response.data) as List<CampaignMessage>;
+        return socket;
+      } else if (response.statusCode == 500) {
+      } else {}
+      // isLoading.value = false;
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
   static getTemplate() async {
     try {
       var response = await _dio.get(

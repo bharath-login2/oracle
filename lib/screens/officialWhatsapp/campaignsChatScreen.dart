@@ -49,7 +49,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
     _handleArgChange(value, index);
   }
 
-  List<Message> items = [];
+  List<CampaignMessage> items = [];
   List argList = [];
   int page = 1;
   int pageSize = 30;

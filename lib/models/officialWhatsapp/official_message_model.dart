@@ -19,7 +19,7 @@ class OfficialMessageModel {
   String profilePhoto;
   int timeDiff;
   bool canSend;
-  List<Message> messages;
+  List<ChatMessage> messages;
 
   OfficialMessageModel({
     required this.groupId,
@@ -51,19 +51,19 @@ class OfficialMessageModel {
         canSend: json["canSend"] ?? "",
         messages: json["messages"] == null
             ? []
-            : List<Message>.from(
-                json["messages"].map((x) => Message.fromJson(x))),
+            : List<ChatMessage>.from(
+                json["messages"].map((x) => ChatMessage.fromJson(x))),
       );
 }
 
-class Message {
+class ChatMessage {
   String messageId;
   bool fromMe;
   String sentTime;
   String status;
   MessageText messageText;
 
-  Message({
+  ChatMessage({
     required this.messageId,
     required this.fromMe,
     required this.sentTime,
@@ -71,7 +71,7 @@ class Message {
     required this.messageText,
   });
 
-  factory Message.fromJson(Map<String, dynamic> json) => Message(
+  factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
         messageId: json["message_id"] ?? "",
         fromMe: json["fromMe"] ?? "",
         sentTime: json["sentTime"] ?? "",

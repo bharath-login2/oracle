@@ -94,6 +94,8 @@ dependencies:
   app_links: ^3.5.0
   firebase_crashlytics: ^4.0.1
   firebase_analytics: ^11.0.1
+  socket_io_client: ^2.0.3+1
+  web_socket_channel: ^3.0.1
 
 
 
