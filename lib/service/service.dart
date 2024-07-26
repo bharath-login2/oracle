@@ -29,6 +29,7 @@ import 'package:login2/models/renewal/add_customer_model.dart';
 import 'package:login2/models/renewal/bulk_remind.dart';
 import 'package:login2/models/renewal/delete_renewal.dart';
 import 'package:login2/models/renewal/edit_renewal.dart';
+import 'package:login2/models/renewal/edit_renewal_details_model.dart';
 import 'package:login2/models/renewal/hidden_list.dart';
 import 'package:login2/models/renewal/hide_model.dart';
 import 'package:login2/models/renewal/payment_report.dart';
@@ -3240,6 +3241,25 @@ class HttpService {
       if (result.statusCode == 200) {
         RenewalDetailslModel response =
             RenewalDetailslModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getEditRenewalDetails(String id, String type) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_type": type,
+      "renewal_id": id
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getRenewalById",
+          data: formData);
+      if (result.statusCode == 200) {
+        EditRenewalDetailsModel response =
+            EditRenewalDetailsModel.fromJson(result.data);
         return response;
       }
     } catch (e) {

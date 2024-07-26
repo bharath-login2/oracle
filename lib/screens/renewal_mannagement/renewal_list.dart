@@ -1,9 +1,8 @@
 // ignore_for_file: must_be_immutable, use_build_context_synchronously
 
+import 'dart:developer';
 import 'package:date_time_picker/date_time_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/branchListModel.dart';
@@ -15,7 +14,8 @@ import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/screens/clients/clientDetails.dart';
-import 'package:login2/screens/renewal_mannagement/edit_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
 import 'package:login2/screens/renewal_mannagement/view_history.dart';
@@ -806,8 +806,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                   items[index]
                                                                       .id,
                                                                   "Renew Details",
-                                                                  "10"
-                                                                    ,
+                                                                  "10",
                                                                   items[index]
                                                                       .cost);
                                                             },
@@ -839,17 +838,33 @@ class _RenewalListState extends State<RenewalList> {
                                                         ),
                                                         InkWell(
                                                           onTap: () {
-                                                            Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        EditRenewalScreen(
-                                                                          id: items[index]
-                                                                              .id,
-                                                                              invoiceId: items[index]
-                                                                      .invoiceId,
-                                                                        ))).then(
-                                                                getList());
+                                                            if (index == 0) {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          EditQuickRenewalScreen(
+                                                                            id: items[index].id,
+                                                                            invoiceId:
+                                                                                items[index].invoiceId,
+                                                                          ))).then(
+                                                                  (r) {
+                                                                getList();
+                                                                log(r);
+                                                              });
+                                                            } else {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          EditCustomRenewal(
+                                                                            renId:
+                                                                                items[index].id,
+                                                                          ))).then(
+                                                                  (r) {
+                                                                getList();
+                                                              });
+                                                            }
                                                           },
                                                           child: Container(
                                                             decoration: BoxDecoration(

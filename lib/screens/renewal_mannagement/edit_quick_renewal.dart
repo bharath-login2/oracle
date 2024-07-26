@@ -4,28 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/edit_renewal.dart';
-import 'package:login2/models/renewal/renewal_details.dart';
-import 'package:login2/models/renewal/renewal_list.dart';
+import 'package:login2/models/renewal/edit_renewal_details_model.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
 
-class EditRenewalScreen extends StatefulWidget {
+class EditQuickRenewalScreen extends StatefulWidget {
   String id;
   dynamic invoiceId;
-  EditRenewalScreen(
-      {super.key,
-      required this.id,
-    
-      required this.invoiceId,
-     });
+  EditQuickRenewalScreen({
+    super.key,
+    required this.id,
+    required this.invoiceId,
+  });
 
   @override
-  State<EditRenewalScreen> createState() => _EditRenewalScreenState();
+  State<EditQuickRenewalScreen> createState() => _EditQuickRenewalScreenState();
 }
 
-class _EditRenewalScreenState extends State<EditRenewalScreen> {
+class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
   final formKey = GlobalKey<FormState>();
-  RenewalDetailslModel? detailsResponse;
+  EditRenewalDetailsModel? editDetails;
   EditRenewalModel? postResponse;
 
   bool isLoading = true;
@@ -35,7 +33,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   String typeDuration = "";
   DateTime? selectedValue;
   dynamic branch;
-  List<ProductId> products = [];
+  List products = [];
   List productName = [];
   double totalProductCost = 0;
   bool isPaid = false;
@@ -51,31 +49,47 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   TextEditingController remindMe = TextEditingController();
   TextEditingController remark = TextEditingController();
 
-  getRenewalDetails() async {
+  getEditDetails() async {
     setState(() {
       isLoading = true;
     });
-    detailsResponse = await HttpService.getRenewalDetails();
+    editDetails = await HttpService.getEditRenewalDetails(widget.id, "invoice");
 
-    if (detailsResponse != null && detailsResponse!.status == true) {
-      filteredNames = detailsResponse!.data.customer;
-      filteredProducts = detailsResponse!.data.products;
-      filteredTemplates = detailsResponse!.data.template;
-
-      setState(() {
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-      });
+    if (editDetails != null && editDetails!.status == true) {
+      // getBranch();
+      filteredNames = editDetails!.data.customers;
+      filteredProducts = editDetails!.data.allProducts;
+      filteredTemplates = editDetails!.data.renewalTemplate;
+      customerId = editDetails!.data.clientId;
+      startDate.text = formatDate(editDetails!.data.startDate);
+      endDate.text = formatDate(editDetails!.data.endDate);
+      remindMe.text = editDetails!.data.templateId;
+      remark.text = editDetails!.data.remarks;
+      productCost.text = editDetails!.data.totalAmount;
+      // createInvoice = editDetails!.data.inv
+      for (int i = 0; i < editDetails!.data.invoiceLists.length; i++) {
+        productName.add(editDetails!.data.invoiceLists[i].productName);
+        products.add({
+          "product_id": editDetails!.data.invoiceLists[i].productId,
+          "product_name": editDetails!.data.invoiceLists[i].productName,
+          "product_rate": editDetails!.data.invoiceLists[i].rate,
+          "quantity": editDetails!.data.invoiceLists[i].qty,
+          "tax_percent": editDetails!.data.invoiceLists[i].taxPercentage,
+          "tax_percent_amount": editDetails!.data.invoiceLists[i].taxAmount,
+          "total_amount": editDetails!.data.invoiceLists[i].amount,
+          "description": editDetails!.data.invoiceLists[i].productDescription,
+        });
+      }
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void filterCustomers(
     String query,
   ) {
-    filteredNames = detailsResponse!.data.customer
+    filteredNames = editDetails!.data.customers
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -83,7 +97,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   void filterProducts(
     String query,
   ) {
-    filteredProducts = detailsResponse!.data.products
+    filteredProducts = editDetails!.data.allProducts
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();
@@ -92,7 +106,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
   void filterTemplates(
     String query,
   ) {
-    filteredTemplates = detailsResponse!.data.template
+    filteredTemplates = editDetails!.data.renewalTemplate
         .where((map) =>
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();
@@ -128,21 +142,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
 
   @override
   void initState() {
-    getRenewalDetails();
-    // customerId = widget.custId;
-    // customerName.text = widget.custName;
-    // startDate.text = widget.startDate;
-    // endDate.text = widget.endDate;
-    // productCost.text = widget.projectCost;
-    // remindMe.text = widget.remindMe;
-    // remark.text = widget.remark;
-    // products = widget.products;
-    // isPaid = widget.isPaid == "" ? false : true;
-    // createInvoice = widget.isPaid == "" ? false : true;
-    // templateId = widget.templateId;
-    for (int i = 0; i < products.length; i++) {
-      productName.add(products[i].prdName);
-    }
+    getEditDetails();
     super.initState();
   }
 
@@ -688,7 +688,7 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
                             templateId = filteredTemplates[index].templateId;
                           } else {
                             typeDuration = filteredProducts[index].noOfDays;
-                            
+
                             if (selectedValue != null) {
                               final endValue = selectedValue!
                                   .add(Duration(days: int.parse(typeDuration)));
@@ -699,12 +699,14 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
                             if (productName.contains(
                                 filteredProducts[index].productName)) {
                             } else {
-                              products.add(ProductId(
-                                prdId: filteredProducts[index].id,
-                                prdCost: filteredProducts[index].totalAmount,
-                                prdQty: "1",
-                                prdName: filteredProducts[index].productName,
-                              ));
+                              products.add({
+                                "product_id": filteredProducts[index].id,
+                                "product_rate":
+                                    filteredProducts[index].totalAmount,
+                                "quantity": "1",
+                                "product_name":
+                                    filteredProducts[index].productName,
+                              });
                               productName
                                   .add(filteredProducts[index].productName);
                             }
@@ -746,5 +748,11 @@ class _EditRenewalScreenState extends State<EditRenewalScreen> {
         });
       },
     );
+  }
+
+  formatDate(DateTime date) {
+    String formated = "";
+    formated = DateFormat('dd-MM-yyyy').format(date);
+    return formated;
   }
 }

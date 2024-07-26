@@ -207,7 +207,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           discountExisting.text,
           shippingChargeExisting.text,
           totalAmountExisting.text,
-          totalAmountExisting.text,
+          totalPaidAmountExisting.text,
           payStatExisting,
           payMethodExisting,
           collectedExisting);
@@ -267,7 +267,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           discountNew.text,
           shippingChargeNew.text,
           totalAmountNew.text,
-          totalAmountNew.text,
+          totalPaidAmountNew.text,
           payStatNew,
           payMethodNew,
           collectedNew);
@@ -721,12 +721,37 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       "Product: ${productsExisting[index]["product_name"]}\nQty: ${productsExisting[index]["quantity"]} Amount: ${productsExisting[index]["total_amount"]}"),
                                 ),
                                 InkWell(
-                                    onTap: () {
+                                    onTap: () async {
                                       productsExisting.removeAt(index);
                                       productName.removeAt(index);
-                                      subTotalExisting.text = "";
-                                      totalTaxExisting.text = "";
-                                      totalAmountExisting.text = "";
+                                      totalProductCostExisting = 0;
+                                      totalProductTaxExisting = 0;
+                                      for (int i = 0;
+                                          i < productsExisting.length;
+                                          i++) {
+                                        totalProductCostExisting +=
+                                            double.parse(
+                                                (await productsExisting[i])[
+                                                    "total_amount"]);
+                                        totalProductTaxExisting += double.parse(
+                                            (await productsExisting[i])[
+                                                "tax_percent_amount"]);
+                                      }
+                                      subTotalExisting.text =
+                                          totalProductCostExisting.toString();
+                                      totalTaxExisting.text =
+                                          totalProductTaxExisting.toString();
+                                      shippingAmtExisting = double.parse(
+                                          shippingChargeExisting.text == ""
+                                              ? "0"
+                                              : shippingChargeExisting.text);
+                                      totalAmountExisting.text =
+                                          (totalProductCostExisting -
+                                                  discountAmtExisting +
+                                                  shippingAmtExisting)
+                                              .toString();
+                                      totalPaidAmountExisting.text =
+                                          totalAmountExisting.text;
                                       setState(() {});
                                     },
                                     child: const Icon(
@@ -835,6 +860,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                             discountAmtExisting +
                                             shippingAmtExisting)
                                         .toString();
+                                totalPaidAmountExisting.text =
+                                    totalAmountExisting.text;
                               },
                               keyboardType: TextInputType.number,
                               controller: discountExisting,
@@ -879,6 +906,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                             discountAmtExisting +
                                             shippingAmtExisting)
                                         .toString();
+                                totalPaidAmountExisting.text =
+                                    totalAmountExisting.text;
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeExisting,
@@ -1751,12 +1780,36 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                       "Product: ${productsNew[index]["product_name"]}\nQty: ${productsNew[index]["quantity"]} Amount: ${productsNew[index]["total_amount"]}"),
                                 ),
                                 InkWell(
-                                    onTap: () {
+                                    onTap: () async {
                                       productsNew.removeAt(index);
                                       productName.removeAt(index);
-                                      subTotalNew.text = "";
-                                      totalTaxNew.text = "";
-                                      totalAmountNew.text = "";
+                                      totalProductCostNew = 0;
+                                      totalProductTaxNew = 0;
+                                      for (int i = 0;
+                                          i < productsNew.length;
+                                          i++) {
+                                        totalProductCostNew += double.parse(
+                                            (await productsNew[i])[
+                                                "total_amount"]);
+                                        totalProductTaxNew += double.parse(
+                                            (await productsNew[i])[
+                                                "tax_percent_amount"]);
+                                      }
+                                      subTotalNew.text =
+                                          totalProductCostNew.toString();
+                                      totalTaxNew.text =
+                                          totalProductTaxNew.toString();
+                                      shippingAmtNew = double.parse(
+                                          shippingChargeNew.text == ""
+                                              ? "0"
+                                              : shippingChargeNew.text);
+                                      totalAmountNew.text =
+                                          (totalProductCostNew -
+                                                  discountAmtNew +
+                                                  shippingAmtNew)
+                                              .toString();
+                                      totalPaidAmountNew.text =
+                                          totalAmountNew.text;
                                       setState(() {});
                                     },
                                     child: const Icon(
@@ -1864,6 +1917,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                         discountAmtNew +
                                         shippingAmtNew)
                                     .toString();
+                                totalPaidAmountNew.text = totalAmountNew.text;
                               },
                               keyboardType: TextInputType.number,
                               controller: discountNew,
@@ -1907,6 +1961,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                         discountAmtNew +
                                         shippingAmtNew)
                                     .toString();
+                                totalPaidAmountNew.text = totalAmountNew.text;
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeNew,
