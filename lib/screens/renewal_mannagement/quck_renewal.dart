@@ -438,7 +438,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                               totalProductCostExisting = 0;
 
                                                                               for (int ind = 0; ind < productsExisting.length; ind++) {
-                                                                                totalProductCostExisting += double.parse((await productsExisting[ind])["prd_cost"]);
+                                                                                totalProductCostExisting += double.parse((await productsExisting[ind])["product_rate"]);
                                                                               }
                                                                               productCostExisting.text = (totalProductCostExisting).toString();
                                                                               print(productsExisting.length);
@@ -995,7 +995,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                               totalProductCostNew = 0;
 
                                                                               for (int ind = 0; ind < productsNew.length; ind++) {
-                                                                                totalProductCostNew += double.parse((await productsNew[ind])["prd_cost"]);
+                                                                                totalProductCostNew += double.parse((await productsNew[ind])["product_rate"]);
                                                                               }
                                                                               productCostNew.text = (totalProductCostNew).toString();
                                                                               print(productsNew.length);
@@ -1510,8 +1510,19 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 filteredProducts[index].productName)) {
                             } else {
                               productsNew.add({
-                                "prd_id": filteredProducts[index].id,
-                                "prd_cost": filteredProducts[index].sellingPrice
+                                "product_id": filteredProducts[index].id,
+                                "product_name":
+                                    filteredProducts[index].productName,
+                                "product_rate":
+                                    filteredProducts[index].sellingPrice,
+                                "quantity": 1,
+                                "tax_percent":
+                                    filteredProducts[index].taxPercent,
+                                "tax_percent_amount":
+                                    filteredProducts[index].taxAmount,
+                                "total_amount":
+                                    filteredProducts[index].sellingPrice,
+                                "description": "",
                               });
                               productName
                                   .add(filteredProducts[index].productName);
@@ -1520,7 +1531,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
 
                             for (int i = 0; i < productsNew.length; i++) {
                               totalProductCostNew += double.parse(
-                                  (await productsNew[i])["prd_cost"]);
+                                  (await productsNew[i])["product_rate"]);
                             }
                             productCostNew.text =
                                 (totalProductCostNew).toString();
@@ -1639,8 +1650,19 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 filteredProducts[index].productName)) {
                             } else {
                               productsExisting.add({
-                                "prd_id": filteredProducts[index].id,
-                                "prd_cost": filteredProducts[index].sellingPrice
+                                "product_id": filteredProducts[index].id,
+                                "product_name":
+                                    filteredProducts[index].productName,
+                                "product_rate":
+                                    filteredProducts[index].sellingPrice,
+                                "quantity": 1,
+                                "tax_percent":
+                                    filteredProducts[index].taxPercent,
+                                "tax_percent_amount":
+                                    filteredProducts[index].taxAmount,
+                                "total_amount":
+                                    filteredProducts[index].sellingPrice,
+                                "description": "",
                               });
                               productName
                                   .add(filteredProducts[index].productName);
@@ -1649,7 +1671,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
 
                             for (int i = 0; i < productsExisting.length; i++) {
                               totalProductCostExisting += double.parse(
-                                  (await productsExisting[i])["prd_cost"]);
+                                  (await productsExisting[i])["product_rate"]);
                             }
                             productCostExisting.text =
                                 (totalProductCostExisting).toString();

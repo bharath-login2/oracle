@@ -23,7 +23,7 @@ class EditQuickRenewalScreen extends StatefulWidget {
 
 class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
   final formKey = GlobalKey<FormState>();
-  EditRenewalDetailsModel? editDetails;
+  RenewalByIdModel? renewalDetails;
   EditRenewalModel? postResponse;
 
   bool isLoading = true;
@@ -53,31 +53,35 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
     setState(() {
       isLoading = true;
     });
-    editDetails = await HttpService.getEditRenewalDetails(widget.id, "invoice");
+    renewalDetails =
+        await HttpService.getRenewalDetailsById(widget.id, "quick");
 
-    if (editDetails != null && editDetails!.status == true) {
+    if (renewalDetails != null && renewalDetails!.status == true) {
       // getBranch();
-      filteredNames = editDetails!.data.customers;
-      filteredProducts = editDetails!.data.allProducts;
-      filteredTemplates = editDetails!.data.renewalTemplate;
-      customerId = editDetails!.data.clientId;
-      startDate.text = formatDate(editDetails!.data.startDate);
-      endDate.text = formatDate(editDetails!.data.endDate);
-      remindMe.text = editDetails!.data.templateId;
-      remark.text = editDetails!.data.remarks;
-      productCost.text = editDetails!.data.totalAmount;
+      filteredNames = renewalDetails!.data.customers;
+      filteredProducts = renewalDetails!.data.allProducts;
+      filteredTemplates = renewalDetails!.data.renewalTemplate;
+      customerId = renewalDetails!.data.clientId;
+      startDate.text = formatDate(renewalDetails!.data.startDate);
+      endDate.text = formatDate(renewalDetails!.data.endDate);
+      remindMe.text = renewalDetails!.data.templateId;
+      remark.text = renewalDetails!.data.remarks;
+      productCost.text = renewalDetails!.data.totalAmount;
+      customerName.text = renewalDetails!.data.customerName;
+      customerId = renewalDetails!.data.clientId;
       // createInvoice = editDetails!.data.inv
-      for (int i = 0; i < editDetails!.data.invoiceLists.length; i++) {
-        productName.add(editDetails!.data.invoiceLists[i].productName);
+      for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
+        productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
-          "product_id": editDetails!.data.invoiceLists[i].productId,
-          "product_name": editDetails!.data.invoiceLists[i].productName,
-          "product_rate": editDetails!.data.invoiceLists[i].rate,
-          "quantity": editDetails!.data.invoiceLists[i].qty,
-          "tax_percent": editDetails!.data.invoiceLists[i].taxPercentage,
-          "tax_percent_amount": editDetails!.data.invoiceLists[i].taxAmount,
-          "total_amount": editDetails!.data.invoiceLists[i].amount,
-          "description": editDetails!.data.invoiceLists[i].productDescription,
+          "product_id": renewalDetails!.data.invoiceLists[i].productId,
+          "product_name": renewalDetails!.data.invoiceLists[i].productName,
+          "product_rate": renewalDetails!.data.invoiceLists[i].rate,
+          "quantity": renewalDetails!.data.invoiceLists[i].qty,
+          "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
+          "tax_percent_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+          "total_amount": renewalDetails!.data.invoiceLists[i].amount,
+          "description":
+              renewalDetails!.data.invoiceLists[i].productDescription,
         });
       }
     }
@@ -89,7 +93,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = editDetails!.data.customers
+    filteredNames = renewalDetails!.data.customers
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -97,7 +101,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
   void filterProducts(
     String query,
   ) {
-    filteredProducts = editDetails!.data.allProducts
+    filteredProducts = renewalDetails!.data.allProducts
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();
@@ -106,27 +110,28 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
   void filterTemplates(
     String query,
   ) {
-    filteredTemplates = editDetails!.data.renewalTemplate
+    filteredTemplates = renewalDetails!.data.renewalTemplate
         .where((map) =>
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
 
-  editRenewal() async {
-    postResponse = await HttpService.editRenewal(
-        products,
+  updateRenewal() async {
+    postResponse = await HttpService.updateQuickRenewal(
+        renewalDetails!.data.renewalId,
+        "quick",
         customerId,
-        productCost.text,
-        templateId,
+        branch,
         startDate.text,
         endDate.text,
+        products,
+        templateId,
         remark.text,
-        branch,
-        widget.id,
-        isPaid,
-        widget.invoiceId,
+        productCost.text,
         totalProductCost,
-        createInvoice);
+        isPaid,
+        createInvoice,
+        renewalDetails!.data.invoicelId);
 
     if (postResponse != null && postResponse!.status == true) {
       Navigator.push(
@@ -362,14 +367,12 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                                                               products.length;
                                                                           ind++) {
                                                                         totalProductCost +=
-                                                                            double.parse(await products[ind].prdCost);
+                                                                            double.parse(await products[ind]["total_amount"]);
                                                                       }
                                                                       productCost
                                                                               .text =
                                                                           (totalProductCost)
                                                                               .toString();
-                                                                      print(products
-                                                                          .length);
                                                                       setState(
                                                                           () {});
 
@@ -439,14 +442,16 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2100),
                             );
-                            setState(() {
-                              startDate.text = DateFormat('dd-MM-yyyy')
-                                  .format(selectedValue!);
-                              final endValue = selectedValue!
-                                  .add(Duration(days: int.parse(typeDuration)));
-                              endDate.text =
-                                  DateFormat('dd-MM-yyyy').format(endValue);
-                            });
+                            if (selectedValue != null) {
+                              setState(() {
+                                startDate.text = DateFormat('dd-MM-yyyy')
+                                    .format(selectedValue!);
+                                final endValue = selectedValue!.add(
+                                    Duration(days: int.parse(typeDuration)));
+                                endDate.text =
+                                    DateFormat('dd-MM-yyyy').format(endValue);
+                              });
+                            }
                           },
                           validator: (value) {
                             if (value!.isEmpty) {
@@ -473,8 +478,10 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2100),
                             );
-                            endDate.text = DateFormat('dd-MM-yyyy')
-                                .format(selectedEndDate!);
+                            if (selectedEndDate != null) {
+                              endDate.text = DateFormat('dd-MM-yyyy')
+                                  .format(selectedEndDate);
+                            }
                           },
                           validator: (value) {
                             if (value!.isEmpty) {
@@ -548,9 +555,8 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                           children: [
                             Checkbox(
                                 fillColor: createInvoice == true
-                                    ? const MaterialStatePropertyAll(
-                                        Colors.blue)
-                                    : const MaterialStatePropertyAll(
+                                    ? const WidgetStatePropertyAll(Colors.blue)
+                                    : const WidgetStatePropertyAll(
                                         Colors.white),
                                 checkColor: Colors.white,
                                 value: createInvoice,
@@ -570,9 +576,8 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                           children: [
                             Checkbox(
                                 fillColor: isPaid == true
-                                    ? const MaterialStatePropertyAll(
-                                        Colors.blue)
-                                    : const MaterialStatePropertyAll(
+                                    ? const WidgetStatePropertyAll(Colors.blue)
+                                    : const WidgetStatePropertyAll(
                                         Colors.white),
                                 checkColor: Colors.white,
                                 value: isPaid,
@@ -598,7 +603,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                           child: RawMaterialButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
-                                editRenewal();
+                                updateRenewal();
                               }
                             },
                             child: const Text(
@@ -685,7 +690,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                           } else if (title == "Template") {
                             remindMe.text =
                                 filteredTemplates[index].templateName;
-                            templateId = filteredTemplates[index].templateId;
+                            templateId = filteredTemplates[index].id;
                           } else {
                             typeDuration = filteredProducts[index].noOfDays;
 
@@ -701,11 +706,18 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                             } else {
                               products.add({
                                 "product_id": filteredProducts[index].id,
-                                "product_rate":
-                                    filteredProducts[index].totalAmount,
-                                "quantity": "1",
                                 "product_name":
                                     filteredProducts[index].productName,
+                                "product_rate":
+                                    filteredProducts[index].sellingPrice,
+                                "quantity": 1,
+                                "tax_percent":
+                                    filteredProducts[index].taxPercent,
+                                "tax_percent_amount":
+                                    filteredProducts[index].taxAmount,
+                                "total_amount":
+                                    filteredProducts[index].sellingPrice,
+                                "description": "",
                               });
                               productName
                                   .add(filteredProducts[index].productName);
@@ -713,8 +725,8 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                             totalProductCost = 0;
 
                             for (int i = 0; i < products.length; i++) {
-                              totalProductCost +=
-                                  double.parse(await products[i].prdCost);
+                              totalProductCost += double.parse(
+                                  await products[i]["total_amount"]);
                             }
                             productCost.text = (totalProductCost).toString();
                           }

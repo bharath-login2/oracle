@@ -3248,7 +3248,7 @@ class HttpService {
     }
   }
 
-  static Future getEditRenewalDetails(String id, String type) async {
+  static Future getRenewalDetailsById(String id, String type) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_type": type,
@@ -3258,8 +3258,7 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}getRenewalById",
           data: formData);
       if (result.statusCode == 200) {
-        EditRenewalDetailsModel response =
-            EditRenewalDetailsModel.fromJson(result.data);
+        RenewalByIdModel response = RenewalByIdModel.fromJson(result.data);
         return response;
       }
     } catch (e) {
@@ -3538,42 +3537,102 @@ class HttpService {
     }
   }
 
-  static Future editRenewal(
-      renewalProducts,
-      clientId,
-      cost,
-      templateId,
+  static Future updateCustomRenewal(
+      rowId,
+      customerId,
+      branchId,
       startDate,
       endDate,
+      renewalType,
+      renewalProduct,
+      templateId,
       remarks,
-      branchId,
-      String recordId,
-      isPaid,
       invoiceId,
-      actualCost,
-      createInvoice) async {
+      paymentStatus,
+      paymentMethod,
+      cartId,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      totalAmount,
+      paidAmount,
+      invoiceDate,
+      collectedStaff) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-      "renewal_product": jsonEncode(renewalProducts),
-      "client_id": clientId,
-      "cost": cost,
+      "renewal_type": renewalType,
+      "row_id": rowId,
+      "check_id_val": DateTime.now().millisecondsSinceEpoch,
+      "renewal_product": jsonEncode(renewalProduct),
+      "customer_id": customerId,
       "template_id": templateId,
       "start_date": startDate,
       "end_date": endDate,
       "remarks": remarks,
-      "branch_id": branchId,
-      "record_id": recordId,
-      "is_paid": isPaid,
+      "branch_id": branchId ?? "",
       "invoice_id": invoiceId,
-      "actual_cost": actualCost,
-      "create_invoice": createInvoice
+      "invoice_date": invoiceDate,
+      "sub_total": subTotal,
+      "estimated_tax": estimatedTax,
+      "discount_amount": discountAmount,
+      "shipping_amount": shippingAmount,
+      "total_amount_paid": totalAmount,
+      "amount_paid_customer": paidAmount,
+      "payment_status": paymentStatus ?? "",
+      "payment_method": paymentMethod ?? "",
+      "collected_staff": collectedStaff ?? "",
     });
     try {
-      var result = await _dio.post(
-          "${await Config.getUrl()}updateRenewalCustomer",
+      var result = await _dio.post("${await Config.getUrl()}update_renewal",
           data: formData);
       if (result.statusCode == 200) {
-        EditRenewalModel response = EditRenewalModel.fromJson(result.data);
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future updateQuickRenewal(
+      rowId,
+      renewalType,
+      customerId,
+      branchId,
+      startDate,
+      endDate,
+      renewalProduct,
+      templateId,
+      remarks,
+      cost,
+      actualCost,
+      isPaid,
+      createInvoice,
+      invoiceId,
+     ) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "check_id_val": DateTime.now().millisecondsSinceEpoch,
+      "renewal_type": renewalType,
+      "create_invoice": createInvoice,
+      "row_id": rowId,
+      "is_paid": isPaid,
+      "renewal_product": jsonEncode(renewalProduct),
+      "customer_id": customerId,
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "remarks": remarks,
+      "branch_id": branchId ?? "",
+      "actual_cost": actualCost,
+      "invoice_id": invoiceId,
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}updateRenewalDetails",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
       }
     } catch (e) {

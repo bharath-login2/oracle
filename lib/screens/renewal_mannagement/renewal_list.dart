@@ -16,6 +16,7 @@ import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/screens/clients/clientDetails.dart';
 import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/renew_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
 import 'package:login2/screens/renewal_mannagement/view_history.dart';
@@ -776,39 +777,57 @@ class _RenewalListState extends State<RenewalList> {
                                                               false,
                                                           child: InkWell(
                                                             onTap: () {
-                                                              products = items[
-                                                                      index]
-                                                                  .productId;
-                                                              productName
-                                                                  .clear();
-                                                              for (int i = 0;
-                                                                  i <
-                                                                      items[index]
-                                                                          .productId
-                                                                          .length;
-                                                                  i++) {
-                                                                productName.add(
+                                                              if (items[index]
+                                                                      .renewalType ==
+                                                                  "quick") {
+                                                                products = items[
+                                                                        index]
+                                                                    .productId;
+                                                                productName
+                                                                    .clear();
+                                                                for (int i = 0;
+                                                                    i <
+                                                                        items[index]
+                                                                            .productId
+                                                                            .length;
+                                                                    i++) {
+                                                                  productName.add(items[
+                                                                          index]
+                                                                      .productId[
+                                                                          i]
+                                                                      .prdName);
+                                                                }
+                                                                setState(() {});
+                                                                startDate
+                                                                    .clear();
+                                                                endDate.clear();
+                                                                projectCost
+                                                                    .clear();
+                                                                remarks.clear();
+                                                                renClientId =
                                                                     items[index]
-                                                                        .productId[
-                                                                            i]
-                                                                        .prdName);
+                                                                        .clientId;
+                                                                renewalBottomSheet(
+                                                                    items[index]
+                                                                        .id,
+                                                                    "Renew Details",
+                                                                    "10",
+                                                                    items[index]
+                                                                        .cost);
+                                                              } else {
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder:
+                                                                          (context) =>
+                                                                              RenewCustomRenewal(
+                                                                        renId: items[index]
+                                                                            .id,
+                                                                        renewalType:
+                                                                            items[index].renewalType,
+                                                                      ),
+                                                                    ));
                                                               }
-                                                              setState(() {});
-                                                              startDate.clear();
-                                                              endDate.clear();
-                                                              projectCost
-                                                                  .clear();
-                                                              remarks.clear();
-                                                              renClientId =
-                                                                  items[index]
-                                                                      .clientId;
-                                                              renewalBottomSheet(
-                                                                  items[index]
-                                                                      .id,
-                                                                  "Renew Details",
-                                                                  "10",
-                                                                  items[index]
-                                                                      .cost);
                                                             },
                                                             child: Container(
                                                               decoration: BoxDecoration(
@@ -838,7 +857,9 @@ class _RenewalListState extends State<RenewalList> {
                                                         ),
                                                         InkWell(
                                                           onTap: () {
-                                                            if (index == 0) {
+                                                            if (items[index]
+                                                                    .renewalType ==
+                                                                "quick") {
                                                               Navigator.push(
                                                                   context,
                                                                   MaterialPageRoute(
@@ -850,7 +871,6 @@ class _RenewalListState extends State<RenewalList> {
                                                                           ))).then(
                                                                   (r) {
                                                                 getList();
-                                                                log(r);
                                                               });
                                                             } else {
                                                               Navigator.push(
@@ -860,6 +880,8 @@ class _RenewalListState extends State<RenewalList> {
                                                                           EditCustomRenewal(
                                                                             renId:
                                                                                 items[index].id,
+                                                                            renewalType:
+                                                                                items[index].renewalType,
                                                                           ))).then(
                                                                   (r) {
                                                                 getList();
@@ -1708,9 +1730,8 @@ class _RenewalListState extends State<RenewalList> {
                           children: [
                             Checkbox(
                                 fillColor: createInvoice == true
-                                    ? const MaterialStatePropertyAll(
-                                        Colors.blue)
-                                    : const MaterialStatePropertyAll(
+                                    ? const WidgetStatePropertyAll(Colors.blue)
+                                    : const WidgetStatePropertyAll(
                                         Colors.white),
                                 checkColor: Colors.white,
                                 value: createInvoice,
@@ -1727,9 +1748,8 @@ class _RenewalListState extends State<RenewalList> {
                           children: [
                             Checkbox(
                                 fillColor: isPaid == true
-                                    ? const MaterialStatePropertyAll(
-                                        Colors.blue)
-                                    : const MaterialStatePropertyAll(
+                                    ? const WidgetStatePropertyAll(Colors.blue)
+                                    : const WidgetStatePropertyAll(
                                         Colors.white),
                                 checkColor: Colors.white,
                                 value: isPaid,

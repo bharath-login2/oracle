@@ -1,18 +1,22 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/renewal/edit_renewal_details_model.dart';
-import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/service/service.dart';
 
 import '../../models/clients/branchListModel.dart';
 
 class EditCustomRenewal extends StatefulWidget {
   String renId;
-  EditCustomRenewal({super.key, required this.renId});
+  String renewalType;
+  EditCustomRenewal(
+      {super.key, required this.renId, required this.renewalType});
 
   @override
   State<EditCustomRenewal> createState() => _EditCustomRenewalState();
@@ -25,7 +29,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   List filteredProducts = [];
   List filteredNames = [];
   List productName = [];
-  EditRenewalDetailsModel? editDetails;
+  RenewalByIdModel? renewalDetails;
   TextEditingController subTotal = TextEditingController();
   TextEditingController totalTax = TextEditingController();
   TextEditingController discount = TextEditingController();
@@ -70,6 +74,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   double parseQty = 0;
   double parseTax = 0;
   String customerId = "";
+  PostRenewalModel? updateResponse;
 
   getBranch() async {
     multiBranch = await Common.getSharedPref("multiBranch");
@@ -78,45 +83,46 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
     if (branchList != null) {}
   }
 
-  getEditDetails() async {
+  getRenewalDetails() async {
     setState(() {
       isLoading = true;
     });
-    editDetails = await HttpService.getEditRenewalDetails(widget.renId, "cart");
+    renewalDetails = await HttpService.getRenewalDetailsById(
+        widget.renId, widget.renewalType);
 
-    if (editDetails != null && editDetails!.status == true) {
+    if (renewalDetails != null && renewalDetails!.status == true) {
       getBranch();
-      invoiceSlNum = editDetails!.data.slNumber;
-      invoiceNumber.text = editDetails!.data.invoiceNumber.toString();
-      invoiceDate.text = editDetails!.data.invoiceDate;
-      filteredNames = editDetails!.data.customers;
-      filteredProducts = editDetails!.data.allProducts;
-      filteredTemplates = editDetails!.data.renewalTemplate;
-      subTotal.text = editDetails!.data.subTotal;
-      totalTax.text = editDetails!.data.estimatedTax;
-      discount.text = editDetails!.data.discountAmount;
-      shippingCharge.text = editDetails!.data.shippingAmount;
-      totalAmount.text = editDetails!.data.totalAmount;
-      // customerName.text = editDetails!.data.name;
-      payStat = editDetails!.data.paymentStatus;
-      totalPaidAmount.text = editDetails!.data.paidAmount;
-      // payMethod = editDetails!.data;
-      // collected = editDetails!.data.;
-      startDate.text = formatDate(editDetails!.data.startDate);
-      endDate.text = formatDate(editDetails!.data.endDate);
-      remindMe.text = editDetails!.data.templateId;
-      remark.text = editDetails!.data.remarks;
-      for (int i = 0; i < editDetails!.data.invoiceLists.length; i++) {
-        productName.add(editDetails!.data.invoiceLists[i].productName);
+      invoiceSlNum = renewalDetails!.data.slNumber;
+      invoiceNumber.text = renewalDetails!.data.invoiceNumber.toString();
+      invoiceDate.text = renewalDetails!.data.invoiceDate;
+      filteredNames = renewalDetails!.data.customers;
+      filteredProducts = renewalDetails!.data.allProducts;
+      filteredTemplates = renewalDetails!.data.renewalTemplate;
+      subTotal.text = renewalDetails!.data.subTotal;
+      totalTax.text = renewalDetails!.data.estimatedTax;
+      discount.text = renewalDetails!.data.discountAmount;
+      shippingCharge.text = renewalDetails!.data.shippingAmount;
+      totalAmount.text = renewalDetails!.data.totalAmount;
+      customerName.text = renewalDetails!.data.customerName;
+      customerId = renewalDetails!.data.clientId;
+      payStat = renewalDetails!.data.paymentStatus;
+      totalPaidAmount.text = renewalDetails!.data.paidAmount;
+      startDate.text = formatDate(renewalDetails!.data.startDate);
+      endDate.text = formatDate(renewalDetails!.data.endDate);
+      remindMe.text = renewalDetails!.data.templateId;
+      remark.text = renewalDetails!.data.remarks;
+      for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
+        productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
-          "product_id": editDetails!.data.invoiceLists[i].productId,
-          "product_name": editDetails!.data.invoiceLists[i].productName,
-          "product_rate": editDetails!.data.invoiceLists[i].rate,
-          "quantity": editDetails!.data.invoiceLists[i].qty,
-          "tax_percent": editDetails!.data.invoiceLists[i].taxPercentage,
-          "tax_percent_amount": editDetails!.data.invoiceLists[i].taxAmount,
-          "total_amount": editDetails!.data.invoiceLists[i].amount,
-          "description": editDetails!.data.invoiceLists[i].productDescription,
+          "product_id": renewalDetails!.data.invoiceLists[i].productId,
+          "product_name": renewalDetails!.data.invoiceLists[i].productName,
+          "product_rate": renewalDetails!.data.invoiceLists[i].rate,
+          "quantity": renewalDetails!.data.invoiceLists[i].qty,
+          "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
+          "tax_percent_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+          "total_amount": renewalDetails!.data.invoiceLists[i].amount,
+          "description":
+              renewalDetails!.data.invoiceLists[i].productDescription,
         });
       }
       setState(() {
@@ -129,9 +135,55 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
     }
   }
 
+  updateRenewal() async {
+    try {
+      updateResponse = await HttpService.updateCustomRenewal(
+        renewalDetails!.data.renewalId,
+        customerId,
+        branch,
+        startDate.text,
+        endDate.text,
+        widget.renewalType,
+        products,
+        templateId,
+        remark.text,
+        renewalDetails!.data.invoicelId,
+        payStat,
+        payMethod,
+        renewalDetails!.data.cartId,
+        subTotal.text,
+        totalTax.text,
+        discount.text,
+        shippingCharge.text,
+        totalAmount.text,
+        totalPaidAmount.text,
+        invoiceDate.text,
+        collected,
+      );
+
+      if (updateResponse != null && updateResponse!.status == true) {
+        Common.toastMessaage(updateResponse!.message, Colors.green);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        Common.toastMessaage(updateResponse!.message, Colors.red);
+        setState(() {
+          uploading = false;
+        });
+      }
+    } catch (e) {
+      log("error: $e");
+      Common.toastMessaage("Something went wrong..!", Colors.red);
+      setState(() {
+        uploading = false;
+      });
+    }
+  }
+
   @override
   void initState() {
-    getEditDetails();
+    getRenewalDetails();
     super.initState();
   }
 
@@ -794,85 +846,28 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                   ),
                 ),
                 const SizedBox(height: 25.0),
-                DropdownButtonFormField(
-                  validator: (val) {
-                    if (val == "" || val == null) {
-                      return "Add payment status";
-                    }
-                    return null;
-                  },
-                  value: payStat,
-                  onChanged: (value) async {
-                    payStat = value.toString();
-                    setState(() {});
-                  },
-                  items: editDetails!.data.paymentStatusList.map((data) {
-                    return DropdownMenuItem<String>(
-                      value: data.paymentStatus.toString(),
-                      child: Text(
-                        data.displaySts.toString(),
-                      ),
-                    );
-                  }).toList(),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                    ),
-                    labelText: 'Payment Status',
-                    prefixIcon: Icon(Icons.arrow_drop_down_circle_outlined,
-                        color: Colors.grey),
-                    labelStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 14.0),
                 Visibility(
-                  visible: payStat == "partial" || payStat == "paid",
+                  visible: widget.renewalType == "cart",
                   child: Column(
                     children: [
-                      TextFormField(
-                        validator: (value) {
-                          if (payStat == "partial") {
-                            if (value == "") {
-                              return "Enter Amount";
-                            }
-                          }
-                          return null;
-                        },
-                        readOnly: payStat != "partial" ? true : false,
-                        keyboardType: TextInputType.number,
-                        controller: totalPaidAmount,
-                        decoration: const InputDecoration(
-                            labelText: 'Total Amount Paid',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                      const SizedBox(height: 14.0),
                       DropdownButtonFormField(
-                        validator: (value) {
-                          if (payStat == "partial" || payStat == "paid") {
-                            if (value == "" || value == null) {
-                              return "Select a payment method";
-                            }
+                        validator: (val) {
+                          if (val == "" || val == null) {
+                            return "Add payment status";
                           }
                           return null;
                         },
-                        value: payMethod,
+                        value: payStat,
                         onChanged: (value) async {
-                          setState(() {
-                            payMethod = value.toString();
-                          });
+                          payStat = value.toString();
+                          setState(() {});
                         },
-                        items: editDetails!.data.paymentMethods.map((data) {
+                        items:
+                            renewalDetails!.data.paymentStatusList.map((data) {
                           return DropdownMenuItem<String>(
-                            value: data.id.toString(),
+                            value: data.paymentStatus.toString(),
                             child: Text(
-                              data.name.toString(),
+                              data.displaySts.toString(),
                             ),
                           );
                         }).toList(),
@@ -881,7 +876,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
-                          labelText: 'Payment Methods',
+                          labelText: 'Payment Status',
                           prefixIcon: Icon(
                               Icons.arrow_drop_down_circle_outlined,
                               color: Colors.grey),
@@ -889,42 +884,109 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         ),
                       ),
                       const SizedBox(height: 14.0),
-                      DropdownButtonFormField(
-                        validator: (value) {
-                          if (payStat == "partial" || payStat == "paid") {
-                            if (value == "" || value == null) {
-                              return "Select a staff";
-                            }
-                          }
-                          return null;
-                        },
-                        value: collected,
-                        onChanged: (value) async {
-                          setState(() {
-                            collected = value.toString();
-                          });
-                        },
-                        items: editDetails!.data.staff.map((data) {
-                          return DropdownMenuItem<String>(
-                            value: data.userId.toString(),
-                            child: Text(
-                              data.staffName.toString(),
+                      Visibility(
+                        visible: payStat == "partial" || payStat == "paid",
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              validator: (value) {
+                                if (payStat == "partial") {
+                                  if (value == "") {
+                                    return "Enter Amount";
+                                  }
+                                }
+                                return null;
+                              },
+                              readOnly: payStat != "partial" ? true : false,
+                              keyboardType: TextInputType.number,
+                              controller: totalPaidAmount,
+                              decoration: const InputDecoration(
+                                  labelText: 'Total Amount Paid',
+                                  prefixIcon: Icon(Icons.currency_rupee,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
                             ),
-                          );
-                        }).toList(),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          labelText: 'Collected By',
-                          prefixIcon: Icon(
-                              Icons.arrow_drop_down_circle_outlined,
-                              color: Colors.grey),
-                          labelStyle: TextStyle(color: Colors.grey),
+                            const SizedBox(height: 14.0),
+                            DropdownButtonFormField(
+                              validator: (value) {
+                                if (payStat == "partial" || payStat == "paid") {
+                                  if (value == "" || value == null) {
+                                    return "Select a payment method";
+                                  }
+                                }
+                                return null;
+                              },
+                              value: payMethod,
+                              onChanged: (value) async {
+                                setState(() {
+                                  payMethod = value.toString();
+                                });
+                              },
+                              items: renewalDetails!.data.paymentMethods
+                                  .map((data) {
+                                return DropdownMenuItem<String>(
+                                  value: data.id.toString(),
+                                  child: Text(
+                                    data.name.toString(),
+                                  ),
+                                );
+                              }).toList(),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelText: 'Payment Methods',
+                                prefixIcon: Icon(
+                                    Icons.arrow_drop_down_circle_outlined,
+                                    color: Colors.grey),
+                                labelStyle: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                            const SizedBox(height: 14.0),
+                            DropdownButtonFormField(
+                              validator: (value) {
+                                if (payStat == "partial" || payStat == "paid") {
+                                  if (value == "" || value == null) {
+                                    return "Select a staff";
+                                  }
+                                }
+                                return null;
+                              },
+                              value: collected,
+                              onChanged: (value) async {
+                                setState(() {
+                                  collected = value.toString();
+                                });
+                              },
+                              items: renewalDetails!.data.staff.map((data) {
+                                return DropdownMenuItem<String>(
+                                  value: data.userId.toString(),
+                                  child: Text(
+                                    data.staffName.toString(),
+                                  ),
+                                );
+                              }).toList(),
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelText: 'Collected By',
+                                prefixIcon: Icon(
+                                    Icons.arrow_drop_down_circle_outlined,
+                                    color: Colors.grey),
+                                labelStyle: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                            const SizedBox(height: 14.0),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 14.0),
                     ],
                   ),
                 ),
@@ -1238,7 +1300,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   void filterCustomers(
     String query,
   ) {
-    filteredNames = editDetails!.data.customers
+    filteredNames = renewalDetails!.data.customers
         .where((map) => map.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
@@ -1246,7 +1308,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   void filterProducts(
     String query,
   ) {
-    filteredProducts = editDetails!.data.allProducts
+    filteredProducts = renewalDetails!.data.allProducts
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();
@@ -1255,7 +1317,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   void filterTemplates(
     String query,
   ) {
-    filteredTemplates = editDetails!.data.renewalTemplate
+    filteredTemplates = renewalDetails!.data.renewalTemplate
         .where((map) =>
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();
