@@ -28,8 +28,7 @@ import 'package:login2/models/product_mannagement/update_subcategory.dart';
 import 'package:login2/models/renewal/add_customer_model.dart';
 import 'package:login2/models/renewal/bulk_remind.dart';
 import 'package:login2/models/renewal/delete_renewal.dart';
-import 'package:login2/models/renewal/edit_renewal.dart';
-import 'package:login2/models/renewal/edit_renewal_details_model.dart';
+import 'package:login2/models/renewal/renewal_by_id_model.dart';
 import 'package:login2/models/renewal/hidden_list.dart';
 import 'package:login2/models/renewal/hide_model.dart';
 import 'package:login2/models/renewal/payment_report.dart';
@@ -44,7 +43,7 @@ import 'package:login2/models/renewal/rivert_client.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
+import 'package:login2/models/renewal/renewal_template_model.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/commonsettingsModel.dart';
 import '../../models/contactGroup/addContactGroupModel.dart';
@@ -3584,8 +3583,8 @@ class HttpService {
       "collected_staff": collectedStaff ?? "",
     });
     try {
-      var result = await _dio.post("${await Config.getUrl()}update_renewal",
-          data: formData);
+      var result = await _dio
+          .post("${await Config.getUrl()}updateRenewalDetails", data: formData);
       if (result.statusCode == 200) {
         PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
@@ -3596,21 +3595,21 @@ class HttpService {
   }
 
   static Future updateQuickRenewal(
-      rowId,
-      renewalType,
-      customerId,
-      branchId,
-      startDate,
-      endDate,
-      renewalProduct,
-      templateId,
-      remarks,
-      cost,
-      actualCost,
-      isPaid,
-      createInvoice,
-      invoiceId,
-     ) async {
+    rowId,
+    renewalType,
+    customerId,
+    branchId,
+    startDate,
+    endDate,
+    renewalProduct,
+    templateId,
+    remarks,
+    cost,
+    actualCost,
+    isPaid,
+    createInvoice,
+    invoiceId,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "check_id_val": DateTime.now().millisecondsSinceEpoch,
@@ -3626,11 +3625,12 @@ class HttpService {
       "remarks": remarks,
       "branch_id": branchId ?? "",
       "actual_cost": actualCost,
+      "cost": cost,
       "invoice_id": invoiceId,
     });
     try {
-      var result = await _dio.post("${await Config.getUrl()}updateRenewalDetails",
-          data: formData);
+      var result = await _dio
+          .post("${await Config.getUrl()}updateRenewalDetails", data: formData);
       if (result.statusCode == 200) {
         PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
@@ -3700,27 +3700,103 @@ class HttpService {
     }
   }
 
-  static Future postRenewDetails(branchId, recordId, startDate, endDate, cost,
-      remarks, addInvoice, products, clientId, isPaid, createInvoice) async {
+  static Future postRenewQuick(
+    branchId,
+    rowId,
+    startDate,
+    endDate,
+    cost,
+    remarks,
+    addInvoice,
+    renewalProduct,
+    customerId,
+    isPaid,
+    createInvoice,
+    renewalType,
+    templateId,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "branch_id": branchId ?? "",
-      "record_id": recordId,
+      "row_id": rowId,
       "start_date": startDate,
       "end_date": endDate,
       "cost": cost,
       "remarks": remarks,
-      "add_invoice": addInvoice,
-      "client_id": clientId,
+      "customer_id": customerId,
       "is_paid": isPaid,
-      "create_invoice": createInvoice
+      "create_invoice": createInvoice,
+      "renewal_product": renewalProduct,
+      "renewal_type": renewalType,
+      "template_id": templateId,
+      "check_id_val": DateTime.now().millisecondsSinceEpoch,
     });
+
     try {
       var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
           data: formData);
       if (result.statusCode == 200) {
         PostRenewDetailsModel response =
             PostRenewDetailsModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postRenewCustom(
+      rowId,
+      customerId,
+      branchId,
+      startDate,
+      endDate,
+      renewalType,
+      renewalProduct,
+      templateId,
+      remarks,
+      invoiceId,
+      paymentStatus,
+      paymentMethod,
+      cartId,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      totalAmount,
+      paidAmount,
+      invoiceDate,
+      collectedStaff,
+      ) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_type": renewalType,
+      "row_id": rowId,
+      "check_id_val": DateTime.now().millisecondsSinceEpoch,
+      "renewal_product": jsonEncode(renewalProduct),
+      "customer_id": customerId,
+      "template_id": templateId,
+      "start_date": startDate,
+      "end_date": endDate,
+      "remarks": remarks,
+      "branch_id": branchId ?? "",
+      "invoice_id": invoiceId,
+      "invoice_date": invoiceDate,
+      "sub_total": subTotal,
+      "estimated_tax": estimatedTax,
+      "discount_amount": discountAmount,
+      "shipping_amount": shippingAmount,
+      "total_amount_paid": totalAmount,
+      "amount_paid_customer": paidAmount,
+      "payment_status": paymentStatus ?? "",
+      "payment_method": paymentMethod ?? "",
+      "collected_staff": collectedStaff ?? "",
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
+          data: formData);
+      if (result.statusCode == 200) {
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
       }
     } catch (e) {

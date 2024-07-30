@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/branchListModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
-import 'package:login2/models/renewal/edit_renewal_details_model.dart';
+import 'package:login2/models/renewal/post_renewal.dart';
+import 'package:login2/models/renewal/renewal_by_id_model.dart';
 import 'package:login2/service/service.dart';
 
 // ignore: must_be_immutable
@@ -69,12 +72,60 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   double parseQty = 0;
   double parseTax = 0;
   String customerId = "";
+  PostRenewalModel? renewResponse;
+
 
   getBranch() async {
     multiBranch = await Common.getSharedPref("multiBranch");
     String token = await Common.getSharedPref("token");
     branchList = await HttpService.getBranchList(token);
     if (branchList != null) {}
+  }
+
+  postRenewal() async {
+    try {
+      renewResponse = await HttpService.postRenewCustom(
+        renewalDetails!.data.renewalId,
+        customerId,
+        branch,
+        startDate.text,
+        endDate.text,
+        widget.renewalType,
+        products,
+        templateId,
+        remark.text,
+        renewalDetails!.data.invoicelId,
+        payStat,
+        payMethod,
+        renewalDetails!.data.cartId,
+        subTotal.text,
+        totalTax.text,
+        discount.text,
+        shippingCharge.text,
+        totalAmount.text,
+        totalPaidAmount.text,
+        invoiceDate.text,
+        collected,
+      );
+
+      if (renewResponse != null && renewResponse!.status == true) {
+        Common.toastMessaage(renewResponse!.message, Colors.green);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        Common.toastMessaage(renewResponse!.message, Colors.red);
+        setState(() {
+          uploading = false;
+        });
+      }
+    } catch (e) {
+      log("error: $e");
+      Common.toastMessaage("Something went wrong..!", Colors.red);
+      setState(() {
+        uploading = false;
+      });
+    }
   }
 
   getEditDetails() async {
@@ -99,14 +150,13 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
       totalAmount.text = renewalDetails!.data.totalAmount;
       customerName.text = renewalDetails!.data.customerName;
       customerId = renewalDetails!.data.clientId;
-      payStat = renewalDetails!.data.paymentStatus;
       totalPaidAmount.text = renewalDetails!.data.paidAmount;
-      // payMethod = editDetails!.data;
-      // collected = editDetails!.data.;
-      startDate.text = formatDate(renewalDetails!.data.startDate);
-      endDate.text = formatDate(renewalDetails!.data.endDate);
-      remindMe.text = renewalDetails!.data.templateId;
+      startDate.text = renewalDetails!.data.nextStartDate;
+      endDate.text = renewalDetails!.data.nextEndDate;
+      remindMe.text = renewalDetails!.data.templateName;
+      templateId = renewalDetails!.data.templateId;
       remark.text = renewalDetails!.data.remarks;
+      typeDuration = renewalDetails!.data.noOfDays;
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
         productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
@@ -117,7 +167,8 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
           "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
           "tax_percent_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
           "total_amount": renewalDetails!.data.invoiceLists[i].amount,
-          "description": renewalDetails!.data.invoiceLists[i].productDescription,
+          "description":
+              renewalDetails!.data.invoiceLists[i].productDescription,
         });
       }
       setState(() {
@@ -179,7 +230,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                         width: 25,
                       ),
                       const Text(
-                        "Edit Renewal",
+                        "Renew Details",
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],
@@ -194,11 +245,11 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                 color: Colors.grey,
               ),
             )
-          : EditWidget(context),
+          : FormWidget(context),
     );
   }
 
-  SafeArea EditWidget(BuildContext context) {
+  SafeArea FormWidget(BuildContext context) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -795,148 +846,146 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                   ),
                 ),
                 const SizedBox(height: 25.0),
-                Visibility(
-                  visible: widget.renewalType == "cart",
-                  child: Column(
-                    children: [
-                      DropdownButtonFormField(
-                        validator: (val) {
-                          if (val == "" || val == null) {
-                            return "Add payment status";
-                          }
-                          return null;
-                        },
-                        value: payStat,
-                        onChanged: (value) async {
-                          payStat = value.toString();
-                          setState(() {});
-                        },
-                        items: renewalDetails!.data.paymentStatusList.map((data) {
-                          return DropdownMenuItem<String>(
-                            value: data.paymentStatus.toString(),
-                            child: Text(
-                              data.displaySts.toString(),
-                            ),
-                          );
-                        }).toList(),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
+                Column(
+                  children: [
+                    DropdownButtonFormField(
+                      validator: (val) {
+                        if (val == "" || val == null) {
+                          return "Add payment status";
+                        }
+                        return null;
+                      },
+                      value: payStat,
+                      onChanged: (value) async {
+                        payStat = value.toString();
+                        setState(() {});
+                      },
+                      items:
+                          renewalDetails!.data.paymentStatusList.map((data) {
+                        return DropdownMenuItem<String>(
+                          value: data.paymentStatus.toString(),
+                          child: Text(
+                            data.displaySts.toString(),
                           ),
-                          labelText: 'Payment Status',
-                          prefixIcon: Icon(
-                              Icons.arrow_drop_down_circle_outlined,
-                              color: Colors.grey),
-                          labelStyle: TextStyle(color: Colors.grey),
+                        );
+                      }).toList(),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
                         ),
+                        labelText: 'Payment Status',
+                        prefixIcon: Icon(
+                            Icons.arrow_drop_down_circle_outlined,
+                            color: Colors.grey),
+                        labelStyle: TextStyle(color: Colors.grey),
                       ),
-                      const SizedBox(height: 14.0),
-                      Visibility(
-                        visible: payStat == "partial" || payStat == "paid",
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              validator: (value) {
-                                if (payStat == "partial") {
-                                  if (value == "") {
-                                    return "Enter Amount";
-                                  }
+                    ),
+                    const SizedBox(height: 14.0),
+                    Visibility(
+                      visible: payStat == "partial" || payStat == "paid",
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            validator: (value) {
+                              if (payStat == "partial") {
+                                if (value == "") {
+                                  return "Enter Amount";
                                 }
-                                return null;
-                              },
-                              readOnly: payStat != "partial" ? true : false,
-                              keyboardType: TextInputType.number,
-                              controller: totalPaidAmount,
-                              decoration: const InputDecoration(
-                                  labelText: 'Total Amount Paid',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                            const SizedBox(height: 14.0),
-                            DropdownButtonFormField(
-                              validator: (value) {
-                                if (payStat == "partial" || payStat == "paid") {
-                                  if (value == "" || value == null) {
-                                    return "Select a payment method";
-                                  }
-                                }
-                                return null;
-                              },
-                              value: payMethod,
-                              onChanged: (value) async {
-                                setState(() {
-                                  payMethod = value.toString();
-                                });
-                              },
-                              items:
-                                  renewalDetails!.data.paymentMethods.map((data) {
-                                return DropdownMenuItem<String>(
-                                  value: data.id.toString(),
-                                  child: Text(
-                                    data.name.toString(),
-                                  ),
-                                );
-                              }).toList(),
-                              decoration: const InputDecoration(
+                              }
+                              return null;
+                            },
+                            readOnly: payStat != "partial" ? true : false,
+                            keyboardType: TextInputType.number,
+                            controller: totalPaidAmount,
+                            decoration: const InputDecoration(
+                                labelText: 'Total Amount Paid',
+                                prefixIcon: Icon(Icons.currency_rupee,
+                                    color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
                                 ),
-                                labelText: 'Payment Methods',
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                labelStyle: TextStyle(color: Colors.grey),
-                              ),
-                            ),
-                            const SizedBox(height: 14.0),
-                            DropdownButtonFormField(
-                              validator: (value) {
-                                if (payStat == "partial" || payStat == "paid") {
-                                  if (value == "" || value == null) {
-                                    return "Select a staff";
-                                  }
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(height: 14.0),
+                          DropdownButtonFormField(
+                            validator: (value) {
+                              if (payStat == "partial" || payStat == "paid") {
+                                if (value == "" || value == null) {
+                                  return "Select a payment method";
                                 }
-                                return null;
-                              },
-                              value: collected,
-                              onChanged: (value) async {
-                                setState(() {
-                                  collected = value.toString();
-                                });
-                              },
-                              items: renewalDetails!.data.staff.map((data) {
-                                return DropdownMenuItem<String>(
-                                  value: data.userId.toString(),
-                                  child: Text(
-                                    data.staffName.toString(),
-                                  ),
-                                );
-                              }).toList(),
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
+                              }
+                              return null;
+                            },
+                            value: payMethod,
+                            onChanged: (value) async {
+                              setState(() {
+                                payMethod = value.toString();
+                              });
+                            },
+                            items: renewalDetails!.data.paymentMethods
+                                .map((data) {
+                              return DropdownMenuItem<String>(
+                                value: data.id.toString(),
+                                child: Text(
+                                  data.name.toString(),
                                 ),
-                                labelText: 'Collected By',
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                labelStyle: TextStyle(color: Colors.grey),
+                              );
+                            }).toList(),
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
                               ),
+                              labelText: 'Payment Methods',
+                              prefixIcon: Icon(
+                                  Icons.arrow_drop_down_circle_outlined,
+                                  color: Colors.grey),
+                              labelStyle: TextStyle(color: Colors.grey),
                             ),
-                            const SizedBox(height: 14.0),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 14.0),
+                          DropdownButtonFormField(
+                            validator: (value) {
+                              if (payStat == "partial" || payStat == "paid") {
+                                if (value == "" || value == null) {
+                                  return "Select a staff";
+                                }
+                              }
+                              return null;
+                            },
+                            value: collected,
+                            onChanged: (value) async {
+                              setState(() {
+                                collected = value.toString();
+                              });
+                            },
+                            items: renewalDetails!.data.staff.map((data) {
+                              return DropdownMenuItem<String>(
+                                value: data.userId.toString(),
+                                child: Text(
+                                  data.staffName.toString(),
+                                ),
+                              );
+                            }).toList(),
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelText: 'Collected By',
+                              prefixIcon: Icon(
+                                  Icons.arrow_drop_down_circle_outlined,
+                                  color: Colors.grey),
+                              labelStyle: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          const SizedBox(height: 14.0),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 TextFormField(
                   controller: startDate,
@@ -1046,7 +1095,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                           setState(() {
                             uploading = true;
                           });
-                          // post();
+                           postRenewal();
                         } else if (products.isEmpty) {
                           Common.toastMessaage(
                               "Add a product to continue", Colors.red);

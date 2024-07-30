@@ -1,28 +1,26 @@
 // ignore_for_file: must_be_immutable, use_build_context_synchronously
 
-import 'dart:developer';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
-import 'package:login2/models/clients/branchListModel.dart';
 import 'package:login2/models/renewal/bulk_remind.dart';
 import 'package:login2/models/renewal/hide_model.dart';
 import 'package:login2/models/renewal/post_reminder.dart';
-import 'package:login2/models/renewal/post_renew_details.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
-import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/screens/clients/clientDetails.dart';
 import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/renew_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_template_model.dart';
+import 'package:login2/models/renewal/renewal_template_model.dart';
 import 'package:login2/screens/renewal_mannagement/view_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
+
+import 'renew_quick_renewal.dart';
 
 class RenewalList extends StatefulWidget {
   String title;
@@ -53,7 +51,6 @@ class _RenewalListState extends State<RenewalList> {
 
   RenewalListModel? listResponse;
   HideModel? hideResponse;
-  PostRenewDetailsModel? postRenewal;
   String clientId = "";
   bool isLoading = true;
   int page = 1;
@@ -75,12 +72,8 @@ class _RenewalListState extends State<RenewalList> {
   List<ListElement> items = [];
   String fromDate = "";
   String toDate = "";
-  bool createInvoice = false;
-  bool isPaid = false;
   bool isAllSelected = false;
   String multiBranch = "true";
-  dynamic branchId;
-  BranchListModel? branchList;
   DateTime? selectedValue;
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
@@ -118,48 +111,6 @@ class _RenewalListState extends State<RenewalList> {
         .where((map) =>
             map.productName.toLowerCase().contains(query.toLowerCase()))
         .toList();
-  }
-
-  postRenewDetails(id) async {
-    postRenewal = await HttpService.postRenewDetails(
-        branchId,
-        id,
-        startDate.text,
-        endDate.text,
-        projectCost.text,
-        remarks.text,
-        createInvoice,
-        products,
-        renClientId,
-        isPaid,
-        createInvoice);
-    if (postRenewal != null && postRenewal!.status == true) {
-      String token = await Common.getSharedPref('token');
-      Common.toastMessaage(postRenewal!.message, Colors.green);
-      if (postRenewal!.data.isRedirect == false) {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
-      } else {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  AddInvoice(token, postRenewal!.data.customerId.toString()),
-            ));
-      }
-    } else {
-      Common.toastMessaage(postRenewal!.message, Colors.red);
-    }
-  }
-
-  getBranch() async {
-    multiBranch = await Common.getSharedPref("multiBranch");
-    String token = await Common.getSharedPref("token");
-    branchList = await HttpService.getBranchList(token);
-    if (branchList != null) {}
   }
 
   getRenewalReminderMessage(String renewalId, String contactId) async {
@@ -237,7 +188,6 @@ class _RenewalListState extends State<RenewalList> {
     isLoading = true;
     getList();
     getDetails();
-    getBranch();
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     super.initState();
   }
@@ -780,40 +730,16 @@ class _RenewalListState extends State<RenewalList> {
                                                               if (items[index]
                                                                       .renewalType ==
                                                                   "quick") {
-                                                                products = items[
-                                                                        index]
-                                                                    .productId;
-                                                                productName
-                                                                    .clear();
-                                                                for (int i = 0;
-                                                                    i <
-                                                                        items[index]
-                                                                            .productId
-                                                                            .length;
-                                                                    i++) {
-                                                                  productName.add(items[
-                                                                          index]
-                                                                      .productId[
-                                                                          i]
-                                                                      .prdName);
-                                                                }
-                                                                setState(() {});
-                                                                startDate
-                                                                    .clear();
-                                                                endDate.clear();
-                                                                projectCost
-                                                                    .clear();
-                                                                remarks.clear();
-                                                                renClientId =
-                                                                    items[index]
-                                                                        .clientId;
-                                                                renewalBottomSheet(
-                                                                    items[index]
-                                                                        .id,
-                                                                    "Renew Details",
-                                                                    "10",
-                                                                    items[index]
-                                                                        .cost);
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder:
+                                                                          (context) =>
+                                                                              RenewQuickRenewal(
+                                                                        id: items[index]
+                                                                            .id,
+                                                                      ),
+                                                                    ));
                                                               } else {
                                                                 Navigator.push(
                                                                     context,
@@ -1377,421 +1303,6 @@ class _RenewalListState extends State<RenewalList> {
                   ),
                 ));
           });
-        });
-      },
-    );
-  }
-
-  renewalBottomSheet(String id, String title, duration, String cost) {
-    projectCost.text = cost;
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom),
-            child: SingleChildScrollView(
-              child: Form(
-                  key: formKey,
-                  child: Container(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 20,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        multiBranch == 'true'
-                            ? DropdownButtonFormField(
-                                value: branchId,
-                                onChanged: (value) async {
-                                  setState(() {
-                                    branchId = value.toString();
-                                  });
-                                },
-                                items: branchList!.data!.map((data) {
-                                  return DropdownMenuItem<String>(
-                                    value: data.branchId.toString(),
-                                    child: Text(
-                                      data.branchName.toString(),
-                                    ),
-                                  );
-                                }).toList(),
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    // Custom border
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  labelText: 'Select Branch',
-                                  prefixIcon: const Icon(
-                                      Icons.arrow_drop_down_circle_outlined,
-                                      color: Colors.grey),
-                                  labelStyle:
-                                      const TextStyle(color: Colors.grey),
-                                ),
-                              )
-                            : const SizedBox(),
-                        const SizedBox(height: 10.0),
-                        GestureDetector(
-                          onTap: () {
-                            dropDialog(context, "Products");
-                          },
-                          child: Container(
-                            width: MediaQuery.of(context).size.width * 1,
-                            height: 65,
-                            decoration: BoxDecoration(
-                              border: Border.all(),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: products.isEmpty
-                                ? const Row(
-                                    children: [
-                                      SizedBox(width: 10),
-                                      Icon(
-                                        Icons.shopping_cart,
-                                        color: Colors.grey,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        'Products *',
-                                        style: TextStyle(
-                                            fontSize: 16, color: Colors.grey),
-                                      ),
-                                    ],
-                                  )
-                                : Row(
-                                    children: [
-                                      const SizedBox(width: 10),
-                                      const Icon(
-                                        Icons.shopping_cart,
-                                        color: Colors.grey,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      SizedBox(
-                                        height: 45,
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .75,
-                                        child: ListView.builder(
-                                          scrollDirection: Axis.horizontal,
-                                          itemCount: productName.length,
-                                          itemBuilder: (context, i) {
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 5, right: 5),
-                                              child: Row(
-                                                children: [
-                                                  Container(
-                                                    height: 45,
-                                                    decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                            color: Colors.grey,
-                                                            width: 0),
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            const BorderRadius
-                                                                .only(
-                                                                topLeft: Radius
-                                                                    .circular(
-                                                                        6),
-                                                                bottomLeft: Radius
-                                                                    .circular(
-                                                                        6))),
-                                                    child: Center(
-                                                      child: Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(10),
-                                                            child: Text(
-                                                              productName[i],
-                                                              style:
-                                                                  const TextStyle(
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return AlertDialog(
-                                                              title: const Text(
-                                                                  'Please Confirm'),
-                                                              content: const Text(
-                                                                  'Are you sure to Remove this Number?'),
-                                                              actions: [
-                                                                // The "Yes" button
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () async {
-                                                                      productName
-                                                                          .remove(
-                                                                              productName[i]);
-                                                                      products
-                                                                          .removeAt(
-                                                                              i);
-                                                                      productCost =
-                                                                          0;
-
-                                                                      for (int ind =
-                                                                              0;
-                                                                          ind <
-                                                                              products.length;
-                                                                          ind++) {
-                                                                        productCost +=
-                                                                            double.parse(products[ind].prdCost);
-                                                                      }
-                                                                      projectCost
-                                                                              .text =
-                                                                          (productCost)
-                                                                              .toString();
-                                                                      setState(
-                                                                          () {});
-
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop();
-                                                                    },
-                                                                    child: const Text(
-                                                                        'Yes')),
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop();
-                                                                    },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No'))
-                                                              ],
-                                                            );
-                                                          });
-                                                    },
-                                                    child: Container(
-                                                      height: 45,
-                                                      width: 40,
-                                                      decoration: BoxDecoration(
-                                                          border: Border.all(
-                                                              color:
-                                                                  Colors.grey,
-                                                              width: 0),
-                                                          color: Colors
-                                                              .grey.shade100,
-                                                          borderRadius:
-                                                              const BorderRadius
-                                                                  .only(
-                                                                  topRight: Radius
-                                                                      .circular(
-                                                                          6),
-                                                                  bottomRight:
-                                                                      Radius.circular(
-                                                                          6))),
-                                                      child: const Icon(
-                                                        Icons.close,
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        TextFormField(
-                          controller: startDate,
-                          readOnly: true,
-                          onTap: () async {
-                            selectedValue = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                            );
-                            setState(() {
-                              startDate.text = DateFormat('dd-MM-yyyy')
-                                  .format(selectedValue!);
-                              final endValue = selectedValue!
-                                  .add(Duration(days: int.parse(duration)));
-                              endDate.text =
-                                  DateFormat('dd-MM-yyyy').format(endValue);
-                            });
-                          },
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Select Start Date";
-                            }
-                            return null;
-                          },
-                          decoration: const InputDecoration(
-                              labelText: 'Start Date',
-                              prefixIcon: Icon(Icons.calendar_month,
-                                  color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextFormField(
-                          onTap: () async {
-                            DateTime? selectedEndDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                            );
-                            endDate.text = DateFormat('dd-MM-yyyy')
-                                .format(selectedEndDate!);
-                          },
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Select End Date";
-                            }
-                            return null;
-                          },
-                          readOnly: true,
-                          controller: endDate,
-                          decoration: const InputDecoration(
-                              labelText: 'End Date',
-                              prefixIcon: Icon(Icons.calendar_month,
-                                  color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextFormField(
-                          controller: projectCost,
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Project Cost";
-                            }
-                            return null;
-                          },
-                          decoration: const InputDecoration(
-                              labelText: 'Project Cost',
-                              prefixIcon: Icon(Icons.currency_rupee,
-                                  color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextFormField(
-                          controller: remarks,
-                          decoration: const InputDecoration(
-                              labelText: 'Remarks',
-                              prefixIcon:
-                                  Icon(Icons.notifications, color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        const SizedBox(height: 10.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Checkbox(
-                                fillColor: createInvoice == true
-                                    ? const WidgetStatePropertyAll(Colors.blue)
-                                    : const WidgetStatePropertyAll(
-                                        Colors.white),
-                                checkColor: Colors.white,
-                                value: createInvoice,
-                                onChanged: (value) {
-                                  setState(() {
-                                    createInvoice = value!;
-                                  });
-                                }),
-                            const Text("Create Invoice")
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Checkbox(
-                                fillColor: isPaid == true
-                                    ? const WidgetStatePropertyAll(Colors.blue)
-                                    : const WidgetStatePropertyAll(
-                                        Colors.white),
-                                checkColor: Colors.white,
-                                value: isPaid,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isPaid = value!;
-                                    if (isPaid == true) {
-                                      createInvoice = value;
-                                    }
-                                  });
-                                }),
-                            const Text("Paid")
-                          ],
-                        ),
-                        const SizedBox(height: 20.0),
-                        Container(
-                          height: 40,
-                          width: double.maxFinite,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF3375e0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          child: RawMaterialButton(
-                            onPressed: () async {
-                              if (formKey.currentState!.validate()) {
-                                Navigator.pop(context);
-                                await postRenewDetails(id);
-                                page = 1;
-                                add = 1;
-                                items.clear();
-                                getList();
-                              }
-                            },
-                            child: const Text("Renew",
-                                style: TextStyle(color: Colors.white)),
-                          ),
-                        )
-                      ],
-                    ),
-                  )),
-            ),
-          );
         });
       },
     );

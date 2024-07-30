@@ -36,6 +36,9 @@ class Data {
   String customerName;
   DateTime startDate;
   DateTime endDate;
+  String nextStartDate;
+  String nextEndDate;
+  String noOfDays;
   String templateId;
   String branchId;
   String remarks;
@@ -51,6 +54,10 @@ class Data {
   String paymentStatus;
   String receiptCount;
   String paidAmount;
+  String paymentMethod;
+  String templateName;
+  bool createInvoice;
+  bool createReceipt;
   List<InvoiceList> invoiceLists;
   List<PaymentStatusList> paymentStatusList;
   List<Customer> paymentMethods;
@@ -59,8 +66,6 @@ class Data {
   List<AllProduct> allProducts;
   List<dynamic> branch;
   List<Staff> staff;
-  String payment_method;
-  String template_name;
 
   Data({
     required this.uniId,
@@ -95,8 +100,13 @@ class Data {
     required this.allProducts,
     required this.branch,
     required this.staff,
-    required this.payment_method,
-    required this.template_name,
+    required this.paymentMethod,
+    required this.templateName,
+    required this.createInvoice,
+    required this.createReceipt,
+    required this.nextStartDate,
+    required this.nextEndDate,
+    required this.noOfDays,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -110,6 +120,9 @@ class Data {
         startDate: DateTime.parse(json["start_date"]),
         endDate: DateTime.parse(json["end_date"]),
         templateId: json["template_id"] ?? "",
+        nextStartDate: json["next_start_date"]??"",
+        nextEndDate: json["next_end_date"]??"",
+        noOfDays: json["no_of_days"] ?? "",
         branchId: json["branch_id"] ?? "",
         remarks: json["remarks"] ?? "",
         slNumber: json["sl_number"] ?? "",
@@ -124,6 +137,10 @@ class Data {
         paymentStatus: json["payment_status"] ?? "",
         receiptCount: json["receipt_count"] ?? "",
         paidAmount: json["paid_amount"] ?? "",
+        paymentMethod: json["payment_method"] ?? "",
+        templateName: json["template_name"] ?? "",
+        createInvoice: json["create_invoice"] ?? false,
+        createReceipt: json["create_receipt"] ?? false,
         invoiceLists: List<InvoiceList>.from(
             json["invoice_lists"].map((x) => InvoiceList.fromJson(x))),
         paymentStatusList: List<PaymentStatusList>.from(
@@ -139,8 +156,6 @@ class Data {
             json["all_products"].map((x) => AllProduct.fromJson(x))),
         branch: List<dynamic>.from(json["branch"].map((x) => x)),
         staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
-        payment_method: json["payment_method"] ?? "",
-        template_name: json["template_name"] ?? "",
       );
 }
 
@@ -216,8 +231,8 @@ class InvoiceList {
         productDescription: json["product_description"] ?? "",
         rate: json["rate"] ?? "",
         qty: json["qty"] ?? "",
-        taxPercentage: json["tax_percentage"] ?? "",
-        taxAmount: json["tax_amount"] ?? "",
+        taxPercentage: json["tax_percentage"] ?? "0",
+        taxAmount: json["tax_amount"] ?? "0",
         amount: json["amount"] ?? "",
       );
 }

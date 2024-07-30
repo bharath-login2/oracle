@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
-import 'package:login2/models/renewal/edit_renewal_details_model.dart';
+import 'package:login2/models/renewal/renewal_by_id_model.dart';
 import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/service/service.dart';
 
@@ -106,11 +106,16 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
       customerName.text = renewalDetails!.data.customerName;
       customerId = renewalDetails!.data.clientId;
       payStat = renewalDetails!.data.paymentStatus;
-      totalPaidAmount.text = renewalDetails!.data.paidAmount;
       startDate.text = formatDate(renewalDetails!.data.startDate);
       endDate.text = formatDate(renewalDetails!.data.endDate);
-      remindMe.text = renewalDetails!.data.templateId;
+      remindMe.text = renewalDetails!.data.templateName;
+      templateId = renewalDetails!.data.templateId;
       remark.text = renewalDetails!.data.remarks;
+      if (payStat == "unpaid") {
+        totalPaidAmount.text = renewalDetails!.data.totalAmount;
+      } else {
+        totalPaidAmount.text = renewalDetails!.data.paidAmount;
+      }
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
         productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
@@ -1095,10 +1100,44 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                       if (uploading == false) {
                         if (formKey.currentState!.validate() &&
                             products.isNotEmpty) {
-                          setState(() {
-                            uploading = true;
-                          });
-                          // post();
+                          if (totalProductCost ==
+                              double.parse(renewalDetails!.data.paidAmount)) {
+                            setState(() {
+                              uploading = true;
+                            });
+                            updateRenewal();
+                          } else {
+                            showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title:
+                                        const Text('Total amount changed!',style: TextStyle(fontSize: 18,color: Colors.red),),
+                                    content: SizedBox(
+                                      width: MediaQuery.of(context).size.width *.5,
+                                      child: Text(
+                                          'Total amount changed ₹${renewalDetails!.data.paidAmount} to ₹${totalProductCost.toString()}'),
+                                    ),
+                                    actions: [
+                                      // The "Yes" button
+                                      TextButton(
+                                          onPressed: () async {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel')),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                            setState(() {
+                                              uploading = true;
+                                            });
+                                            updateRenewal();
+                                          },
+                                          child: const Text('Continue'))
+                                    ],
+                                  );
+                                });
+                          }
                         } else if (products.isEmpty) {
                           Common.toastMessaage(
                               "Add a product to continue", Colors.red);
@@ -1115,7 +1154,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                             ),
                           )
                         : const Text(
-                            "Submit",
+                            "Update",
                             style: TextStyle(color: Colors.white),
                           ),
                   ),

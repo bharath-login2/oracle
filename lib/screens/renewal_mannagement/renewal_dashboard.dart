@@ -757,71 +757,74 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
             backgroundColor: Colors.blue.shade700,
             foregroundColor: Colors.white,
             onPressed: () {
-              showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      scrollable: true,
-                      content: Column(
-                        children: [
-                          SizedBox(
-                              height: 100,
-                              width: 200,
-                              child: Padding(
-                                padding: const EdgeInsets.all(30.0),
-                                child: Image.asset("assets/main/bill_logo.png"),
-                              )),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              GestureDetector(
-                                  onTap: () async {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const QuickRenewal(),
-                                        ));
-                                  },
-                                  child: Container(
-                                      height: 50,
-                                      width: 100,
-                                      decoration: BoxDecoration(
-                                          color: Colors.green.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                      child: const Center(
-                                          child: Text('Quick\nInsert')))),
-                              GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CustomRenewal(),
-                                        ));
-                                  },
-                                  child: Container(
-                                      height: 50,
-                                      width: 100,
-                                      decoration: BoxDecoration(
-                                          color: Colors.green.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(10)),
-                                      child: const Center(
-                                          child:
-                                              Text('Custom\nRenewal'))))
-                            ],
-                          )
-                        ],
-                      ),
-                    );
-                  });
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CustomRenewal(),
+                  ));
+              // renewalAddDialog(context);
             },
             label: const Row(
               children: [Icon(Icons.add), Text(" Renewal")],
             )),
       ),
     );
+  }
+
+  Future<dynamic> renewalAddDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            content: Column(
+              children: [
+                SizedBox(
+                    height: 100,
+                    width: 200,
+                    child: Padding(
+                      padding: const EdgeInsets.all(30.0),
+                      child: Image.asset("assets/main/bill_logo.png"),
+                    )),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                        onTap: () async {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const QuickRenewal(),
+                              ));
+                        },
+                        child: Container(
+                            height: 50,
+                            width: 100,
+                            decoration: BoxDecoration(
+                                color: Colors.green.shade100,
+                                borderRadius: BorderRadius.circular(10)),
+                            child: const Center(child: Text('Quick\nInsert')))),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CustomRenewal(),
+                              ));
+                        },
+                        child: Container(
+                            height: 50,
+                            width: 100,
+                            decoration: BoxDecoration(
+                                color: Colors.green.shade100,
+                                borderRadius: BorderRadius.circular(10)),
+                            child:
+                                const Center(child: Text('Custom\nRenewal'))))
+                  ],
+                )
+              ],
+            ),
+          );
+        });
   }
 }

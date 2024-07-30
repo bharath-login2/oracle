@@ -1,29 +1,25 @@
-// ignore_for_file: must_be_immutable, await_only_futures, use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, must_be_immutable
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/renewal/post_renew_details.dart';
 import 'package:login2/models/renewal/renewal_by_id_model.dart';
-import 'package:login2/models/renewal/post_renewal.dart';
+import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/service/service.dart';
 
-class EditQuickRenewalScreen extends StatefulWidget {
+class RenewQuickRenewal extends StatefulWidget {
   String id;
-  dynamic invoiceId;
-  EditQuickRenewalScreen({
-    super.key,
-    required this.id,
-    required this.invoiceId,
-  });
+   RenewQuickRenewal({super.key,required this.id});
 
   @override
-  State<EditQuickRenewalScreen> createState() => _EditQuickRenewalScreenState();
+  State<RenewQuickRenewal> createState() => _RenewQuickRenewalState();
 }
 
-class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
+class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
   final formKey = GlobalKey<FormState>();
   RenewalByIdModel? renewalDetails;
-  PostRenewalModel? postResponse;
+  PostRenewDetailsModel? postRenewal;
 
   bool isLoading = true;
   List filteredNames = [];
@@ -61,16 +57,9 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
       filteredProducts = renewalDetails!.data.allProducts;
       filteredTemplates = renewalDetails!.data.renewalTemplate;
       customerId = renewalDetails!.data.clientId;
-      startDate.text = formatDate(renewalDetails!.data.startDate);
-      endDate.text = formatDate(renewalDetails!.data.endDate);
-      remark.text = renewalDetails!.data.remarks;
       productCost.text = renewalDetails!.data.totalAmount;
       customerName.text = renewalDetails!.data.customerName;
       customerId = renewalDetails!.data.clientId;
-      remindMe.text = renewalDetails!.data.templateName;
-      templateId = renewalDetails!.data.templateId;
-      createInvoice = renewalDetails!.data.createInvoice;
-      isPaid = renewalDetails!.data.createReceipt;
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
         productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
@@ -117,28 +106,37 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
         .toList();
   }
 
-  updateRenewal() async {
-    postResponse = await HttpService.updateQuickRenewal(
-        renewalDetails!.data.renewalId,
-        "quick",
-        customerId,
-        branch,
-        startDate.text,
-        endDate.text,
-        products,
-        templateId,
-        remark.text,
-        productCost.text,
-        totalProductCost,
-        isPaid,
-        createInvoice,
-        renewalDetails!.data.invoicelId);
-
-    if (postResponse != null && postResponse!.status == true) {
-      Navigator.pop(context);
-      Common.toastMessaage(postResponse!.message, Colors.green);
+  renew() async {
+    postRenewal = await HttpService.postRenewQuick(
+      branch,
+      renewalDetails!.data.renewalId,
+      startDate.text,
+      endDate.text,
+      productCost.text,
+      remark.text,
+      createInvoice,
+      products,
+      customerId,
+      isPaid,
+      createInvoice,
+      "quick",
+      templateId,
+    );
+    if (postRenewal != null && postRenewal!.status == true) {
+      String token = await Common.getSharedPref('token');
+      Common.toastMessaage(postRenewal!.message, Colors.green);
+      if (postRenewal!.data.isRedirect == false) {
+        Navigator.pop(context);
+      } else {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddInvoice(token, postRenewal!.data.customerId.toString()),
+            ));
+      }
     } else {
-      Common.toastMessaage(postResponse!.message, Colors.red);
+      Common.toastMessaage(postRenewal!.message, Colors.red);
     }
   }
 
@@ -195,7 +193,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                         width: 25,
                       ),
                       const Text(
-                        "Edit Renewal",
+                        "Renew Details",
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],
@@ -600,7 +598,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                           child: RawMaterialButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
-                                updateRenewal();
+                                renew();
                               }
                             },
                             child: const Text(

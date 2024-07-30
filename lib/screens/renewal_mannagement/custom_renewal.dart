@@ -306,7 +306,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           appBar: AppBar(
             backgroundColor: const Color(0xFF3375e0),
             foregroundColor: Colors.white,
-            title: const Text("Custom Renewal"),
+            title: const Text("Add Renewal"),
             leading: InkWell(
               onTap: () {
                 Navigator.pop(context);
