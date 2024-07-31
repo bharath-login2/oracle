@@ -79,7 +79,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
           "product_rate": renewalDetails!.data.invoiceLists[i].rate,
           "quantity": renewalDetails!.data.invoiceLists[i].qty,
           "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
-          "tax_percent_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+          "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
           "total_amount": renewalDetails!.data.invoiceLists[i].amount,
           "description":
               renewalDetails!.data.invoiceLists[i].productDescription,
@@ -714,7 +714,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                 "quantity": 1,
                                 "tax_percent":
                                     filteredProducts[index].taxPercent,
-                                "tax_percent_amount":
+                                "total_tax_amount":
                                     filteredProducts[index].taxAmount,
                                 "total_amount":
                                     filteredProducts[index].sellingPrice,

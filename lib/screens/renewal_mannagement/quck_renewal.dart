@@ -1518,7 +1518,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 "quantity": 1,
                                 "tax_percent":
                                     filteredProducts[index].taxPercent,
-                                "tax_percent_amount":
+                                "total_tax_amount":
                                     filteredProducts[index].taxAmount,
                                 "total_amount":
                                     filteredProducts[index].sellingPrice,
@@ -1658,7 +1658,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                 "quantity": 1,
                                 "tax_percent":
                                     filteredProducts[index].taxPercent,
-                                "tax_percent_amount":
+                                "total_tax_amount":
                                     filteredProducts[index].taxAmount,
                                 "total_amount":
                                     filteredProducts[index].sellingPrice,

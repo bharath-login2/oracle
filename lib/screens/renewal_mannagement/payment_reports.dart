@@ -52,8 +52,7 @@ class _PaymentReportState extends State<PaymentReport> {
 
   void _onLoadMore() {
     if (items.length + 20 == page * pageSize &&
-        itemPositionsListener.itemPositions.value.last.index ==
-            items.length - 1) {
+        itemPositionsListener.itemPositions.value.last.index == items.length) {
       getList();
     }
   }
@@ -67,7 +66,7 @@ class _PaymentReportState extends State<PaymentReport> {
       toDate,
       daysToExpire,
     );
-    if (listResponse != null) {
+    if (listResponse != null && listResponse!.status == true) {
       items.addAll(listResponse!.data.lists);
       page++;
       setState(() {
@@ -179,67 +178,67 @@ class _PaymentReportState extends State<PaymentReport> {
                         width: 150,
                         child: Image.asset("assets/icons/missed_leads.png")),
                   )
-                : SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          decoration: const BoxDecoration(
-                              gradient: LinearGradient(colors: [
-                            Color(0xFF2a86c9),
-                            Color(0xFF406dbe)
-                          ])),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Total Amount : ${listResponse!.data.totalAmount}/-",
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(
-                                  "Total Paid : ${listResponse!.data.totalPaid}/-",
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(
-                                  "Balance Amount : ${listResponse!.data.balanceAmount}/-",
-                                  style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                              ],
-                            ),
+                : Column(
+                    children: [
+                       Container(
+                        width: MediaQuery.of(context).size.width,
+                        decoration: const BoxDecoration(
+                            gradient: LinearGradient(colors: [
+                          Color(0xFF2a86c9),
+                          Color(0xFF406dbe)
+                        ])),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Total Amount : ${listResponse!.data.totalAmount}/-",
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                "Total Paid : ${listResponse!.data.totalPaid}/-",
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                "Balance Amount : ${listResponse!.data.balanceAmount}/-",
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                            ],
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: ScrollablePositionedList.builder(
-                              shrinkWrap: true,
-                              itemScrollController: itemScrollController,
-                              itemPositionsListener: itemPositionsListener,
-                              itemCount: items.length +
-                                  (items.length + 20 == page * pageSize
-                                      ? 1
-                                      : 0),
-                              initialScrollIndex: 0,
-                              itemBuilder: (context, index) {
+                      ),
+                
+                      Expanded(
+                        child: ScrollablePositionedList.builder(
+                            shrinkWrap: true,
+                            itemScrollController: itemScrollController,
+                            itemPositionsListener: itemPositionsListener,
+                            itemCount: items.length +
+                                (items.length + 20 == page * pageSize ? 1 : 0),
+                            initialScrollIndex: 0,
+                            itemBuilder: (context, index) {
+                              if (index == items.length) {
+                                return buildLoaderListItem();
+                              } else {
                                 return Padding(
                                   padding: const EdgeInsets.only(
-                                      bottom: 8.0, top: 8.0),
+                                      bottom: 8.0, top: 8.0,left: 8.0,right: 8.0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width * .9,
@@ -385,11 +384,11 @@ class _PaymentReportState extends State<PaymentReport> {
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontWeight: FontWeight.bold,
-                                                                    fontSize:
-                                                                        20),
+                                                            style: const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 20),
                                                           ),
                                                         ),
                                                       ],
@@ -427,9 +426,12 @@ class _PaymentReportState extends State<PaymentReport> {
                                                     height: 10,
                                                   ),
                                                   Visibility(
-                                                    visible:
-                                                        items[index].isPaid ==
-                                                            true,
+                                                    visible: items[index]
+                                                                .isPaid ==
+                                                            true &&
+                                                        items[index]
+                                                                .paymentMode !=
+                                                            "",
                                                     child: Container(
                                                       decoration:
                                                           const BoxDecoration(
@@ -516,10 +518,10 @@ class _PaymentReportState extends State<PaymentReport> {
                                     ),
                                   ),
                                 );
-                              }),
-                        )
-                      ],
-                    ),
+                              }
+                            }),
+                      ),
+                         ],
                   ),
       ),
     );

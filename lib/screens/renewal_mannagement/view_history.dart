@@ -19,10 +19,19 @@ class _ViewHistoryState extends State<ViewHistory> {
   ReminderHistoryModel? response;
 
   getHistory() async {
-    response = await HttpService.viewHistory(widget.id);
     setState(() {
-      isLoading = false;
+      isLoading = true;
     });
+    response = await HttpService.viewHistory(widget.id);
+    if (response != null && response!.status == true) {
+      setState(() {
+        isLoading = false;
+      });
+    }{
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override

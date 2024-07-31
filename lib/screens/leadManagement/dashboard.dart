@@ -609,6 +609,9 @@ class _DashboardState extends State<Dashboard> {
                                                       int i) {
                                                 return GestureDetector(
                                                   onTap: () async {
+                                                    log(userDashboard!.data!
+                                                        .modules![i].menuName
+                                                        .toString());
                                                     if (configure!
                                                             .data!.isExpired ==
                                                         true) {
@@ -642,7 +645,7 @@ class _DashboardState extends State<Dashboard> {
                                                               .data!
                                                               .modules![i]
                                                               .menuName ==
-                                                          'messages') {
+                                                          'whatsapp') {
                                                         Navigator.push(
                                                           context,
                                                           MaterialPageRoute(

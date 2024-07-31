@@ -59,7 +59,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
   String whCodeNew = "91";
   List productsExisting = [];
   List productsNew = [];
-  List productName = [];
+  List productNameListExisting = [];
+  List productNameListNew = [];
   double totalProductCostExisting = 0;
   double totalProductCostNew = 0;
   double totalProductTaxExisting = 0;
@@ -384,7 +385,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Customer *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -396,9 +397,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 ),
                 const SizedBox(height: 14.0),
                 TextFormField(
+                  
                   controller: invoiceNumber,
                   readOnly: true,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Number',
                     prefixIcon: Icon(Icons.receipt, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -430,7 +432,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Date',
                     prefixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -456,7 +458,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: InputDecoration(
+                        decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(
                             // Custom border
                             borderRadius: BorderRadius.circular(5),
@@ -484,7 +486,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   onTap: (() {
                     dropDialogExisting(context, "Products");
                   }),
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Product *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -504,7 +506,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         onChanged: (val) {
                           calculateTotalExisting();
                         },
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Rate *',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -562,7 +564,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 ),
                                 labelStyle: const TextStyle(color: Colors.grey),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 14),
+                                    horizontal: 8.0, vertical: 8,),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(5.0),
                                 ),
@@ -616,7 +618,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         },
                         keyboardType: TextInputType.number,
                         controller: prodTaxExisting,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Tax(in %)',
                             prefixIcon: Icon(Icons.percent, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -633,7 +635,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         readOnly: true,
                         controller: prodAmountExisting,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Amount',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -653,7 +655,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         maxLines: 2,
                         controller: prodDetailsExisting,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Details',
                             prefixIcon:
                                 Icon(Icons.receipt_long, color: Colors.grey),
@@ -723,7 +725,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 InkWell(
                                     onTap: () async {
                                       productsExisting.removeAt(index);
-                                      productName.removeAt(index);
+                                      productNameListExisting.removeAt(index);
                                       totalProductCostExisting = 0;
                                       totalProductTaxExisting = 0;
                                       for (int i = 0;
@@ -735,7 +737,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                                     "total_amount"]);
                                         totalProductTaxExisting += double.parse(
                                             (await productsExisting[i])[
-                                                "tax_percent_amount"]);
+                                                "total_tax_amount"]);
                                       }
                                       subTotalExisting.text =
                                           totalProductCostExisting.toString();
@@ -764,7 +766,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         ),
                       );
                     }),
-                const SizedBox(height: 25.0),
+                const SizedBox(height: 15.0),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 26.0),
                   child: Column(
@@ -786,7 +788,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: subTotalExisting,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Sub Total',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -819,7 +821,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalTaxExisting,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Tax',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -865,7 +867,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: discountExisting,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Discount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -911,7 +913,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeExisting,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Shipping Charge',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -944,7 +946,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalAmountExisting,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Amount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -963,7 +965,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 25.0),
+                const SizedBox(height: 15.0),
                 DropdownButtonFormField(
                   validator: (val) {
                     if (val == "" || val == null) {
@@ -984,7 +986,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                     );
                   }).toList(),
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
@@ -1004,8 +1006,11 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       TextFormField(
                         validator: (value) {
                           if (payStatExisting == "partial") {
-                            if (value == "") {
+                            double val = double.parse(value!);
+                            if (value == "" || val == 0) {
                               return "Enter Amount";
+                            } else if (val >= totalProductCostExisting) {
+                              return "Paid amount cannot be greater than or equal to total cost";
                             }
                           }
                           return null;
@@ -1013,7 +1018,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: payStatExisting != "partial" ? true : false,
                         keyboardType: TextInputType.number,
                         controller: totalPaidAmountExisting,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Total Amount Paid',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1048,7 +1053,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -1085,7 +1090,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -1126,7 +1131,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Start Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -1156,7 +1161,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: endDateExisting,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'End Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -1173,7 +1178,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: remindMeExisting,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Remind Template *',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1185,7 +1190,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: remarkExisting,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Remarks',
                       prefixIcon: Icon(Icons.description, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1263,7 +1268,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Customer Name *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1277,7 +1282,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   controller: invoiceNumber,
                   readOnly: true,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Number',
                     prefixIcon: Icon(Icons.receipt, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1309,7 +1314,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Date',
                     prefixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1336,7 +1341,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: InputDecoration(
+                  decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Number *',
                     prefix: Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -1370,7 +1375,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   keyboardType: TextInputType.phone,
                   controller: whatsappNumber,
-                  decoration: InputDecoration(
+                  decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'WhatsApp Number',
                     prefix: Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -1410,7 +1415,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.border_color, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1422,7 +1427,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address1,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 1',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1435,7 +1440,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address2,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 2',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1448,7 +1453,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address3,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 3',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1462,7 +1467,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   keyboardType: TextInputType.number,
                   controller: pinCode,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Pincode',
                     prefixIcon: Icon(Icons.pin_drop, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1475,7 +1480,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: postOffice,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Post Office',
                     prefixIcon:
                         Icon(Icons.local_post_office_sharp, color: Colors.grey),
@@ -1489,7 +1494,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: gstNumber,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'GST Number',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1515,7 +1520,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: InputDecoration(
+                        decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(
                             // Custom border
                             borderRadius: BorderRadius.circular(5),
@@ -1543,7 +1548,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   onTap: (() {
                     dropDialogNew(context, "Products");
                   }),
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     labelText: 'Product *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1563,7 +1568,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         onChanged: (val) {
                           calculateTotalNew();
                         },
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Rate *',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1675,7 +1680,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         },
                         keyboardType: TextInputType.number,
                         controller: prodTaxNew,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Tax(in %)',
                             prefixIcon: Icon(Icons.percent, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -1692,7 +1697,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         readOnly: true,
                         controller: prodAmountNew,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Amount',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1712,7 +1717,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         maxLines: 2,
                         controller: prodDetailsNew,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Details',
                             prefixIcon:
                                 Icon(Icons.receipt_long, color: Colors.grey),
@@ -1782,7 +1787,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 InkWell(
                                     onTap: () async {
                                       productsNew.removeAt(index);
-                                      productName.removeAt(index);
+                                      productNameListNew.removeAt(index);
                                       totalProductCostNew = 0;
                                       totalProductTaxNew = 0;
                                       for (int i = 0;
@@ -1793,7 +1798,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                                 "total_amount"]);
                                         totalProductTaxNew += double.parse(
                                             (await productsNew[i])[
-                                                "tax_percent_amount"]);
+                                                "total_tax_amount"]);
                                       }
                                       subTotalNew.text =
                                           totalProductCostNew.toString();
@@ -1822,7 +1827,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         ),
                       );
                     }),
-                const SizedBox(height: 25.0),
+                const SizedBox(height: 15.0),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 26.0),
                   child: Column(
@@ -1844,7 +1849,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: subTotalNew,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Sub Total',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1877,7 +1882,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalTaxNew,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Tax',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1921,7 +1926,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: discountNew,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Discount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1965,7 +1970,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeNew,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Shipping Charge',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1998,7 +2003,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalAmountNew,
-                              decoration: const InputDecoration(
+                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Amount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -2017,7 +2022,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 25.0),
+                const SizedBox(height: 15.0),
                 DropdownButtonFormField(
                   validator: (val) {
                     if (val == "" || val == null) {
@@ -2038,7 +2043,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                     );
                   }).toList(),
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
@@ -2057,8 +2062,11 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       TextFormField(
                         validator: (value) {
                           if (payStatNew == "partial") {
-                            if (value == "") {
+                            double val = double.parse(value!);
+                            if (value == "" || val == 0) {
                               return "Enter Amount";
+                            } else if (val >= totalProductCostNew) {
+                              return "Paid amount cannot be greater than or equal to total cost";
                             }
                           }
                           return null;
@@ -2066,7 +2074,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: payStatNew != "partial" ? true : false,
                         keyboardType: TextInputType.number,
                         controller: totalPaidAmountNew,
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                             labelText: 'Total Amount Paid',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -2100,7 +2108,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -2136,7 +2144,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(
+                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -2177,7 +2185,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Start Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -2207,7 +2215,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: endDateNew,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'End Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -2224,7 +2232,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: remindMeNew,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Remind Template *',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -2236,7 +2244,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: remarkNew,
-                  decoration: const InputDecoration(
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
                       labelText: 'Remarks',
                       prefixIcon: Icon(Icons.description, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -2536,7 +2544,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   }
 
   addProductExisting() async {
-    if (productName.contains(productNameExisting.text)) {
+    if (productNameListExisting.contains(productNameExisting.text)) {
       Common.toastMessaage('Already Added', Colors.red);
     } else {
       if (productNameExisting.text != "") {
@@ -2546,11 +2554,11 @@ class _CustomRenewalState extends State<CustomRenewal> {
           "product_rate": prodRateExisting.text,
           "quantity": productQuantityExisting.text,
           "tax_percent": prodTaxExisting.text,
-          "tax_percent_amount": productTaxExisting.toString(),
+          "total_tax_amount": productTaxExisting.toString(),
           "total_amount": prodAmountExisting.text,
           "description": prodDetailsExisting.text,
         });
-        productName.add(productNameExisting.text);
+        productNameListExisting.add(productNameExisting.text);
         productNameExisting.text = "";
         prodRateExisting.text = "";
         productQuantityExisting.text = "1";
@@ -2563,7 +2571,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           totalProductCostExisting +=
               double.parse((await productsExisting[i])["total_amount"]);
           totalProductTaxExisting +=
-              double.parse((await productsExisting[i])["tax_percent_amount"]);
+              double.parse((await productsExisting[i])["total_tax_amount"]);
         }
         subTotalExisting.text = totalProductCostExisting.toString();
         totalTaxExisting.text = totalProductTaxExisting.toString();
@@ -2595,7 +2603,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   }
 
   addProductNew() async {
-    if (productName.contains(productNameNew.text)) {
+    if (productNameListNew.contains(productNameNew.text)) {
       Common.toastMessaage('Already Added', Colors.red);
     } else {
       if (productNameNew.text != "") {
@@ -2605,11 +2613,11 @@ class _CustomRenewalState extends State<CustomRenewal> {
           "product_rate": prodRateNew.text,
           "quantity": productQuantityNew.text,
           "tax_percent": prodTaxNew.text,
-          "tax_percent_amount": productTaxNew.toString(),
+          "total_tax_amount": productTaxNew.toString(),
           "total_amount": prodAmountNew.text,
           "description": prodDetailsNew.text,
         });
-        productName.add(productNameNew.text);
+        productNameListNew.add(productNameNew.text);
         productNameNew.text = "";
         prodRateNew.text = "";
         productQuantityNew.text = "1";
@@ -2622,7 +2630,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           totalProductCostNew +=
               double.parse((await productsNew[i])["total_amount"]);
           totalProductTaxNew +=
-              double.parse((await productsNew[i])["tax_percent_amount"]);
+              double.parse((await productsNew[i])["total_tax_amount"]);
         }
         subTotalNew.text = totalProductCostNew.toString();
         totalTaxNew.text = totalProductTaxNew.toString();

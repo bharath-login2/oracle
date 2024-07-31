@@ -3707,7 +3707,6 @@ class HttpService {
     endDate,
     cost,
     remarks,
-    addInvoice,
     renewalProduct,
     customerId,
     isPaid,
@@ -3726,18 +3725,19 @@ class HttpService {
       "customer_id": customerId,
       "is_paid": isPaid,
       "create_invoice": createInvoice,
-      "renewal_product": renewalProduct,
+      "renewal_product": jsonEncode(renewalProduct),
       "renewal_type": renewalType,
       "template_id": templateId,
       "check_id_val": DateTime.now().millisecondsSinceEpoch,
     });
+    log(jsonEncode(renewalProduct));
 
     try {
       var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
           data: formData);
       if (result.statusCode == 200) {
-        PostRenewDetailsModel response =
-            PostRenewDetailsModel.fromJson(result.data);
+        PostRenewalModel response =
+            PostRenewalModel.fromJson(result.data);
         return response;
       }
     } catch (e) {

@@ -1,16 +1,19 @@
 // ignore_for_file: use_build_context_synchronously, must_be_immutable
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/post_renew_details.dart';
+import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/renewal_by_id_model.dart';
 import 'package:login2/screens/clients/addInvoice.dart';
 import 'package:login2/service/service.dart';
 
 class RenewQuickRenewal extends StatefulWidget {
   String id;
-   RenewQuickRenewal({super.key,required this.id});
+  RenewQuickRenewal({super.key, required this.id});
 
   @override
   State<RenewQuickRenewal> createState() => _RenewQuickRenewalState();
@@ -19,7 +22,7 @@ class RenewQuickRenewal extends StatefulWidget {
 class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
   final formKey = GlobalKey<FormState>();
   RenewalByIdModel? renewalDetails;
-  PostRenewDetailsModel? postRenewal;
+  PostRenewalModel? postRenewal;
 
   bool isLoading = true;
   List filteredNames = [];
@@ -60,6 +63,8 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
       productCost.text = renewalDetails!.data.totalAmount;
       customerName.text = renewalDetails!.data.customerName;
       customerId = renewalDetails!.data.clientId;
+      startDate.text = renewalDetails!.data.nextStartDate;
+      endDate.text = renewalDetails!.data.nextEndDate;
       for (int i = 0; i < renewalDetails!.data.invoiceLists.length; i++) {
         productName.add(renewalDetails!.data.invoiceLists[i].productName);
         products.add({
@@ -68,7 +73,7 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
           "product_rate": renewalDetails!.data.invoiceLists[i].rate,
           "quantity": renewalDetails!.data.invoiceLists[i].qty,
           "tax_percent": renewalDetails!.data.invoiceLists[i].taxPercentage,
-          "tax_percent_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
+          "total_tax_amount": renewalDetails!.data.invoiceLists[i].taxAmount,
           "total_amount": renewalDetails!.data.invoiceLists[i].amount,
           "description":
               renewalDetails!.data.invoiceLists[i].productDescription,
@@ -114,7 +119,6 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
       endDate.text,
       productCost.text,
       remark.text,
-      createInvoice,
       products,
       customerId,
       isPaid,
@@ -122,21 +126,24 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
       "quick",
       templateId,
     );
-    if (postRenewal != null && postRenewal!.status == true) {
-      String token = await Common.getSharedPref('token');
+    try{if (postRenewal != null && postRenewal!.status == true) {
+      // String token = await Common.getSharedPref('token');
       Common.toastMessaage(postRenewal!.message, Colors.green);
-      if (postRenewal!.data.isRedirect == false) {
-        Navigator.pop(context);
-      } else {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  AddInvoice(token, postRenewal!.data.customerId.toString()),
-            ));
-      }
+      Navigator.pop(context);
+      // if (postRenewal!.data.isRedirect == false) {
+      //   Navigator.pop(context);
+      // } else {
+      //   Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) =>
+      //             AddInvoice(token, postRenewal!.data.customerId.toString()),
+      //       ));
+      // }
     } else {
       Common.toastMessaage(postRenewal!.message, Colors.red);
+    }}catch(e){
+      Common.toastMessaage("Something went wrong!", Colors.red);
     }
   }
 
@@ -193,8 +200,8 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                         width: 25,
                       ),
                       const Text(
-                        "Renew Details",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
+                        "RENEW PRODUCT",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ],
                   ),
@@ -602,7 +609,7 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                               }
                             },
                             child: const Text(
-                              "Update",
+                              "Renew",
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
@@ -712,7 +719,7 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                                 "quantity": 1,
                                 "tax_percent":
                                     filteredProducts[index].taxPercent,
-                                "tax_percent_amount":
+                                "total_tax_amount":
                                     filteredProducts[index].taxAmount,
                                 "total_amount":
                                     filteredProducts[index].sellingPrice,

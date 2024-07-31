@@ -258,8 +258,8 @@ class _RenewalListState extends State<RenewalList> {
                                 ),
                               )
                             : Checkbox(
-                                fillColor: const MaterialStatePropertyAll(
-                                    Colors.white),
+                                fillColor:
+                                    const WidgetStatePropertyAll(Colors.white),
                                 checkColor: Colors.blue,
                                 value: isAllSelected,
                                 onChanged: (value) {
@@ -653,7 +653,8 @@ class _RenewalListState extends State<RenewalList> {
                                                                 overflow:
                                                                     TextOverflow
                                                                         .ellipsis,
-                                                                "${items[index].remainingDays}",
+                                                                items[index]
+                                                                    .remainingDays,
                                                                 style: const TextStyle(
                                                                     fontSize:
                                                                         14,
@@ -781,56 +782,59 @@ class _RenewalListState extends State<RenewalList> {
                                                         const SizedBox(
                                                           width: 10,
                                                         ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            if (items[index]
-                                                                    .renewalType ==
-                                                                "quick") {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) =>
-                                                                          EditQuickRenewalScreen(
-                                                                            id: items[index].id,
-                                                                            invoiceId:
-                                                                                items[index].invoiceId,
-                                                                          ))).then(
-                                                                  (r) {
-                                                                getList();
-                                                              });
-                                                            } else {
-                                                              Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) =>
-                                                                          EditCustomRenewal(
-                                                                            renId:
-                                                                                items[index].id,
-                                                                            renewalType:
-                                                                                items[index].renewalType,
-                                                                          ))).then(
-                                                                  (r) {
-                                                                getList();
-                                                              });
-                                                            }
-                                                          },
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2),
-                                                                color: Colors
-                                                                    .blueAccent),
-                                                            child:
-                                                                const Padding(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(8.0),
-                                                              child: Icon(
-                                                                  Icons.edit,
+                                                        Visibility(
+                                                          visible: items[index]
+                                                                  .isRenewed ==
+                                                              false,
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              if (items[index]
+                                                                      .renewalType ==
+                                                                  "quick") {
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                        builder: (context) =>
+                                                                            EditQuickRenewalScreen(
+                                                                              id: items[index].id,
+                                                                              invoiceId: items[index].invoiceId,
+                                                                            ))).then(
+                                                                    (r) {
+                                                                  getList();
+                                                                });
+                                                              } else {
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                        builder: (context) =>
+                                                                            EditCustomRenewal(
+                                                                              renId: items[index].id,
+                                                                              renewalType: items[index].renewalType,
+                                                                            ))).then(
+                                                                    (r) {
+                                                                  getList();
+                                                                });
+                                                              }
+                                                            },
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
                                                                   color: Colors
-                                                                      .white),
+                                                                      .blueAccent),
+                                                              child:
+                                                                  const Padding(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            8.0),
+                                                                child: Icon(
+                                                                    Icons.edit,
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
@@ -858,9 +862,15 @@ class _RenewalListState extends State<RenewalList> {
                                                                       TextButton(
                                                                           onPressed:
                                                                               () async {
-                                                                            Navigator.pop(context);
+                                                                            Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => const RenewalDashboard(),
+                                                                                ));
                                                                             await hide(items[index].id);
                                                                             page =
+                                                                                1;
+                                                                            add =
                                                                                 1;
                                                                             items.clear();
                                                                             getList();
@@ -1395,7 +1405,7 @@ class _RenewalListState extends State<RenewalList> {
                             color: Color(0xFF3375e0),
                             borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
-                          child: RawMaterialButton(
+                          child: RawMaterialButton( 
                             onPressed: () async {
                               Navigator.pop(context);
                               await postReminder(id, contactNo);
