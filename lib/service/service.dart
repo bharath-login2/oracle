@@ -2591,7 +2591,6 @@ class HttpService {
         return chatListModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
     }
@@ -2634,7 +2633,6 @@ class HttpService {
         return addContactModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
     } finally {}
@@ -2656,7 +2654,6 @@ class HttpService {
         return officialMessageModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -2678,7 +2675,6 @@ class HttpService {
         return officialMessageModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log("Exception: $e");
     } finally {}
@@ -2686,19 +2682,17 @@ class HttpService {
 
   static socketChat(String groupId) async {
     try {
-      var response = await _dio.get(
-          "${await Config.getUrl()}official_whatsapp_messages",
-          queryParameters: {
-            "group_id": groupId,
-            "token": await Common.getSharedPref("token"),
-          });
+      var formData = FormData.fromMap({
+        "group_id": groupId,
+        "token": await Common.getSharedPref("token"),
+      });
+      var response = await _dio
+          .post("${await Config.getUrl()}getWhatsappMessage", data: formData);
+
       if (response.statusCode == 200) {
-        List<ChatMessage> socket =
-            ChatMessage.fromJson(response.data) as List<ChatMessage>;
-        return socket;
+        return response.data;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -2718,7 +2712,6 @@ class HttpService {
         return socket;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -2736,7 +2729,6 @@ class HttpService {
         return templateModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } finally {}
   }
 
@@ -2755,7 +2747,6 @@ class HttpService {
         return templateContentMoel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } finally {}
   }
 
@@ -2786,7 +2777,6 @@ class HttpService {
         return sendTemplateMesaageModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log("Exception: $e");
     }
@@ -2816,7 +2806,6 @@ class HttpService {
         return sendMesaageModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
     } finally {}
@@ -2840,7 +2829,6 @@ class HttpService {
         return sendMesaageModel;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       // print("Exception: $e");
     } finally {}
@@ -3736,8 +3724,7 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
           data: formData);
       if (result.statusCode == 200) {
-        PostRenewalModel response =
-            PostRenewalModel.fromJson(result.data);
+        PostRenewalModel response = PostRenewalModel.fromJson(result.data);
         return response;
       }
     } catch (e) {
@@ -3746,28 +3733,28 @@ class HttpService {
   }
 
   static Future postRenewCustom(
-      rowId,
-      customerId,
-      branchId,
-      startDate,
-      endDate,
-      renewalType,
-      renewalProduct,
-      templateId,
-      remarks,
-      invoiceId,
-      paymentStatus,
-      paymentMethod,
-      cartId,
-      subTotal,
-      estimatedTax,
-      discountAmount,
-      shippingAmount,
-      totalAmount,
-      paidAmount,
-      invoiceDate,
-      collectedStaff,
-      ) async {
+    rowId,
+    customerId,
+    branchId,
+    startDate,
+    endDate,
+    renewalType,
+    renewalProduct,
+    templateId,
+    remarks,
+    invoiceId,
+    paymentStatus,
+    paymentMethod,
+    cartId,
+    subTotal,
+    estimatedTax,
+    discountAmount,
+    shippingAmount,
+    totalAmount,
+    paidAmount,
+    invoiceDate,
+    collectedStaff,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_type": renewalType,
@@ -4247,7 +4234,6 @@ class HttpService {
         return addContact;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -4271,7 +4257,6 @@ class HttpService {
         return campaignEdit;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -4294,7 +4279,6 @@ class HttpService {
         return removeContact;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -4316,7 +4300,6 @@ class HttpService {
         return deleteGroup;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }
@@ -4337,7 +4320,6 @@ class HttpService {
         return getResponse;
       } else if (response.statusCode == 500) {
       } else {}
-      // isLoading.value = false;
     } catch (e) {
       log(e.toString());
     }

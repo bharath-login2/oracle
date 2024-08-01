@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/components/campaignsBubble.dart';
 import 'package:login2/screens/officialWhatsapp/components/chat_list_item.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../core/common.dart';
 import '../../models/officialWhatsapp/ChatListModel.dart';
 import '../../models/officialWhatsapp/campaignsListModel.dart';
@@ -29,6 +35,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
 
   bool isLoading = true;
   bool isSearch = false;
+  late final WebSocketChannel socket;
+
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
@@ -41,6 +49,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   ChatListModel? chatListModel;
   CampaignsListModel? campaignsListModel;
   OfficialWhatsappConfigeModel? officialWhatsAppConfigure;
+  String userId = "";
 
   String token = '';
   int add = 1;
@@ -51,7 +60,14 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
     itemPositionsListener.itemPositions.addListener(_onLoadMore);
     chatCampaignsList('');
     getOfficialConfigaration();
+    socketStream();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    socket.sink.close();
+    super.dispose();
   }
 
   void _onLoadMore() {
@@ -61,6 +77,37 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
       chats('');
       add++;
     }
+  }
+
+  socketStream() async {
+    userId = await Common.getSharedPref("userId");
+    // log("userId: $userId");
+    final wsProtocol =
+        (Uri.parse('https://dummy').scheme == 'https') ? 'wss://' : 'ws://';
+    const wsHost = 'websocket.login2.co.in';
+    const wsPort = '8080';
+
+    socket = WebSocketChannel.connect(
+      Uri.parse('$wsProtocol$wsHost:$wsPort'),
+    );
+    socket.sink.add(jsonEncode({'type': 'register', 'userId': "#$userId"}));
+    socket.stream.listen((response) async {
+      try {
+        // log("response :$response");
+        WebsocketResponseModel res =
+            WebsocketResponseModel.fromJson(jsonDecode(response));
+        // log("res :$res");
+        FlutterRingtonePlayer().playNotification();
+        log("socket success");
+        await Future.delayed(const Duration(seconds: 5));
+        page = 1;
+        add = 1;
+        items.clear();
+        chats("");
+      } catch (e) {
+        log(e.toString());
+      }
+    });
   }
 
   getOfficialConfigaration() async {
@@ -290,6 +337,13 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                                 add = 1;
                                                                 items.clear();
                                                                 chats("");
+                                                                socket.sink.add(
+                                                                    jsonEncode({
+                                                                  'type':
+                                                                      'register',
+                                                                  'userId':
+                                                                      "#$userId"
+                                                                }));
                                                               });
                                                             },
                                                             child: chatListItem(

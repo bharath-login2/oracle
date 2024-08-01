@@ -7,8 +7,10 @@ import 'dart:io';
 // import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
@@ -64,13 +66,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   List<ChatMessage> items = [];
-  List<ChatMessage> socketResponse = [];
   List argList = [];
   int page = 1;
   int pageSize = 30;
   String? userImage;
   OfficialMessageModel? officialMessageModel;
-  List<ChatMessage>? socketMessage;
   MediaModel? mediaDetails;
   bool isTyped = false;
   bool isLoading = true;
@@ -130,7 +130,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   socketStream() async {
     final String userId = await Common.getSharedPref("userId");
-    log("userId: $userId");
+    // log("userId: $userId");
     final wsProtocol =
         (Uri.parse('https://dummy').scheme == 'https') ? 'wss://' : 'ws://';
     const wsHost = 'websocket.login2.co.in';
@@ -139,12 +139,22 @@ class _ChatScreenState extends State<ChatScreen> {
     socket = WebSocketChannel.connect(
       Uri.parse('$wsProtocol$wsHost:$wsPort'),
     );
-    socket.sink.add(jsonEncode({'type': 'register', 'userId': userId}));
-    socket.stream.listen((message) {
-      log(message);
-getSocketMerssage();
-      // socketResponse.add(items[0]);
-      // items.insert(0, socketResponse[0]);
+    socket.sink.add(jsonEncode({'type': 'register', 'userId': "#$userId"}));
+    socket.stream.listen((response) async {
+      try {
+        // log("response :$response");
+        WebsocketResponseModel res =
+            WebsocketResponseModel.fromJson(jsonDecode(response));
+        // log("res :$res");
+        final value = trimString(res.fromUser);
+        if (value == widget.groupId) {
+          log("socket success $value");
+          await Future.delayed(const Duration(seconds: 5));
+          getSocketMerssage();
+        }
+      } catch (e) {
+        log(e.toString());
+      }
     });
   }
 
@@ -177,11 +187,20 @@ getSocketMerssage();
   }
 
   getSocketMerssage() async {
-    socketMessage = await HttpService.socketChat(widget.groupId);
-    if (socketMessage != null) {
-      setState(() {
-        socketResponse.insertAll(0, socketMessage!);
-      });
+    try {
+      final socketMessage = await HttpService.socketChat(widget.groupId);
+      if (socketMessage != null) {
+        // log(socketMessage!["messages"].toString());
+        FlutterRingtonePlayer().playNotification();
+        final List<dynamic> messagesJson = socketMessage['messages'];
+        final List<ChatMessage> newMessages =
+            messagesJson.map((json) => ChatMessage.fromJson(json)).toList();
+        setState(() {
+          items.insertAll(0, newMessages);
+        });
+      }
+    } catch (e) {
+      log(e.toString());
     }
   }
 
@@ -318,7 +337,7 @@ getSocketMerssage();
                   items.clear();
                   getchat(widget.groupId);
                   setState(() {});
-                  // _sendMessage();
+                  // getSocketMerssage();
                 },
                 child: const Icon(
                   Icons.refresh,
@@ -3380,5 +3399,11 @@ getSocketMerssage();
   void scrollToFirstIndex() {
     itemScrollController.jumpTo(
         index: 0, alignment: 0.1); // Jump to position 0.0 (first item)
+  }
+
+  trimString(String value) {
+    if (value.startsWith('#')) {
+      return value.substring(1);
+    }
   }
 }
