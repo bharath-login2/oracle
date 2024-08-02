@@ -12,7 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
-import 'package:login2/screens/officialWhatsapp/chatHomeScreen.dart';
+import 'package:login2/screens/officialWhatsapp/chat_home_screen.dart';
 import 'package:login2/screens/officialWhatsapp/view_Items.dart';
 import 'package:login2/screens/officialWhatsapp/viewerScreen.dart';
 import 'package:login2/screens/officialWhatsapp/whatsapp_profile.dart';
@@ -150,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (value == widget.groupId) {
           log("socket success $value");
           await Future.delayed(const Duration(seconds: 5));
-          getSocketMerssage();
+          getSocketMerssages();
         }
       } catch (e) {
         log(e.toString());
@@ -186,7 +186,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  getSocketMerssage() async {
+  getSocketMerssages() async {
     try {
       final socketMessage = await HttpService.socketChat(widget.groupId);
       if (socketMessage != null) {
@@ -217,12 +217,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 builder: (context) => Dashboard(token),
               ));
         } else {
-          Navigator.pushReplacement(
+          Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const ChatHomeScreen(),
               ));
-          Navigator.pop(context);
         }
       },
       child: Scaffold(
@@ -249,13 +248,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                     builder: (context) => Dashboard(token),
                                   ));
                             } else {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         const ChatHomeScreen(),
                                   ));
-                              Navigator.pop(context);
                             }
                           },
                           child: const Icon(

@@ -307,15 +307,7 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
 
   addContactDialog(context) {
     String code = '91';
-    String trimPlus91(String mobileNumber) {
-      if (mobileNumber.startsWith('+91')) {
-        return mobileNumber.substring(3);
-      } else if (mobileNumber.startsWith('91')) {
-        return mobileNumber.substring(2);
-      } else {
-        return mobileNumber;
-      }
-    }
+    
 
     showDialog(
       context: context,
@@ -423,7 +415,7 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
                         final PhoneContact contact =
                             await FlutterContactPicker.pickPhoneContact();
                         String number =
-                            trimPlus91(contact.phoneNumber!.number.toString());
+                          Common.trimPlus91(contact.phoneNumber!.number.toString());
                         String name = contact.fullName!;
                         numberTextController.text = number.replaceAll(' ', '');
                         nameTextController.text = name;

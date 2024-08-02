@@ -15,6 +15,16 @@ class Common {
         fontSize: 16.0);
   }
 
+static  String trimPlus91(String mobileNumber) {
+    if (mobileNumber.length == 13) {
+      return mobileNumber.substring(3);
+    } else if (mobileNumber.length == 12) {
+      return mobileNumber.substring(2);
+    } else {
+      return mobileNumber;
+    }
+  }
+
   static saveSharedPref(String key, String val) async {
     final prefs = await SharedPreferences.getInstance();
     if (key == 'token') {
@@ -99,7 +109,9 @@ class Common {
       prefs.setString(key, val);
     }else if (key == 'navToFollowUp') {
       prefs.setString(key, val);
-    } else {
+    } else if (key == 'chatList') {
+      prefs.setString(key, val);
+    }else {
       await prefs.clear();
     }
   }

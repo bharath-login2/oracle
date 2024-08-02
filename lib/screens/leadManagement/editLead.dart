@@ -137,9 +137,9 @@ class _EditLeadState extends State<EditLead> {
         clientName.text = leadDetails!.data!.clientName.toString();
         contactNo.text = leadDetails!.data!.contactNumber1.toString();
         cost.text = leadDetails!.data!.cost.toString();
-        final myString = leadDetails!.data!.contactNumber1.toString();
-        int countryCodeLengt = leadDetails!.data!.countryCode!.length;
-        contactNo.text = myString.substring(countryCodeLengt);
+        // final myString = leadDetails!.data!.contactNumber1.toString();
+        // int countryCodeLengt = leadDetails!.data!.countryCode!.length;
+        // contactNo.text = myString.substring(countryCodeLengt);
         address.text = leadDetails!.data!.address.toString();
         remark.text = leadDetails!.data!.remarks.toString();
         leadSubType = leadDetails!.data!.leadSubCategory.toString();

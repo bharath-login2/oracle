@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../models/officialWhatsapp/ChatListModel.dart';
+import '../../../models/officialWhatsapp/chat_list_model.dart';
 import '../colorConst.dart';
 
 Widget chatListItem(context, ChatData items) {
@@ -75,17 +75,31 @@ Widget chatListItem(context, ChatData items) {
                 )),
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              items.lastMsgTime,
-              style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-            ),
-            const SizedBox(
-              height: 4,
-            ),
-          ],
+        trailing: Padding(
+          padding: const EdgeInsets.only(right: 4.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                items.lastMsgTime,
+                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+              ),
+              const SizedBox(
+                height: 4,
+              ),
+              if (items.unreadMessageCount != 0)
+                CircleAvatar(
+                  radius: 8,
+                  backgroundColor: ColorConstant.barGreen,
+                  child: Center(
+                      child: Text(
+                    items.unreadMessageCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                  )),
+                )
+            ],
+          ),
         ),
       ),
     ],

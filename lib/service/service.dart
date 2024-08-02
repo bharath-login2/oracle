@@ -169,7 +169,7 @@ import '../models/lead_management/unsetReminderModel.dart';
 import '../models/lead_management/updateReminderSetings.dart';
 import '../models/lead_management/uploadAudioRecoed.dart';
 import '../models/lead_management/viewLeadSubCategoryModel.dart';
-import '../models/officialWhatsapp/ChatListModel.dart';
+import '../models/officialWhatsapp/chat_list_model.dart';
 import '../models/officialWhatsapp/addContactModel.dart';
 import '../models/officialWhatsapp/campaignsListModel.dart';
 import '../models/officialWhatsapp/mediaModel.dart';

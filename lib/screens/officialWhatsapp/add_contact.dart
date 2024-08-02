@@ -2,25 +2,18 @@ import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:login2/core/common.dart';
 
 import '../../models/officialWhatsapp/addContactModel.dart';
 import '../../service/service.dart';
-import 'chatHomeScreen.dart';
+import 'chat_home_screen.dart';
 import 'colorConst.dart';
 
 addContactPopUp(context, nameController, numberController) {
   String code = '91';
   final formKey = GlobalKey<FormState>();
 
-  String trimPlus91(String mobileNumber) {
-    if (mobileNumber.startsWith('+91')) {
-      return mobileNumber.substring(3);
-    } else if (mobileNumber.startsWith('91')) {
-      return mobileNumber.substring(2);
-    } else {
-      return mobileNumber;
-    }
-  }
+  
 
   showDialog(
     context: context,
@@ -124,7 +117,7 @@ addContactPopUp(context, nameController, numberController) {
                       final PhoneContact contact =
                           await FlutterContactPicker.pickPhoneContact();
                       String number =
-                          trimPlus91(contact.phoneNumber!.number.toString());
+                        Common.trimPlus91(contact.phoneNumber!.number.toString());
                       String name = contact.fullName!;
                       numberController.text = number.replaceAll(' ', '');
                       nameController.text = name;

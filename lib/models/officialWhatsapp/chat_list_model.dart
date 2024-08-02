@@ -42,6 +42,7 @@ class ChatData {
   String msgStatus;
   String lastMessage;
   bool fromMe;
+  int unreadMessageCount;
 
   ChatData({
     required this.groupId,
@@ -53,6 +54,7 @@ class ChatData {
     required this.msgStatus,
     required this.lastMessage,
     required this.fromMe,
+    required this.unreadMessageCount,
   });
 
   factory ChatData.fromJson(Map<String, dynamic> json) => ChatData(
@@ -65,6 +67,7 @@ class ChatData {
     msgStatus: json["msgStatus"],
     lastMessage: json["lastMessage"],
     fromMe: json["fromMe"],
+    unreadMessageCount: json["unreadMessageCount"]??0,
   );
 
   Map<String, dynamic> toJson() => {
