@@ -9,7 +9,7 @@ import '../../models/commonConfigureModel.dart';
 import '../../models/userManagement/deleteStaffModel.dart';
 import '../../models/userManagement/viewStaffModel.dart';
 import '../../screens/authentication/login.dart';
-import '../../screens/bottomNavigationBar.dart';
+import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/homePage.dart';
 import '../../screens/leadManagement/dashboard.dart';

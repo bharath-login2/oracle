@@ -10,7 +10,7 @@ import '../../models/settings/addWhatsappSettingsModel.dart';
 import '../../models/settings/addWhatsappSettingsOffModel.dart';
 import '../../models/settings/whatsappSettings%20MOdel.dart';
 import '../../screens/authentication/login.dart';
-import '../../screens/bottomNavigationBar.dart';
+import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/homePage.dart';
 import '../../screens/leadManagement/dashboard.dart';

@@ -1179,7 +1179,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   readOnly: true,
                   controller: remindMeExisting,
                   decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
-                      labelText: 'Remind Template *',
+                      labelText: 'Remind Template ',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(
@@ -2233,7 +2233,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   readOnly: true,
                   controller: remindMeNew,
                   decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
-                      labelText: 'Remind Template *',
+                      labelText: 'Remind Template ',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(

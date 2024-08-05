@@ -16,7 +16,7 @@ import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
 import '../../screens/authentication/login.dart';
-import '../../screens/bottomNavigationBar.dart';
+import 'bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/settings/whatsappSettings.dart';

@@ -14,7 +14,7 @@ import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/bulkDeleteLeadModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
 import '../../models/lead_management/viewLeadsModel.dart';
-import '../../screens/bottomNavigationBar.dart';
+import '../bottom_navigation_bar.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/leadManagement/leadDetails.dart';
 import '../../service/service.dart';

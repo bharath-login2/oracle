@@ -21,7 +21,7 @@ import '../../models/lead_management/leadDashboardModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
 import '../../models/loginCheckModel.dart';
 import '../../screens/authentication/login.dart';
-import '../../screens/bottomNavigationBar.dart';
+import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import 'add_leads.dart';
 import '../../screens/leadManagement/callHistoryPage.dart';

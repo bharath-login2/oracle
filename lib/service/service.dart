@@ -3549,6 +3549,7 @@ class HttpService {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_type": renewalType,
+      "cart_id": cartId,
       "row_id": rowId,
       "check_id_val": DateTime.now().millisecondsSinceEpoch,
       "renewal_product": jsonEncode(renewalProduct),
@@ -3565,7 +3566,8 @@ class HttpService {
       "discount_amount": discountAmount,
       "shipping_amount": shippingAmount,
       "total_amount_paid": totalAmount,
-      "amount_paid_customer": paidAmount,
+      "cost": totalAmount,
+      "amount_paid_customer": paymentStatus == "unpaid" ? "0" : paidAmount,
       "payment_status": paymentStatus ?? "",
       "payment_method": paymentMethod ?? "",
       "collected_staff": collectedStaff ?? "",

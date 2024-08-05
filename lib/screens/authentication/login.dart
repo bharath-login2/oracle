@@ -150,7 +150,6 @@ class _LoginState extends State<Login> {
               Common.saveSharedPref("unofficialWhatsApp",
                   object1.data!.whatsappUnofficial.toString());
             }
-
             Common.saveSharedPref("sound", 'slow_spring_board');
             Common.saveSharedPref("token", object.data!.token.toString());
             Common.saveSharedPref(

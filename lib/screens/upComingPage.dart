@@ -3,7 +3,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
 import '../../screens/authentication/login.dart';
-import '../../screens/bottomNavigationBar.dart';
+import 'bottom_navigation_bar.dart';
 import '../../screens/homePage.dart';
 import 'leadManagement/add_leads.dart';
 import '../../screens/leadManagement/dashboard.dart';

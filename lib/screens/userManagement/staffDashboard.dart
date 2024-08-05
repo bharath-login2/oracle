@@ -5,7 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
-import '../../screens/bottomNavigationBar.dart';
+import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/leadManagement/callHistoryPage.dart';
 import '../../screens/leadManagement/viewLeadCategory.dart';

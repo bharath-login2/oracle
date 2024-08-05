@@ -1056,7 +1056,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                   readOnly: true,
                   controller: remindMe,
                   decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
-                      labelText: 'Remind Template *',
+                      labelText: 'Remind Template',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(

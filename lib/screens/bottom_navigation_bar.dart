@@ -1,15 +1,13 @@
-import 'dart:io';
+// ignore_for_file: must_be_immutable
 
+import 'dart:developer';
+import 'dart:io';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/callHistoryPage.dart';
-
 import '../../screens/homePage.dart';
 import 'leadManagement/add_leads.dart';
-import '../../screens/settings/whatsappSettings.dart';
 import '../../screens/userManagement/viewUsers.dart';
-import '../../screens/whatsAppGroup/groupList.dart';
 import 'package:flutter/material.dart';
-
 import 'callLogs/callLogs.dart';
 import 'officialWhatsapp/chat_home_screen.dart';
 
@@ -31,6 +29,22 @@ class BottomNavigation extends StatefulWidget {
 }
 
 class _BottomNavigationState extends State<BottomNavigation> {
+  String whatsappPermissions = "";
+  @override
+  void initState() {
+    getPermissions();
+    super.initState();
+  }
+
+  getPermissions() async {
+    try {
+      whatsappPermissions = await Common.getSharedPref("officialWhatsApp");
+      log(whatsappPermissions);
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
@@ -96,17 +110,19 @@ class _BottomNavigationState extends State<BottomNavigation> {
                                 "accessCallRecordingPermission");
                         String userId = await Common.getSharedPref("userId");
                         String name = await Common.getSharedPref("name");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CallHistoryPage(
-                                  widget.token,
-                                  name,
-                                  userId,
-                                  accessCallRecordingPermission == "true"
-                                      ? true
-                                      : false)),
-                        );
+                        if (context.mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => CallHistoryPage(
+                                    widget.token,
+                                    name,
+                                    userId,
+                                    accessCallRecordingPermission == "true"
+                                        ? true
+                                        : false)),
+                          );
+                        }
                       }
                     },
                     child: SizedBox(
@@ -159,11 +175,15 @@ class _BottomNavigationState extends State<BottomNavigation> {
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const ChatHomeScreen()),
-                );
+                if (whatsappPermissions == "true") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ChatHomeScreen()),
+                  );
+                } else {
+                  _dialogue(context, 'whattsApp');
+                }
                 // showDialog(
                 //     barrierColor: Colors.grey.withOpacity(.5),
                 //     context: context,

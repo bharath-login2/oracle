@@ -740,7 +740,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                         id: items[index]
                                                                             .id,
                                                                       ),
-                                                                    ));
+                                                                    )).then((_){
+                                                                      page =1;
+                                                                      add = 1;
+                                                                      items.clear();
+                                                                      getList();
+                                                                    });
                                                               } else {
                                                                 Navigator.push(
                                                                     context,
@@ -753,7 +758,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                         renewalType:
                                                                             items[index].renewalType,
                                                                       ),
-                                                                    ));
+                                                                    )).then((_){
+                                                                      page =1;
+                                                                      add = 1;
+                                                                      items.clear();
+                                                                      getList();
+                                                                    });
                                                               }
                                                             },
                                                             child: Container(
@@ -810,10 +820,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                             EditCustomRenewal(
                                                                               renId: items[index].id,
                                                                               renewalType: items[index].renewalType,
-                                                                            ))).then(
-                                                                    (r) {
-                                                                  getList();
-                                                                });
+                                                                            ))).then((_){
+                                                                      page =1;
+                                                                      add = 1;
+                                                                      items.clear();
+                                                                      getList();
+                                                                    });
                                                               }
                                                             },
                                                             child: Container(

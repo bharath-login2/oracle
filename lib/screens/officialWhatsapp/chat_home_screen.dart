@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
-import 'package:get/get.dart';
 import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/components/campaignsBubble.dart';
@@ -16,7 +15,6 @@ import '../../models/officialWhatsapp/campaignsListModel.dart';
 import '../../models/officialWhatsapp/officialWhatsappConfigureModel.dart';
 import '../../service/service.dart';
 import '../leadManagement/dashboard.dart';
-import '../settings/whatsappSettings.dart';
 import 'add_contact.dart';
 import 'colorConst.dart';
 import 'components/tab_bar.dart';
@@ -208,12 +206,11 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                         autofocus: true,
                                                         controller:
                                                             searchController,
-                                                        onChanged: (value) {
+                                                        onChanged: (value) async{
                                                           page = 1;
                                                           add = 1;
                                                           items.clear();
-                                                          chats(searchController
-                                                              .text);
+                                                          await chats(value);
                                                           setState(() {});
                                                         },
                                                         decoration:
