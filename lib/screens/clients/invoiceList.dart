@@ -38,7 +38,7 @@ class _InvoiceListState extends State<InvoiceList> {
   String customerId = "";
   String customerName = "Customer";
   TextEditingController search = TextEditingController();
-  bool isSearch=false;
+  bool isSearch = false;
 
   @override
   void initState() {
@@ -66,12 +66,11 @@ class _InvoiceListState extends State<InvoiceList> {
       customerList = await HttpService.customerList(widget.token);
       items = customerList!.data!;
       filteredItems.addAll(items);
-      if(isSearch==true){
-        isSearch=false;
-        if(mounted)
-          {
-            Navigator.pop(context);
-          }
+      if (isSearch == true) {
+        isSearch = false;
+        if (mounted) {
+          Navigator.pop(context);
+        }
       }
       setState(() {});
     }
@@ -84,7 +83,8 @@ class _InvoiceListState extends State<InvoiceList> {
             onWillPop: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
+                MaterialPageRoute(
+                    builder: (context) => Dashboard(widget.token)),
               );
               return true;
             },
@@ -764,7 +764,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                           padding: const EdgeInsets.all(8.0),
                                           child: InkWell(
                                             onTap: () {
-                                              isSearch=true;
+                                              isSearch = true;
                                               Common.showProgressDialog(
                                                   context, "Searching..");
                                               getData();
@@ -797,7 +797,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                 const SizedBox(
                                   height: 20,
                                 ),
-                                invoiceList!.data!.lists!.isNotEmpty
+                                invoiceList!.data.lists.isNotEmpty
                                     ? Padding(
                                         padding: const EdgeInsets.only(
                                             left: 12,
@@ -805,22 +805,29 @@ class _InvoiceListState extends State<InvoiceList> {
                                             top: 12,
                                             bottom: 80),
                                         child: ListView.builder(
-                                          physics: const NeverScrollableScrollPhysics(),
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
                                           shrinkWrap: true,
-                                          itemCount: invoiceList!.data!.lists!.length,
+                                          itemCount:
+                                              invoiceList!.data.lists.length,
                                           itemBuilder: (context, index) {
                                             return Padding(
                                               padding: const EdgeInsets.only(
                                                   bottom: 10),
                                               child: InkWell(
-                                                onTap: (){
+                                                onTap: () {
                                                   Navigator.push(
                                                     context,
-                                                    MaterialPageRoute(builder: (context) => ReceiptByInvoice(widget.token,
-                                                        invoiceList!
-                                                            .data!
-                                                            .lists![index]
-                                                            .id.toString())),
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ReceiptByInvoice(
+                                                                widget.token,
+                                                                invoiceList!
+                                                                    .data
+                                                                    .lists[
+                                                                        index]
+                                                                    .id
+                                                                    .toString())),
                                                   );
                                                 },
                                                 child: Container(
@@ -831,8 +838,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                               .withOpacity(0.2),
                                                           spreadRadius: 1,
                                                           blurRadius: 1,
-                                                          offset:
-                                                              const Offset(1, 1),
+                                                          offset: const Offset(
+                                                              1, 1),
                                                         )
                                                       ],
                                                       borderRadius:
@@ -840,8 +847,9 @@ class _InvoiceListState extends State<InvoiceList> {
                                                               5),
                                                       color: Colors.white),
                                                   child: Padding(
-                                                    padding: const EdgeInsets.all(
-                                                        14.0),
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            14.0),
                                                     child: Column(
                                                       crossAxisAlignment:
                                                           CrossAxisAlignment
@@ -860,23 +868,19 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   0.6,
                                                               child: InkWell(
                                                                 onTap: () {
-                                                                  Navigator.push(
+                                                                  Navigator
+                                                                      .push(
                                                                     context,
                                                                     MaterialPageRoute(
                                                                         builder: (context) => ClientDetails(
-                                                                            widget
-                                                                                .token,
-                                                                            invoiceList!
-                                                                                .data!
-                                                                                .lists![index]
-                                                                                .clientId
-                                                                                .toString())),
+                                                                            widget.token,
+                                                                            invoiceList!.data.lists[index].clientId.toString())),
                                                                   );
                                                                 },
                                                                 child: Text(
                                                                     invoiceList!
-                                                                        .data!
-                                                                        .lists![
+                                                                        .data
+                                                                        .lists[
                                                                             index]
                                                                         .customerName
                                                                         .toString(),
@@ -900,8 +904,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                           .circular(
                                                                               2),
                                                                   color: invoiceList!
-                                                                              .data!
-                                                                              .lists![
+                                                                              .data
+                                                                              .lists[
                                                                                   index]
                                                                               .status
                                                                               .toString() ==
@@ -912,36 +916,32 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                           0xfffcbcbc)),
                                                               child: Center(
                                                                 child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          left:
-                                                                              12,
-                                                                          right:
-                                                                              12,
-                                                                          top: 6,
-                                                                          bottom:
-                                                                              6),
+                                                                  padding: const EdgeInsets
+                                                                      .only(
+                                                                      left: 12,
+                                                                      right: 12,
+                                                                      top: 6,
+                                                                      bottom:
+                                                                          6),
                                                                   child: Text(
                                                                       invoiceList!
-                                                                          .data!
-                                                                          .lists![
+                                                                          .data
+                                                                          .lists[
                                                                               index]
                                                                           .status
                                                                           .toString(),
                                                                       style:
                                                                           TextStyle(
-                                                                        color: invoiceList!.data!.lists![index].status.toString() ==
+                                                                        color: invoiceList!.data.lists[index].status.toString() ==
                                                                                 'Paid'
-                                                                            ? Colors
-                                                                                .green
-                                                                            : Colors
-                                                                                .red,
+                                                                            ? Colors.green
+                                                                            : invoiceList!.data.lists[index].status.toString() == 'Renewed'
+                                                                                ? Colors.green
+                                                                                : Colors.red,
                                                                         fontSize:
                                                                             14,
                                                                         fontWeight:
-                                                                            FontWeight
-                                                                                .w600,
+                                                                            FontWeight.w600,
                                                                       )),
                                                                 ),
                                                               ),
@@ -964,7 +964,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                     .width *
                                                                 0.41,
                                                             child: Text(
-                                                              "Invoice No : ${invoiceList!.data!.lists![index].invoiceNumber}",
+                                                              "Invoice No : ${invoiceList!.data.lists[index].invoiceNumber}",
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
@@ -994,7 +994,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                     .width *
                                                                 0.41,
                                                             child: Text(
-                                                              "Total Amount : ₹ ${invoiceList!.data!.lists![index].totalAmount}",
+                                                              "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
@@ -1024,7 +1024,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                     .width *
                                                                 0.41,
                                                             child: Text(
-                                                              "Paid Amount : ₹ ${invoiceList!.data!.lists![index].totalPaid}",
+                                                              "Paid Amount : ₹ ${invoiceList!.data.lists[index].totalPaid}",
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
@@ -1041,28 +1041,36 @@ class _InvoiceListState extends State<InvoiceList> {
                                                         const SizedBox(
                                                           height: 5,
                                                         ),
-                                                        invoiceList!.data!.lists![index].balance!='0.00'? SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                          child: Text(
-                                                            "Balance Amount : ₹ ${invoiceList!.data!.lists![index].balance}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                              color: Colors.red,
-                                                              fontSize: 14,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400,
-                                                            ),
-                                                          ),
-                                                        ):
-                                                         const SizedBox(),
+                                                        invoiceList!
+                                                                    .data
+                                                                    .lists[
+                                                                        index]
+                                                                    .balance !=
+                                                                '0.00'
+                                                            ? SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.6,
+                                                                child: Text(
+                                                                  "Balance Amount : ₹ ${invoiceList!.data.lists[index].balance}",
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    color: Colors
+                                                                        .red,
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                  ),
+                                                                ),
+                                                              )
+                                                            : const SizedBox(),
                                                         const SizedBox(
                                                           height: 5,
                                                         ),
@@ -1078,7 +1086,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       .width *
                                                                   0.6,
                                                               child: Text(
-                                                                "Pay Mode : ${invoiceList!.data!.lists![index].paymentMode}",
+                                                                "Pay Mode : ${invoiceList!.data.lists[index].paymentMode}",
                                                                 overflow:
                                                                     TextOverflow
                                                                         .ellipsis,
@@ -1091,7 +1099,6 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                 ),
                                                               ),
                                                             ),
-
                                                           ],
                                                         ),
                                                         const SizedBox(
@@ -1117,8 +1124,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                         const Icon(
                                                                           Icons
                                                                               .calendar_month,
-                                                                          color: Colors
-                                                                              .grey,
+                                                                          color:
+                                                                              Colors.grey,
                                                                           size:
                                                                               20,
                                                                         ),
@@ -1127,18 +1134,15 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                               8,
                                                                         ),
                                                                         Text(
-                                                                            invoiceList!.data!.lists![index].invoiceDate
+                                                                            invoiceList!.data.lists[index].invoiceDate
                                                                                 .toString(),
                                                                             maxLines:
                                                                                 2,
-                                                                            overflow: TextOverflow
-                                                                                .ellipsis,
-                                                                            style:
-                                                                                const TextStyle(
-                                                                              fontSize:
-                                                                                  14,
-                                                                              fontWeight:
-                                                                                  FontWeight.w400,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: const TextStyle(
+                                                                              fontSize: 14,
+                                                                              fontWeight: FontWeight.w400,
                                                                             )),
                                                                       ],
                                                                     ),
@@ -1149,34 +1153,40 @@ class _InvoiceListState extends State<InvoiceList> {
                                                             Row(
                                                               children: [
                                                                 InkWell(
-                                                                  onTap: (){
+                                                                  onTap: () {
                                                                     Navigator
                                                                         .push(
                                                                       context,
                                                                       MaterialPageRoute(
-                                                                          builder: (context) => ViewInvoice(widget.token, invoiceList!.data!.lists![index].id.toString(), invoiceList!.data!.lists![index].clientId.toString(),invoiceList!.data!.lists![index].invoiceNumber.toString())),
+                                                                          builder: (context) => ViewInvoice(
+                                                                              widget.token,
+                                                                              invoiceList!.data.lists[index].id.toString(),
+                                                                              invoiceList!.data.lists[index].clientId.toString(),
+                                                                              invoiceList!.data.lists[index].invoiceNumber.toString())),
                                                                     );
                                                                   },
                                                                   child:
-                                                                  Container(
+                                                                      Container(
                                                                     decoration: BoxDecoration(
                                                                         borderRadius:
-                                                                        BorderRadius.circular(2),
-                                                                        color:Colors.green.shade100),
+                                                                            BorderRadius.circular(
+                                                                                2),
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100),
                                                                     child:
-                                                                     Padding(
-                                                                      padding:
-                                                                      const EdgeInsets.all(8.0),
-                                                                      child: Container(
-                                                                        height: 20,
-                                                                        width: 20,
-                                                                        decoration: const BoxDecoration(
-                                                                          image: DecorationImage(
-                                                                              image:AssetImage(
-                                                                                  'assets/icons/pdf.png')
-                                                                          )
-                                                                        ),
-
+                                                                        Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          8.0),
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            20,
+                                                                        width:
+                                                                            20,
+                                                                        decoration:
+                                                                            const BoxDecoration(image: DecorationImage(image: AssetImage('assets/icons/pdf.png'))),
                                                                       ),
                                                                     ),
                                                                   ),
@@ -1185,9 +1195,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   width: 10,
                                                                 ),
                                                                 invoiceList!
-                                                                            .data!
-                                                                            .lists![
-                                                                                index]
+                                                                            .data
+                                                                            .lists[index]
                                                                             .isPaid ==
                                                                         false
                                                                     ? InkWell(
@@ -1196,23 +1205,20 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                           Navigator
                                                                               .push(
                                                                             context,
-                                                                            MaterialPageRoute(
-                                                                                builder: (context) => ReceiptAdd(widget.token, invoiceList!.data!.lists![index].clientId.toString(), invoiceList!.data!.lists![index].id.toString())),
+                                                                            MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, invoiceList!.data.lists[index].clientId.toString(), invoiceList!.data.lists[index].id.toString())),
                                                                           );
                                                                         },
                                                                         child:
                                                                             Container(
                                                                           decoration: BoxDecoration(
-                                                                              borderRadius:
-                                                                                  BorderRadius.circular(2),
+                                                                              borderRadius: BorderRadius.circular(2),
                                                                               color: const Color(0xffe9d9fd)),
                                                                           child:
                                                                               const Padding(
                                                                             padding:
                                                                                 EdgeInsets.all(8.0),
-                                                                            child: Icon(
-                                                                                Icons.currency_rupee,
-                                                                                color: Color(0xff9747FF)),
+                                                                            child:
+                                                                                Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
                                                                           ),
                                                                         ),
                                                                       )
@@ -1228,8 +1234,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       MaterialPageRoute(
                                                                           builder: (context) => EditInvoice(
                                                                               widget.token,
-                                                                              invoiceList!.data!.lists![index].id.toString(),
-                                                                              invoiceList!.data!.lists![index].clientId.toString())),
+                                                                              invoiceList!.data.lists[index].id.toString(),
+                                                                              invoiceList!.data.lists[index].clientId.toString())),
                                                                     );
                                                                   },
                                                                   child:
@@ -1248,8 +1254,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       child: Icon(
                                                                           Icons
                                                                               .mode_edit_outlined,
-                                                                          color: Colors
-                                                                              .blue),
+                                                                          color:
+                                                                              Colors.blue),
                                                                     ),
                                                                   ),
                                                                 ),
@@ -1276,7 +1282,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                               TextButton(
                                                                                   onPressed: () async {
                                                                                     Common.showProgressDialog(context, "Loading..");
-                                                                                    DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, invoiceList!.data!.lists![index].id);
+                                                                                    DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, invoiceList!.data.lists[index].id);
                                                                                     if (deleteInvoice.data == true) {
                                                                                       Common.toastMessaage(deleteInvoice.message, Colors.green);
                                                                                       if (context.mounted) {
@@ -1318,8 +1324,8 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       child: Icon(
                                                                           Icons
                                                                               .delete_outline,
-                                                                          color: Colors
-                                                                              .red),
+                                                                          color:
+                                                                              Colors.red),
                                                                     ),
                                                                   ),
                                                                 ),
@@ -1362,7 +1368,7 @@ class _InvoiceListState extends State<InvoiceList> {
                               ],
                             ),
                           ),
-                          invoiceList!.data!.lists!.isNotEmpty
+                          invoiceList!.data.lists.isNotEmpty
                               ? Container(
                                   height: 80.0,
                                   color: Colors.grey.shade200,
@@ -1395,7 +1401,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                           FontWeight.bold),
                                                 )),
                                             Text(
-                                              ': ${invoiceList!.data!.totalInvoiceAmount}',
+                                              ': ${invoiceList!.data.totalInvoiceAmount}',
                                               style: const TextStyle(
                                                   color: Colors.black,
                                                   fontSize: 15,
@@ -1423,7 +1429,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                           FontWeight.bold),
                                                 )),
                                             Text(
-                                              ': ${invoiceList!.data!.totalInvoicePaid}',
+                                              ': ${invoiceList!.data.totalInvoicePaid}',
                                               style: const TextStyle(
                                                   color: Colors.green,
                                                   fontSize: 15,
@@ -1451,7 +1457,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                           FontWeight.bold),
                                                 )),
                                             Text(
-                                              ': ${invoiceList!.data!.balanceAmount}',
+                                              ': ${invoiceList!.data.balanceAmount}',
                                               style: const TextStyle(
                                                   color: Colors.red,
                                                   fontSize: 15,
@@ -1527,5 +1533,4 @@ class _InvoiceListState extends State<InvoiceList> {
               ),
             ));
   }
-
 }

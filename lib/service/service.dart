@@ -33,7 +33,6 @@ import 'package:login2/models/renewal/hidden_list.dart';
 import 'package:login2/models/renewal/hide_model.dart';
 import 'package:login2/models/renewal/payment_report.dart';
 import 'package:login2/models/renewal/post_reminder.dart';
-import 'package:login2/models/renewal/post_renew_details.dart';
 import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/reminder_history_model.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
@@ -2094,10 +2093,6 @@ class HttpService {
   }
 
   static Future invoiceList(token, fromDate, toDate, clientId) async {
-    // print('token: '+token);
-    // print('fromDate: '+fromDate);
-    // print('toDate: '+toDate);
-    // print('clientId: '+clientId);
     var formData = FormData.fromMap({
       'token': token,
       'from_date': fromDate,
@@ -2115,10 +2110,6 @@ class HttpService {
   }
 
   static Future pendingInvoiceList(token, fromDate, toDate, clientId) async {
-    // print('token: '+token);
-    // print('fromDate: '+fromDate);
-    // print('toDate: '+toDate);
-    // print('clientId: '+clientId);
     var formData = FormData.fromMap({
       'token': token,
       'from_date': fromDate,

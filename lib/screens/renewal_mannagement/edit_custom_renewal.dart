@@ -1293,9 +1293,9 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                           }
                           Navigator.pop(context);
                           setState(() {});
-                          filterCustomers("");
-                          filteredProducts;
-                          filteredTemplates;
+                          filterCustomers;
+                          filterProducts;
+                          filterTemplates;
                         },
                         title: SizedBox(
                           width: 200,

@@ -827,7 +827,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         address: items[index]
                                                             .address,
                                                         leadType1:
-                                                            widget.leadType)),
+                                                            widget.leadType,
+                                                            )),
                                           ).then((value) {
                                             items.clear();
                                             page = 1;
