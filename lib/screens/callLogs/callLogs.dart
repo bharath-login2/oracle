@@ -171,33 +171,10 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                   Row(
                     children: [
-                      history.isNotEmpty
+                      onLongPress
                           ? InkWell(
                               onTap: () async {
-                                Map<String, dynamic> body = {
-                                  "token": widget.token,
-                                  'log': history,
-                                };
-                                if (context.mounted) {
-                                  Common.showProgressDialog(
-                                      context, "Uploading..");
-                                }
-                                CallLogUploadModel object1 =
-                                    await HttpService.callLogUpload(body);
-                                if (object1.data == true) {
-                                  Common.toastMessaage(
-                                      object1.message, Colors.green);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                    getData();
-                                  }
-                                } else {
-                                  Common.toastMessaage(
-                                      object1.message, Colors.red);
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                  }
-                                }
+                                bulkUpload();
                               },
                               child: const Icon(
                                 Icons.upload,
@@ -208,51 +185,7 @@ class _CallLogsState extends State<CallLogs> {
                       deleteHistoryIds.isNotEmpty
                           ? InkWell(
                               onTap: () {
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        scrollable: true,
-                                        title: const Text('Please Confirm'),
-                                        content: const Text(
-                                            'Are you sure to Delete?'),
-                                        actions: [
-                                          // The "Yes" button
-                                          TextButton(
-                                              onPressed: () async {
-                                                Map<String, dynamic> body = {
-                                                  "token": widget.token,
-                                                  'deletedIds':
-                                                      deleteHistoryIds,
-                                                };
-                                                DeleteCallHistoryModel delete =
-                                                    await HttpService
-                                                        .deleteCallHistoryLogs(
-                                                            body);
-                                                if (delete.data == true) {
-                                                  deleteHistoryIds.clear();
-                                                  Common.toastMessaage(
-                                                      delete.message,
-                                                      Colors.green);
-                                                  getData();
-                                                } else {
-                                                  Common.toastMessaage(
-                                                      delete.message,
-                                                      Colors.red);
-                                                  if (context.mounted) {
-                                                    Navigator.of(context).pop();
-                                                  }
-                                                }
-                                              },
-                                              child: const Text('Yes')),
-                                          TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: const Text('No'))
-                                        ],
-                                      );
-                                    });
+                                deleteDialog(context);
                               },
                               child: const Icon(
                                 Icons.delete,
@@ -432,6 +365,7 @@ class _CallLogsState extends State<CallLogs> {
                               setState(() {
                                 selectedIndex = 0;
                                 deleteHistoryIds.clear();
+                                onLongPress = false;
                               });
                             },
                             child: Container(
@@ -518,7 +452,6 @@ class _CallLogsState extends State<CallLogs> {
                                 height: 10,
                               ),
                               //Text(_callLogEntries as String),
-
                               refresh == false
                                   ? Column(
                                       children: [
@@ -649,52 +582,87 @@ class _CallLogsState extends State<CallLogs> {
                                                     },
                                                     child: InkWell(
                                                         onLongPress: () {
-                                                          setState(() {
-                                                            onLongPress = true;
-                                                            history.add({
-                                                              "name": _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .name ??
-                                                                  "",
-                                                              "phone_number":
-                                                                  _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .number,
-                                                              "callTypes": _callLogEntries
-                                                                  .elementAt(
-                                                                      indexStaff)
-                                                                  .callType
-                                                                  .toString()
-                                                                  .substring(_callLogEntries
-                                                                          .elementAt(
-                                                                              indexStaff)
-                                                                          .callType
-                                                                          .toString()
-                                                                          .indexOf(
-                                                                              '.') +
-                                                                      1),
-                                                              "time":
-                                                                  '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
-                                                              "duration":
-                                                                  _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .duration,
-                                                              "simName": _callLogEntries
-                                                                  .elementAt(
-                                                                      indexStaff)
-                                                                  .simDisplayName,
-                                                              "timeStamp":
-                                                                  _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .timestamp,
-                                                            });
-                                                            historyIndex.add(
+                                                          if (historyIndex
+                                                              .contains(
+                                                                  indexStaff)) {
+                                                            historyIndex.remove(
                                                                 indexStaff);
-                                                          });
+                                                            history.removeWhere(
+                                                              (item) =>
+                                                                  mapEquals(
+                                                                      item,
+                                                                      ({
+                                                                        "name": _callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .name,
+                                                                        "phone_number": _callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .number,
+                                                                        "callTypes": _callLogEntries
+                                                                            .elementAt(
+                                                                                indexStaff)
+                                                                            .callType
+                                                                            .toString()
+                                                                            .substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') +
+                                                                                1),
+                                                                        "time":
+                                                                            '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
+                                                                        "duration": _callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .duration,
+                                                                        "simName": _callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .simDisplayName,
+                                                                        "timeStamp": _callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .timestamp,
+                                                                      })),
+                                                            );
+                                                          } else {
+                                                            setState(() {
+                                                              onLongPress =
+                                                                  true;
+                                                              history.add({
+                                                                "name": _callLogEntries
+                                                                        .elementAt(
+                                                                            indexStaff)
+                                                                        .name ??
+                                                                    "",
+                                                                "phone_number":
+                                                                    _callLogEntries
+                                                                        .elementAt(
+                                                                            indexStaff)
+                                                                        .number,
+                                                                "callTypes": _callLogEntries
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .callType
+                                                                    .toString()
+                                                                    .substring(_callLogEntries
+                                                                            .elementAt(indexStaff)
+                                                                            .callType
+                                                                            .toString()
+                                                                            .indexOf('.') +
+                                                                        1),
+                                                                "time":
+                                                                    '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
+                                                                "duration": _callLogEntries
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .duration,
+                                                                "simName": _callLogEntries
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .simDisplayName,
+                                                                "timeStamp": _callLogEntries
+                                                                    .elementAt(
+                                                                        indexStaff)
+                                                                    .timestamp,
+                                                              });
+                                                              historyIndex.add(
+                                                                  indexStaff);
+                                                            });
+                                                          }
                                                         },
                                                         onTap: () {
                                                           if (onLongPress ==
@@ -775,6 +743,10 @@ class _CallLogsState extends State<CallLogs> {
                                                               historyIndex.add(
                                                                   indexStaff);
                                                             }
+                                                          }
+                                                          if (historyIndex
+                                                              .isEmpty) {
+                                                            onLongPress = false;
                                                           }
                                                           setState(() {});
                                                         },
@@ -925,6 +897,10 @@ class _CallLogsState extends State<CallLogs> {
                                                                                             Navigator.pop(context);
                                                                                           }
                                                                                         }
+                                                                                        setState(() {
+                                                                                          history.clear();
+                                                                                          historyIndex.clear();
+                                                                                        });
                                                                                       },
                                                                                       child: const Icon(Icons.upload))
                                                                                   : const SizedBox(),
@@ -1871,6 +1847,73 @@ class _CallLogsState extends State<CallLogs> {
         ),
       ),
     );
+  }
+
+  Future<dynamic> deleteDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Please Confirm'),
+            content: const Text('Are you sure to Delete?'),
+            actions: [
+              // The "Yes" button
+              TextButton(
+                  onPressed: () async {
+                    Map<String, dynamic> body = {
+                      "token": widget.token,
+                      'deletedIds': deleteHistoryIds,
+                    };
+                    DeleteCallHistoryModel delete =
+                        await HttpService.deleteCallHistoryLogs(body);
+                    if (delete.data == true) {
+                      deleteHistoryIds.clear();
+                      Common.toastMessaage(delete.message, Colors.green);
+                      getData();
+                    } else {
+                      Common.toastMessaage(delete.message, Colors.red);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  },
+                  child: const Text('Yes')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No'))
+            ],
+          );
+        });
+  }
+
+  bulkUpload() async {
+    Map<String, dynamic> body = {
+      "token": widget.token,
+      'log': history,
+    };
+    if (context.mounted) {
+      Common.showProgressDialog(context, "Uploading..");
+    }
+    CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+    if (object1.data == true) {
+      Common.toastMessaage(object1.message, Colors.green);
+      if (context.mounted) {
+        Navigator.pop(context);
+        getData();
+      }
+    } else {
+      Common.toastMessaage(object1.message, Colors.red);
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    }
+    setState(() {
+      history.clear();
+      historyIndex.clear();
+    });
   }
 }
 

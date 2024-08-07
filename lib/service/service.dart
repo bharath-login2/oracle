@@ -58,7 +58,6 @@ import '../../models/contactGroup/sendMessageModel.dart';
 import '../../models/dashboardModel.dart';
 import '../../models/lead_management/addLeadCategoryModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
-import '../../models/lead_management/addLeadFollowupModel.dart';
 import '../../models/lead_management/addLeadModel.dart';
 import '../../models/lead_management/callHistoryModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
@@ -144,6 +143,7 @@ import '../models/fileManager/renameFileModel.dart';
 import '../models/lead_management/BulkTransferLeadModel.dart';
 import '../models/lead_management/TransferLeadModel.dart';
 import '../models/lead_management/addBulkContactGroupModel.dart';
+import '../models/lead_management/addLeadFollowupModel.dart';
 import '../models/lead_management/addLeadSubCategoryModel.dart';
 import '../models/lead_management/bulkDeleteLeadModel.dart';
 import '../models/lead_management/callResultResonModel.dart';
@@ -701,9 +701,25 @@ class HttpService {
       priorityId,
       checked,
       timeBefore,
-      addClient,
       callResponseId,
-      reasonId) async {
+      reasonId,
+      createSales,
+      createType,
+      checkIdVal,
+      invoiceDate,
+      productList,
+      reminderTemplate,
+      totalAmount,
+      startDate,
+      endDate,
+      paymentStatus,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      paymentMethod,
+      paidAmount,
+      collectedStaff) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -719,9 +735,25 @@ class HttpService {
       "priority": priorityId,
       "reminder": checked,
       "time_before": timeBefore,
-      "is_lead_to_customer": addClient,
       "call_response_id": callResponseId,
       "reason_id": reasonId,
+      "create_sales": createSales,
+      "create_type": createType,
+      "check_id_val": checkIdVal,
+      "invoice_date": invoiceDate,
+      "product_list": jsonEncode(productList),
+      "reminder_template": reminderTemplate,
+      "total_amount_paid": totalAmount,
+      "start_date": startDate,
+      "end_date": endDate,
+      "payment_status": paymentStatus,
+      "sub_total": subTotal,
+      "estimated_tax": estimatedTax,
+      "discount_amount": discountAmount,
+      "shipping_amount": shippingAmount,
+      "payment_method": paymentMethod,
+      "amount_paid_customer": paidAmount,
+      "collected_staff": collectedStaff,
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",

@@ -1191,142 +1191,124 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                     ),
                                                                   ),
                                                                 ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                invoiceList!
-                                                                            .data
-                                                                            .lists[index]
-                                                                            .isPaid ==
-                                                                        false
-                                                                    ? InkWell(
+                                                                Visibility(
+                                                                  visible: invoiceList!
+                                                                          .data
+                                                                          .lists[
+                                                                              index]
+                                                                          .invType ==
+                                                                      "1",
+                                                                  child: Row(
+                                                                    children: [
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      invoiceList!.data.lists[index].isPaid ==
+                                                                              false
+                                                                          ? InkWell(
+                                                                              onTap: () {
+                                                                                Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, invoiceList!.data.lists[index].clientId.toString(), invoiceList!.data.lists[index].id.toString())),
+                                                                                );
+                                                                              },
+                                                                              child: Container(
+                                                                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), color: const Color(0xffe9d9fd)),
+                                                                                child: const Padding(
+                                                                                  padding: EdgeInsets.all(8.0),
+                                                                                  child: Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
+                                                                                ),
+                                                                              ),
+                                                                            )
+                                                                          : const SizedBox(),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      InkWell(
                                                                         onTap:
                                                                             () {
                                                                           Navigator
                                                                               .push(
                                                                             context,
-                                                                            MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, invoiceList!.data.lists[index].clientId.toString(), invoiceList!.data.lists[index].id.toString())),
+                                                                            MaterialPageRoute(builder: (context) => EditInvoice(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
                                                                           );
                                                                         },
                                                                         child:
                                                                             Container(
                                                                           decoration: BoxDecoration(
                                                                               borderRadius: BorderRadius.circular(2),
-                                                                              color: const Color(0xffe9d9fd)),
+                                                                              color: const Color(0xffaedcf4)),
                                                                           child:
                                                                               const Padding(
                                                                             padding:
                                                                                 EdgeInsets.all(8.0),
                                                                             child:
-                                                                                Icon(Icons.currency_rupee, color: Color(0xff9747FF)),
+                                                                                Icon(Icons.mode_edit_outlined, color: Colors.blue),
                                                                           ),
                                                                         ),
-                                                                      )
-                                                                    : const SizedBox(),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => EditInvoice(
-                                                                              widget.token,
-                                                                              invoiceList!.data.lists[index].id.toString(),
-                                                                              invoiceList!.data.lists[index].clientId.toString())),
-                                                                    );
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    decoration: BoxDecoration(
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(
-                                                                                2),
-                                                                        color: const Color(
-                                                                            0xffaedcf4)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              8.0),
-                                                                      child: Icon(
-                                                                          Icons
-                                                                              .mode_edit_outlined,
-                                                                          color:
-                                                                              Colors.blue),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    showDialog(
-                                                                        context:
-                                                                            context,
-                                                                        builder:
-                                                                            (BuildContext
-                                                                                context) {
-                                                                          return AlertDialog(
-                                                                            scrollable:
-                                                                                true,
-                                                                            title:
-                                                                                const Text('Please Confirm'),
-                                                                            content:
-                                                                                const Text('Are you sure to Delete?'),
-                                                                            actions: [
-                                                                              // The "Yes" button
-                                                                              TextButton(
-                                                                                  onPressed: () async {
-                                                                                    Common.showProgressDialog(context, "Loading..");
-                                                                                    DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, invoiceList!.data.lists[index].id);
-                                                                                    if (deleteInvoice.data == true) {
-                                                                                      Common.toastMessaage(deleteInvoice.message, Colors.green);
-                                                                                      if (context.mounted) {
-                                                                                        Navigator.push(
-                                                                                          context,
-                                                                                          MaterialPageRoute(builder: (context) => InvoiceList(widget.token)),
-                                                                                        );
-                                                                                      }
-                                                                                    } else {
-                                                                                      Common.toastMessaage(deleteInvoice.message, Colors.red);
-                                                                                      if (context.mounted) {
-                                                                                        Navigator.of(context).pop();
-                                                                                      }
-                                                                                    }
-                                                                                  },
-                                                                                  child: const Text('Yes')),
-                                                                              TextButton(
-                                                                                  onPressed: () {
-                                                                                    Navigator.of(context).pop();
-                                                                                  },
-                                                                                  child: const Text('No'))
-                                                                            ],
-                                                                          );
-                                                                        });
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    decoration: BoxDecoration(
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(
-                                                                                2),
-                                                                        color: const Color(
-                                                                            0xfffcbcbc)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              8.0),
-                                                                      child: Icon(
-                                                                          Icons
-                                                                              .delete_outline,
-                                                                          color:
-                                                                              Colors.red),
-                                                                    ),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          showDialog(
+                                                                              context: context,
+                                                                              builder: (BuildContext context) {
+                                                                                return AlertDialog(
+                                                                                  scrollable: true,
+                                                                                  title: const Text('Please Confirm'),
+                                                                                  content: const Text('Are you sure to Delete?'),
+                                                                                  actions: [
+                                                                                    // The "Yes" button
+                                                                                    TextButton(
+                                                                                        onPressed: () async {
+                                                                                          Common.showProgressDialog(context, "Loading..");
+                                                                                          DeleteInvoiceModel deleteInvoice = await HttpService.deleteInvoice(widget.token, invoiceList!.data.lists[index].id);
+                                                                                          if (deleteInvoice.data == true) {
+                                                                                            Common.toastMessaage(deleteInvoice.message, Colors.green);
+                                                                                            if (context.mounted) {
+                                                                                              Navigator.push(
+                                                                                                context,
+                                                                                                MaterialPageRoute(builder: (context) => InvoiceList(widget.token)),
+                                                                                              );
+                                                                                            }
+                                                                                          } else {
+                                                                                            Common.toastMessaage(deleteInvoice.message, Colors.red);
+                                                                                            if (context.mounted) {
+                                                                                              Navigator.of(context).pop();
+                                                                                            }
+                                                                                          }
+                                                                                        },
+                                                                                        child: const Text('Yes')),
+                                                                                    TextButton(
+                                                                                        onPressed: () {
+                                                                                          Navigator.of(context).pop();
+                                                                                        },
+                                                                                        child: const Text('No'))
+                                                                                  ],
+                                                                                );
+                                                                              });
+                                                                        },
+                                                                        child:
+                                                                            Container(
+                                                                          decoration: BoxDecoration(
+                                                                              borderRadius: BorderRadius.circular(2),
+                                                                              color: const Color(0xfffcbcbc)),
+                                                                          child:
+                                                                              const Padding(
+                                                                            padding:
+                                                                                EdgeInsets.all(8.0),
+                                                                            child:
+                                                                                Icon(Icons.delete_outline, color: Colors.red),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                               ],

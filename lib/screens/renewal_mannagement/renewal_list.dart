@@ -740,12 +740,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                         id: items[index]
                                                                             .id,
                                                                       ),
-                                                                    )).then((_){
-                                                                      page =1;
-                                                                      add = 1;
-                                                                      items.clear();
-                                                                      getList();
-                                                                    });
+                                                                    )).then((_) {
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  items.clear();
+                                                                  getList();
+                                                                });
                                                               } else {
                                                                 Navigator.push(
                                                                     context,
@@ -758,12 +758,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                         renewalType:
                                                                             items[index].renewalType,
                                                                       ),
-                                                                    )).then((_){
-                                                                      page =1;
-                                                                      add = 1;
-                                                                      items.clear();
-                                                                      getList();
-                                                                    });
+                                                                    )).then((_) {
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  items.clear();
+                                                                  getList();
+                                                                });
                                                               }
                                                             },
                                                             child: Container(
@@ -820,12 +820,13 @@ class _RenewalListState extends State<RenewalList> {
                                                                             EditCustomRenewal(
                                                                               renId: items[index].id,
                                                                               renewalType: items[index].renewalType,
-                                                                            ))).then((_){
-                                                                      page =1;
-                                                                      add = 1;
-                                                                      items.clear();
-                                                                      getList();
-                                                                    });
+                                                                            ))).then(
+                                                                    (_) {
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  items.clear();
+                                                                  getList();
+                                                                });
                                                               }
                                                             },
                                                             child: Container(
@@ -1417,7 +1418,7 @@ class _RenewalListState extends State<RenewalList> {
                             color: Color(0xFF3375e0),
                             borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
-                          child: RawMaterialButton( 
+                          child: RawMaterialButton(
                             onPressed: () async {
                               Navigator.pop(context);
                               await postReminder(id, contactNo);
