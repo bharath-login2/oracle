@@ -104,7 +104,7 @@ class _AddFollowupState extends State<AddFollowup> {
   TextEditingController leadTypeVal = TextEditingController();
   TextEditingController leadSubTypeVal = TextEditingController();
   TextEditingController priorityVal = TextEditingController();
-  TextEditingController timeBefore = TextEditingController(text: '10');
+  TextEditingController timeBefore = TextEditingController();
   TextEditingController callReasonVal = TextEditingController();
   TextEditingController productDescription = TextEditingController();
   TextEditingController productRate = TextEditingController();
@@ -139,7 +139,6 @@ class _AddFollowupState extends State<AddFollowup> {
   bool headerContent = false;
   Color paidColor = Colors.black;
   var code = '91';
-  String? templateImage;
   bool? result1 = true;
   String? callHistoryId;
   String priority = 'Normal';
@@ -223,7 +222,6 @@ class _AddFollowupState extends State<AddFollowup> {
             priority = widget.priority.toString();
             priorityId = widget.priorityId.toString();
           }
-
           setState(() {});
         }
         setState(() {});
@@ -3328,7 +3326,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                     Common.showProgressDialog(
                                         context, "Loading..");
                                   }
-                                  AddLeadFollowupModel object1 =
+                                  AddLeadFollowupModels object1 =
                                       await HttpService.addLeadsFollowup(
                                           widget.token,
                                           callResultId,

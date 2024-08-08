@@ -25,6 +25,9 @@ class LeadDeatailsModelAdd {
 class Data {
   bool? voiceListerningPermission;
   bool? voiceUploadPermission;
+  bool? createCustomerInvoice;
+  bool? createRenewal;
+  bool? createInstallment;
   List<FollowUpData>? followUpData;
   List<CallHistory>? callHistory;
   List<Activities>? activities;
@@ -32,15 +35,21 @@ class Data {
 
   Data(
       {this.voiceListerningPermission,
-        this.voiceUploadPermission,
-        this.followUpData,
-        this.callHistory,
-        this.activities,
-        this.additionalFields});
+      this.voiceUploadPermission,
+      this.createCustomerInvoice,
+      this.createRenewal,
+      this.createInstallment,
+      this.followUpData,
+      this.callHistory,
+      this.activities,
+      this.additionalFields});
 
   Data.fromJson(Map<String, dynamic> json) {
     voiceListerningPermission = json['voiceListerningPermission'];
     voiceUploadPermission = json['voiceUploadPermission'];
+    createCustomerInvoice = json['createCustomerInvoice'];
+    createRenewal = json['createRenewal'];
+    createInstallment = json['createInstallment'];
     if (json['followUpData'] != null) {
       followUpData = <FollowUpData>[];
       json['followUpData'].forEach((v) {
@@ -117,28 +126,30 @@ class FollowUpData {
 
   FollowUpData(
       {this.callDetailsId,
-        this.scheduledDate,
-        this.date,
-        this.calledDate,
-        this.remarks,
-        this.callMasterId,
-        this.callResult,
-        this.staffName,
-        this.proPicThumb,
-        this.callStatusId,
-        this.callResultId,
-        this.callResponseId,
-        this.callResponse,
-        this.isCalled,
-        this.isEdit,
-        this.isDelete,
-        this.dispalyDate,
-        this.isSetReminder,
-        this.isReminder,
-        this.time,
-        this.voiceFile,
-        this.voiceUploadPermission,
-        this.playVoicePermission,this.reason,this.reasonId});
+      this.scheduledDate,
+      this.date,
+      this.calledDate,
+      this.remarks,
+      this.callMasterId,
+      this.callResult,
+      this.staffName,
+      this.proPicThumb,
+      this.callStatusId,
+      this.callResultId,
+      this.callResponseId,
+      this.callResponse,
+      this.isCalled,
+      this.isEdit,
+      this.isDelete,
+      this.dispalyDate,
+      this.isSetReminder,
+      this.isReminder,
+      this.time,
+      this.voiceFile,
+      this.voiceUploadPermission,
+      this.playVoicePermission,
+      this.reason,
+      this.reasonId});
 
   FollowUpData.fromJson(Map<String, dynamic> json) {
     callDetailsId = json['call_details_id'];
@@ -223,25 +234,25 @@ class CallHistory {
 
   CallHistory(
       {this.id,
-        this.staffName,
-        this.callHistoryImage,
-        this.sourceNumber,
-        this.destinationNumber,
-        this.date,
-        this.startTime,
-        this.endTime,
-        this.time,
-        this.callDuration,
-        this.callDurationHr,
-        this.resourceURL,
-        this.status,
-        this.isAttended,
-        this.direction,
-        this.isTransfered,
-        this.isplayed,
-        this.audioplayed,
-        this.currentpos,
-        this.currentpostlabel});
+      this.staffName,
+      this.callHistoryImage,
+      this.sourceNumber,
+      this.destinationNumber,
+      this.date,
+      this.startTime,
+      this.endTime,
+      this.time,
+      this.callDuration,
+      this.callDurationHr,
+      this.resourceURL,
+      this.status,
+      this.isAttended,
+      this.direction,
+      this.isTransfered,
+      this.isplayed,
+      this.audioplayed,
+      this.currentpos,
+      this.currentpostlabel});
 
   CallHistory.fromJson(Map<String, dynamic> json) {
     id = json['id'];

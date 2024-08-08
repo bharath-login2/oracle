@@ -14,6 +14,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/post_confirmed_followup.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart';
@@ -209,10 +210,9 @@ class _LeadDetailsState extends State<LeadDetails> {
       leadDetails = await HttpService.leadDetails(widget.token, callMasterId);
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (leadDetails != null) {
+        contactMobile.text =
+            await Common.addPlus(leadDetails!.data!.contactNumber1.toString());
         setState(() {
-          // final myString = leadDetails!.data!.contactNumber1.toString();
-          // int countryCodeLengt = leadDetails!.data!.countryCode!.length;
-          // whatsappNo1 = myString.substring(countryCodeLengt);
           whatsappNo1 = leadDetails!.data!.contactNumber1.toString();
           whatsappNo = leadDetails!.data!.contactNumber1.toString();
           contactFName.text = leadDetails!.data!.clientName.toString();
@@ -2601,6 +2601,39 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               ),
                                                                             )
                                                                           : const SizedBox(),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      if (leadDetailsAdditional!
+                                                                              .data!
+                                                                              .createCustomerInvoice ==
+                                                                          true && leadDetailsAdditional!
+                                                                              .data!.followUpData![0].callResult == "Confirmed")
+                                                                        InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder: (context) => PostConfirmedFollowup(
+                                                                                    callMasterId: widget.callMasterId,
+                                                                                    renewalPermission: leadDetailsAdditional!.data!.createRenewal??false,
+                                                                                    installmentPermission: leadDetailsAdditional!.data!.createInstallment??false,
+                                                                                  ),
+                                                                                )).then((r) {
+                                                                              getData();
+                                                                            });
+                                                                          },
+                                                                          child:
+                                                                              const Icon(
+                                                                            Icons.add,
+                                                                            color:
+                                                                                Colors.green,
+                                                                            size:
+                                                                                25,
+                                                                          ),
+                                                                        ),
                                                                       const SizedBox(
                                                                         width:
                                                                             10,
@@ -7149,7 +7182,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                             ? "There seems to be a temporary issue, \n Please retry to continue"
                             : 'No Network Found !',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(
@@ -7255,7 +7288,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);
-                    Common.directCall(leadDetails!.data!.contactNumber1.toString());
+                    Common.directCall(
+                        leadDetails!.data!.contactNumber1.toString());
                   },
                   child: SizedBox(
                       height: 50,

@@ -3322,7 +3322,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     Common.showProgressDialog(
                                         context, "Loading..");
                                   }
-                                  AddLeadFollowupModel object1 =
+                                  AddLeadFollowupModels object1 =
                                       await HttpService.addLeadsFollowup(
                                           widget.token,
                                           callResultId,

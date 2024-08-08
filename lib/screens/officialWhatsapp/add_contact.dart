@@ -117,7 +117,7 @@ addContactPopUp(context, nameController, numberController) {
                       final PhoneContact contact =
                           await FlutterContactPicker.pickPhoneContact();
                       String number =
-                        Common.trimPlus91(contact.phoneNumber!.number.toString());
+                       Common.trimPlus91(contact.phoneNumber!.number.toString());
                       String name = contact.fullName!;
                       numberController.text = number.replaceAll(' ', '');
                       nameController.text = name;

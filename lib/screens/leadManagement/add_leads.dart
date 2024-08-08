@@ -94,12 +94,20 @@ class _AddLeadsState extends State<AddLeads> {
   void initState() {
     super.initState();
     clientName.text = widget.clientName ?? "";
-    contactNo.text = Common.trimPlus91(widget.phoneNumber ?? "");
+    contactNo.text = trimPlus91(widget.phoneNumber ?? "");
     address.text = widget.address ?? "";
     getData();
   }
 
- 
+  String trimPlus91(String mobileNumber) {
+    if (mobileNumber.startsWith('+91')) {
+      return mobileNumber.substring(3);
+    } else if (mobileNumber.startsWith('91')) {
+      return mobileNumber.substring(2);
+    } else {
+      return mobileNumber;
+    }
+  }
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
@@ -1330,6 +1338,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                           checkLeadPhone.message
                                                               .toString()),
                                                       actions: [
+                                                        // The "Yes" button
                                                         TextButton(
                                                             onPressed: () {
                                                               Navigator.of(
@@ -1624,6 +1633,7 @@ class _AddLeadsState extends State<AddLeads> {
             content: const Text(
                 'Please contact the support team to upgrade your current plan'),
             actions: [
+              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

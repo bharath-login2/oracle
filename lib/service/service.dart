@@ -758,8 +758,63 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",
           data: formData);
-      AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
+      AddLeadFollowupModels model = AddLeadFollowupModels.fromJson(result.data);
       return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postConfirmedFollowup(
+      callMasterId,
+      invoiceRemarks,
+      renewalRemarks,
+      createType,
+      checkIdVal,
+      invoiceDate,
+      productList,
+      reminderTemplate,
+      totalAmount,
+      startDate,
+      endDate,
+      paymentStatus,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      paymentMethod,
+      paidAmount,
+      collectedStaff) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "invoice_remarks": invoiceRemarks,
+      "renewal_remarks": renewalRemarks,
+      "call_master_id": callMasterId,
+      "create_type": createType,
+      "check_id_val": checkIdVal,
+      "invoice_date": invoiceDate,
+      "product_list": jsonEncode(productList),
+      "reminder_template": reminderTemplate,
+      "total_amount_paid": totalAmount,
+      "start_date": startDate,
+      "end_date": endDate,
+      "payment_status": paymentStatus,
+      "sub_total": subTotal,
+      "estimated_tax": estimatedTax,
+      "discount_amount": discountAmount,
+      "shipping_amount": shippingAmount,
+      "payment_method": paymentMethod,
+      "amount_paid_customer": paidAmount,
+      "collected_staff": collectedStaff,
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}postConfirmedFollowup",
+          data: formData);
+      if (result.statusCode == 200) {
+        AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
