@@ -346,7 +346,16 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                                               content: const Text(
                                                                   'Are you sure to Remove this product?'),
                                                               actions: [
-                                                                // The "Yes" button
+                                                                 TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop();
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                            'No')),
                                                                 TextButton(
                                                                     onPressed:
                                                                         () async {
@@ -379,16 +388,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                                                     },
                                                                     child: const Text(
                                                                         'Yes')),
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop();
-                                                                    },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No'))
+                                                               
                                                               ],
                                                             );
                                                           });

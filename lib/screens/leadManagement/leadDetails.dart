@@ -878,7 +878,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   .data!.warningMessage
                                                   .toString()),
                                               actions: [
-                                                // The "Yes" button
                                                 TextButton(
                                                     onPressed: () {
                                                       Navigator.of(context)
@@ -1360,7 +1359,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   .warningMessage
                                                                   .toString()),
                                                           actions: [
-                                                            // The "Yes" button
                                                             TextButton(
                                                                 onPressed: () {
                                                                   Navigator.of(
@@ -2966,7 +2964,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                         title: const Text('Please Confirm'),
                                                                                         content: const Text('Are you sure to Remove this Voice?'),
                                                                                         actions: [
-                                                                                          // The "Yes" button
                                                                                           TextButton(
                                                                                               onPressed: () {
                                                                                                 Navigator.of(context).pop();
@@ -4612,7 +4609,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                   title: const Text('Please Confirm'),
                                                                                   content: const Text('Are you sure to Delete?'),
                                                                                   actions: [
-                                                                                    // The "Yes" button
                                                                                     TextButton(
                                                                                         onPressed: () {
                                                                                           Navigator.of(context).pop();
@@ -5119,7 +5115,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                                             title: const Text('Please Confirm'),
                                                                                                                             content: const Text('Are you sure to Remove this Number?'),
                                                                                                                             actions: [
-                                                                                                                              // The "Yes" button
+                                                                                                                             TextButton(
+                                                                                                                                  onPressed: () {
+                                                                                                                                    Navigator.of(context).pop();
+                                                                                                                                  },
+                                                                                                                                  child: const Text('No')),
                                                                                                                               TextButton(
                                                                                                                                   onPressed: () async {
                                                                                                                                     setState(() {
@@ -5129,11 +5129,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                                                     Navigator.of(context).pop();
                                                                                                                                   },
                                                                                                                                   child: const Text('Yes')),
-                                                                                                                              TextButton(
-                                                                                                                                  onPressed: () {
-                                                                                                                                    Navigator.of(context).pop();
-                                                                                                                                  },
-                                                                                                                                  child: const Text('No'))
+                                                                                                                              
                                                                                                                             ],
                                                                                                                           );
                                                                                                                         });
@@ -5177,7 +5173,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                           ],
                                                                                         ),
                                                                                         actions: [
-                                                                                          // The "Yes" button
                                                                                           TextButton(
                                                                                               onPressed: () async {
                                                                                                 Navigator.of(context).pop();
@@ -5572,7 +5567,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           content:
                                                                               const Text('You are about to delete this Mile stone?'),
                                                                           actions: [
-                                                                            // The "Yes" button
+                                                                          TextButton(
+                                                                                onPressed: () {
+                                                                                  Navigator.of(context).pop();
+                                                                                },
+                                                                                child: const Text('No')),
                                                                             TextButton(
                                                                                 onPressed: () async {
                                                                                   Common.showProgressDialog(context, "Loading..");
@@ -5605,11 +5604,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                   }
                                                                                 },
                                                                                 child: const Text('Yes')),
-                                                                            TextButton(
-                                                                                onPressed: () {
-                                                                                  Navigator.of(context).pop();
-                                                                                },
-                                                                                child: const Text('No'))
+                                                                            
                                                                           ],
                                                                         );
                                                                       });
@@ -7305,7 +7300,6 @@ class _LeadDetailsState extends State<LeadDetails> {
             content: const Text(
                 'You have no permission to access the feature please contact the support team'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -7324,7 +7318,11 @@ class _LeadDetailsState extends State<LeadDetails> {
             title: const Text('Please Confirm'),
             content: const Text('Are you sure to Delete?'),
             actions: [
-              // The "Yes" button
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
               TextButton(
                   onPressed: () async {
                     DeleteLeadFollowModel delete =
@@ -7362,11 +7360,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                     }
                   },
                   child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
+              
             ],
           );
         });

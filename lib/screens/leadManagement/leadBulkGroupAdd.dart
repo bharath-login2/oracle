@@ -194,7 +194,14 @@ class _AddBulkContactGroupState extends State<AddBulkContactGroup> {
                                                     content: const Text(
                                                         'Are you sure to Remove this Number?'),
                                                     actions: [
-                                                      // The "Yes" button
+                                                      TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                          child:
+                                                              const Text('No')),
                                                       TextButton(
                                                           onPressed: () async {
                                                             if (widget
@@ -234,14 +241,6 @@ class _AddBulkContactGroupState extends State<AddBulkContactGroup> {
                                                           },
                                                           child: const Text(
                                                               'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No'))
                                                     ],
                                                   );
                                                 });

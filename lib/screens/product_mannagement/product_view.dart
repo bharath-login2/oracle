@@ -266,7 +266,14 @@ class _ProductViewState extends State<ProductView> {
                                                     content: const Text(
                                                         'Are you sure?'),
                                                     actions: [
-                                                      // The "Yes" button
+                                                     TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                          child:
+                                                              const Text('No')),
                                                       TextButton(
                                                           onPressed: () async {
                                                             Navigator.pop(
@@ -277,14 +284,7 @@ class _ProductViewState extends State<ProductView> {
                                                           },
                                                           child: const Text(
                                                               'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No'))
+                                                      
                                                     ],
                                                   );
                                                 });

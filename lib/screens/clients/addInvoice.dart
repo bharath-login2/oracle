@@ -3045,7 +3045,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             content: Text(invCheck.message
                                                 .toString()),
                                             actions: [
-                                              // The "Yes" button
                                               TextButton(
                                                   onPressed: () {
                                                     Navigator.of(context)

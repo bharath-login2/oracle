@@ -503,18 +503,18 @@ class _NotificationPageState extends State<NotificationPage> {
             title: const Text('Please Confirm'),
             content: const Text('Are you sure to Delete?'),
             actions: [
-              // The "Yes" button
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
               TextButton(
                   onPressed: () async {
                     deleteNotification(notificationId);
                     Navigator.pop(context);
                   },
                   child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
+              
             ],
           );
         });

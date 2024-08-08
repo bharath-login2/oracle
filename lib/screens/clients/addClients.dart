@@ -661,7 +661,6 @@ class _AddClientsState extends State<AddClients> {
                                                                   'field_value'],
                                                         })),
                                                   );
-
                                                   setState(() {});
                                                 },
                                                 child: const Padding(

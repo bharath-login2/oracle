@@ -792,7 +792,11 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                           title: const Text('Please Confirm'),
                                                                                           content: const Text('Are you sure to Remove this Number?'),
                                                                                           actions: [
-                                                                                            // The "Yes" button
+                                                                                            TextButton(
+                                                                                                onPressed: () {
+                                                                                                  Navigator.of(context).pop();
+                                                                                                },
+                                                                                                child: const Text('No')),
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
@@ -819,11 +823,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
                                                                                                 child: const Text('Yes')),
-                                                                                            TextButton(
-                                                                                                onPressed: () {
-                                                                                                  Navigator.of(context).pop();
-                                                                                                },
-                                                                                                child: const Text('No'))
+                                                                                            
                                                                                           ],
                                                                                         );
                                                                                       });
@@ -1037,7 +1037,11 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                           title: const Text('Please Confirm'),
                                                                                           content: const Text('Are you sure to Remove this Number?'),
                                                                                           actions: [
-                                                                                            // The "Yes" button
+                                                                                           TextButton(
+                                                                                                onPressed: () {
+                                                                                                  Navigator.of(context).pop();
+                                                                                                },
+                                                                                                child: const Text('No')),
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
@@ -1047,11 +1051,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
                                                                                                 child: const Text('Yes')),
-                                                                                            TextButton(
-                                                                                                onPressed: () {
-                                                                                                  Navigator.of(context).pop();
-                                                                                                },
-                                                                                                child: const Text('No'))
+                                                                                            
                                                                                           ],
                                                                                         );
                                                                                       });
@@ -1265,7 +1265,11 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                           title: const Text('Please Confirm'),
                                                                                           content: const Text('Are you sure to Remove this Number?'),
                                                                                           actions: [
-                                                                                            // The "Yes" button
+                                                                                          TextButton(
+                                                                                                onPressed: () {
+                                                                                                  Navigator.of(context).pop();
+                                                                                                },
+                                                                                                child: const Text('No')),
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
@@ -1275,11 +1279,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
                                                                                                 child: const Text('Yes')),
-                                                                                            TextButton(
-                                                                                                onPressed: () {
-                                                                                                  Navigator.of(context).pop();
-                                                                                                },
-                                                                                                child: const Text('No'))
+                                                                                            
                                                                                           ],
                                                                                         );
                                                                                       });
@@ -1493,7 +1493,11 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                           title: const Text('Please Confirm'),
                                                                                           content: const Text('Are you sure to Remove this Number?'),
                                                                                           actions: [
-                                                                                            // The "Yes" button
+                                                                                          TextButton(
+                                                                                                onPressed: () {
+                                                                                                  Navigator.of(context).pop();
+                                                                                                },
+                                                                                                child: const Text('No')),
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
@@ -1503,11 +1507,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
                                                                                                 child: const Text('Yes')),
-                                                                                            TextButton(
-                                                                                                onPressed: () {
-                                                                                                  Navigator.of(context).pop();
-                                                                                                },
-                                                                                                child: const Text('No'))
+                                                                                            
                                                                                           ],
                                                                                         );
                                                                                       });
@@ -1680,7 +1680,11 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                             content: const Text(
                                                 'Are you sure to Delete?'),
                                             actions: [
-                                              // The "Yes" button
+                                             TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('No')),
                                               TextButton(
                                                   onPressed: () async {
                                                     DeleteLeadModel delete =
@@ -1723,11 +1727,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                     }
                                                   },
                                                   child: const Text('Yes')),
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text('No'))
+                                              
                                             ],
                                           );
                                         });
@@ -1743,7 +1743,6 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                   .data!.warningMessage
                                                   .toString()),
                                               actions: [
-                                                // The "Yes" button
                                                 TextButton(
                                                     onPressed: () {
                                                       Navigator.of(context)
@@ -2172,7 +2171,6 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                             .warningMessage
                                                                             .toString()),
                                                                         actions: [
-                                                                          // The "Yes" button
                                                                           TextButton(
                                                                               onPressed: () {
                                                                                 Navigator.of(context).pop();

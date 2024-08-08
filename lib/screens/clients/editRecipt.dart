@@ -778,7 +778,14 @@ class _EditReceiptState extends State<EditReceipt> {
                                   content: const Text(
                                       'Are you sure to Delete?'),
                                   actions: [
-                                    // The "Yes" button
+                                    TextButton(
+                                        onPressed: () {
+                                          Navigator.of(
+                                              context)
+                                              .pop();
+                                        },
+                                        child:
+                                        const Text('No')),
                                     TextButton(
                                         onPressed: () async {
                                           ReceiptFileDeleteModel deleteReceiptFile=await HttpService.deleteReceiptFile(widget.token,receiptDetails!.data!.receiptId);
@@ -815,14 +822,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                         },
                                         child: const Text(
                                             'Yes')),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.of(
-                                              context)
-                                              .pop();
-                                        },
-                                        child:
-                                        const Text('No'))
+                                    
                                   ],
                                 );
                               });

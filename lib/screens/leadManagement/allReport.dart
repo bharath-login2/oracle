@@ -428,7 +428,6 @@ class _AllReportState extends State<AllReport> {
                                     //         content: const Text(
                                     //             'Are you sure to Delete?'),
                                     //         actions: [
-                                    //           // The "Yes" button
                                     //           TextButton(
                                     //               onPressed: () async {
                                     //                 DeleteLeadModel delete =
@@ -489,7 +488,6 @@ class _AllReportState extends State<AllReport> {
                                               title: const Text('Alert !!!'),
                                               content: Text(""),
                                               actions: [
-                                                // The "Yes" button
                                                 TextButton(
                                                     onPressed: () {
                                                       Navigator.of(context)
@@ -518,9 +516,9 @@ class _AllReportState extends State<AllReport> {
                                                                               index]
                                                                           .callMasterId
                                                                           .toString(),
-                                                                      pageName:
-                                                                          widget
-                                                                              .pageName.toString(),
+                                                                      pageName: widget
+                                                                          .pageName
+                                                                          .toString(),
                                                                       page:
                                                                           page,
                                                                       pageSize:
@@ -568,7 +566,8 @@ class _AllReportState extends State<AllReport> {
                                                   items[index]
                                                       .callMasterId
                                                       .toString(),
-                                                  pageName: widget.pageName.toString(),
+                                                  pageName: widget.pageName
+                                                      .toString(),
                                                   page: page,
                                                   pageSize: page * pageSize,
                                                   fromDate: fromdate.toString(),
@@ -671,7 +670,11 @@ class _AllReportState extends State<AllReport> {
                                                                 width: 5,
                                                               ),
                                                               SizedBox(
-                                                                width: MediaQuery.of(context).size.width*.46,
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    .46,
                                                                 child: Text(
                                                                   items[index]
                                                                       .clientName
@@ -742,20 +745,20 @@ class _AllReportState extends State<AllReport> {
                                                           ),
                                                           Row(
                                                             mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .end,
+                                                                MainAxisAlignment
+                                                                    .end,
                                                             children: [
                                                               Visibility(
-                                                                visible: items[
-                                                                            index]
-                                                                        .categoryCount
-                                                                        .toString() !=
-                                                                    "1"&& items[
-                                                                            index]
-                                                                        .categoryCount
-                                                                        .toString() !=
-                                                                    "",
-                                                                child: Container(
+                                                                visible: items[index]
+                                                                            .categoryCount
+                                                                            .toString() !=
+                                                                        "1" &&
+                                                                    items[index]
+                                                                            .categoryCount
+                                                                            .toString() !=
+                                                                        "",
+                                                                child:
+                                                                    Container(
                                                                   height: 20,
                                                                   width: 20,
                                                                   decoration: const BoxDecoration(
@@ -775,9 +778,9 @@ class _AllReportState extends State<AllReport> {
                                                                           color: Colors
                                                                               .white,
                                                                           fontWeight:
-                                                                              FontWeight
-                                                                                  .bold),
-                                                                      maxLines: 1,
+                                                                              FontWeight.bold),
+                                                                      maxLines:
+                                                                          1,
                                                                       overflow:
                                                                           TextOverflow
                                                                               .ellipsis,
@@ -1073,7 +1076,6 @@ class _AllReportState extends State<AllReport> {
                                                                         content:
                                                                             Text(""),
                                                                         actions: [
-                                                                          // The "Yes" button
                                                                           TextButton(
                                                                               onPressed: () {
                                                                                 Navigator.of(context).pop();
@@ -1117,7 +1119,9 @@ class _AllReportState extends State<AllReport> {
                                                                 if (widget
                                                                         .cloudCall ==
                                                                     true) {
-                                                                       chooseCallDialog(context, index);
+                                                                  chooseCallDialog(
+                                                                      context,
+                                                                      index);
                                                                 } else {
                                                                   String url =
                                                                       'tel:+${items[index].contactNumber1}';
@@ -1265,137 +1269,102 @@ class _AllReportState extends State<AllReport> {
 
   Future<dynamic> chooseCallDialog(BuildContext context, int index) {
     return showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text(
-                                                  'Choose Call Type'),
-                                              content: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      Common
-                                                          .showProgressDialog(
-                                                              context,
-                                                              "Loading..");
-                                                      CloudCallModel object1 =
-                                                          await HttpService
-                                                              .addCloudCall(
-                                                                  widget
-                                                                      .token,
-                                                                  items[index]
-                                                                      .callMasterId,
-                                                                  items[index]
-                                                                      .contactNumber1);
-                                                      if (object1.data ==
-                                                          true) {
-                                                        if (context.mounted) {
-                                                          Common.toastMessaage(
-                                                            object1.message,
-                                                            Colors.green);
-                                                          Navigator.pop(context);
-                                                          Navigator.pop(context);
-                                                        }
-                                                      } else {
-                                                        Common.toastMessaage(
-                                                            object1.message,
-                                                            Colors.red);
-                                                        if (context.mounted) {
-                                                          Navigator.pop(
-                                                              context);
-                                                        }
-                                                      }
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Row(
-                                                        children: [
-                                                          Container(
-                                                            height: 30,
-                                                            width: 30,
-                                                            decoration: BoxDecoration(
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade300,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            5)),
-                                                            child: const Icon(
-                                                              Icons
-                                                                  .cloud_circle_rounded,
-                                                              color: Colors
-                                                                  .black,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 20,
-                                                          ),
-                                                          const Text(
-                                                            'Cloud Call',
-                                                            style: TextStyle(
-                                                                fontSize: 18),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 10,
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      // String url =
-                                                      //     'tel:${'+${items[index].contactNumber1}'}';
-                                                      // await launchUrl(Uri.parse(url));
-                                                      Navigator.pop(context);
-                                                      bool? res =
-                                                          await FlutterPhoneDirectCaller
-                                                              .callNumber(
-                                                                  '+${items[index].contactNumber1}');
-                                                    },
-                                                    child: SizedBox(
-                                                        height: 50,
-                                                        child: Row(
-                                                          children: [
-                                                            Container(
-                                                              height: 30,
-                                                              width: 30,
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade300,
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                          5)),
-                                                              child:
-                                                                  const Icon(
-                                                                Icons.call,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            const Text(
-                                                              'Phone Call',
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      18),
-                                                            ),
-                                                          ],
-                                                        )),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          });
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Choose Call Type'),
+            content: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    CloudCallModel object1 = await HttpService.addCloudCall(
+                        widget.token,
+                        items[index].callMasterId,
+                        items[index].contactNumber1);
+                    if (object1.data == true) {
+                      if (context.mounted) {
+                        Common.toastMessaage(object1.message, Colors.green);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      Common.toastMessaage(object1.message, Colors.red);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Icon(
+                            Icons.cloud_circle_rounded,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        const Text(
+                          'Cloud Call',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                InkWell(
+                  onTap: () async {
+                    // String url =
+                    //     'tel:${'+${items[index].contactNumber1}'}';
+                    // await launchUrl(Uri.parse(url));
+                    Navigator.pop(context);
+                    bool? res = await FlutterPhoneDirectCaller.callNumber(
+                        '+${items[index].contactNumber1}');
+                  },
+                  child: SizedBox(
+                      height: 50,
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(5)),
+                            child: const Icon(
+                              Icons.call,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          const Text(
+                            'Phone Call',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ],
+                      )),
+                ),
+              ],
+            ),
+          );
+        });
   }
 
   Future<dynamic> filtrationSheet(BuildContext context) {
@@ -1830,7 +1799,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -1861,14 +1837,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });
@@ -2102,7 +2070,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2116,14 +2091,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });
@@ -2354,7 +2321,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2369,14 +2343,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });
@@ -2608,7 +2574,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2622,14 +2595,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });
@@ -2867,7 +2832,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2881,14 +2853,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });
@@ -3121,7 +3085,14 @@ class _AllReportState extends State<AllReport> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                    TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -3135,14 +3106,6 @@ class _AllReportState extends State<AllReport> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
                                                                   ],
                                                                 );
                                                               });

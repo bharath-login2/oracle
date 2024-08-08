@@ -1083,7 +1083,11 @@ class _ViewUsersState extends State<ViewUsers> {
             title: const Text('Please Confirm'),
             content: const Text('Are you sure to Delete?'),
             actions: [
-              // The "Yes" button
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
               TextButton(
                   onPressed: () async {
                     DeleteStaffModel delete = await HttpService.deleteStaff(
@@ -1102,11 +1106,7 @@ class _ViewUsersState extends State<ViewUsers> {
                     }
                   },
                   child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
+              
             ],
           );
         });
@@ -1121,7 +1121,6 @@ class _ViewUsersState extends State<ViewUsers> {
             content: const Text(
                 'You have no permission to access the feature please contact the support team'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -1141,7 +1140,6 @@ class _ViewUsersState extends State<ViewUsers> {
             content: const Text(
                 'Please contact the support team to upgrade your current plan'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

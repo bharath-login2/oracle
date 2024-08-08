@@ -52,8 +52,8 @@ class _ClientListState extends State<ClientList> {
       });
     }
 
-    mainClients =
-        await HttpService.mainClients(widget.token, searchController.text,fDate,tDate);
+    mainClients = await HttpService.mainClients(
+        widget.token, searchController.text, fDate, tDate);
     if (mainClients != null) {
       setState(() {
         isSearch = false;
@@ -68,7 +68,8 @@ class _ClientListState extends State<ClientList> {
             onWillPop: () async {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
+                MaterialPageRoute(
+                    builder: (context) => Dashboard(widget.token)),
               );
               return true;
             },
@@ -141,7 +142,6 @@ class _ClientListState extends State<ClientList> {
                               size: 30,
                             ),
                           ),
-
                         ],
                       ),
                     ),
@@ -791,7 +791,11 @@ class _ClientListState extends State<ClientList> {
                                                                           content:
                                                                               const Text('Are you sure to Delete?'),
                                                                           actions: [
-                                                                            // The "Yes" button
+                                                                            TextButton(
+                                                                                onPressed: () {
+                                                                                  Navigator.of(context).pop();
+                                                                                },
+                                                                                child: const Text('No')),
                                                                             TextButton(
                                                                                 onPressed: () async {
                                                                                   Common.showProgressDialog(context, "Loading..");
@@ -812,11 +816,6 @@ class _ClientListState extends State<ClientList> {
                                                                                   }
                                                                                 },
                                                                                 child: const Text('Yes')),
-                                                                            TextButton(
-                                                                                onPressed: () {
-                                                                                  Navigator.of(context).pop();
-                                                                                },
-                                                                                child: const Text('No'))
                                                                           ],
                                                                         );
                                                                       });

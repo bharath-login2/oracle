@@ -373,7 +373,6 @@ void _dialogue(BuildContext context, title) {
           content: const Text(
               'You have no permission to access the feature please contact the support team'),
           actions: [
-            // The "Yes" button
             TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();

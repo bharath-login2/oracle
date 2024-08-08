@@ -463,7 +463,14 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         },
                                                       ),
                                                       actions: [
-                                                        // The "Yes" button
+                                                      TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: const Text(
+                                                                'No')),
 
                                                         TextButton(
                                                             onPressed:
@@ -522,14 +529,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                'No'))
+                                                       
                                                       ],
                                                     );
                                                   });
@@ -555,7 +555,14 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                       content: const Text(
                                                           'Are you sure to Delete Selected Leads?'),
                                                       actions: [
-                                                        // The "Yes" button
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: const Text(
+                                                                'No')),
                                                         TextButton(
                                                             onPressed:
                                                                 () async {
@@ -606,14 +613,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                'No'))
+                                                        
                                                       ],
                                                     );
                                                   });
@@ -847,7 +847,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         .data.warningMessage
                                                         .toString()),
                                                     actions: [
-                                                      // The "Yes" button
                                                       TextButton(
                                                           onPressed: () {
                                                             Navigator.of(
@@ -1523,7 +1522,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                               title: const Text('Alert !!!'),
                                                                               content: Text(viewLeads!.data.warningMessage.toString()),
                                                                               actions: [
-                                                                                // The "Yes" button
                                                                                 TextButton(
                                                                                     onPressed: () {
                                                                                       Navigator.of(context).pop();
@@ -2295,7 +2293,14 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                     TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2326,14 +2331,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
+                                                                   
                                                                   ],
                                                                 );
                                                               });
@@ -2564,7 +2562,14 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                  TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2579,14 +2584,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
+                                                                    
                                                                   ],
                                                                 );
                                                               });
@@ -2818,7 +2816,14 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                    // The "Yes" button
+                                                                   TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.of(context)
+                                                                              .pop();
+                                                                        },
+                                                                        child: const Text(
+                                                                            'No')),
                                                                     TextButton(
                                                                         onPressed:
                                                                             () async {
@@ -2832,14 +2837,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    TextButton(
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.of(context)
-                                                                              .pop();
-                                                                        },
-                                                                        child: const Text(
-                                                                            'No'))
+                                                                   
                                                                   ],
                                                                 );
                                                               });
@@ -3088,7 +3086,13 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         const Text(
                                                                             'Are you sure to Remove this Number?'),
                                                                     actions: [
-                                                                      // The "Yes" button
+                                                                     TextButton(
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child:
+                                                                              const Text('No')),
                                                                       TextButton(
                                                                           onPressed:
                                                                               () async {
@@ -3117,13 +3121,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                           },
                                                                           child:
                                                                               const Text('Yes')),
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child:
-                                                                              const Text('No'))
+                                                                      
                                                                     ],
                                                                   );
                                                                 });

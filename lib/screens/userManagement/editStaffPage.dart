@@ -740,7 +740,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         const Text(
                                                                             'Are you sure to Remove this Number?'),
                                                                     actions: [
-                                                                      // The "Yes" button
+                                                                     TextButton(
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child:
+                                                                              const Text('No')),
                                                                       TextButton(
                                                                           onPressed:
                                                                               () async {
@@ -753,13 +759,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                           },
                                                                           child:
                                                                               const Text('Yes')),
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child:
-                                                                              const Text('No'))
+                                                                      
                                                                     ],
                                                                   );
                                                                 });

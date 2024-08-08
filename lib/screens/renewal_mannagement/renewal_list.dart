@@ -871,7 +871,13 @@ class _RenewalListState extends State<RenewalList> {
                                                                         const Text(
                                                                             'Are you sure to Hide?'),
                                                                     actions: [
-                                                                      // The "Yes" button
+                                                                      TextButton(
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child:
+                                                                              const Text('No')),
                                                                       TextButton(
                                                                           onPressed:
                                                                               () async {
@@ -890,13 +896,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                           },
                                                                           child:
                                                                               const Text('Yes')),
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child:
-                                                                              const Text('No'))
+                                                                      
                                                                     ],
                                                                   );
                                                                 });

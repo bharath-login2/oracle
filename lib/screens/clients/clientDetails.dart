@@ -357,7 +357,12 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                     content: const Text(
                                                         'Are you sure to Delete?'),
                                                     actions: [
-                                                      // The "Yes" button
+                                                      TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(context)
+                                                                .pop();
+                                                          },
+                                                          child: const Text('No')),
                                                       TextButton(
                                                           onPressed: () async {
                                                             Common
@@ -404,12 +409,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                             }
                                                           },
                                                           child: const Text('Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(context)
-                                                                .pop();
-                                                          },
-                                                          child: const Text('No'))
+                                                      
                                                     ],
                                                   );
                                                 });
@@ -860,7 +860,14 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                     content: const Text(
                                                                         'Are you sure to Delete?'),
                                                                     actions: [
-                                                                      // The "Yes" button
+                                                                       TextButton(
+                                                                          onPressed: () {
+                                                                            Navigator.of(
+                                                                                context)
+                                                                                .pop();
+                                                                          },
+                                                                          child:
+                                                                          const Text('No')),
                                                                       TextButton(
                                                                           onPressed: () async {
                                                                             Common.showProgressDialog(
@@ -899,14 +906,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                           },
                                                                           child: const Text(
                                                                               'Yes')),
-                                                                      TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.of(
-                                                                                context)
-                                                                                .pop();
-                                                                          },
-                                                                          child:
-                                                                          const Text('No'))
+                                                                     
                                                                     ],
                                                                   );
                                                                 });
@@ -1177,7 +1177,14 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                       content: const Text(
                                                                           'Are you sure to Delete?'),
                                                                       actions: [
-                                                                        // The "Yes" button
+                                                                        TextButton(
+                                                                            onPressed: () {
+                                                                              Navigator.of(
+                                                                                  context)
+                                                                                  .pop();
+                                                                            },
+                                                                            child:
+                                                                            const Text('No')),
                                                                         TextButton(
                                                                             onPressed: () async {
                                                                               Common.showProgressDialog(
@@ -1223,7 +1230,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                                   .pop();
                                                                             },
                                                                             child:
-                                                                            const Text('No'))
+                                                                            const Text('No')),
                                                                       ],
                                                                     );
                                                                   });

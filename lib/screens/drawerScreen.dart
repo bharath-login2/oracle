@@ -62,8 +62,8 @@ class _DraweScreenState extends State<DraweScreen> {
     super.initState();
     getData();
     Timer.periodic(const Duration(milliseconds: 500), (timer) {
-        _currentColorIndex = (_currentColorIndex + 1) % _textColors.length;
-      });
+      _currentColorIndex = (_currentColorIndex + 1) % _textColors.length;
+    });
   }
 
   getData() async {
@@ -362,7 +362,11 @@ void logout(BuildContext context) {
           title: const Text('Please Confirm'),
           content: const Text('Are you sure to Logout?'),
           actions: [
-            // The "Yes" button
+            TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('No')),
             TextButton(
                 onPressed: () {
                   Common.saveSharedPref("Logout", "success");
@@ -381,11 +385,6 @@ void logout(BuildContext context) {
                   }
                 },
                 child: const Text('Yes')),
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('No'))
           ],
         );
       });

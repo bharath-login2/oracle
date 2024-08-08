@@ -174,7 +174,11 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                           content: const Text(
                                               'Are you sure to Delete?'),
                                           actions: [
-                                            // The "Yes" button
+                                           TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('No')),
                                             TextButton(
                                                 onPressed: () async {
                                                   DeleteStaffModel delete =
@@ -210,11 +214,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                   }
                                                 },
                                                 child: const Text('Yes')),
-                                            TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                child: const Text('No'))
+                                            
                                           ],
                                         );
                                       });

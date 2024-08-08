@@ -709,7 +709,14 @@ class _ReceiptListState extends State<ReceiptList> {
                                                         content: const Text(
                                                             'Are you sure to Delete?'),
                                                         actions: [
-                                                          // The "Yes" button
+                                                           TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                    context)
+                                                                    .pop();
+                                                              },
+                                                              child:
+                                                              const Text('No')),
                                                           TextButton(
                                                               onPressed: () async {
                                                                 Common.showProgressDialog(
@@ -748,14 +755,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                               },
                                                               child: const Text(
                                                                   'Yes')),
-                                                          TextButton(
-                                                              onPressed: () {
-                                                                Navigator.of(
-                                                                    context)
-                                                                    .pop();
-                                                              },
-                                                              child:
-                                                              const Text('No'))
+                                                        
                                                         ],
                                                       );
                                                     });

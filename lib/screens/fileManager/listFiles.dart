@@ -342,7 +342,6 @@ class _ListFilesState extends State<ListFiles> {
                                             content: const Text(
                                                 'Are you sure to Delete?'),
                                             actions: [
-                                              // The "Yes" button
                                               TextButton(
                                                   onPressed: () {
                                                     Navigator.of(context).pop();
@@ -1979,7 +1978,6 @@ class _ListFilesState extends State<ListFiles> {
             content: const Text(
                 'You have no permission to access the feature please contact the support team'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

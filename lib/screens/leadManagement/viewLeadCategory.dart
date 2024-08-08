@@ -568,7 +568,11 @@ class _ViewLeadCategoryState extends State<ViewLeadCategory> {
             title: const Text('Please Confirm'),
             content: const Text('Are you sure to Delete?'),
             actions: [
-              // The "Yes" button
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
               TextButton(
                   onPressed: () async {
                    LeadCategoryDeleteModel deleteCategory=await HttpService.deleteLeadCategory(widget.token,categoryId);
@@ -600,11 +604,7 @@ class _ViewLeadCategoryState extends State<ViewLeadCategory> {
                      }
                   },
                   child: const Text('Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No'))
+              
             ],
           );
         });

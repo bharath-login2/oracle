@@ -1133,7 +1133,15 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                           content: const Text(
                                                               'You are about to delete an Account Connection ?'),
                                                           actions: [
-                                                            // The "Yes" button
+                                                            TextButton(
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop();
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                        'No')),
                                                             TextButton(
                                                                 onPressed:
                                                                     () async {
@@ -1168,15 +1176,7 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                 child:
                                                                     const Text(
                                                                         'Yes')),
-                                                            TextButton(
-                                                                onPressed: () {
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop();
-                                                                },
-                                                                child:
-                                                                    const Text(
-                                                                        'No'))
+                                                            
                                                           ],
                                                         );
                                                       });

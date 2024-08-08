@@ -346,7 +346,6 @@ class _SearchPageState extends State<SearchPage> {
                                           //         content: const Text(
                                           //             'Are you sure to Delete?'),
                                           //         actions: [
-                                          //           // The "Yes" button
                                           //           TextButton(
                                           //               onPressed: () async {
                                           //                 DeleteLeadModel
@@ -418,7 +417,6 @@ class _SearchPageState extends State<SearchPage> {
                                                         .data.warningMessage
                                                         .toString()),
                                                     actions: [
-                                                      // The "Yes" button
                                                       TextButton(
                                                           onPressed: () {
                                                             Navigator.of(
@@ -992,7 +990,6 @@ class _SearchPageState extends State<SearchPage> {
                                                                             .warningMessage
                                                                             .toString()),
                                                                         actions: [
-                                                                          // The "Yes" button
                                                                           TextButton(
                                                                               onPressed: () {
                                                                                 Navigator.of(context).pop();

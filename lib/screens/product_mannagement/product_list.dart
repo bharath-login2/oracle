@@ -357,7 +357,14 @@ class _ProductListState extends State<ProductList> {
                                                     content: const Text(
                                                         'Are you sure?'),
                                                     actions: [
-                                                      // The "Yes" button
+                                                     TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                          child:
+                                                              const Text('No')),
                                                       TextButton(
                                                           onPressed: () async {
                                                             Navigator.pop(
@@ -370,14 +377,7 @@ class _ProductListState extends State<ProductList> {
                                                           },
                                                           child: const Text(
                                                               'Yes')),
-                                                      TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No'))
+                                                      
                                                     ],
                                                   );
                                                 });

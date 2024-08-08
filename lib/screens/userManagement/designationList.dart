@@ -215,7 +215,14 @@ class _DesignationListState extends State<DesignationList> {
                                                       content: const Text(
                                                           'Are you sure to Delete?'),
                                                       actions: [
-                                                        // The "Yes" button
+                                                         TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: const Text(
+                                                                'No')),
                                                         TextButton(
                                                             onPressed:
                                                                 () async {
@@ -255,14 +262,7 @@ class _DesignationListState extends State<DesignationList> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                'No'))
+                                                       
                                                       ],
                                                     );
                                                   });

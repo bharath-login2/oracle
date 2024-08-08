@@ -621,7 +621,6 @@ class _GroupListState extends State<GroupList> {
             title: const Text('Upgrade Package !!!'),
             content: const Text('Please contact the support team to upgrade your current plan'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

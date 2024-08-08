@@ -468,7 +468,6 @@
 //                                                 content: const Text(
 //                                                     'Are you sure to Delete?'),
 //                                                 actions: [
-//                                                   // The "Yes" button
 //                                                   TextButton(
 //                                                       onPressed: () async {
 //                                                         Common.showProgressDialog(

@@ -697,7 +697,6 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                       //                                   content: const Text(
                       //                                       'Are you sure to Hide?'),
                       //                                   actions: [
-                      //                                     // The "Yes" button
                       //                                     TextButton(
                       //                                         onPressed:
                       //                                             () async {

@@ -299,7 +299,6 @@ class _FileMangerListState extends State<FileMangerList> {
             content: const Text(
                 'You have no permission to access the feature please contact the support team'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

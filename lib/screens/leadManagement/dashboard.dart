@@ -6606,7 +6606,6 @@ class _DashboardState extends State<Dashboard> {
             content: const Text(
                 'You have no permission to access the feature please contact the support team'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
@@ -6626,7 +6625,6 @@ class _DashboardState extends State<Dashboard> {
             content: const Text(
                 'Please contact the support team to upgrade your current plan'),
             actions: [
-              // The "Yes" button
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();

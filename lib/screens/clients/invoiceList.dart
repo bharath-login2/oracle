@@ -1264,7 +1264,11 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                                   title: const Text('Please Confirm'),
                                                                                   content: const Text('Are you sure to Delete?'),
                                                                                   actions: [
-                                                                                    // The "Yes" button
+                                                                                   TextButton(
+                                                                                        onPressed: () {
+                                                                                          Navigator.of(context).pop();
+                                                                                        },
+                                                                                        child: const Text('No')),
                                                                                     TextButton(
                                                                                         onPressed: () async {
                                                                                           Common.showProgressDialog(context, "Loading..");
@@ -1285,11 +1289,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                                           }
                                                                                         },
                                                                                         child: const Text('Yes')),
-                                                                                    TextButton(
-                                                                                        onPressed: () {
-                                                                                          Navigator.of(context).pop();
-                                                                                        },
-                                                                                        child: const Text('No'))
+                                                                                    
                                                                                   ],
                                                                                 );
                                                                               });
