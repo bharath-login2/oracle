@@ -2527,7 +2527,8 @@ class _DashboardState extends State<Dashboard> {
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "New Leads",
-                                                                              "1");
+                                                                              "1",
+                                                                              "");
                                                                         }
                                                                       }
                                                                     },
@@ -2776,7 +2777,8 @@ class _DashboardState extends State<Dashboard> {
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "Followup Leads",
-                                                                              "2");
+                                                                              "2",
+                                                                              "");
                                                                         }
                                                                       }
                                                                     },
@@ -3024,7 +3026,8 @@ class _DashboardState extends State<Dashboard> {
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "Closed Leads",
-                                                                              "4");
+                                                                              "4",
+                                                                              "");
                                                                         }
                                                                       }
                                                                     },
@@ -3269,6 +3272,7 @@ class _DashboardState extends State<Dashboard> {
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "Total Called",
+                                                                              "",
                                                                               "-1");
                                                                         }
                                                                       }
@@ -3514,7 +3518,8 @@ class _DashboardState extends State<Dashboard> {
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "Transferred Leads",
-                                                                              "-2");
+                                                                              "",
+                                                                              "2");
                                                                         }
                                                                       }
                                                                     },
@@ -3748,14 +3753,15 @@ class _DashboardState extends State<Dashboard> {
                                                                       if (object1!
                                                                               .status ==
                                                                           true) {
-                                                                        if (context
+                                                                         if (context
                                                                             .mounted) {
                                                                           Navigator.pop(
                                                                               context);
                                                                           leadProgressbarDialog(
                                                                               context,
                                                                               "Missed Leads",
-                                                                              "-3");
+                                                                              "",
+                                                                              "1");
                                                                         }
                                                                       }
                                                                     },
@@ -6106,7 +6112,7 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<Object?> leadProgressbarDialog(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status, String type) {
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",
       barrierDismissible: true,
@@ -6217,14 +6223,10 @@ class _DashboardState extends State<Dashboard> {
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
                                                   pageName: title,
-                                                  fromDate: DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month -
-                                                              3,
-                                                          DateTime.now().day)
-                                                      .toString(),
+                                                  fromDate: fromdate.toString(),
                                                   toDate: todate.toString(),
                                                   status: status,
+                                                  leadType: type,
                                                   staffName: object1!.data!
                                                       .staffLeads![i].staffName,
                                                   staff: object1!.data!
@@ -6348,13 +6350,9 @@ class _DashboardState extends State<Dashboard> {
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
                                                   pageName: title,
-                                                  fromDate: DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month -
-                                                              3,
-                                                          DateTime.now().day)
-                                                      .toString(),
+                                                  fromDate: fromdate.toString(),
                                                   toDate: todate.toString(),
+                                                  leadType: type,
                                                   status: status,
                                                   categoryName: object1!
                                                       .data!
@@ -6485,13 +6483,8 @@ class _DashboardState extends State<Dashboard> {
                                                   deleteLeadPermission1,
                                                   cloudCallPermission1,
                                                   pageName: title,
-                                                  leadType: status,
-                                                  fromDate: DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month -
-                                                              3,
-                                                          DateTime.now().day)
-                                                      .toString(),
+                                                  leadType: type,
+                                                  fromDate: fromdate.toString(),
                                                   toDate: DateTime(
                                                           DateTime.now().year,
                                                           DateTime.now().month,
