@@ -463,7 +463,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         },
                                                       ),
                                                       actions: [
-                                                      TextButton(
+                                                        TextButton(
                                                             onPressed: () {
                                                               Navigator.of(
                                                                       context)
@@ -471,7 +471,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             },
                                                             child: const Text(
                                                                 'No')),
-
                                                         TextButton(
                                                             onPressed:
                                                                 () async {
@@ -529,7 +528,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                       
                                                       ],
                                                     );
                                                   });
@@ -613,7 +611,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                             },
                                                             child: const Text(
                                                                 'Yes')),
-                                                        
                                                       ],
                                                     );
                                                   });
@@ -793,42 +790,37 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             MaterialPageRoute(
                                                 builder: (context) =>
                                                     AddFollowup(
-                                                        widget.token,
-                                                        widget.editLead,
-                                                        widget.deleteLead,
-                                                        widget.cloudCall,
-                                                        items[index]
-                                                            .callMasterId,
-                                                        pageName:
-                                                            widget.pageName,
-                                                        status: widget.status,
-                                                        staff: widget.staff,
-                                                        isCalled:
-                                                            widget.isCalled,
-                                                        fromDate:
-                                                            widget.fromDate,
-                                                        toDate: widget.toDate,
-                                                        category:
-                                                            widget.category,
-                                                        leadType: items[index]
-                                                            .leadCategory,
-                                                        leadTypeId: items[index]
-                                                            .leadCategoryId,
-                                                        leadSubType: items[index]
-                                                            .leadSubCategory,
-                                                        leadSubTypeId: items[
-                                                                index]
-                                                            .leadSubCategoryId,
-                                                        priorityId: items[index]
-                                                            .priority,
-                                                        priority: items[index]
-                                                            .priorityName,
-                                                        cost: items[index].cost,
-                                                        address: items[index]
-                                                            .address,
-                                                        leadType1:
-                                                            widget.leadType,
-                                                            )),
+                                                      widget.token,
+                                                      widget.editLead,
+                                                      widget.deleteLead,
+                                                      widget.cloudCall,
+                                                      items[index].callMasterId,
+                                                      pageName: widget.pageName,
+                                                      status: widget.status,
+                                                      staff: widget.staff,
+                                                      isCalled: widget.isCalled,
+                                                      fromDate: widget.fromDate,
+                                                      toDate: widget.toDate,
+                                                      category: widget.category,
+                                                      leadType: items[index]
+                                                          .leadCategory,
+                                                      leadTypeId: items[index]
+                                                          .leadCategoryId,
+                                                      leadSubType: items[index]
+                                                          .leadSubCategory,
+                                                      leadSubTypeId: items[
+                                                              index]
+                                                          .leadSubCategoryId,
+                                                      priorityId:
+                                                          items[index].priority,
+                                                      priority: items[index]
+                                                          .priorityName,
+                                                      cost: items[index].cost,
+                                                      address:
+                                                          items[index].address,
+                                                      leadType1:
+                                                          widget.leadType,
+                                                    )),
                                           ).then((value) {
                                             items.clear();
                                             page = 1;
@@ -942,10 +934,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                               // String url =
                                               //     'tel:+${items[index].contactNumber1}';
                                               // await launchUrl(Uri.parse(url));
-                                              bool? res =
-                                                  await FlutterPhoneDirectCaller
-                                                      .callNumber(
-                                                          '+${items[index].contactNumber1}');
+                                              Common.directCall(
+                                                  items[index].contactNumber1);
                                             }
                                           }
                                         }
@@ -1562,9 +1552,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         //     'tel:+${items[index].contactNumber1}';
                                                                         // await launchUrl(
                                                                         //     Uri.parse(url));
-                                                                        bool?
-                                                                            res =
-                                                                            await FlutterPhoneDirectCaller.callNumber('+${items[index].contactNumber1}');
+                                                                        Common.directCall(
+                                                                            '+${items[index].contactNumber1}');
                                                                       }
                                                                     }
                                                                   },
@@ -2293,7 +2282,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                     TextButton(
+                                                                    TextButton(
                                                                         onPressed:
                                                                             () {
                                                                           Navigator.of(context)
@@ -2331,7 +2320,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                   
                                                                   ],
                                                                 );
                                                               });
@@ -2562,7 +2550,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                  TextButton(
+                                                                    TextButton(
                                                                         onPressed:
                                                                             () {
                                                                           Navigator.of(context)
@@ -2584,7 +2572,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                    
                                                                   ],
                                                                 );
                                                               });
@@ -2816,7 +2803,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                       const Text(
                                                                           'Are you sure to Remove this Number?'),
                                                                   actions: [
-                                                                   TextButton(
+                                                                    TextButton(
                                                                         onPressed:
                                                                             () {
                                                                           Navigator.of(context)
@@ -2837,7 +2824,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         },
                                                                         child: const Text(
                                                                             'Yes')),
-                                                                   
                                                                   ],
                                                                 );
                                                               });
@@ -3086,7 +3072,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         const Text(
                                                                             'Are you sure to Remove this Number?'),
                                                                     actions: [
-                                                                     TextButton(
+                                                                      TextButton(
                                                                           onPressed:
                                                                               () {
                                                                             Navigator.of(context).pop();
@@ -3121,7 +3107,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                           },
                                                                           child:
                                                                               const Text('Yes')),
-                                                                      
                                                                     ],
                                                                   );
                                                                 });
@@ -3275,10 +3260,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    // String url = 'tel:+${items[index].contactNumber1}';
-                    // await launchUrl(Uri.parse(url));
-                    bool? res = await FlutterPhoneDirectCaller.callNumber(
-                        '+${items[index].contactNumber1}');
+                    Common.directCall('+${items[index].contactNumber1}');
                   },
                   child: SizedBox(
                       height: 50,

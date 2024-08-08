@@ -310,9 +310,7 @@ class _DraweScreenState extends State<DraweScreen> {
                                       ),
                                       InkWell(
                                         onTap: () async {
-                                          String url =
-                                              'tel:+${commmon!.data!.customerCareCall}';
-                                          await launch(url);
+                                          Common.dialPad(commmon!.data!.customerCareCall.toString());
                                         },
                                         child: Image.asset(
                                             'assets/icons/telephone.png',

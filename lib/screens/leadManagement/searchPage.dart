@@ -1299,8 +1299,7 @@ class _SearchPageState extends State<SearchPage> {
                     // String url = 'tel:+${search!.data!.details![i]
                     //     .contactNumber1}';
                     // await launch(url);
-                    bool? res = await FlutterPhoneDirectCaller.callNumber(
-                        '+${search!.data.details[i].contactNumber1}');
+                    Common.directCall(search!.data.details[i].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

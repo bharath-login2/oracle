@@ -552,10 +552,8 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                        bool? res =
-                                                            await FlutterPhoneDirectCaller
-                                                                .callNumber(
-                                                                    '+${_callLogEntries.elementAt(indexStaff).number}');
+                                                        
+                                                                    Common.directCall(_callLogEntries.elementAt(indexStaff).number.toString());
                                                       } else {
                                                         Navigator.push(
                                                             context,
@@ -1406,10 +1404,8 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                        bool? res =
-                                                            await FlutterPhoneDirectCaller
-                                                                .callNumber(
-                                                                    '+${logHistory!.data![index].phoneNumber}');
+                                                       
+                                                                    Common.directCall(logHistory!.data![index].phoneNumber.toString());
                                                       } else {
                                                         Navigator.push(
                                                             context,
@@ -1922,7 +1918,7 @@ class _CallLogsState extends State<CallLogs> {
 }
 
 Future<void> _makeCall(String number) async {
-  bool? res = await FlutterPhoneDirectCaller.callNumber('+91${number}');
+  Common.directCall('+91$number');
 }
 
 void _keyPressed(String number) {

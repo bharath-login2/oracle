@@ -545,9 +545,8 @@ class _AllReportState extends State<AllReport> {
                                       if (widget.cloudCall == true) {
                                         chooseCallDialog(context, index);
                                       } else {
-                                        String url =
-                                            'tel:+${items[index].contactNumber1}';
-                                        await launchUrl(Uri.parse(url));
+                                        Common.dialPad(
+                                            items[index].contactNumber1);
                                       }
                                     }
                                   }
@@ -1123,11 +1122,12 @@ class _AllReportState extends State<AllReport> {
                                                                       context,
                                                                       index);
                                                                 } else {
-                                                                  String url =
-                                                                      'tel:+${items[index].contactNumber1}';
-                                                                  await launchUrl(
-                                                                      Uri.parse(
-                                                                          url));
+                                                                  Common.dialPad(
+                                                                      items[index]
+                                                                          .contactNumber1);
+                                                                  Common.dialPad(
+                                                                      items[index]
+                                                                          .contactNumber1);
                                                                 }
                                                               }
                                                             },
@@ -1333,8 +1333,7 @@ class _AllReportState extends State<AllReport> {
                     //     'tel:${'+${items[index].contactNumber1}'}';
                     // await launchUrl(Uri.parse(url));
                     Navigator.pop(context);
-                    bool? res = await FlutterPhoneDirectCaller.callNumber(
-                        '+${items[index].contactNumber1}');
+                    Common.directCall(items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

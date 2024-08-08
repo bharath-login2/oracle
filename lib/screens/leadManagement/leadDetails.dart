@@ -934,9 +934,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       if (widget.cloudCall == true) {
                                         chooseCallDialog(context);
                                       } else {
-                                        String url =
-                                            'tel:+${leadDetails!.data!.contactNumber1}';
-                                        await launch(url);
+                                        Common.dialPad(leadDetails!
+                                            .data!.contactNumber1
+                                            .toString());
                                       }
                                     }
                                   } else {
@@ -1408,9 +1408,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                       true) {
                                                     chooseCallDialog(context);
                                                   } else {
-                                                    String url =
-                                                        'tel:+${leadDetails!.data!.contactNumber1}';
-                                                    await launch(url);
+                                                    Common.dialPad(leadDetails!
+                                                        .data!.contactNumber1
+                                                        .toString());
                                                   }
                                                 }
                                               },
@@ -5115,7 +5115,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                                             title: const Text('Please Confirm'),
                                                                                                                             content: const Text('Are you sure to Remove this Number?'),
                                                                                                                             actions: [
-                                                                                                                             TextButton(
+                                                                                                                              TextButton(
                                                                                                                                   onPressed: () {
                                                                                                                                     Navigator.of(context).pop();
                                                                                                                                   },
@@ -5129,7 +5129,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                                                     Navigator.of(context).pop();
                                                                                                                                   },
                                                                                                                                   child: const Text('Yes')),
-                                                                                                                              
                                                                                                                             ],
                                                                                                                           );
                                                                                                                         });
@@ -5567,7 +5566,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           content:
                                                                               const Text('You are about to delete this Mile stone?'),
                                                                           actions: [
-                                                                          TextButton(
+                                                                            TextButton(
                                                                                 onPressed: () {
                                                                                   Navigator.of(context).pop();
                                                                                 },
@@ -5604,7 +5603,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                   }
                                                                                 },
                                                                                 child: const Text('Yes')),
-                                                                            
                                                                           ],
                                                                         );
                                                                       });
@@ -7257,8 +7255,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);
-                    bool? res = await FlutterPhoneDirectCaller.callNumber(
-                        '+${leadDetails!.data!.contactNumber1}');
+                    Common.directCall(leadDetails!.data!.contactNumber1.toString());
                   },
                   child: SizedBox(
                       height: 50,
@@ -7360,7 +7357,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                     }
                   },
                   child: const Text('Yes')),
-              
             ],
           );
         });

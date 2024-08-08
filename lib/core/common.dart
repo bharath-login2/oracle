@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Common {
   static toastMessaage(message, color) {
@@ -15,7 +17,7 @@ class Common {
         fontSize: 16.0);
   }
 
-static  String trimPlus91(String mobileNumber) {
+  static String trimPlus91(String mobileNumber) {
     if (mobileNumber.length == 13) {
       return mobileNumber.substring(3);
     } else if (mobileNumber.length == 12) {
@@ -23,6 +25,27 @@ static  String trimPlus91(String mobileNumber) {
     } else {
       return mobileNumber;
     }
+  }
+
+  static addPlus(String number) async {
+    if (number.length == 12) {
+      return "+$number";
+    } else {
+      return number;
+    }
+  }
+
+  static directCall(String number) async {
+    if (number.length == 12) {
+      await FlutterPhoneDirectCaller.callNumber('+$number');
+    } else {
+      await FlutterPhoneDirectCaller.callNumber(number);
+    }
+  }
+
+  static dialPad(String number) async {
+    String url = 'tel:+$number';
+    await launchUrl(Uri.parse(url));
   }
 
   static saveSharedPref(String key, String val) async {
@@ -107,11 +130,9 @@ static  String trimPlus91(String mobileNumber) {
       prefs.setString(key, val);
     } else if (key == 'openAppLeadId') {
       prefs.setString(key, val);
-    }else if (key == 'navToFollowUp') {
+    } else if (key == 'navToFollowUp') {
       prefs.setString(key, val);
-    } else if (key == 'chatList') {
-      prefs.setString(key, val);
-    }else {
+    } else {
       await prefs.clear();
     }
   }
