@@ -78,7 +78,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   }
 
   postConfirmedFollowup() async {
-    AddLeadFollowupModels object1 = await HttpService.postConfirmedFollowup(
+    AddLeadFollowupModel object1 = await HttpService.postConfirmedFollowup(
         widget.callMasterId,
         invoiceRemarks.text,
         renewalRemarks.text,
@@ -101,6 +101,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
     if (object1.status == true) {
       Common.toastMessaage(object1.message, Colors.green);
       if (mounted) {
+        Navigator.pop(context);
         Navigator.pop(context);
       }
     }

@@ -37,6 +37,7 @@ import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/reminder_history_model.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/models/renewal/renewal_followup_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/models/renewal/rivert_client.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
@@ -758,7 +759,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",
           data: formData);
-      AddLeadFollowupModels model = AddLeadFollowupModels.fromJson(result.data);
+      AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
       return model;
     } catch (e) {
       log("error: $e");
@@ -3313,6 +3314,25 @@ class HttpService {
     }
   }
 
+  static Future getAddRenewalFollowUpDetails(renewalId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_id": renewalId,
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getAddRenewalFollowUpDetails",
+          data: formData);
+      if (result.statusCode == 200) {
+        RenewalFollowupDetailsModel response =
+            RenewalFollowupDetailsModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future getRenewalDetailsById(String id, String type) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
@@ -3995,6 +4015,79 @@ class HttpService {
         BulkRemindModel response = BulkRemindModel.fromJson(result.data);
         return response;
       }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postRenewalFollowup(
+      token,
+      callResultId,
+      nextFollowupDate,
+      cost,
+      leadTypeId,
+      leadSubType,
+      remarks,
+      callMasterId,
+      calledDate,
+      callHistoryId,
+      checked,
+      timeBefore,
+      callResponseId,
+      reasonId,
+      createSales,
+      invoiceDate,
+      productList,
+      reminderTemplate,
+      totalAmount,
+      startDate,
+      endDate,
+      paymentStatus,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      paymentMethod,
+      paidAmount,
+      collectedStaff) async {
+    var formData = FormData.fromMap({
+      "token": token,
+      "next_followup_date": nextFollowupDate,
+      "call_result_id": callResultId,
+      "lead_category_id": leadTypeId,
+      "lead_sub_category_id": leadSubType,
+      "cost": cost,
+      "remarks": remarks,
+      "renewal_id": callMasterId,
+      "called_date": calledDate,
+      "cloud_call_id": callHistoryId,
+      "reminder": checked,
+      "time_before": timeBefore,
+      "call_response_id": callResponseId,
+      "reason_id": reasonId,
+      "create_sales": createSales,
+      "invoice_date": invoiceDate,
+      "product_list": callResultId == '2' ? "" : jsonEncode(productList),
+      "follow_up_products": callResultId == '2' ?  jsonEncode(productList):"",
+      "reminder_template": reminderTemplate,
+      "total_amount_paid": totalAmount,
+      "start_date": startDate,
+      "end_date": endDate,
+      "payment_status": paymentStatus,
+      "sub_total": subTotal,
+      "estimated_tax": estimatedTax,
+      "discount_amount": discountAmount,
+      "shipping_amount": shippingAmount,
+      "payment_method": paymentMethod,
+      "amount_paid_customer": paidAmount,
+      "collected_staff": collectedStaff,
+    });
+   
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}postRenewalFollowup", data: formData);
+      AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
+      return model;
     } catch (e) {
       log("error: $e");
     }

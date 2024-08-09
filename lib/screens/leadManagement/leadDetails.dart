@@ -978,7 +978,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       getData();
                                     });
                                   }
-
                                   return null;
                                 },
                                 child: Container(

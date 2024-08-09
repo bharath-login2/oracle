@@ -3,161 +3,108 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:login2/models/clients/postalCodeModel.dart';
-import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/models/lead_management/addLeadFollowupModel.dart';
+import 'package:login2/models/renewal/renewal_followup_details.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
-import '../../models/lead_management/addLeadCommonDataModel.dart';
-import '../../models/lead_management/addLeadFollowupModel.dart';
-import '../../models/lead_management/callResultResonModel.dart';
-import '../../models/lead_management/leadSubTypeModel.dart';
-import '../../screens/leadManagement/leadDetails.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 // ignore: must_be_immutable
 class RenewalFollowup extends StatefulWidget {
-  String? token;
   bool editLead;
   bool deleteLead;
   bool cloudCall;
-  String callMasterId;
-  String? fromDate;
-  String? toDate;
-  String? status;
-  String? category;
-  String? staff;
-  String? pageName;
-  bool? isCalled;
-  String? callingDate;
-  String? callHistoryId;
-  int? scrollToIndex;
-  String? leadTypeId;
-  String? leadType;
-  String? leadSubTypeId;
-  String? leadSubType;
-  String? cost;
-  String? address;
-  String? searchKey;
-  String? priority;
-  String? priorityId;
-  String? leadType1;
+  String renewalId;
+  String leadTypeId;
+  DateTime callingDate;
 
-  RenewalFollowup(this.token, this.editLead, this.deleteLead, this.cloudCall,
-      this.callMasterId,
-      {super.key,
-      this.fromDate,
-      this.toDate,
-      this.status,
-      this.category,
-      this.staff,
-      this.pageName,
-      this.isCalled,
-      this.callingDate,
-      this.callHistoryId,
-      this.scrollToIndex,
-      this.leadTypeId,
-      this.leadType,
-      this.leadSubTypeId,
-      this.leadSubType,
-      this.cost,
-      this.address,
-      this.searchKey,
-      this.priority,
-      this.priorityId,
-      this.leadType1});
+  RenewalFollowup(
+    this.editLead,
+    this.deleteLead,
+    this.cloudCall,
+    this.renewalId,
+    this.leadTypeId,
+    this.callingDate, {
+    super.key,
+  });
 
   @override
   State<RenewalFollowup> createState() => _RenewalFollowupState();
 }
 
-class _RenewalFollowupState extends State<RenewalFollowup> {
-  AddLeadCommonDataModel? commonDetails;
-  RenewalDetailslModel? detailsResponse;
-  LeadSubTypeModel? leadSubTypeList;
-  CallResultResonModel? callResultReason;
-  List<Template> filteredTemplates = [];
-  String templateId = "";
-  String callResult = 'Followup';
-  String callResultId = '2';
-  String callResponse = 'Call Response';
-  String callResponseId = '';
-  String? nextFollowupDate = '';
-  String leadType = 'Lead Category';
-  String leadTypeId = '';
-  String leadSubType = 'Lead Sub Category';
-  String leadSubTypeId = '';
-  String callResultReasonName = 'Reason';
-  String callResultReasonId = '';
-  String invoiceNumber = '';
-  TextEditingController cost = TextEditingController();
-  TextEditingController remarks = TextEditingController();
-  TextEditingController calledDate1 = TextEditingController();
-  TextEditingController nextFollowupDate1 = TextEditingController();
-  TextEditingController address = TextEditingController();
-  TextEditingController callResultVal = TextEditingController();
-  TextEditingController callResponseVal = TextEditingController();
-  TextEditingController leadTypeVal = TextEditingController();
-  TextEditingController leadSubTypeVal = TextEditingController();
-  TextEditingController priorityVal = TextEditingController();
-  TextEditingController timeBefore = TextEditingController(text: '10');
-  TextEditingController callReasonVal = TextEditingController();
-  TextEditingController productDescription = TextEditingController();
-  TextEditingController productRate = TextEditingController();
-  TextEditingController productQty = TextEditingController();
-  TextEditingController productTaxPercent = TextEditingController();
-  TextEditingController productTaxAmount = TextEditingController();
-  TextEditingController productTotalAmount = TextEditingController();
-  TextEditingController discount = TextEditingController();
-  TextEditingController shippingCharge = TextEditingController();
-  TextEditingController paidAmount = TextEditingController();
-  TextEditingController search = TextEditingController();
-  TextEditingController startDate = TextEditingController();
-  TextEditingController endDate = TextEditingController();
-  TextEditingController reminderTemplate = TextEditingController();
-  bool result = true;
-  var invoiceDate = DateTime.now();
-  List<Map<String, dynamic>> products = [];
-  double subTotal = 0.00;
-  double totalTaxAmount = 00;
-  double allTotal = 0.00;
-  bool isPaying = false;
-  dynamic paymentMethod;
-  dynamic paymentStatus;
-  dynamic collectedStaff;
-  List<Product> items = [];
-  List<Product> filteredItems = [];
-  String productId = "";
-  String productName = "Choose Product";
-  PostalCodeModel? billingPostal;
-  PostalCodeModel? shippingPostal;
-  bool header = true;
-  bool headerContent = false;
-  Color paidColor = Colors.black;
-  var code = '91';
-  String? templateImage;
-  bool? result1 = true;
-  String? callHistoryId;
-  String priority = 'Normal';
-  String priorityId = '2';
-  bool checked = false;
-  bool createOrder = false;
-  bool createRenewal = false;
-  bool isExpand = false;
-  bool isChecked = false;
-  bool isMoreDetails = false;
-  bool timeOut = false;
+TextEditingController productDescription = TextEditingController();
+TextEditingController productRate = TextEditingController();
+TextEditingController productQty = TextEditingController();
+TextEditingController productTaxPercent = TextEditingController();
+TextEditingController productTaxAmount = TextEditingController();
+TextEditingController productTotalAmount = TextEditingController();
+TextEditingController discount = TextEditingController();
+TextEditingController shippingCharge = TextEditingController();
+TextEditingController paidAmount = TextEditingController();
+TextEditingController search = TextEditingController();
+TextEditingController startDate = TextEditingController();
+TextEditingController endDate = TextEditingController();
+TextEditingController invoiceRemarks = TextEditingController();
+TextEditingController renewalRemarks = TextEditingController();
+TextEditingController reminderTemplate = TextEditingController();
+TextEditingController productCost = TextEditingController();
+RenewalFollowupDetailsModel? detailsResponse;
+Color paidColor = Colors.black;
+String templateId = "";
+List<RenewalTemplate> filteredTemplates = [];
+String invoiceNumber = '';
+var invoiceDate = DateTime.now();
+List<Map<String, dynamic>> products = [];
+List productNames = [];
+double totalProductCost = 0;
 
+double subTotal = 0.00;
+double totalTaxAmount = 00;
+double allTotal = 0.00;
+bool isPaying = false;
+dynamic paymentMethod;
+dynamic paymentStatus;
+dynamic collectedStaff;
+List<AllProduct> items = [];
+List<AllProduct> filteredItems = [];
+String productId = "";
+String productName = "Choose Product";
+bool createRenewal = false;
+bool createOrder = false;
+String callResult = 'Followup';
+String callResultId = '2';
+String callResponse = 'Call Response';
+String callResponseId = '';
+String? nextFollowupDate = '';
+String leadType = 'Lead Category';
+String leadTypeId = '';
+String leadSubType = 'Lead Sub Category';
+String leadSubTypeId = '';
+String callResultReasonName = 'Reason';
+String callResultReasonId = '';
+TextEditingController remarks = TextEditingController();
+TextEditingController calledDate1 = TextEditingController();
+TextEditingController nextFollowupDate1 = TextEditingController();
+TextEditingController callResultVal = TextEditingController();
+TextEditingController callResponseVal = TextEditingController();
+TextEditingController timeBefore = TextEditingController(text: '10');
+TextEditingController callReasonVal = TextEditingController();
+bool? result = true;
+bool? result1 = true;
+String? callHistoryId;
+bool checked = false;
+bool addClient = false;
+bool isExpand = false;
+bool isChecked = false;
+bool timeOut = false;
+String token = "";
+
+class _RenewalFollowupState extends State<RenewalFollowup> {
   void toggleTextFieldVisibility() {
     setState(() {
       checked = !checked;
-    });
-  }
-
-  void toggleMoreDetails() {
-    setState(() {
-      isMoreDetails = !isMoreDetails;
     });
   }
 
@@ -165,11 +112,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   void initState() {
     super.initState();
     getData();
-  }
-
-  void changeRadioValue(int? value) {
-    priorityId = value.toString();
-    setState(() {});
   }
 
   getData() async {
@@ -185,62 +127,20 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
           result = false;
         });
       }
-      detailsResponse = await HttpService.getRenewalDetails();
+      token = await Common.getSharedPref("token");
+      detailsResponse =
+          await HttpService.getAddRenewalFollowUpDetails(widget.renewalId);
       if (detailsResponse != null) {
-        invoiceNumber = detailsResponse!.data.invoiceNumber.toString();
-        items = detailsResponse!.data.products;
-        filteredTemplates = detailsResponse!.data.template;
+        invoiceNumber = detailsResponse!.data.invoiceId.toString();
+        items = detailsResponse!.data.allProducts;
+        filteredTemplates = detailsResponse!.data.renewalTemplate;
         filteredItems.addAll(items);
       }
-      commonDetails = await HttpService.addLeadCommonData(widget.token);
-      if (commonDetails != null) {
-        callResultReasonList();
-        if (widget.leadTypeId != '') {
-          leadSubTypeList = await HttpService.leadSubType(widget.leadTypeId);
-          if (leadSubTypeList == null) {
-            setState(() {
-              timeOut = true;
-            });
-          }
-          if (widget.leadType != null) {
-            leadType = widget.leadType.toString();
-            leadTypeId = widget.leadTypeId.toString();
-          }
-          if (widget.leadSubType != null) {
-            leadSubType = widget.leadSubType.toString();
-            leadSubTypeId = widget.leadSubTypeId.toString();
-          }
-          if (widget.cost != null) {
-            cost.text = widget.cost.toString();
-          }
-          if (widget.address != null) {
-            address.text = widget.address.toString();
-          }
-          if (widget.priority != null) {
-            priority = widget.priority.toString();
-            priorityId = widget.priorityId.toString();
-          }
-
-          setState(() {});
-        }
-        setState(() {});
-      } else {
-        setState(() {
-          timeOut = true;
-        });
-      }
+      setState(() {});
     } catch (e) {
       setState(() {
         timeOut = true;
       });
-    }
-  }
-
-  callResultReasonList() async {
-    callResultReason =
-        await HttpService.callResultReasonLiat(widget.token, callResultId);
-    if (commonDetails != null) {
-      setState(() {});
     }
   }
 
@@ -255,14 +155,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
     callResultVal.text = callResult;
     callReasonVal.text = callResultReasonName;
     callResponseVal.text = callResponse;
-    leadTypeVal.text = leadType;
-    leadSubTypeVal.text = leadSubType;
-    priorityVal.text = priority;
-    if (widget.callHistoryId != null) {
-      callHistoryId = widget.callHistoryId.toString();
-    } else {
-      callHistoryId = '';
-    }
+
     if (widget.callingDate != null) {
       calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
           .format(DateTime.parse(widget.callingDate.toString()));
@@ -324,7 +217,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                 ),
               ),
             ),
-            body: commonDetails != null
+            body: detailsResponse != null
                 ? SingleChildScrollView(
                     child: Padding(
                       padding:
@@ -396,64 +289,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           ),
                           TextFormField(
                             onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Status'),
-                                      content: SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .18,
-                                        width:
-                                            MediaQuery.of(context).size.height *
-                                                .8,
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.callResultNew.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  callResult = commonDetails!
-                                                      .data
-                                                      .callResultNew[ind]
-                                                      .callResultNew
-                                                      .toString();
-
-                                                  callResultId = commonDetails!
-                                                      .data
-                                                      .callResultNew[ind]
-                                                      .callResultIdNew
-                                                      .toString();
-                                                  callResultReasonList();
-                                                  if (callResultId != '2') {
-                                                    nextFollowupDate = '';
-                                                    checked = false;
-                                                  }
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .callResultNew[ind]
-                                                      .callResultNew
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  });
+                              callResultDialog(context);
                             },
                             maxLines: 1,
                             readOnly: true,
@@ -476,64 +312,12 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                          callResultReason!.data!.isNotEmpty
+                          callResultId == '3'
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 15),
                                   child: TextFormField(
                                     onTap: () {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text('Reason'),
-                                              content: SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .32,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .8,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: callResultReason!
-                                                      .data!.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          callResultReasonName =
-                                                              callResultReason!
-                                                                  .data![ind]
-                                                                  .reason
-                                                                  .toString();
-                                                          callResultReasonId =
-                                                              callResultReason!
-                                                                  .data![ind].id
-                                                                  .toString();
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
-                                                        child: Text(
-                                                          callResultReason!
-                                                              .data![ind].reason
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                            );
-                                          });
+                                      reasonDialog(context);
                                     },
                                     maxLines: 1,
                                     readOnly: true,
@@ -541,7 +325,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),
-                                        labelText: 'Call Result',
+                                        labelText: 'Reason',
                                         fillColor: Colors.white,
                                         filled: true,
                                         prefixIcon: Icon(Icons.reply_all_sharp,
@@ -733,58 +517,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             ),
                           TextFormField(
                             onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      scrollable: true,
-                                      title: const Text('Call Response'),
-                                      content: SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.height *
-                                                .8,
-                                        child: ListView.builder(
-                                          shrinkWrap: true,
-                                          itemCount: commonDetails!
-                                              .data.callResponseStatus.length,
-                                          itemBuilder: (context, ind) {
-                                            return InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  callResponse = commonDetails!
-                                                      .data
-                                                      .callResponseStatus[ind]
-                                                      .callResponse
-                                                      .toString();
-
-                                                  callResponseId =
-                                                      commonDetails!
-                                                          .data
-                                                          .callResponseStatus[
-                                                              ind]
-                                                          .callResponseId
-                                                          .toString();
-                                                  Navigator.pop(context, true);
-                                                });
-                                              },
-                                              child: SizedBox(
-                                                height: 50,
-                                                child: Text(
-                                                  commonDetails!
-                                                      .data
-                                                      .callResponseStatus[ind]
-                                                      .callResponse
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontSize: 18),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  });
+                              callResponseDialog(context);
                             },
                             maxLines: 1,
                             readOnly: true,
@@ -806,403 +539,228 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 5),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.3,
-                                  child: const Text(
-                                    'Priority',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
+                         if (callResultId == '2') Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  productDialog(context, "1");
+                                },
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width * 1,
+                                  height: 55,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(),
+                                    borderRadius: BorderRadius.circular(5),
                                   ),
-                                ),
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.6,
-                                  child: SizedBox(
-                                    height: 50,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount:
-                                          commonDetails!.data.priority.length,
-                                      itemBuilder: (context, i) {
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 30),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(
-                                                height: 24,
-                                                width: 24,
-                                                child: Radio(
-                                                    activeColor: int.parse(
-                                                                priorityId) ==
-                                                            1
-                                                        ? Colors.grey
-                                                        : int.parse(priorityId) ==
-                                                                2
-                                                            ? Colors.green
-                                                            : int.parse(priorityId) ==
-                                                                    3
-                                                                ? Colors.red
-                                                                : Colors.purple,
-                                                    value: int.parse(
-                                                        commonDetails!
-                                                            .data
-                                                            .priority[i]
-                                                            .priorityId
-                                                            .toString()),
-                                                    groupValue:
-                                                        int.parse(priorityId),
-                                                    onChanged: (int? value) {
-                                                      changeRadioValue(value);
-                                                    }),
-                                              ),
-                                              Text(commonDetails!
-                                                  .data.priority[i].priority
-                                                  .toString()),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10, right: 10),
-                            child: InkWell(
-                              onTap: toggleMoreDetails,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(isMoreDetails == false
-                                      ? 'More Details'
-                                      : 'Less Details'),
-                                  Icon(isMoreDetails == false
-                                      ? Icons.keyboard_arrow_down
-                                      : Icons.keyboard_arrow_up)
-                                ],
-                              ),
-                            ),
-                          ),
-                          Visibility(
-                            visible: isMoreDetails,
-                            child: Column(
-                              children: [
-                                TextFormField(
-                                  controller: cost,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Cost',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(Icons.currency_rupee,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                ),
-                                const SizedBox(
-                                  height: 15,
-                                ),
-                                TextFormField(
-                                  controller: leadTypeVal,
-                                  onTap: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            scrollable: true,
-                                            title: const Text('Lead Category'),
-                                            content: SizedBox(
+                                  child: products.isEmpty
+                                      ? const Row(
+                                          children: [
+                                            SizedBox(width: 10),
+                                            Icon(
+                                              Icons.shopping_cart,
+                                              color: Colors.grey,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'Products',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.grey),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            const SizedBox(width: 10),
+                                            const Icon(
+                                              Icons.shopping_cart,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            SizedBox(
+                                              height: 45,
                                               width: MediaQuery.of(context)
                                                       .size
-                                                      .height *
+                                                      .width *
                                                   .8,
                                               child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: commonDetails!
-                                                    .data.leadCategory.length,
-                                                itemBuilder: (context, ind) {
-                                                  return InkWell(
-                                                    onTap: () async {
-                                                      leadSubTypeList =
-                                                          await HttpService.leadSubType(
-                                                              commonDetails!
-                                                                  .data
-                                                                  .leadCategory[
-                                                                      ind]
-                                                                  .leadCategoryId
-                                                                  .toString());
-                                                      setState(() {
-                                                        leadSubType =
-                                                            'Lead Sub Category';
-                                                        leadSubTypeId = '';
-                                                        leadType =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategory
-                                                                .toString();
-                                                        leadTypeId =
-                                                            commonDetails!
-                                                                .data
-                                                                .leadCategory[
-                                                                    ind]
-                                                                .leadCategoryId
-                                                                .toString();
-                                                        Navigator.pop(
-                                                            context, true);
-                                                      });
-                                                    },
-                                                    child: SizedBox(
-                                                      height: 50,
-                                                      child: Text(
-                                                        commonDetails!
-                                                            .data
-                                                            .leadCategory[ind]
-                                                            .leadCategory
-                                                            .toString(),
-                                                        style: const TextStyle(
-                                                            fontSize: 18),
-                                                      ),
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                itemCount: productNames.length,
+                                                itemBuilder: (context, i) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5, right: 5),
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          height: 45,
+                                                          decoration: BoxDecoration(
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  width: 0),
+                                                              color:
+                                                                  Colors.white,
+                                                              borderRadius: const BorderRadius
+                                                                  .only(
+                                                                  topLeft: Radius
+                                                                      .circular(
+                                                                          6),
+                                                                  bottomLeft: Radius
+                                                                      .circular(
+                                                                          6))),
+                                                          child: Center(
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          10),
+                                                                  child: Text(
+                                                                    productNames[
+                                                                        i],
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      color: Colors
+                                                                          .black,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        InkWell(
+                                                          onTap: () {
+                                                            showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (BuildContext
+                                                                        context) {
+                                                                  return AlertDialog(
+                                                                    title: const Text(
+                                                                        'Please Confirm'),
+                                                                    content:
+                                                                        const Text(
+                                                                            'Are you sure to Remove this product?'),
+                                                                    actions: [
+                                                                      TextButton(
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.of(context).pop();
+                                                                          },
+                                                                          child:
+                                                                              const Text('No')),
+                                                                      TextButton(
+                                                                          onPressed:
+                                                                              () async {
+                                                                            productNames.remove(productName[i]);
+                                                                            products.removeAt(i);
+                                                                            totalProductCost =
+                                                                                0;
+                                                                            for (int ind = 0;
+                                                                                ind < products.length;
+                                                                                ind++) {
+                                                                              totalProductCost += double.parse(await products[ind]["total_amount"]);
+                                                                            }
+                                                                            productCost.text =
+                                                                                (totalProductCost).toString();
+                                                                            setState(() {});
+
+                                                                            if (context.mounted) {
+                                                                              Navigator.of(context).pop();
+                                                                            }
+                                                                          },
+                                                                          child:
+                                                                              const Text('Yes')),
+                                                                    ],
+                                                                  );
+                                                                });
+                                                          },
+                                                          child: Container(
+                                                            height: 45,
+                                                            width: 40,
+                                                            decoration: BoxDecoration(
+                                                                border: Border.all(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    width: 0),
+                                                                color: Colors.grey
+                                                                    .shade100,
+                                                                borderRadius: const BorderRadius
+                                                                    .only(
+                                                                    topRight: Radius
+                                                                        .circular(
+                                                                            6),
+                                                                    bottomRight:
+                                                                        Radius.circular(
+                                                                            6))),
+                                                            child: const Icon(
+                                                              Icons.close,
+                                                              color: Colors.red,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   );
                                                 },
                                               ),
                                             ),
-                                          );
-                                        });
-                                  },
-                                  maxLines: 1,
-                                  readOnly: true,
-                                  decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Lead Category',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(Icons.category,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                leadSubTypeList != null &&
-                                        leadSubTypeList!.data!.isNotEmpty
-                                    ? Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 15),
-                                        child: TextFormField(
-                                          controller: leadSubTypeVal,
-                                          onTap: () {
-                                            showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Lead Sub Category'),
-                                                    content: SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              .8,
-                                                      child: ListView.builder(
-                                                        shrinkWrap: true,
-                                                        itemCount:
-                                                            leadSubTypeList!
-                                                                .data!.length,
-                                                        itemBuilder: (context,
-                                                            subIndex) {
-                                                          return InkWell(
-                                                            onTap: () async {
-                                                              setState(() {
-                                                                leadSubType = leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategory
-                                                                    .toString();
-                                                                leadSubTypeId = leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategoryId
-                                                                    .toString();
-                                                                Navigator.pop(
-                                                                    context,
-                                                                    true);
-                                                              });
-                                                            },
-                                                            child: SizedBox(
-                                                              height: 50,
-                                                              child: Text(
-                                                                leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategory
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                              ),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    ),
-                                                  );
-                                                });
-                                          },
-                                          maxLines: 1,
-                                          readOnly: true,
-                                          decoration: const InputDecoration(
-                                              contentPadding: EdgeInsets.only(
-                                                  left: 10, top: 2, bottom: 2),
-                                              labelText: 'Lead Sub Category',
-                                              fillColor: Colors.white,
-                                              filled: true,
-                                              prefixIcon: Icon(Icons.subtitles,
-                                                  color: Colors.grey),
-                                              border: OutlineInputBorder(),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(
-                                                    color: Colors.grey),
-                                              ),
-                                              labelStyle: TextStyle(
-                                                  color: Colors.grey)),
+                                          ],
                                         ),
-                                      )
-                                    : const SizedBox(),
-                                TextFormField(
-                                  controller: address,
-                                  maxLines: 2,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Address',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
                                 ),
-                                const SizedBox(
-                                  height: 15,
-                                ),
-                                SizedBox(
-                                  height: 30,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount:
-                                        commonDetails!.data.callResponse.length,
-                                    itemBuilder: (context, i) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 5, right: 10),
-                                        child: InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              remarks.text = commonDetails!
-                                                  .data.callResponse[i]
-                                                  .toString();
-                                            });
-                                          },
-                                          child: Container(
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color: Colors.grey,
-                                                    width: 0),
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    const BorderRadius.all(
-                                                        Radius.circular(6))),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 8, right: 8),
-                                                  child: Text(
-                                                    commonDetails!
-                                                        .data.callResponse[i]
-                                                        .toString(),
-                                                    style: const TextStyle(
-                                                      color: Color(0xFF717171),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 15,
-                                ),
-                                TextFormField(
-                                  controller: remarks,
-                                  maxLines: 2,
-                                  decoration: const InputDecoration(
-                                      labelText: 'Remarks',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                ),
-                                const SizedBox(
-                                  height: 15,
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 15.0),
+                              TextFormField(
+                                controller: productCost,
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return "Please Enter Cost";
+                                  }
+                                  return null;
+                                },
+                                decoration: const InputDecoration(
+                                    contentPadding: EdgeInsets.only(
+                                        left: 10, top: 2, bottom: 2),
+                                    labelText: 'Cost',
+                                    prefixIcon: Icon(Icons.currency_rupee,
+                                        color: Colors.grey),
+                                    border: OutlineInputBorder(),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: Colors.grey),
+                                    ),
+                                    labelStyle: TextStyle(color: Colors.grey)),
+                              ),
+                              const SizedBox(height: 15.0),
+                            ],
                           ),
-                          if (callResultId == '4' &&
-                              commonDetails!.data.customerAddPermission == true)
+                          TextFormField(
+                            controller: remarks,
+                            maxLines: 2,
+                            decoration: const InputDecoration(
+                                labelText: 'Remarks',
+                                fillColor: Colors.white,
+                                filled: true,
+                                //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          if (callResultId == '4')
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Order'),
@@ -1216,32 +774,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 controlAffinity:
                                     ListTileControlAffinity.leading),
                           Visibility(
-                            visible: createOrder &&
-                                callResultId == '4' &&
-                                commonDetails!.data.customerAddPermission ==
-                                    true,
+                            visible: createOrder && callResultId == '4',
                             child: Column(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 10, right: 10, top: 15),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Invoice Number :',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          )),
-                                      Text(invoiceNumber,
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          )),
-                                    ],
-                                  ),
-                                ),
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -1301,698 +836,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     alignment: Alignment.topRight,
                                     child: InkWell(
                                       onTap: () async {
-                                        showGeneralDialog(
-                                          barrierLabel: "showGeneralDialog",
-                                          barrierDismissible: true,
-                                          barrierColor:
-                                              Colors.black.withOpacity(0.6),
-                                          transitionDuration:
-                                              const Duration(milliseconds: 400),
-                                          context: context,
-                                          pageBuilder: (context, _, __) {
-                                            return StatefulBuilder(
-                                                builder: (context, setState) {
-                                              return Align(
-                                                alignment: Alignment.center,
-                                                child: SingleChildScrollView(
-                                                  child: AlertDialog(
-                                                    content: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        const Text(
-                                                          'Product Details',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 18),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 15,
-                                                        ),
-                                                        GestureDetector(
-                                                          onTap: () {
-                                                            showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (context) {
-                                                                return StatefulBuilder(
-                                                                    builder:
-                                                                        (context,
-                                                                            setState) {
-                                                                  return AlertDialog(
-                                                                    content:
-                                                                        Column(
-                                                                      mainAxisSize:
-                                                                          MainAxisSize
-                                                                              .min,
-                                                                      children: [
-                                                                        Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .all(
-                                                                              8.0),
-                                                                          child:
-                                                                              TextField(
-                                                                            controller:
-                                                                                search,
-                                                                            autocorrect:
-                                                                                false,
-                                                                            keyboardType:
-                                                                                TextInputType.visiblePassword,
-                                                                            autofocus:
-                                                                                true,
-                                                                            onChanged:
-                                                                                (value) {
-                                                                              setState(() {
-                                                                                filteredItems = items.where((item) => item.productName.toLowerCase().contains(value.toLowerCase())).toList();
-                                                                              });
-                                                                            },
-                                                                            decoration:
-                                                                                const InputDecoration(
-                                                                              contentPadding: EdgeInsets.all(8),
-                                                                              hintText: 'Search',
-                                                                              prefixIcon: Icon(Icons.search),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        SizedBox(
-                                                                          height:
-                                                                              MediaQuery.of(context).size.height * .3,
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * .8,
-                                                                          child:
-                                                                              ListView.builder(
-                                                                            itemCount:
-                                                                                filteredItems.length,
-                                                                            physics:
-                                                                                const ScrollPhysics(),
-                                                                            shrinkWrap:
-                                                                                true,
-                                                                            itemBuilder:
-                                                                                (context, index) {
-                                                                              return ListTile(
-                                                                                  onTap: () {
-                                                                                    productName = filteredItems[index].productName;
-                                                                                    productId = filteredItems[index].id;
-                                                                                    productRate.text = filteredItems[index].sellingPrice;
-                                                                                    productTaxPercent.text = filteredItems[index].taxPercent;
-                                                                                    productTaxAmount.text = filteredItems[index].taxAmount;
-                                                                                    setState(() {});
-                                                                                    if (context.mounted) {
-                                                                                      Navigator.pop(context);
-                                                                                    }
-                                                                                  },
-                                                                                  title: Text(filteredItems[index].productName));
-                                                                            },
-                                                                          ),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            if (context.mounted) {
-                                                                              Navigator.pop(context);
-                                                                            }
-                                                                          },
-                                                                          child:
-                                                                              const Text("Close")),
-                                                                    ],
-                                                                  );
-                                                                });
-                                                              },
-                                                            );
-                                                          },
-                                                          child: Container(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                1,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  Colors.white,
-                                                              border: Border.all(
-                                                                  color: Colors
-                                                                      .black),
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          4),
-                                                            ),
-                                                            child: Center(
-                                                                child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          16.0,
-                                                                      vertical:
-                                                                          12.0),
-                                                              child: Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  SizedBox(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.5,
-                                                                      child:
-                                                                          Text(
-                                                                        productName,
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                      )),
-                                                                ],
-                                                              ),
-                                                            )),
-                                                          ),
-                                                        ),
-
-                                                        // Padding(
-                                                        //   padding: const EdgeInsets.all(8.0),
-                                                        //   child: SizedBox(
-                                                        //     child: TextFormField(
-                                                        //       controller: productName,
-                                                        //       keyboardType: TextInputType.text,
-                                                        //       decoration: const InputDecoration(
-                                                        //           hintText: 'Product Name',
-                                                        //           contentPadding:
-                                                        //           EdgeInsets.symmetric(
-                                                        //               vertical: 10,
-                                                        //               horizontal: 10),
-                                                        //           border: OutlineInputBorder()),
-                                                        //     ),
-                                                        //   ),
-                                                        // ),
-                                                        const SizedBox(
-                                                          height: 15,
-                                                        ),
-                                                        Row(
-                                                          children: [
-                                                            SizedBox(
-                                                              width: 110,
-                                                              child:
-                                                                  TextFormField(
-                                                                onChanged:
-                                                                    (value) {
-                                                                  if (value ==
-                                                                      '') {
-                                                                    value = '0';
-                                                                  }
-                                                                  productTaxAmount
-                                                                      .text = (double.parse(
-                                                                              value) *
-                                                                          double.parse(
-                                                                              productTaxPercent.text) /
-                                                                          100)
-                                                                      .toString();
-                                                                  productTotalAmount
-                                                                      .text = ((double.parse(value) +
-                                                                              double.parse(productTaxAmount.text)) *
-                                                                          double.parse(productQty.text))
-                                                                      .toString();
-
-                                                                  productTotalAmount
-                                                                      .text = double.parse(
-                                                                          productTotalAmount
-                                                                              .text)
-                                                                      .toStringAsFixed(
-                                                                          2);
-
-                                                                  setState(
-                                                                      () {});
-                                                                },
-                                                                controller:
-                                                                    productRate,
-                                                                keyboardType:
-                                                                    TextInputType
-                                                                        .number,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        contentPadding: EdgeInsets.only(
-                                                                            left:
-                                                                                10,
-                                                                            top:
-                                                                                2,
-                                                                            bottom:
-                                                                                2),
-                                                                        labelText:
-                                                                            'Rate',
-                                                                        fillColor:
-                                                                            Colors
-                                                                                .white,
-                                                                        filled:
-                                                                            true,
-                                                                        prefixIcon: Icon(
-                                                                            Icons
-                                                                                .arrow_right,
-                                                                            color: Colors
-                                                                                .grey),
-                                                                        border:
-                                                                            OutlineInputBorder(),
-                                                                        focusedBorder:
-                                                                            OutlineInputBorder(
-                                                                          borderSide:
-                                                                              BorderSide(color: Colors.grey),
-                                                                        ),
-                                                                        labelStyle:
-                                                                            TextStyle(color: Colors.grey)),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 110,
-                                                              child:
-                                                                  TextFormField(
-                                                                onChanged:
-                                                                    (value) {
-                                                                  if (value ==
-                                                                      '') {
-                                                                    value = '0';
-                                                                  }
-                                                                  productTotalAmount
-                                                                      .text = ((double.parse(productRate.text) +
-                                                                              double.parse(productTaxAmount.text)) *
-                                                                          double.parse(value))
-                                                                      .toString();
-                                                                  productTotalAmount
-                                                                      .text = double.parse(
-                                                                          productTotalAmount
-                                                                              .text)
-                                                                      .toStringAsFixed(
-                                                                          2);
-                                                                  setState(
-                                                                      () {});
-                                                                },
-                                                                controller:
-                                                                    productQty,
-                                                                keyboardType:
-                                                                    TextInputType
-                                                                        .number,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        contentPadding: EdgeInsets.only(
-                                                                            left:
-                                                                                10,
-                                                                            top:
-                                                                                2,
-                                                                            bottom:
-                                                                                2),
-                                                                        labelText:
-                                                                            'Qty',
-                                                                        fillColor:
-                                                                            Colors
-                                                                                .white,
-                                                                        filled:
-                                                                            true,
-                                                                        prefixIcon: Icon(
-                                                                            Icons
-                                                                                .arrow_right,
-                                                                            color: Colors
-                                                                                .grey),
-                                                                        border:
-                                                                            OutlineInputBorder(),
-                                                                        focusedBorder:
-                                                                            OutlineInputBorder(
-                                                                          borderSide:
-                                                                              BorderSide(color: Colors.grey),
-                                                                        ),
-                                                                        labelStyle:
-                                                                            TextStyle(color: Colors.grey)),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 15,
-                                                        ),
-
-                                                        Row(
-                                                          children: [
-                                                            SizedBox(
-                                                              width: 110,
-                                                              child:
-                                                                  TextFormField(
-                                                                onChanged:
-                                                                    (value) {
-                                                                  if (value ==
-                                                                      '') {
-                                                                    value = '0';
-                                                                  }
-                                                                  productTaxAmount
-                                                                      .text = (double.parse(productRate
-                                                                              .text) *
-                                                                          double.parse(
-                                                                              value) /
-                                                                          100)
-                                                                      .toString();
-                                                                  productTotalAmount
-                                                                      .text = ((double.parse(productRate.text) +
-                                                                              double.parse(productTaxAmount.text)) *
-                                                                          double.parse(productQty.text))
-                                                                      .toString();
-                                                                  productTotalAmount
-                                                                      .text = double.parse(
-                                                                          productTotalAmount
-                                                                              .text)
-                                                                      .toStringAsFixed(
-                                                                          2);
-                                                                  setState(
-                                                                      () {});
-                                                                },
-                                                                controller:
-                                                                    productTaxPercent,
-                                                                keyboardType:
-                                                                    TextInputType
-                                                                        .number,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        contentPadding: EdgeInsets.only(
-                                                                            left:
-                                                                                10,
-                                                                            top:
-                                                                                2,
-                                                                            bottom:
-                                                                                2),
-                                                                        labelText:
-                                                                            'Tax Percent',
-                                                                        fillColor:
-                                                                            Colors
-                                                                                .white,
-                                                                        filled:
-                                                                            true,
-                                                                        prefixIcon: Icon(
-                                                                            Icons
-                                                                                .arrow_right,
-                                                                            color: Colors
-                                                                                .grey),
-                                                                        border:
-                                                                            OutlineInputBorder(),
-                                                                        focusedBorder:
-                                                                            OutlineInputBorder(
-                                                                          borderSide:
-                                                                              BorderSide(color: Colors.grey),
-                                                                        ),
-                                                                        labelStyle:
-                                                                            TextStyle(color: Colors.grey)),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 110,
-                                                              child:
-                                                                  TextFormField(
-                                                                controller:
-                                                                    productTaxAmount,
-                                                                keyboardType:
-                                                                    TextInputType
-                                                                        .number,
-                                                                readOnly: true,
-                                                                decoration:
-                                                                    const InputDecoration(
-                                                                        contentPadding: EdgeInsets.only(
-                                                                            left:
-                                                                                10,
-                                                                            top:
-                                                                                2,
-                                                                            bottom:
-                                                                                2),
-                                                                        labelText:
-                                                                            'Tax Amount',
-                                                                        fillColor:
-                                                                            Colors
-                                                                                .white,
-                                                                        filled:
-                                                                            true,
-                                                                        prefixIcon: Icon(
-                                                                            Icons
-                                                                                .arrow_right,
-                                                                            color: Colors
-                                                                                .grey),
-                                                                        border:
-                                                                            OutlineInputBorder(),
-                                                                        focusedBorder:
-                                                                            OutlineInputBorder(
-                                                                          borderSide:
-                                                                              BorderSide(color: Colors.grey),
-                                                                        ),
-                                                                        labelStyle:
-                                                                            TextStyle(color: Colors.grey)),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-
-                                                        const SizedBox(
-                                                          height: 15,
-                                                        ),
-                                                        SizedBox(
-                                                          child: TextFormField(
-                                                            controller:
-                                                                productTotalAmount,
-                                                            keyboardType:
-                                                                TextInputType
-                                                                    .number,
-                                                            readOnly: true,
-                                                            decoration:
-                                                                const InputDecoration(
-                                                                    contentPadding: EdgeInsets.only(
-                                                                        left:
-                                                                            10,
-                                                                        top: 2,
-                                                                        bottom:
-                                                                            2),
-                                                                    labelText:
-                                                                        'Total Amount',
-                                                                    fillColor:
-                                                                        Colors
-                                                                            .white,
-                                                                    filled:
-                                                                        true,
-                                                                    prefixIcon: Icon(
-                                                                        Icons
-                                                                            .arrow_right,
-                                                                        color: Colors
-                                                                            .grey),
-                                                                    border:
-                                                                        OutlineInputBorder(),
-                                                                    focusedBorder:
-                                                                        OutlineInputBorder(
-                                                                      borderSide:
-                                                                          BorderSide(
-                                                                              color: Colors.grey),
-                                                                    ),
-                                                                    labelStyle:
-                                                                        TextStyle(
-                                                                            color:
-                                                                                Colors.grey)),
-                                                          ),
-                                                        ),
-
-                                                        const SizedBox(
-                                                          height: 10,
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop();
-                                                              },
-                                                              child: Container(
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              5)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10,
-                                                                        left:
-                                                                            30,
-                                                                        right:
-                                                                            30),
-                                                                    child: Text(
-                                                                      'Cancel',
-                                                                      style: TextStyle(
-                                                                          color:
-                                                                              Colors.black),
-                                                                    ),
-                                                                  )),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            GestureDetector(
-                                                              onTap: () {
-                                                                if (productRate
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Common.toastMessaage(
-                                                                      'Enter Product Rate',
-                                                                      Colors
-                                                                          .red);
-                                                                } else if (productQty
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Common.toastMessaage(
-                                                                      'Enter Product Qty',
-                                                                      Colors
-                                                                          .red);
-                                                                } else if (productTaxPercent
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Common.toastMessaage(
-                                                                      'Enter Product Tax Percent',
-                                                                      Colors
-                                                                          .red);
-                                                                } else if (productTaxAmount
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Common.toastMessaage(
-                                                                      'Enter Product Tax Amount',
-                                                                      Colors
-                                                                          .red);
-                                                                } else if (productTotalAmount
-                                                                    .text
-                                                                    .isEmpty) {
-                                                                  Common.toastMessaage(
-                                                                      'Enter Product Total Amount',
-                                                                      Colors
-                                                                          .red);
-                                                                } else {
-                                                                  products.add({
-                                                                    "product_name":
-                                                                        productName,
-                                                                    "product_id":
-                                                                        productId,
-                                                                    "description":
-                                                                        productDescription
-                                                                            .text,
-                                                                    "product_rate":
-                                                                        productRate
-                                                                            .text,
-                                                                    "quantity":
-                                                                        productQty
-                                                                            .text,
-                                                                    "tax_percent":
-                                                                        productTaxPercent
-                                                                            .text,
-                                                                    "total_tax_amount":
-                                                                        productTaxAmount
-                                                                            .text,
-                                                                    "total_amount":
-                                                                        productTotalAmount
-                                                                            .text,
-                                                                  });
-
-                                                                  subTotal = subTotal +
-                                                                      double.parse(
-                                                                          productTotalAmount
-                                                                              .text);
-                                                                  totalTaxAmount = totalTaxAmount +
-                                                                      double.parse(productTaxAmount
-                                                                              .text) *
-                                                                          double.parse(
-                                                                              productQty.text);
-                                                                  allTotal = subTotal +
-                                                                      double.parse(shippingCharge.text ==
-                                                                              ''
-                                                                          ? '0'
-                                                                          : shippingCharge
-                                                                              .text) -
-                                                                      double.parse(discount.text ==
-                                                                              ''
-                                                                          ? '0'
-                                                                          : discount
-                                                                              .text);
-                                                                  productName =
-                                                                      "Choose Product";
-                                                                  productId =
-                                                                      "";
-                                                                  productDescription
-                                                                      .clear();
-                                                                  productRate
-                                                                      .clear();
-                                                                  productQty
-                                                                      .clear();
-                                                                  productTaxPercent
-                                                                      .clear();
-                                                                  productTaxAmount
-                                                                      .clear();
-                                                                  productTotalAmount
-                                                                      .clear();
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop();
-                                                                  setState(
-                                                                      () {});
-                                                                }
-                                                              },
-                                                              child: Container(
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .green,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              5)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10,
-                                                                        left:
-                                                                            25,
-                                                                        right:
-                                                                            25),
-                                                                    child: Text(
-                                                                      'Add',
-                                                                      style: TextStyle(
-                                                                          color:
-                                                                              Colors.white),
-                                                                    ),
-                                                                  )),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            });
-                                          },
-                                          transitionBuilder:
-                                              (_, animation1, __, child) {
-                                            return SlideTransition(
-                                              position: Tween(
-                                                begin: const Offset(0, 1),
-                                                end: const Offset(0, 0),
-                                              ).animate(animation1),
-                                              child: child,
-                                            );
-                                          },
-                                        );
+                                        addProductsDialog(context).then((_) {
+                                          setState(() {});
+                                        });
                                       },
                                       child: Container(
                                           decoration: BoxDecoration(
@@ -2648,6 +1494,105 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                       height: 5,
                                     ),
                                     const Divider(),
+
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          const Text('Pay Status * :'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          SizedBox(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.5,
+                                            height: 35,
+                                            child: FormField<String>(
+                                              builder: (FormFieldState<String>
+                                                  state) {
+                                                return Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.5,
+                                                  decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      borderRadius:
+                                                          const BorderRadius
+                                                              .all(
+                                                              Radius.circular(
+                                                                  5))),
+                                                  child:
+                                                      DropdownButtonHideUnderline(
+                                                    child:
+                                                        DropdownButton<String>(
+                                                      isExpanded: true,
+                                                      hint: const Padding(
+                                                        padding:
+                                                            EdgeInsets.only(
+                                                                left: 20),
+                                                        child: Text('Status'),
+                                                      ),
+                                                      value: paymentStatus,
+                                                      items: detailsResponse!
+                                                          .data
+                                                          .paymentStatusList
+                                                          .map((data) {
+                                                        return DropdownMenuItem(
+                                                          value: data
+                                                              .paymentStatus
+                                                              .toString(),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 10),
+                                                            child: SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.5,
+                                                              child: Text(
+                                                                data.displaySts
+                                                                    .toString(),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }).toList(),
+                                                      onChanged: (newValue) {
+                                                        setState(() {
+                                                          paymentStatus =
+                                                              newValue;
+                                                          if (paymentStatus ==
+                                                              "paid") {
+                                                            paidAmount.text =
+                                                                allTotal
+                                                                    .toString();
+                                                          }
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      height: 10,
+                                    ),
                                     Padding(
                                       padding: const EdgeInsets.only(right: 10),
                                       child: Row(
@@ -2708,103 +1653,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                   ),
                                                   labelStyle: const TextStyle(
                                                       color: Colors.black)),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 10,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          const Text('Pay Status * :'),
-                                          const SizedBox(
-                                            width: 10,
-                                          ),
-                                          SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.5,
-                                            height: 35,
-                                            child: FormField<String>(
-                                              builder: (FormFieldState<String>
-                                                  state) {
-                                                return Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.5,
-                                                  decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      borderRadius:
-                                                          const BorderRadius
-                                                              .all(
-                                                              Radius.circular(
-                                                                  5))),
-                                                  child:
-                                                      DropdownButtonHideUnderline(
-                                                    child:
-                                                        DropdownButton<String>(
-                                                      isExpanded: true,
-                                                      hint: const Padding(
-                                                        padding:
-                                                            EdgeInsets.only(
-                                                                left: 20),
-                                                        child: Text('Status'),
-                                                      ),
-                                                      value: paymentStatus,
-                                                      items: detailsResponse!
-                                                          .data.paymentStatus
-                                                          .map((data) {
-                                                        return DropdownMenuItem(
-                                                          value: data
-                                                              .paymentStatus
-                                                              .toString(),
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10),
-                                                            child: SizedBox(
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.5,
-                                                              child: Text(
-                                                                data.displaySts
-                                                                    .toString(),
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }).toList(),
-                                                      onChanged: (newValue) {
-                                                        setState(() {
-                                                          paymentStatus =
-                                                              newValue;
-                                                          if (paymentStatus ==
-                                                              "paid") {
-                                                            paidAmount.text =
-                                                                allTotal
-                                                                    .toString();
-                                                          }
-                                                        });
-                                                      },
-                                                    ),
-                                                  ),
-                                                );
-                                              },
                                             ),
                                           ),
                                         ],
@@ -2972,7 +1820,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                                         (data) {
                                                               return DropdownMenuItem(
                                                                 value: data
-                                                                    .userId
+                                                                    .accountId
                                                                     .toString(),
                                                                 child: Padding(
                                                                   padding:
@@ -2987,7 +1835,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                                             .width *
                                                                         0.5,
                                                                     child: Text(
-                                                                      data.staffName
+                                                                      data.accountName
                                                                           .toString(),
                                                                       overflow:
                                                                           TextOverflow
@@ -3154,9 +2002,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               ],
                             ),
                           ),
-                          if (callResultId == '4' &&
-                              createOrder &&
-                              commonDetails!.data.customerAddPermission)
+                          if (callResultId == '4' && createOrder)
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -3268,9 +2114,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 20,
                           ),
-                          const SizedBox(
-                            height: 20,
-                          ),
                           InkWell(
                             onTap: () async {
                               final connectivityResult =
@@ -3286,63 +2129,28 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(
                                       'Choose next followup date', Colors.red);
-                                } else if (createOrder == true &&
-                                    products.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Please add a product to continue',
-                                      Colors.red);
-                                } else if (createOrder == true &&
-                                        paidAmount.text.isEmpty ||
-                                    paymentStatus == null) {
-                                  Common.toastMessaage(
-                                      'Paid Amount and Payment Status is required to add invoice',
-                                      Colors.red);
-                                } else if (paymentStatus != "1" &&
-                                    paymentMethod == null) {
-                                  Common.toastMessaage(
-                                      'Payment Method is required to add invoice',
-                                      Colors.red);
-                                } else if (paymentStatus != "1" &&
-                                    collectedStaff == null) {
-                                  Common.toastMessaage(
-                                      'Collected Staff is required to add invoice',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
-                                    startDate.text == "") {
-                                  Common.toastMessaage(
-                                      'Start date is required to add renewal',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
-                                    endDate.text == "") {
-                                  Common.toastMessaage(
-                                      'End date is required to add renewal',
-                                      Colors.red);
                                 } else {
                                   if (context.mounted) {
                                     Common.showProgressDialog(
                                         context, "Loading..");
                                   }
-                                  AddLeadFollowupModels object1 =
-                                      await HttpService.addLeadsFollowup(
-                                          widget.token,
+                                  AddLeadFollowupModel object1 =
+                                      await HttpService.postRenewalFollowup(
+                                          token,
                                           callResultId,
                                           nextFollowupDate1.text,
-                                          cost.text,
-                                          address.text,
+                                          productCost.text,
                                           leadTypeId,
                                           leadSubTypeId,
                                           remarks.text,
-                                          widget.callMasterId,
+                                          widget.renewalId,
                                           calledDate1.text,
                                           callHistoryId,
-                                          priorityId,
                                           checked,
                                           timeBefore.text,
                                           callResponseId,
                                           callResultReasonId,
                                           createOrder,
-                                          createRenewal ? "renewal" : "invoice",
-                                          detailsResponse!.data.checkId,
                                           invoiceDate,
                                           products,
                                           reminderTemplate.text,
@@ -3362,29 +2170,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                         object1.message, Colors.green);
                                     if (context.mounted) {
                                       Navigator.pop(context);
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => LeadDetails(
-                                                  widget.token!,
-                                                  widget.editLead,
-                                                  widget.deleteLead,
-                                                  widget.cloudCall,
-                                                  widget.callMasterId,
-                                                  pageName: widget.pageName
-                                                      .toString(),
-                                                  fromDate: widget.fromDate,
-                                                  toDate: widget.toDate,
-                                                  status: widget.status,
-                                                  category: widget.category,
-                                                  staff: widget.staff,
-                                                  isCalled: widget.isCalled,
-                                                  searchKey: widget.searchKey,
-                                                  scrollToIndex:
-                                                      widget.scrollToIndex,
-                                                  leadType: widget.leadType1,
-                                                )),
-                                      );
                                       Navigator.pop(context);
                                     }
                                   } else {
@@ -3460,8 +2245,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                     timeOut == true
                         ? "There seems to be a temporary issue, \n Please retry to continue"
                         : 'No Network Found !',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -3496,6 +2280,614 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                 ],
               ),
             ));
+  }
+
+  Future<Object?> addProductsDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Product Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        productDialog(context, "2");
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    productName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+
+                    // Padding(
+                    //   padding: const EdgeInsets.all(8.0),
+                    //   child: SizedBox(
+                    //     child: TextFormField(
+                    //       controller: productName,
+                    //       keyboardType: TextInputType.text,
+                    //       decoration: const InputDecoration(
+                    //           hintText: 'Product Name',
+                    //           contentPadding:
+                    //           EdgeInsets.symmetric(
+                    //               vertical: 10,
+                    //               horizontal: 10),
+                    //           border: OutlineInputBorder()),
+                    //     ),
+                    //   ),
+                    // ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              productTaxAmount.text = (double.parse(value) *
+                                      double.parse(productTaxPercent.text) /
+                                      100)
+                                  .toString();
+                              productTotalAmount.text = ((double.parse(value) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+
+                              setState(() {});
+                            },
+                            controller: productRate,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Rate',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(value))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                            },
+                            controller: productQty,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Qty',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              productTaxAmount.text =
+                                  (double.parse(productRate.text) *
+                                          double.parse(value) /
+                                          100)
+                                      .toString();
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                            },
+                            controller: productTaxPercent,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Percent',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            controller: productTaxAmount,
+                            keyboardType: TextInputType.number,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Amount',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    SizedBox(
+                      child: TextFormField(
+                        controller: productTotalAmount,
+                        keyboardType: TextInputType.number,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                            labelText: 'Total Amount',
+                            fillColor: Colors.white,
+                            filled: true,
+                            prefixIcon:
+                                Icon(Icons.arrow_right, color: Colors.grey),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 30, right: 30),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              )),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            if (productRate.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Rate', Colors.red);
+                            } else if (productQty.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Qty', Colors.red);
+                            } else if (productTaxPercent.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Percent', Colors.red);
+                            } else if (productTaxAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Amount', Colors.red);
+                            } else if (productTotalAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Total Amount', Colors.red);
+                            } else {
+                              products.add({
+                                "product_name": productName,
+                                "product_id": productId,
+                                "description": productDescription.text,
+                                "product_rate": productRate.text,
+                                "quantity": productQty.text,
+                                "tax_percent": productTaxPercent.text,
+                                "total_tax_amount": productTaxAmount.text,
+                                "total_amount": productTotalAmount.text,
+                              });
+
+                              subTotal = subTotal +
+                                  double.parse(productTotalAmount.text);
+                              totalTaxAmount = totalTaxAmount +
+                                  double.parse(productTaxAmount.text) *
+                                      double.parse(productQty.text);
+                              allTotal = subTotal +
+                                  double.parse(shippingCharge.text == ''
+                                      ? '0'
+                                      : shippingCharge.text) -
+                                  double.parse(discount.text == ''
+                                      ? '0'
+                                      : discount.text);
+                              productName = "Choose Product";
+                              productId = "";
+                              productDescription.clear();
+                              productRate.clear();
+                              productQty.clear();
+                              productTaxPercent.clear();
+                              productTaxAmount.clear();
+                              productTotalAmount.clear();
+                              Navigator.of(context).pop();
+                              setState(() {});
+                            }
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 25, right: 25),
+                                child: Text(
+                                  'Add',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<dynamic> productDialog(BuildContext context, String type) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredItems = items
+                            .where((item) => item.productName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredItems.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () async {
+                            if (type == "2") {
+                              productName = filteredItems[index].productName;
+                              productId = filteredItems[index].id;
+                              productRate.text =
+                                  filteredItems[index].sellingPrice;
+                              productTaxPercent.text =
+                                  filteredItems[index].taxPercent;
+                              productTaxAmount.text =
+                                  filteredItems[index].taxAmount;
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            } else {
+                              products.add({
+                                "product_id": filteredItems[index].id,
+                                "product_name":
+                                    filteredItems[index].productName,
+                                "product_rate":
+                                    filteredItems[index].sellingPrice,
+                                "quantity": 1,
+                                "tax_percent": filteredItems[index].taxPercent,
+                                "total_tax_amount":
+                                    filteredItems[index].taxAmount,
+                                "total_amount":
+                                    filteredItems[index].sellingPrice,
+                                "description": "",
+                              });
+                              productNames
+                                  .add(filteredItems[index].productName);
+                              totalProductCost = 0;
+                              for (int i = 0; i < products.length; i++) {
+                                totalProductCost += double.parse(
+                                    await products[i]["total_amount"]);
+                              }
+                              productCost.text = (totalProductCost).toString();
+                              setState(() {});
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          },
+                          title: Text(filteredItems[index].productName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Future<dynamic> callResponseDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Call Response'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.height * .8,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: detailsResponse!.data.callResponse.length,
+                itemBuilder: (context, ind) {
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        callResponse = detailsResponse!
+                            .data.callResponse[ind].callResponse
+                            .toString();
+
+                        callResponseId = detailsResponse!
+                            .data.callResponse[ind].callResponseId
+                            .toString();
+                        Navigator.pop(context, true);
+                      });
+                    },
+                    child: SizedBox(
+                      height: 50,
+                      child: Text(
+                        detailsResponse!.data.callResponse[ind].callResponse
+                            .toString(),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<dynamic> reasonDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Reason'),
+            content: SizedBox(
+              height: MediaQuery.of(context).size.height * .32,
+              width: MediaQuery.of(context).size.height * .8,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: detailsResponse!.data.reasonList.length,
+                itemBuilder: (context, ind) {
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        callResultReasonName = detailsResponse!
+                            .data.reasonList[ind].reason
+                            .toString();
+                        callResultReasonId =
+                            detailsResponse!.data.reasonList[ind].id.toString();
+
+                        Navigator.pop(context, true);
+                      });
+                    },
+                    child: SizedBox(
+                      height: 50,
+                      child: Text(
+                        detailsResponse!.data.reasonList[ind].reason.toString(),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<dynamic> callResultDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Status'),
+            content: SizedBox(
+              height: MediaQuery.of(context).size.height * .24,
+              width: MediaQuery.of(context).size.height * .8,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: detailsResponse!.data.callResult.length,
+                itemBuilder: (context, ind) {
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        callResult = detailsResponse!
+                            .data.callResult[ind].callResult
+                            .toString();
+
+                        callResultId = detailsResponse!
+                            .data.callResult[ind].callResultId
+                            .toString();
+                        if (callResultId != '2') {
+                          nextFollowupDate = '';
+                          checked = false;
+                        }
+                        Navigator.pop(context, true);
+                      });
+                      products.clear();
+                      productNames.clear();
+                    },
+                    child: SizedBox(
+                      height: 50,
+                      child: Text(
+                        detailsResponse!.data.callResult[ind].callResult
+                            .toString(),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
   }
 
   Future<dynamic> dropDialog(BuildContext context) {
@@ -3576,7 +2968,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   void filterTemplates(
     String query,
   ) {
-    filteredTemplates = detailsResponse!.data.template
+    filteredTemplates = detailsResponse!.data.renewalTemplate
         .where((map) =>
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();

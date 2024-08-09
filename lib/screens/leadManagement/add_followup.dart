@@ -1995,7 +1995,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                               child: child,
                                             );
                                           },
-                                        );
+                                        ).then((_) {
+                                          setState(() {});
+                                        });
                                       },
                                       child: Container(
                                           decoration: BoxDecoration(
@@ -3326,7 +3328,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                     Common.showProgressDialog(
                                         context, "Loading..");
                                   }
-                                  AddLeadFollowupModels object1 =
+                                  AddLeadFollowupModel object1 =
                                       await HttpService.addLeadsFollowup(
                                           widget.token,
                                           callResultId,

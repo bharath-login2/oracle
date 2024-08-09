@@ -127,7 +127,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
     }
   }
 
-  getEditDetails() async {
+  getDetails() async {
     setState(() {
       isLoading = true;
     });
@@ -182,7 +182,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
 
   @override
   void initState() {
-    getEditDetails();
+    getDetails();
     super.initState();
   }
 
