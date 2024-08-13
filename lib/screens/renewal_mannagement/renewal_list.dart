@@ -394,14 +394,16 @@ class _RenewalListState extends State<RenewalList> {
                                                       MaterialPageRoute(
                                                           builder: (context) =>
                                                               RenewalFollowup(
-                                                                  true,
-                                                                  true,
-                                                                  true,
                                                                   items[index]
                                                                       .id,
-                                                                  items[index]
-                                                                      .id,DateTime.now()
-                                                                )));
+                                                                  DateTime
+                                                                      .now()))).then(
+                                                      (_) {
+                                                    page = 1;
+                                                    add = 1;
+                                                    items.clear();
+                                                    getList();
+                                                  });
                                                 }
                                               });
                                               if ((items.length -
@@ -494,7 +496,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                               context)
                                                                           .size
                                                                           .width *
-                                                                      .55,
+                                                                      .50,
                                                                   child: Text(
                                                                     overflow:
                                                                         TextOverflow
@@ -522,7 +524,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                             context)
                                                                         .size
                                                                         .width *
-                                                                    .55,
+                                                                    .50,
                                                                 child: Text(
                                                                   overflow:
                                                                       TextOverflow
@@ -550,7 +552,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                             context)
                                                                         .size
                                                                         .width *
-                                                                    .55,
+                                                                    .50,
                                                                 child: Text(
                                                                   overflow:
                                                                       TextOverflow
@@ -581,7 +583,7 @@ class _RenewalListState extends State<RenewalList> {
                                                                             context)
                                                                         .size
                                                                         .width *
-                                                                    .55,
+                                                                    .50,
                                                                 child: Text(
                                                                   " ${items[index].products}",
                                                                   style: const TextStyle(

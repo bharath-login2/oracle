@@ -116,7 +116,7 @@ class RenewalGridItem extends StatelessWidget {
                             children: [
                               const Text("  Paid: ₹",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
                               SizedBox(
-                                width: MediaQuery.of(context).size.width * .25,
+                                width: MediaQuery.of(context).size.width * .23,
                                 child: Text("$paidAmount /-",
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -132,7 +132,7 @@ class RenewalGridItem extends StatelessWidget {
                           children: [
                             const Text("  Total: ₹",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
                             SizedBox(
-                              width: MediaQuery.of(context).size.width * .25,
+                              width: MediaQuery.of(context).size.width * .23,
                               child: Text("$totalAmount /-",
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -166,7 +166,7 @@ class RenewalGridItem extends StatelessWidget {
             //       ),
             //     ),
             //   ],
-            // )
+            // )  
           ],
         ),
       ),

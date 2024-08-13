@@ -325,7 +325,7 @@ class _AddFollowupState extends State<AddFollowup> {
                 ),
               ),
             ),
-            body: commonDetails != null
+            body: commonDetails != null && callResultReason != null
                 ? SingleChildScrollView(
                     child: Padding(
                       padding:
@@ -1203,7 +1203,9 @@ class _AddFollowupState extends State<AddFollowup> {
                             ),
                           ),
                           if (callResultId == '4' &&
-                              commonDetails!.data.customerAddPermission == true)
+                              commonDetails!
+                                      .data.customerAddInvoicePermission ==
+                                  true)
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Order'),
@@ -1219,7 +1221,8 @@ class _AddFollowupState extends State<AddFollowup> {
                           Visibility(
                             visible: createOrder &&
                                 callResultId == '4' &&
-                                commonDetails!.data.customerAddPermission ==
+                                commonDetails!
+                                        .data.customerAddInvoicePermission ==
                                     true,
                             child: Column(
                               children: [
@@ -1395,6 +1398,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                                 (context, index) {
                                                                               return ListTile(
                                                                                   onTap: () {
+                                                                                    productQty.text = "1";
                                                                                     productName = filteredItems[index].productName;
                                                                                     productId = filteredItems[index].id;
                                                                                     productRate.text = filteredItems[index].sellingPrice;
@@ -1402,6 +1406,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                                     productTaxAmount.text = filteredItems[index].taxAmount;
                                                                                     productTotalAmount.text = ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
                                                                                     productTotalAmount.text = double.parse(productTotalAmount.text).toStringAsFixed(2);
+                                                                                    if (paymentStatus == "paid") {
+                                                                                      paidAmount.text = productTotalAmount.text;
+                                                                                    }
                                                                                     setState(() {});
                                                                                     if (context.mounted) {
                                                                                       Navigator.pop(context);
@@ -3162,7 +3169,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           ),
                           if (callResultId == '4' &&
                               createOrder &&
-                              commonDetails!.data.customerAddPermission)
+                              commonDetails!.data.isRenewal)
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -3176,7 +3183,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                 controlAffinity:
                                     ListTileControlAffinity.leading),
                           Visibility(
-                              visible: createRenewal && createOrder,
+                              visible: createRenewal &&
+                                  createOrder &&
+                                  commonDetails!.data.isRenewal,
                               child: Column(
                                 children: [
                                   TextFormField(

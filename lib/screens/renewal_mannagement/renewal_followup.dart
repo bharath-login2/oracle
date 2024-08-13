@@ -1,5 +1,3 @@
-// ignore_for_file: file_names
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -13,19 +11,11 @@ import 'package:intl/intl.dart';
 
 // ignore: must_be_immutable
 class RenewalFollowup extends StatefulWidget {
-  bool editLead;
-  bool deleteLead;
-  bool cloudCall;
   String renewalId;
-  String leadTypeId;
   DateTime callingDate;
 
   RenewalFollowup(
-    this.editLead,
-    this.deleteLead,
-    this.cloudCall,
     this.renewalId,
-    this.leadTypeId,
     this.callingDate, {
     super.key,
   });
@@ -34,74 +24,68 @@ class RenewalFollowup extends StatefulWidget {
   State<RenewalFollowup> createState() => _RenewalFollowupState();
 }
 
-TextEditingController productDescription = TextEditingController();
-TextEditingController productRate = TextEditingController();
-TextEditingController productQty = TextEditingController();
-TextEditingController productTaxPercent = TextEditingController();
-TextEditingController productTaxAmount = TextEditingController();
-TextEditingController productTotalAmount = TextEditingController();
-TextEditingController discount = TextEditingController();
-TextEditingController shippingCharge = TextEditingController();
-TextEditingController paidAmount = TextEditingController();
-TextEditingController search = TextEditingController();
-TextEditingController startDate = TextEditingController();
-TextEditingController endDate = TextEditingController();
-TextEditingController invoiceRemarks = TextEditingController();
-TextEditingController renewalRemarks = TextEditingController();
-TextEditingController reminderTemplate = TextEditingController();
-TextEditingController productCost = TextEditingController();
-RenewalFollowupDetailsModel? detailsResponse;
-Color paidColor = Colors.black;
-String templateId = "";
-List<RenewalTemplate> filteredTemplates = [];
-String invoiceNumber = '';
-var invoiceDate = DateTime.now();
-List<Map<String, dynamic>> products = [];
-List productNames = [];
-double totalProductCost = 0;
-
-double subTotal = 0.00;
-double totalTaxAmount = 00;
-double allTotal = 0.00;
-bool isPaying = false;
-dynamic paymentMethod;
-dynamic paymentStatus;
-dynamic collectedStaff;
-List<AllProduct> items = [];
-List<AllProduct> filteredItems = [];
-String productId = "";
-String productName = "Choose Product";
-bool createRenewal = false;
-bool createOrder = false;
-String callResult = 'Followup';
-String callResultId = '2';
-String callResponse = 'Call Response';
-String callResponseId = '';
-String? nextFollowupDate = '';
-String leadType = 'Lead Category';
-String leadTypeId = '';
-String leadSubType = 'Lead Sub Category';
-String leadSubTypeId = '';
-String callResultReasonName = 'Reason';
-String callResultReasonId = '';
-TextEditingController remarks = TextEditingController();
-TextEditingController calledDate1 = TextEditingController();
-TextEditingController nextFollowupDate1 = TextEditingController();
-TextEditingController callResultVal = TextEditingController();
-TextEditingController callResponseVal = TextEditingController();
-TextEditingController timeBefore = TextEditingController(text: '10');
-TextEditingController callReasonVal = TextEditingController();
-bool? result = true;
-bool? result1 = true;
-String? callHistoryId;
-bool checked = false;
-bool addClient = false;
-bool isExpand = false;
-bool isChecked = false;
-bool timeOut = false;
-String token = "";
-
 class _RenewalFollowupState extends State<RenewalFollowup> {
+  TextEditingController productDescription = TextEditingController();
+  TextEditingController productRate = TextEditingController();
+  TextEditingController productQty = TextEditingController();
+  TextEditingController productTaxPercent = TextEditingController();
+  TextEditingController productTaxAmount = TextEditingController();
+  TextEditingController productTotalAmount = TextEditingController();
+  TextEditingController discount = TextEditingController();
+  TextEditingController shippingCharge = TextEditingController();
+  TextEditingController paidAmount = TextEditingController();
+  TextEditingController search = TextEditingController();
+  TextEditingController startDate = TextEditingController();
+  TextEditingController endDate = TextEditingController();
+  TextEditingController invoiceRemarks = TextEditingController();
+  TextEditingController renewalRemarks = TextEditingController();
+  TextEditingController reminderTemplate = TextEditingController();
+  TextEditingController productCost = TextEditingController();
+  RenewalFollowupDetailsModel? detailsResponse;
+  Color paidColor = Colors.black;
+  String templateId = "";
+  List<RenewalTemplate> filteredTemplates = [];
+  String invoiceNumber = '';
+  var invoiceDate = DateTime.now();
+  List<Map<String, dynamic>> products = [];
+  List productNames = [];
+  double totalProductCost = 0;
+  bool isLoading = true;
+  double subTotal = 0.00;
+  double totalTaxAmount = 00;
+  double allTotal = 0.00;
+  bool isPaying = false;
+  dynamic paymentMethod;
+  dynamic paymentStatus;
+  dynamic collectedStaff;
+  List<AllProduct> items = [];
+  List<AllProduct> filteredItems = [];
+  String productId = "";
+  String productName = "Choose Product";
+  bool createRenewal = false;
+  bool createOrder = false;
+  String leadStatus = 'Followup';
+  String leadStatusId = '2';
+  String callResponse = 'Call Response';
+  String callResponseId = '';
+  String? nextFollowupDate = '';
+  String callResultReasonName = 'Reason';
+  String callResultReasonId = '';
+  TextEditingController remarks = TextEditingController();
+  TextEditingController calledDate1 = TextEditingController();
+  TextEditingController nextFollowupDate1 = TextEditingController();
+  TextEditingController callResultVal = TextEditingController();
+  TextEditingController callResponseVal = TextEditingController();
+  TextEditingController timeBefore = TextEditingController(text: '10');
+  TextEditingController callReasonVal = TextEditingController();
+  bool? result = true;
+  bool? result1 = true;
+  bool checked = false;
+  bool addClient = false;
+  bool isExpand = false;
+  bool isChecked = false;
+  bool timeOut = false;
+  String token = "";
   void toggleTextFieldVisibility() {
     setState(() {
       checked = !checked;
@@ -115,6 +99,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   }
 
   getData() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
@@ -142,6 +129,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
         timeOut = true;
       });
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   String getYmdFromDmy(String dmy) {
@@ -152,16 +142,11 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
 
   @override
   Widget build(BuildContext context) {
-    callResultVal.text = callResult;
+    callResultVal.text = leadStatus;
     callReasonVal.text = callResultReasonName;
     callResponseVal.text = callResponse;
-
-    if (widget.callingDate != null) {
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
-          .format(DateTime.parse(widget.callingDate.toString()));
-    } else {
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
-    }
+    calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
+        .format(DateTime.parse(widget.callingDate.toString()));
 
     return result == true && timeOut == false
         ? Scaffold(
@@ -217,7 +202,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                 ),
               ),
             ),
-            body: detailsResponse != null
+            body: isLoading == false
                 ? SingleChildScrollView(
                     child: Padding(
                       padding:
@@ -297,7 +282,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             decoration: const InputDecoration(
                                 contentPadding: EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                labelText: 'Call Result',
+                                labelText: 'Lead Status',
                                 fillColor: Colors.white,
                                 filled: true,
                                 prefixIcon: Icon(
@@ -312,7 +297,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                          callResultId == '3'
+                          leadStatusId == '3'
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 15),
                                   child: TextFormField(
@@ -340,7 +325,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                   ),
                                 )
                               : const SizedBox(),
-                          if (callResultId == '2')
+                          if (leadStatusId == '2')
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -495,7 +480,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     ),
                                   ),
                                 ),
-                                if (callResultId == '2')
+                                if (leadStatusId == '2')
                                   InkWell(
                                     onTap: toggleTextFieldVisibility,
                                     child: Padding(
@@ -511,7 +496,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                   ),
                               ],
                             ),
-                          if (callResultId == '2')
+                          if (leadStatusId == '2')
                             const SizedBox(
                               height: 15,
                             ),
@@ -539,210 +524,213 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                         if (callResultId == '2') Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  productDialog(context, "1");
-                                },
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width * 1,
-                                  height: 55,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: products.isEmpty
-                                      ? const Row(
-                                          children: [
-                                            SizedBox(width: 10),
-                                            Icon(
-                                              Icons.shopping_cart,
-                                              color: Colors.grey,
-                                            ),
-                                            SizedBox(width: 10),
-                                            Text(
-                                              'Products',
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.grey),
-                                            ),
-                                          ],
-                                        )
-                                      : Row(
-                                          children: [
-                                            const SizedBox(width: 10),
-                                            const Icon(
-                                              Icons.shopping_cart,
-                                              color: Colors.grey,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            SizedBox(
-                                              height: 45,
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .8,
-                                              child: ListView.builder(
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                itemCount: productNames.length,
-                                                itemBuilder: (context, i) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 5, right: 5),
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          height: 45,
-                                                          decoration: BoxDecoration(
-                                                              border: Border.all(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  width: 0),
-                                                              color:
-                                                                  Colors.white,
-                                                              borderRadius: const BorderRadius
-                                                                  .only(
-                                                                  topLeft: Radius
-                                                                      .circular(
-                                                                          6),
-                                                                  bottomLeft: Radius
-                                                                      .circular(
-                                                                          6))),
-                                                          child: Center(
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .center,
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          10),
-                                                                  child: Text(
-                                                                    productNames[
-                                                                        i],
-                                                                    style:
-                                                                        const TextStyle(
-                                                                      color: Colors
-                                                                          .black,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder:
-                                                                    (BuildContext
-                                                                        context) {
-                                                                  return AlertDialog(
-                                                                    title: const Text(
-                                                                        'Please Confirm'),
-                                                                    content:
-                                                                        const Text(
-                                                                            'Are you sure to Remove this product?'),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child:
-                                                                              const Text('No')),
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () async {
-                                                                            productNames.remove(productName[i]);
-                                                                            products.removeAt(i);
-                                                                            totalProductCost =
-                                                                                0;
-                                                                            for (int ind = 0;
-                                                                                ind < products.length;
-                                                                                ind++) {
-                                                                              totalProductCost += double.parse(await products[ind]["total_amount"]);
-                                                                            }
-                                                                            productCost.text =
-                                                                                (totalProductCost).toString();
-                                                                            setState(() {});
-
-                                                                            if (context.mounted) {
-                                                                              Navigator.of(context).pop();
-                                                                            }
-                                                                          },
-                                                                          child:
-                                                                              const Text('Yes')),
-                                                                    ],
-                                                                  );
-                                                                });
-                                                          },
-                                                          child: Container(
+                          if (leadStatusId == '2')
+                            Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    productDialog(context, "1");
+                                  },
+                                  child: Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * 1,
+                                    height: 55,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: productNames.isEmpty
+                                        ? const Row(
+                                            children: [
+                                              SizedBox(width: 10),
+                                              Icon(
+                                                Icons.shopping_cart,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(
+                                                'Products',
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.grey),
+                                              ),
+                                            ],
+                                          )
+                                        : Row(
+                                            children: [
+                                              const SizedBox(width: 10),
+                                              const Icon(
+                                                Icons.shopping_cart,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              SizedBox(
+                                                height: 45,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .8,
+                                                child: ListView.builder(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  itemCount:
+                                                      productNames.length,
+                                                  itemBuilder: (context, i) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 5,
+                                                              right: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
                                                             height: 45,
-                                                            width: 40,
                                                             decoration: BoxDecoration(
                                                                 border: Border.all(
                                                                     color: Colors
                                                                         .grey,
                                                                     width: 0),
-                                                                color: Colors.grey
-                                                                    .shade100,
+                                                                color: Colors
+                                                                    .white,
                                                                 borderRadius: const BorderRadius
                                                                     .only(
-                                                                    topRight: Radius
+                                                                    topLeft: Radius
                                                                         .circular(
                                                                             6),
-                                                                    bottomRight:
+                                                                    bottomLeft:
                                                                         Radius.circular(
                                                                             6))),
-                                                            child: const Icon(
-                                                              Icons.close,
-                                                              color: Colors.red,
+                                                            child: Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Padding(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    child: Text(
+                                                                      productNames[
+                                                                          i],
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             ),
                                                           ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
+                                                          InkWell(
+                                                            onTap: () {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          context) {
+                                                                    return AlertDialog(
+                                                                      title: const Text(
+                                                                          'Please Confirm'),
+                                                                      content:
+                                                                          const Text(
+                                                                              'Are you sure to Remove this product?'),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('No')),
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () async {
+                                                                              productNames.removeAt(i);
+                                                                              products.removeAt(i);
+                                                                              totalProductCost = 0;
+                                                                              for (int ind = 0; ind < products.length; ind++) {
+                                                                                totalProductCost += double.parse(await products[ind]["total_amount"]);
+                                                                              }
+                                                                              productCost.text = (totalProductCost).toString();
+                                                                              setState(() {});
+
+                                                                              if (context.mounted) {
+                                                                                Navigator.of(context).pop();
+                                                                              }
+                                                                            },
+                                                                            child:
+                                                                                const Text('Yes')),
+                                                                      ],
+                                                                    );
+                                                                  });
+                                                            },
+                                                            child: Container(
+                                                              height: 45,
+                                                              width: 40,
+                                                              decoration: BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      width: 0),
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade100,
+                                                                  borderRadius: const BorderRadius
+                                                                      .only(
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              6),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              6))),
+                                                              child: const Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
+                                            ],
+                                          ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 15.0),
-                              TextFormField(
-                                controller: productCost,
-                                validator: (value) {
-                                  if (value!.isEmpty) {
-                                    return "Please Enter Cost";
-                                  }
-                                  return null;
-                                },
-                                decoration: const InputDecoration(
-                                    contentPadding: EdgeInsets.only(
-                                        left: 10, top: 2, bottom: 2),
-                                    labelText: 'Cost',
-                                    prefixIcon: Icon(Icons.currency_rupee,
-                                        color: Colors.grey),
-                                    border: OutlineInputBorder(),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide:
-                                          BorderSide(color: Colors.grey),
-                                    ),
-                                    labelStyle: TextStyle(color: Colors.grey)),
-                              ),
-                              const SizedBox(height: 15.0),
-                            ],
-                          ),
+                                const SizedBox(height: 15.0),
+                                TextFormField(
+                                  controller: productCost,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "Please Enter Cost";
+                                    }
+                                    return null;
+                                  },
+                                  decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.only(
+                                          left: 10, top: 2, bottom: 2),
+                                      labelText: 'Cost',
+                                      prefixIcon: Icon(Icons.currency_rupee,
+                                          color: Colors.grey),
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                      labelStyle:
+                                          TextStyle(color: Colors.grey)),
+                                ),
+                                const SizedBox(height: 15.0),
+                              ],
+                            ),
                           TextFormField(
                             controller: remarks,
                             maxLines: 2,
@@ -760,7 +748,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                          if (callResultId == '4')
+                          if (leadStatusId == '4')
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Order'),
@@ -774,7 +762,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 controlAffinity:
                                     ListTileControlAffinity.leading),
                           Visibility(
-                            visible: createOrder && callResultId == '4',
+                            visible: createOrder && leadStatusId == '4',
                             child: Column(
                               children: [
                                 Padding(
@@ -2002,7 +1990,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               ],
                             ),
                           ),
-                          if (callResultId == '4' && createOrder)
+                          if (leadStatusId == '4' && createOrder)
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -2122,10 +2110,10 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                       ConnectivityResult.mobile ||
                                   connectivityResult ==
                                       ConnectivityResult.wifi) {
-                                if (callResultId == '') {
+                                if (leadStatusId == '') {
                                   Common.toastMessaage(
                                       'Choose any Status', Colors.red);
-                                } else if (callResultId == '2' &&
+                                } else if (leadStatusId == '2' &&
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(
                                       'Choose next followup date', Colors.red);
@@ -2137,15 +2125,14 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                   AddLeadFollowupModel object1 =
                                       await HttpService.postRenewalFollowup(
                                           token,
-                                          callResultId,
+                                          leadStatusId,
                                           nextFollowupDate1.text,
                                           productCost.text,
-                                          leadTypeId,
-                                          leadSubTypeId,
+                                          detailsResponse!.data.leadId,
                                           remarks.text,
                                           widget.renewalId,
                                           calledDate1.text,
-                                          callHistoryId,
+                                          detailsResponse!.data.clientId,
                                           checked,
                                           timeBefore.text,
                                           callResponseId,
@@ -2690,6 +2677,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             if (type == "2") {
                               productName = filteredItems[index].productName;
                               productId = filteredItems[index].id;
+                              productQty.text = "1";
                               productRate.text =
                                   filteredItems[index].sellingPrice;
                               productTaxPercent.text =
@@ -2710,18 +2698,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               }
                             } else {
                               products.add({
-                                "product_id": filteredItems[index].id,
-                                "product_name":
-                                    filteredItems[index].productName,
-                                "product_rate":
-                                    filteredItems[index].sellingPrice,
-                                "quantity": 1,
-                                "tax_percent": filteredItems[index].taxPercent,
-                                "total_tax_amount":
-                                    filteredItems[index].taxAmount,
+                                "prd_id": filteredItems[index].id,
                                 "total_amount":
                                     filteredItems[index].sellingPrice,
-                                "description": "",
                               });
                               productNames
                                   .add(filteredItems[index].productName);
@@ -2858,14 +2837,13 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                   return InkWell(
                     onTap: () {
                       setState(() {
-                        callResult = detailsResponse!
+                        leadStatus = detailsResponse!
                             .data.callResult[ind].callResult
                             .toString();
-
-                        callResultId = detailsResponse!
+                        leadStatusId = detailsResponse!
                             .data.callResult[ind].callResultId
                             .toString();
-                        if (callResultId != '2') {
+                        if (leadStatusId != '2') {
                           nextFollowupDate = '';
                           checked = false;
                         }
@@ -2943,6 +2921,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           reminderTemplate.text =
                               filteredTemplates[index].templateName;
                           templateId = filteredTemplates[index].id;
+                          Navigator.pop(context);
                           filterTemplates("");
                         },
                         title: SizedBox(
