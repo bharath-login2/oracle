@@ -3301,28 +3301,37 @@ class _AddFollowupState extends State<AddFollowup> {
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(
                                       'Choose next followup date', Colors.red);
-                                } else if (createOrder == true &&
-                                    products.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Please add a product to continue',
-                                      Colors.red);
-                                } else if (createOrder == true &&
-                                        paidAmount.text.isEmpty ||
-                                    paymentStatus == null) {
-                                  Common.toastMessaage(
-                                      'Paid Amount and Payment Status is required to add invoice',
-                                      Colors.red);
-                                } else if (paymentStatus != "1" &&
-                                    paymentMethod == null) {
-                                  Common.toastMessaage(
-                                      'Payment Method is required to add invoice',
-                                      Colors.red);
-                                } else if (paymentStatus != "1" &&
-                                    collectedStaff == null) {
-                                  Common.toastMessaage(
-                                      'Collected Staff is required to add invoice',
-                                      Colors.red);
-                                } else if (createRenewal == true &&
+                                }
+                                if (commonDetails!.data.isRenewal) {
+                                  if (createOrder == true && products.isEmpty) {
+                                    Common.toastMessaage(
+                                        'Please add a product to continue',
+                                        Colors.red);
+                                  } else if (createOrder == true &&
+                                      paidAmount.text.isEmpty) {
+                                    Common.toastMessaage(
+                                        'Paid Amount is required to add invoice',
+                                        Colors.red);
+                                  } else if (createOrder == true &&
+                                      paymentStatus == null) {
+                                    Common.toastMessaage(
+                                        'Payment Status is required to add invoice',
+                                        Colors.red);
+                                  } else if (createOrder == true &&
+                                      paymentStatus != "1" &&
+                                      paymentMethod == null) {
+                                    Common.toastMessaage(
+                                        'Payment Method is required to add invoice',
+                                        Colors.red);
+                                  } else if (createOrder == true &&
+                                      paymentStatus != "1" &&
+                                      collectedStaff == null) {
+                                    Common.toastMessaage(
+                                        'Collected Staff is required to add invoice',
+                                        Colors.red);
+                                  }
+                                } 
+                                 if (createRenewal == true &&
                                     startDate.text == "") {
                                   Common.toastMessaage(
                                       'Start date is required to add renewal',
