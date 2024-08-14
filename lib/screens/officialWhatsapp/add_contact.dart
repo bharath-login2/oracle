@@ -13,8 +13,6 @@ addContactPopUp(context, nameController, numberController) {
   String code = '91';
   final formKey = GlobalKey<FormState>();
 
-  
-
   showDialog(
     context: context,
     builder: (context) {
@@ -116,8 +114,8 @@ addContactPopUp(context, nameController, numberController) {
                     onTap: () async {
                       final PhoneContact contact =
                           await FlutterContactPicker.pickPhoneContact();
-                      String number =
-                       Common.trimPlus91(contact.phoneNumber!.number.toString());
+                      String number = Common.trimPlus91(
+                          contact.phoneNumber!.number.toString());
                       String name = contact.fullName!;
                       numberController.text = number.replaceAll(' ', '');
                       nameController.text = name;

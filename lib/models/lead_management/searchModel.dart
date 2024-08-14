@@ -4,114 +4,120 @@
 
 import 'dart:convert';
 
-SearchModel searchModelFromJson(String str) => SearchModel.fromJson(json.decode(str));
+SearchModel searchModelFromJson(String str) =>
+    SearchModel.fromJson(json.decode(str));
 
 String searchModelToJson(SearchModel data) => json.encode(data.toJson());
 
 class SearchModel {
-    Data data;
-    bool status;
-    String message;
+  Data data;
+  bool status;
+  String message;
 
-    SearchModel({
-        required this.data,
-        required this.status,
-        required this.message,
-    });
+  SearchModel({
+    required this.data,
+    required this.status,
+    required this.message,
+  });
 
-    factory SearchModel.fromJson(Map<String, dynamic> json) => SearchModel(
+  factory SearchModel.fromJson(Map<String, dynamic> json) => SearchModel(
         data: Data.fromJson(json["data"]),
         status: json["status"],
         message: json["message"],
-    );
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "data": data.toJson(),
         "status": status,
         "message": message,
-    };
+      };
 }
 
 class Data {
-    List<Detail> details;
-    int totalLeads;
-    bool callPermission;
-    String warningMessage;
-    String callLeadId;
+  List<Detail> details;
+  int totalLeads;
+  bool callPermission;
+  String warningMessage;
+  String callLeadId;
 
-    Data({
-        required this.details,
-        required this.totalLeads,
-        required this.callPermission,
-        required this.warningMessage,
-        required this.callLeadId,
-    });
+  Data({
+    required this.details,
+    required this.totalLeads,
+    required this.callPermission,
+    required this.warningMessage,
+    required this.callLeadId,
+  });
 
-    factory Data.fromJson(Map<String, dynamic> json) => Data(
-        details: List<Detail>.from(json["details"].map((x) => Detail.fromJson(x))),
+  factory Data.fromJson(Map<String, dynamic> json) => Data(
+        details:
+            List<Detail>.from(json["details"].map((x) => Detail.fromJson(x))),
         totalLeads: json["totalLeads"],
         callPermission: json["callPermission"],
         warningMessage: json["warningMessage"],
         callLeadId: json["callLeadId"],
-    );
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "details": List<dynamic>.from(details.map((x) => x.toJson())),
         "totalLeads": totalLeads,
         "callPermission": callPermission,
         "warningMessage": warningMessage,
         "callLeadId": callLeadId,
-    };
+      };
 }
 
 class Detail {
-    String callMasterId;
-    String calledDate;
-    int callResultId;
-    String callStatusId;
-    String scheduledDate;
-    String clientName;
-    String contactNumber1;
-    String callResult;
-    String proPicThumb;
-    String staffName;
-    String leadCategory;
-    String priority;
-    String priorityName;
-    String categoryCount;
-    String leadCategoryId;
-    String leadSubCategoryId;
-    String cost;
-    String address;
-    String leadSubCategory;
-    String profilePic;
-    bool isCalled;
+  String callMasterId;
+  String calledDate;
+  int callResultId;
+  String callStatusId;
+  String scheduledDate;
+  String clientName;
+  String contactNumber1;
+  String callResult;
+  String proPicThumb;
+  String staffName;
+  String leadCategory;
+  String priority;
+  String priorityName;
+  String categoryCount;
+  String leadCategoryId;
+  String leadSubCategoryId;
+  String cost;
+  String address;
+  String leadSubCategory;
+  String profilePic;
+  bool isCalled;
+  String custId;
+  bool isCustomer;
 
-    Detail({
-        required this.callMasterId,
-        required this.calledDate,
-        required this.callResultId,
-        required this.callStatusId,
-        required this.scheduledDate,
-        required this.clientName,
-        required this.contactNumber1,
-        required this.callResult,
-        required this.proPicThumb,
-        required this.staffName,
-        required this.leadCategory,
-        required this.priority,
-        required this.priorityName,
-        required this.categoryCount,
-        required this.leadCategoryId,
-        required this.leadSubCategoryId,
-        required this.cost,
-        required this.address,
-        required this.leadSubCategory,
-        required this.profilePic,
-        required this.isCalled,
-    });
+  Detail({
+    required this.callMasterId,
+    required this.calledDate,
+    required this.callResultId,
+    required this.callStatusId,
+    required this.scheduledDate,
+    required this.clientName,
+    required this.contactNumber1,
+    required this.callResult,
+    required this.proPicThumb,
+    required this.staffName,
+    required this.leadCategory,
+    required this.priority,
+    required this.priorityName,
+    required this.categoryCount,
+    required this.leadCategoryId,
+    required this.leadSubCategoryId,
+    required this.cost,
+    required this.address,
+    required this.leadSubCategory,
+    required this.profilePic,
+    required this.isCalled,
+    required this.custId,
+    required this.isCustomer,
+  });
 
-    factory Detail.fromJson(Map<String, dynamic> json) => Detail(
+  factory Detail.fromJson(Map<String, dynamic> json) => Detail(
         callMasterId: json["call_master_id"],
         calledDate: json["called_date"],
         callResultId: json["call_result_id"],
@@ -133,9 +139,11 @@ class Detail {
         leadSubCategory: json["lead_sub_category"],
         profilePic: json["profile_pic"],
         isCalled: json["is_called"],
-    );
+        custId: json["cust_id"],
+        isCustomer: json["is_customer"],
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "call_master_id": callMasterId,
         "called_date": calledDate,
         "call_result_id": callResultId,
@@ -157,5 +165,5 @@ class Detail {
         "lead_sub_category": leadSubCategory,
         "profile_pic": profilePic,
         "is_called": isCalled,
-    };
+      };
 }

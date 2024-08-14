@@ -104,7 +104,7 @@ class _AddFollowupState extends State<AddFollowup> {
   TextEditingController leadTypeVal = TextEditingController();
   TextEditingController leadSubTypeVal = TextEditingController();
   TextEditingController priorityVal = TextEditingController();
-  TextEditingController timeBefore = TextEditingController();
+  TextEditingController timeBefore = TextEditingController(text: "10");
   TextEditingController callReasonVal = TextEditingController();
   TextEditingController productDescription = TextEditingController();
   TextEditingController productRate = TextEditingController();
@@ -2758,71 +2758,76 @@ class _AddFollowupState extends State<AddFollowup> {
                                     const SizedBox(
                                       height: 10,
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          const Text('Paid Amount * :'),
-                                          const SizedBox(
-                                            width: 10,
-                                          ),
-                                          SizedBox(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.5,
-                                            height: 35,
-                                            child: TextFormField(
-                                              readOnly: paymentStatus == "paid",
-                                              style:
-                                                  TextStyle(color: paidColor),
-                                              onChanged: (val) {
-                                                if (double.parse(val) >
-                                                    allTotal) {
-                                                  Common.toastMessaage(
-                                                      'Enter valid amount',
-                                                      Colors.red);
-                                                  paidColor = Colors.red;
-                                                } else {
-                                                  paidColor = Colors.black;
-                                                }
-                                                setState(() {});
-                                              },
-                                              controller: paidAmount,
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              decoration: InputDecoration(
-                                                  contentPadding:
-                                                      const EdgeInsets.only(
-                                                          left: 10,
-                                                          top: 2,
-                                                          bottom: 2),
-                                                  //labelText: 'Invoice Number',
-                                                  fillColor: Colors.grey[300],
-                                                  filled: true,
-                                                  border:
-                                                      const OutlineInputBorder(
-                                                    // width: 0.0 produces a thin "hairline" border
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(5)),
-                                                    borderSide: BorderSide.none,
-                                                  ),
-                                                  focusedBorder:
-                                                      OutlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                        color: Colors
-                                                            .grey.shade300),
-                                                  ),
-                                                  labelStyle: const TextStyle(
-                                                      color: Colors.black)),
+                                    if (paymentStatus != "unpaid")
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 10),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            const Text('Paid Amount * :'),
+                                            const SizedBox(
+                                              width: 10,
                                             ),
-                                          ),
-                                        ],
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.5,
+                                              height: 35,
+                                              child: TextFormField(
+                                                readOnly:
+                                                    paymentStatus == "paid",
+                                                style:
+                                                    TextStyle(color: paidColor),
+                                                onChanged: (val) {
+                                                  if (double.parse(val) >
+                                                      allTotal) {
+                                                    Common.toastMessaage(
+                                                        'Enter valid amount',
+                                                        Colors.red);
+                                                    paidColor = Colors.red;
+                                                  } else {
+                                                    paidColor = Colors.black;
+                                                  }
+                                                  setState(() {});
+                                                },
+                                                controller: paidAmount,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                decoration: InputDecoration(
+                                                    contentPadding:
+                                                        const EdgeInsets.only(
+                                                            left: 10,
+                                                            top: 2,
+                                                            bottom: 2),
+                                                    //labelText: 'Invoice Number',
+                                                    fillColor: Colors.grey[300],
+                                                    filled: true,
+                                                    border:
+                                                        const OutlineInputBorder(
+                                                      // width: 0.0 produces a thin "hairline" border
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  5)),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                          color: Colors
+                                                              .grey.shade300),
+                                                    ),
+                                                    labelStyle: const TextStyle(
+                                                        color: Colors.black)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                     const SizedBox(
                                       height: 10,
                                     ),
@@ -3301,42 +3306,52 @@ class _AddFollowupState extends State<AddFollowup> {
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(
                                       'Choose next followup date', Colors.red);
-                                }
-                                if (commonDetails!.data.isRenewal) {
-                                  if (createOrder == true && products.isEmpty) {
-                                    Common.toastMessaage(
-                                        'Please add a product to continue',
-                                        Colors.red);
-                                  } else if (createOrder == true &&
-                                      paidAmount.text.isEmpty) {
-                                    Common.toastMessaage(
-                                        'Paid Amount is required to add invoice',
-                                        Colors.red);
-                                  } else if (createOrder == true &&
-                                      paymentStatus == null) {
-                                    Common.toastMessaage(
-                                        'Payment Status is required to add invoice',
-                                        Colors.red);
-                                  } else if (createOrder == true &&
-                                      paymentStatus != "1" &&
-                                      paymentMethod == null) {
-                                    Common.toastMessaage(
-                                        'Payment Method is required to add invoice',
-                                        Colors.red);
-                                  } else if (createOrder == true &&
-                                      paymentStatus != "1" &&
-                                      collectedStaff == null) {
-                                    Common.toastMessaage(
-                                        'Collected Staff is required to add invoice',
-                                        Colors.red);
-                                  }
-                                } 
-                                 if (createRenewal == true &&
+                                } else if (createOrder == true &&
+                                    products.isEmpty &&
+                                    commonDetails!
+                                        .data.customerAddInvoicePermission) {
+                                  Common.toastMessaage(
+                                      'Please add a product to continue',
+                                      Colors.red);
+                                } else if (createOrder == true &&
+                                    commonDetails!
+                                        .data.customerAddInvoicePermission &&
+                                    paymentStatus == null) {
+                                  Common.toastMessaage(
+                                      'Payment Status is required to add invoice',
+                                      Colors.red);
+                                } else if (createOrder == true &&
+                                    paidAmount.text.isEmpty &&
+                                    commonDetails!
+                                        .data.customerAddInvoicePermission &&
+                                    paymentStatus != "unpaid") {
+                                  Common.toastMessaage(
+                                      'Paid Amount is required to add invoice',
+                                      Colors.red);
+                                } else if (createOrder == true &&
+                                    paymentStatus != "unpaid" &&
+                                    commonDetails!
+                                        .data.customerAddInvoicePermission &&
+                                    paymentMethod == null) {
+                                  Common.toastMessaage(
+                                      'Payment Method is required to add invoice',
+                                      Colors.red);
+                                } else if (createOrder == true &&
+                                    commonDetails!
+                                        .data.customerAddInvoicePermission &&
+                                    paymentStatus != "unpaid" &&
+                                    collectedStaff == null) {
+                                  Common.toastMessaage(
+                                      'Collected Staff is required to add invoice',
+                                      Colors.red);
+                                } else if (createRenewal == true &&
+                                    commonDetails!.data.isRenewal &&
                                     startDate.text == "") {
                                   Common.toastMessaage(
                                       'Start date is required to add renewal',
                                       Colors.red);
                                 } else if (createRenewal == true &&
+                                    commonDetails!.data.isRenewal &&
                                     endDate.text == "") {
                                   Common.toastMessaage(
                                       'End date is required to add renewal',

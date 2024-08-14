@@ -142,8 +142,8 @@ class _AllReportState extends State<AllReport> {
       setState(() {
         isLoading = true;
       });
-      selectedIUsers.clear();
-      selectedUserNumbers.clear();
+      // selectedIUsers.clear();
+      // selectedUserNumbers.clear();
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
           connectivityResult == ConnectivityResult.wifi) {
@@ -679,11 +679,14 @@ class _AllReportState extends State<AllReport> {
                                                                       .clientName
                                                                       .toString(),
                                                                   // items.length.toString(),
-                                                                  style: const TextStyle(
+                                                                  style: TextStyle(
                                                                       fontSize:
                                                                           16,
-                                                                      color: Colors
-                                                                          .black,
+                                                                      color: items[index].isCustomer
+                                                                          ? Colors
+                                                                              .green
+                                                                          : Colors
+                                                                              .black,
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .bold),

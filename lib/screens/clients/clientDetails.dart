@@ -86,11 +86,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                     children: [
                       InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ClientList(widget.token)),
-                          );
+                          Navigator.pop(context);
                         },
                         child: Container(
                           height: 25,
@@ -206,13 +202,17 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    Text(
-                                                      mainClientDetail!.data.name
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.w500),
+                                                    SizedBox(
+                                                      width: MediaQuery.of(context).size.width *.55,
+                                                      child: Text(
+                                                        mainClientDetail!.data.name
+                                                            .toString(),
+                                                            overflow: TextOverflow.ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.w500),
+                                                      ),
                                                     ),
                                                     const SizedBox(
                                                       height: 3,

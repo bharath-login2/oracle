@@ -14,6 +14,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/clients/clientDetails.dart';
 import 'package:login2/screens/leadManagement/post_confirmed_followup.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:lottie/lottie.dart';
@@ -232,6 +233,7 @@ class _LeadDetailsState extends State<LeadDetails> {
         timeOut = true;
       });
     }
+    log(leadDetailsAdditional!.data.isCreateOrder.toString());
   }
 
   listFolderList(token, callMasterId, path) async {
@@ -2235,8 +2237,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   child: InkWell(
                                                     onTap: () {
                                                       if (leadDetailsAdditional!
-                                                              .data!
-                                                              .followUpData![
+                                                              .data
+                                                              .followUpData[
                                                                   index]
                                                               .isCalled ==
                                                           false) {
@@ -2301,8 +2303,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               BorderRadius
                                                                   .circular(5),
                                                           color: leadDetailsAdditional!
-                                                                      .data!
-                                                                      .followUpData![
+                                                                      .data
+                                                                      .followUpData[
                                                                           index]
                                                                       .isCalled ==
                                                                   false
@@ -2375,7 +2377,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             shape:
                                                                                 BoxShape.circle,
                                                                             image:
-                                                                                DecorationImage(fit: BoxFit.cover, image: NetworkImage(leadDetailsAdditional!.data!.followUpData![index].proPicThumb.toString())),
+                                                                                DecorationImage(fit: BoxFit.cover, image: NetworkImage(leadDetailsAdditional!.data.followUpData[index].proPicThumb.toString())),
                                                                             // image: AssetImage(
                                                                             //     'assets/images/img.jpeg')),
                                                                           ),
@@ -2391,8 +2393,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         child:
                                                                             Text(
                                                                           leadDetailsAdditional!
-                                                                              .data!
-                                                                              .followUpData![index]
+                                                                              .data
+                                                                              .followUpData[index]
                                                                               .staffName
                                                                               .toString(),
                                                                           style:
@@ -2407,12 +2409,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   ),
                                                                   Row(
                                                                     children: [
-                                                                      leadDetailsAdditional!.data!.followUpData![index].isSetReminder ==
+                                                                      leadDetailsAdditional!.data.followUpData[index].isSetReminder ==
                                                                               true
                                                                           ? InkWell(
                                                                               onTap: () {
-                                                                                timeBefore.text = leadDetailsAdditional!.data!.followUpData![index].time.toString();
-                                                                                checked = leadDetailsAdditional!.data!.followUpData![index].isReminder!;
+                                                                                timeBefore.text = leadDetailsAdditional!.data.followUpData[index].time.toString();
+                                                                                checked = leadDetailsAdditional!.data.followUpData[index].isReminder;
                                                                                 // print(callMasterId);
                                                                                 showGeneralDialog(
                                                                                   barrierLabel: "showGeneralDialog",
@@ -2467,14 +2469,14 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                           ),
                                                                                                           labelStyle: TextStyle(color: Colors.grey)),
                                                                                                     ),
-                                                                                                    leadDetailsAdditional!.data!.followUpData![index].isReminder == true
+                                                                                                    leadDetailsAdditional!.data.followUpData[index].isReminder == true
                                                                                                         ? Align(
                                                                                                             alignment: Alignment.topRight,
                                                                                                             child: Padding(
                                                                                                               padding: const EdgeInsets.only(top: 15),
                                                                                                               child: InkWell(
                                                                                                                   onTap: () async {
-                                                                                                                    UnsetReminderModel unsetReminder = await HttpService.unsetReminder(widget.token, leadDetailsAdditional!.data!.followUpData![index].callDetailsId.toString());
+                                                                                                                    UnsetReminderModel unsetReminder = await HttpService.unsetReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString());
                                                                                                                     if (unsetReminder.data == true) {
                                                                                                                       if (mounted) {
                                                                                                                         Common.showProgressDialog(context, "Loading..");
@@ -2529,7 +2531,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                             Common.toastMessaage('Ser Time', Colors.red);
                                                                                                           } else {
                                                                                                             Common.showProgressDialog(context, "Loading..");
-                                                                                                            UpdateReminderSetting updateReminder = await HttpService.updateReminder(widget.token, leadDetailsAdditional!.data!.followUpData![index].callDetailsId, true, timeBefore.text);
+                                                                                                            UpdateReminderSetting updateReminder = await HttpService.updateReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId, true, timeBefore.text);
                                                                                                             if (updateReminder.status == true) {
                                                                                                               Common.toastMessaage(updateReminder.message, Colors.green);
                                                                                                               if (context.mounted) {
@@ -2595,7 +2597,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               },
                                                                               child: Icon(
                                                                                 Icons.notifications,
-                                                                                color: leadDetailsAdditional!.data!.followUpData![index].isReminder == true ? Colors.green : Colors.red,
+                                                                                color: leadDetailsAdditional!.data.followUpData[index].isReminder == true ? Colors.green : Colors.red,
                                                                                 size: 20,
                                                                               ),
                                                                             )
@@ -2605,10 +2607,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             10,
                                                                       ),
                                                                       if (leadDetailsAdditional!
-                                                                              .data!
-                                                                              .createCustomerInvoice ==
-                                                                          true && leadDetailsAdditional!
-                                                                              .data!.followUpData![0].callResult == "Confirmed")
+                                                                                  .data.createCustomerInvoice ==
+                                                                              true &&
+                                                                          leadDetailsAdditional!.data.followUpData[0].callResult ==
+                                                                              "Confirmed" &&
+                                                                          leadDetailsAdditional!.data.isCreateOrder ==
+                                                                              true)
                                                                         InkWell(
                                                                           onTap:
                                                                               () {
@@ -2617,8 +2621,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 MaterialPageRoute(
                                                                                   builder: (context) => PostConfirmedFollowup(
                                                                                     callMasterId: widget.callMasterId,
-                                                                                    renewalPermission: leadDetailsAdditional!.data!.createRenewal??false,
-                                                                                    installmentPermission: leadDetailsAdditional!.data!.createInstallment??false,
+                                                                                    renewalPermission: leadDetailsAdditional!.data.createRenewal,
+                                                                                    installmentPermission: leadDetailsAdditional!.data.createInstallment,
                                                                                   ),
                                                                                 )).then((r) {
                                                                               getData();
@@ -2632,12 +2636,34 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             size:
                                                                                 25,
                                                                           ),
+                                                                        )
+                                                                      else if (leadDetailsAdditional!
+                                                                              .data
+                                                                              .followUpData[0]
+                                                                              .callResult ==
+                                                                          "Confirmed")
+                                                                        InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(builder: (context) => ClientDetails(widget.token, leadDetailsAdditional!.data.customerId.toString())),
+                                                                            ).then((r) {
+                                                                              getData();
+                                                                            });
+                                                                          },
+                                                                          child:
+                                                                              const Icon(
+                                                                            Icons.menu,
+                                                                            color:
+                                                                                Colors.green,
+                                                                          ),
                                                                         ),
                                                                       const SizedBox(
                                                                         width:
                                                                             10,
                                                                       ),
-                                                                      leadDetailsAdditional!.data!.followUpData![index].isEdit ==
+                                                                      leadDetailsAdditional!.data.followUpData[index].isEdit ==
                                                                               true
                                                                           ? InkWell(
                                                                               onTap: () {
@@ -2650,7 +2676,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                             widget.deleteLead,
                                                                                             widget.cloudCall,
                                                                                             callMasterId,
-                                                                                            leadDetailsAdditional!.data!.followUpData![index].callDetailsId.toString(),
+                                                                                            leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
                                                                                             pageName: widget.pageName,
                                                                                             status: widget.status,
                                                                                             staff: widget.staff,
@@ -2674,11 +2700,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         width:
                                                                             5,
                                                                       ),
-                                                                      leadDetailsAdditional!.data!.followUpData![index].isDelete ==
+                                                                      leadDetailsAdditional!.data.followUpData[index].isDelete ==
                                                                               true
                                                                           ? InkWell(
                                                                               onTap: () {
-                                                                                _deleteFollowup(context, leadDetailsAdditional!.data!.followUpData![index].callDetailsId);
+                                                                                _deleteFollowup(context, leadDetailsAdditional!.data.followUpData[index].callDetailsId);
                                                                               },
                                                                               child: const Icon(
                                                                                 Icons.delete,
@@ -2698,7 +2724,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 height: 15,
                                                               ),
                                                               Text(
-                                                                'Scheduled Date : ${leadDetailsAdditional!.data!.followUpData![index].scheduledDate}',
+                                                                'Scheduled Date : ${leadDetailsAdditional!.data.followUpData[index].scheduledDate}',
                                                                 style: const TextStyle(
                                                                     fontSize:
                                                                         12,
@@ -2710,7 +2736,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 height: 8,
                                                               ),
                                                               Text(
-                                                                'Remark:${leadDetailsAdditional!.data!.followUpData![index].remarks}',
+                                                                'Remark:${leadDetailsAdditional!.data.followUpData[index].remarks}',
                                                                 style: const TextStyle(
                                                                     fontSize:
                                                                         12,
@@ -2746,7 +2772,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       Container(
                                                                         decoration: BoxDecoration(
                                                                             color:
-                                                                                _colors[int.parse(leadDetailsAdditional!.data!.followUpData![index].callResultId.toString())],
+                                                                                _colors[int.parse(leadDetailsAdditional!.data.followUpData[index].callResultId.toString())],
                                                                             borderRadius: BorderRadius.circular(5)),
                                                                         child:
                                                                             Padding(
@@ -2758,7 +2784,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               bottom: 2),
                                                                           child:
                                                                               Text(
-                                                                            leadDetailsAdditional!.data!.followUpData![index].callResult.toString(),
+                                                                            leadDetailsAdditional!.data.followUpData[index].callResult.toString(),
                                                                             style: const TextStyle(
                                                                                 fontSize: 13,
                                                                                 color: Colors.white,
@@ -2770,7 +2796,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         width:
                                                                             10,
                                                                       ),
-                                                                      leadDetailsAdditional!.data!.followUpData![index].isCalled ==
+                                                                      leadDetailsAdditional!.data.followUpData[index].isCalled ==
                                                                               false
                                                                           ? const Text(
                                                                               '( Pending )',
@@ -2784,8 +2810,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 height: 8,
                                                               ),
                                                               leadDetailsAdditional!
-                                                                          .data!
-                                                                          .followUpData![
+                                                                          .data
+                                                                          .followUpData[
                                                                               index]
                                                                           .reason !=
                                                                       ''
@@ -2796,7 +2822,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               8),
                                                                       child:
                                                                           Text(
-                                                                        'Reason: ${leadDetailsAdditional!.data!.followUpData![index].reason}',
+                                                                        'Reason: ${leadDetailsAdditional!.data.followUpData[index].reason}',
                                                                         style: const TextStyle(
                                                                             fontSize:
                                                                                 12,
@@ -2807,13 +2833,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     )
                                                                   : const SizedBox(),
                                                               leadDetailsAdditional!
-                                                                          .data!
-                                                                          .followUpData![
+                                                                          .data
+                                                                          .followUpData[
                                                                               index]
                                                                           .callResponse !=
                                                                       ''
                                                                   ? Text(
-                                                                      'Call Response : ${leadDetailsAdditional!.data!.followUpData![index].callResponse}',
+                                                                      'Call Response : ${leadDetailsAdditional!.data.followUpData[index].callResponse}',
                                                                       style: const TextStyle(
                                                                           fontSize:
                                                                               12,
@@ -2827,8 +2853,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 height: 8,
                                                               ),
                                                               leadDetailsAdditional!
-                                                                          .data!
-                                                                          .followUpData![
+                                                                          .data
+                                                                          .followUpData[
                                                                               index]
                                                                           .playVoicePermission ==
                                                                       true
@@ -2905,7 +2931,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                         heroTag: "play tag",
                                                                                                         onPressed: () async {
                                                                                                           isPlay = true;
-                                                                                                          audioCreateController.playVoice(leadDetailsAdditional!.data!.followUpData![index].voiceFile);
+                                                                                                          audioCreateController.playVoice(leadDetailsAdditional!.data.followUpData[index].voiceFile);
                                                                                                         },
                                                                                                         shape: const CircleBorder(),
                                                                                                         backgroundColor: Colors.white,
@@ -3007,7 +3033,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                 DeleteLeadVoiceModel deleteVoice = await HttpService.deleteLeadVoice(
                                                                                                   widget.token,
                                                                                                   callMasterId,
-                                                                                                  leadDetailsAdditional!.data!.followUpData![index].callDetailsId.toString(),
+                                                                                                  leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
                                                                                                 );
                                                                                                 if (deleteVoice.data == true) {
                                                                                                   getData();
@@ -3037,8 +3063,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                       ),
                                                                     )
                                                                   : leadDetailsAdditional!
-                                                                              .data!
-                                                                              .followUpData![
+                                                                              .data
+                                                                              .followUpData[
                                                                                   index]
                                                                               .voiceUploadPermission ==
                                                                           true
@@ -3189,7 +3215,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                 UploadAudioRecord uploadAudio = await HttpService.leadVoiceUpload(
                                                                                                   widget.token,
                                                                                                   callMasterId,
-                                                                                                  leadDetailsAdditional!.data!.followUpData![index].callDetailsId.toString(),
+                                                                                                  leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
                                                                                                   audioCreateController.audioPath.value.toString(),
                                                                                                 );
                                                                                                 if (uploadAudio.data == true) {
@@ -3314,8 +3340,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     child: Center(
                                                         child: Text(
                                                       leadDetailsAdditional!
-                                                          .data!
-                                                          .followUpData![index]
+                                                          .data
+                                                          .followUpData[index]
                                                           .dispalyDate
                                                           .toString(),
                                                     )),
@@ -3325,7 +3351,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             );
                                           },
                                           itemCount: leadDetailsAdditional!
-                                              .data!.followUpData!.length,
+                                              .data.followUpData.length,
                                         ),
                                       if (selectedIndex == 1)
                                         ListView.builder(
@@ -3333,7 +3359,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             physics:
                                                 const NeverScrollableScrollPhysics(),
                                             itemCount: leadDetailsAdditional!
-                                                .data!.activities!.length,
+                                                .data.activities.length,
                                             itemBuilder: (context, i) {
                                               return Stack(
                                                 children: [
@@ -3354,8 +3380,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                             children: [
                                                               Text(
                                                                   leadDetailsAdditional!
-                                                                      .data!
-                                                                      .activities![
+                                                                      .data
+                                                                      .activities[
                                                                           i]
                                                                       .staffName
                                                                       .toString(),
@@ -3371,8 +3397,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 width: 240,
                                                                 child: Text(
                                                                   leadDetailsAdditional!
-                                                                      .data!
-                                                                      .activities![
+                                                                      .data
+                                                                      .activities[
                                                                           i]
                                                                       .remark
                                                                       .toString(),
@@ -3388,8 +3414,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               ),
                                                               Text(
                                                                 leadDetailsAdditional!
-                                                                    .data!
-                                                                    .activities![
+                                                                    .data
+                                                                    .activities[
                                                                         i]
                                                                     .createdTime
                                                                     .toString(),
@@ -3454,8 +3480,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 fit: BoxFit
                                                                     .cover,
                                                                 image: NetworkImage(leadDetailsAdditional!
-                                                                    .data!
-                                                                    .activities![
+                                                                    .data
+                                                                    .activities[
                                                                         i]
                                                                     .proPicThumb
                                                                     .toString())),
@@ -3471,52 +3497,52 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             }),
                                       if (selectedIndex == 2)
                                         leadDetailsAdditional!
-                                                .data!.callHistory!.isNotEmpty
+                                                .data.callHistory.isNotEmpty
                                             ? ListView.builder(
                                                 shrinkWrap: true,
                                                 physics:
                                                     const NeverScrollableScrollPhysics(),
                                                 itemCount:
-                                                    leadDetailsAdditional!.data!
-                                                        .callHistory!.length,
+                                                    leadDetailsAdditional!.data
+                                                        .callHistory.length,
                                                 itemBuilder: (context, i) {
                                                   return AudioItem(
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .direction
                                                         .toString(),
-                                                    leadDetailsAdditional!.data!
-                                                        .callHistory![i].time
+                                                    leadDetailsAdditional!.data
+                                                        .callHistory[i].time
                                                         .toString(),
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .isAttended!,
-                                                    leadDetailsAdditional!.data!
-                                                        .callHistory![i].date
+                                                    leadDetailsAdditional!.data
+                                                        .callHistory[i].date
                                                         .toString(),
-                                                    leadDetailsAdditional!.data!
-                                                        .callHistory![i].status
+                                                    leadDetailsAdditional!.data
+                                                        .callHistory[i].status
                                                         .toString(),
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .resourceURL
                                                         .toString(),
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .callDurationHr
                                                         .toString(),
-                                                    leadDetailsAdditional!.data!
-                                                        .voiceListerningPermission!,
-                                                    leadDetailsAdditional!.data!
-                                                        .callHistory![i].id
+                                                    leadDetailsAdditional!.data
+                                                        .voiceListerningPermission,
+                                                    leadDetailsAdditional!.data
+                                                        .callHistory[i].id
                                                         .toString(),
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .isTransfered!,
                                                     widget.token,
                                                     widget.editLead,
@@ -3524,12 +3550,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     widget.cloudCall,
                                                     callMasterId,
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .callHistoryImage,
                                                     leadDetailsAdditional!
-                                                        .data!
-                                                        .callHistory![i]
+                                                        .data
+                                                        .callHistory[i]
                                                         .staffName,
                                                     leadDetails!
                                                         .data!.clientName,
@@ -4038,8 +4064,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                               height: 10,
                                             ),
                                             leadDetailsAdditional!
-                                                    .data!
-                                                    .additionalFields!
+                                                    .data
+                                                    .additionalFields
                                                     .isNotEmpty
                                                 ? Padding(
                                                     padding:
@@ -4110,8 +4136,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                   const NeverScrollableScrollPhysics(),
                                                               itemCount:
                                                                   leadDetailsAdditional!
-                                                                      .data!
-                                                                      .additionalFields!
+                                                                      .data
+                                                                      .additionalFields
                                                                       .length,
                                                               itemBuilder:
                                                                   (context, i) {
@@ -4132,7 +4158,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               0.44,
                                                                           child:
                                                                               Text(
-                                                                            leadDetailsAdditional!.data!.additionalFields![i].name.toString(),
+                                                                            leadDetailsAdditional!.data.additionalFields[i].name.toString(),
                                                                             style:
                                                                                 const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                                                             maxLines:
@@ -4151,7 +4177,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               0.4,
                                                                           child:
                                                                               Text(
-                                                                            leadDetailsAdditional!.data!.additionalFields![i].value.toString(),
+                                                                            leadDetailsAdditional!.data.additionalFields[i].value.toString(),
                                                                             style:
                                                                                 const TextStyle(fontSize: 14),
                                                                             maxLines:
