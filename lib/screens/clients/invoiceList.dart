@@ -1264,7 +1264,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                                   title: const Text('Please Confirm'),
                                                                                   content: const Text('Are you sure to Delete?'),
                                                                                   actions: [
-                                                                                   TextButton(
+                                                                                    TextButton(
                                                                                         onPressed: () {
                                                                                           Navigator.of(context).pop();
                                                                                         },
@@ -1289,7 +1289,6 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                                           }
                                                                                         },
                                                                                         child: const Text('Yes')),
-                                                                                    
                                                                                   ],
                                                                                 );
                                                                               });

@@ -4053,7 +4053,7 @@ class HttpService {
       "token": token,
       "next_followup_date": nextFollowupDate,
       "call_result_id": callResponseId,
-      "lead_id": leadId ,
+      "lead_id": leadId,
       "lead_status": leadStatusId,
       "cost": cost,
       "remarks": remarks,
@@ -4066,7 +4066,7 @@ class HttpService {
       "create_sales": createSales,
       "invoice_date": invoiceDate,
       "product_list": leadStatusId == '2' ? "" : jsonEncode(productList),
-      "follow_up_products": leadStatusId == '2' ?  jsonEncode(productList):"",
+      "follow_up_products": leadStatusId == '2' ? jsonEncode(productList) : "",
       "reminder_template": reminderTemplate,
       "total_amount_paid": totalAmount,
       "start_date": startDate,
@@ -4080,7 +4080,7 @@ class HttpService {
       "amount_paid_customer": paidAmount,
       "collected_staff": collectedStaff,
     });
-   
+
     try {
       var result = await _dio
           .post("${await Config.getUrl()}postRenewalFollowup", data: formData);

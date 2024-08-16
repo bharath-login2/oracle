@@ -58,6 +58,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   dynamic paymentMethod;
   dynamic paymentStatus;
   dynamic collectedStaff;
+  String typeDuration = "";
   List<AllProduct> items = [];
   List<AllProduct> filteredItems = [];
   String productId = "";
@@ -2027,6 +2028,11 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                         startDate.text =
                                             DateFormat('dd-MM-yyyy')
                                                 .format(selectedValue!);
+                                        final endValue = selectedValue.add(
+                                            Duration(
+                                                days: int.parse(typeDuration)));
+                                        endDate.text = DateFormat('dd-MM-yyyy')
+                                            .format(endValue);
                                       });
                                     },
                                     validator: (value) {
@@ -2740,6 +2746,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               productTotalAmount.text =
                                   double.parse(productTotalAmount.text)
                                       .toStringAsFixed(2);
+                              typeDuration = filteredItems[index].noOfDays;
+
                               setState(() {});
                               if (context.mounted) {
                                 Navigator.pop(context);

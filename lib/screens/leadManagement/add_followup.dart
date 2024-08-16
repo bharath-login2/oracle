@@ -1,11 +1,9 @@
 // ignore_for_file: file_names
 
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:lottie/lottie.dart';
@@ -94,6 +92,8 @@ class _AddFollowupState extends State<AddFollowup> {
   String callResultReasonName = 'Reason';
   String callResultReasonId = '';
   String invoiceNumber = '';
+  String typeDuration = "";
+
   TextEditingController cost = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController calledDate1 = TextEditingController();
@@ -1398,7 +1398,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                                 (context, index) {
                                                                               return ListTile(
                                                                                   onTap: () {
-                                                                                    productQty.text = "1";
+                                                                                    if (productQty.text == "") {
+                                                                                      productQty.text = "1";
+                                                                                    }
                                                                                     productName = filteredItems[index].productName;
                                                                                     productId = filteredItems[index].id;
                                                                                     productRate.text = filteredItems[index].sellingPrice;
@@ -1409,6 +1411,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                                     if (paymentStatus == "paid") {
                                                                                       paidAmount.text = productTotalAmount.text;
                                                                                     }
+                                                                                    typeDuration = filteredItems[index].noOfDays;
                                                                                     setState(() {});
                                                                                     if (context.mounted) {
                                                                                       Navigator.pop(context);
@@ -1914,7 +1917,6 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                         productTotalAmount
                                                                             .text,
                                                                   });
-
                                                                   subTotal = subTotal +
                                                                       double.parse(
                                                                           productTotalAmount
@@ -3208,6 +3210,12 @@ class _AddFollowupState extends State<AddFollowup> {
                                         startDate.text =
                                             DateFormat('dd-MM-yyyy')
                                                 .format(selectedValue!);
+                                        final endValue = selectedValue.add(
+                                            Duration(
+                                                days: int.parse(typeDuration)));
+                                        endDate.text =
+                                            DateFormat('dd-MM-yyyy')
+                                                .format(endValue);
                                       });
                                     },
                                     validator: (value) {
@@ -3302,6 +3310,10 @@ class _AddFollowupState extends State<AddFollowup> {
                                 if (callResultId == '') {
                                   Common.toastMessaage(
                                       'Choose any Status', Colors.red);
+                                }
+                                if (callResponseId == '') {
+                                  Common.toastMessaage(
+                                      'Choose call response', Colors.red);
                                 } else if (callResultId == '2' &&
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(

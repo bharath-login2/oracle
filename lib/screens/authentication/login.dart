@@ -162,7 +162,7 @@ class _LoginState extends State<Login> {
             Common.saveSharedPref("callLogPermission", 'false');
 
             if (object.status == true) {
-              if (context.mounted) {
+              if (mounted) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (context) =>
@@ -262,7 +262,7 @@ class _LoginState extends State<Login> {
                                         serverChoose = true;
                                         setState(() {});
                                       })
-                                  : SizedBox(),
+                                  : const SizedBox(),
                             ),
                           ),
                           const SizedBox(

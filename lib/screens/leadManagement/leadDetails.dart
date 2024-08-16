@@ -233,7 +233,6 @@ class _LeadDetailsState extends State<LeadDetails> {
         timeOut = true;
       });
     }
-    log(leadDetailsAdditional!.data.isCreateOrder.toString());
   }
 
   listFolderList(token, callMasterId, path) async {
@@ -2234,841 +2233,711 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   padding:
                                                       const EdgeInsets.only(
                                                           left: 50.0),
-                                                  child: InkWell(
-                                                    onTap: () {
-                                                      if (leadDetailsAdditional!
-                                                              .data
-                                                              .followUpData[
-                                                                  index]
-                                                              .isCalled ==
-                                                          false) {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder: (context) => AddFollowup(
-                                                                  widget.token,
-                                                                  widget
-                                                                      .editLead,
-                                                                  widget
-                                                                      .deleteLead,
-                                                                  widget
-                                                                      .cloudCall,
-                                                                  widget
-                                                                      .callMasterId,
-                                                                  pageName: widget
-                                                                      .pageName,
-                                                                  status: widget
-                                                                      .status,
-                                                                  staff: widget
-                                                                      .staff,
-                                                                  isCalled: widget
-                                                                      .isCalled,
-                                                                  fromDate: widget
-                                                                      .fromDate,
-                                                                  toDate: widget
-                                                                      .toDate,
-                                                                  category: widget
-                                                                      .category,
-                                                                  leadType: leadDetails!
-                                                                      .data!
-                                                                      .leadCategory,
-                                                                  leadTypeId: leadDetails!
-                                                                      .data!
-                                                                      .leadCategoryId,
-                                                                  leadSubType:
-                                                                      leadDetails!
-                                                                          .data!
-                                                                          .leadSubCategory,
-                                                                  leadSubTypeId: leadDetails!.data!.leadSubCategoryId,
-                                                                  priority: leadDetails!.data!.priority,
-                                                                  priorityId: leadDetails!.data!.priorityId,
-                                                                  cost: leadDetails!.data!.cost,
-                                                                  address: leadDetails!.data!.address,
-                                                                  searchKey: widget.searchKey.toString(),
-                                                                  leadType1: widget.leadType)),
-                                                        ).then((r) {
-                                                          getData();
-                                                        });
-                                                      }
-                                                    },
-                                                    child: Card(
-                                                      margin:
-                                                          const EdgeInsets.all(
-                                                              20.0),
-                                                      child: Container(
-                                                        width: double.infinity,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(5),
-                                                          color: leadDetailsAdditional!
-                                                                      .data
-                                                                      .followUpData[
-                                                                          index]
-                                                                      .isCalled ==
-                                                                  false
-                                                              ? Colors.green
-                                                                  .shade100
-                                                              : Colors.white,
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Colors.grey
-                                                                  .withOpacity(
-                                                                      0.5),
-                                                              spreadRadius: 4,
-                                                              blurRadius: 6,
-                                                              offset:
-                                                                  const Offset(
-                                                                      1, 1),
+                                                  child: Dismissible(
+                                                    key: const Key('0'),
+                                                    background: Container(
+                                                      color: Colors.blue,
+                                                      child: const Align(
+                                                        alignment: Alignment
+                                                            .centerLeft,
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .start,
+                                                          children: <Widget>[
+                                                            SizedBox(
+                                                              width: 20,
+                                                            ),
+                                                            Icon(
+                                                              Icons.menu,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                            Text(
+                                                              "Client Details",
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .left,
                                                             ),
                                                           ],
                                                         ),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 40),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              const SizedBox(
-                                                                  height: 10),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  Row(
-                                                                    children: [
-                                                                      Container(
-                                                                        constraints:
-                                                                            const BoxConstraints(
-                                                                          maxHeight:
-                                                                              50,
-                                                                        ),
-                                                                        child:
-                                                                            Container(
+                                                      ),
+                                                    ),
+                                                    secondaryBackground:
+                                                        Container(
+                                                      color: Colors.blue,
+                                                      child: const Align(
+                                                        alignment: Alignment
+                                                            .centerRight,
+                                                        child: Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .end,
+                                                          children: <Widget>[
+                                                            Icon(
+                                                              Icons.menu,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                            Text(
+                                                              " Client Details",
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .right,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 20,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    confirmDismiss:
+                                                        (direction) async {
+                                                      if (leadDetailsAdditional!
+                                                                  .data
+                                                                  .followUpData[
+                                                                      0]
+                                                                  .callResult ==
+                                                              "Confirmed" &&
+                                                          leadDetailsAdditional!
+                                                                  .data
+                                                                  .isCreateOrder !=
+                                                              true) {
+                                                        Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  ClientDetails(
+                                                                      widget
+                                                                          .token,
+                                                                      leadDetailsAdditional!
+                                                                          .data
+                                                                          .customerId
+                                                                          .toString())),
+                                                        ).then((r) {
+                                                          getData();
+                                                        });
+                                                      } else {
+                                                        Common.toastMessaage(
+                                                            "Invoice not created yet. Please create an invoice to proceed.",
+                                                            Colors.red);
+                                                      }
+
+                                                      return null;
+                                                    },
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        if (leadDetailsAdditional!
+                                                                .data
+                                                                .followUpData[
+                                                                    index]
+                                                                .isCalled ==
+                                                            false) {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) => AddFollowup(
+                                                                    widget
+                                                                        .token,
+                                                                    widget
+                                                                        .editLead,
+                                                                    widget
+                                                                        .deleteLead,
+                                                                    widget
+                                                                        .cloudCall,
+                                                                    widget
+                                                                        .callMasterId,
+                                                                    pageName: widget
+                                                                        .pageName,
+                                                                    status: widget
+                                                                        .status,
+                                                                    staff: widget
+                                                                        .staff,
+                                                                    isCalled: widget
+                                                                        .isCalled,
+                                                                    fromDate: widget
+                                                                        .fromDate,
+                                                                    toDate: widget
+                                                                        .toDate,
+                                                                    category: widget
+                                                                        .category,
+                                                                    leadType: leadDetails!
+                                                                        .data!
+                                                                        .leadCategory,
+                                                                    leadTypeId: leadDetails!
+                                                                        .data!
+                                                                        .leadCategoryId,
+                                                                    leadSubType: leadDetails!
+                                                                        .data!
+                                                                        .leadSubCategory,
+                                                                    leadSubTypeId: leadDetails!.data!.leadSubCategoryId,
+                                                                    priority: leadDetails!.data!.priority,
+                                                                    priorityId: leadDetails!.data!.priorityId,
+                                                                    cost: leadDetails!.data!.cost,
+                                                                    address: leadDetails!.data!.address,
+                                                                    searchKey: widget.searchKey.toString(),
+                                                                    leadType1: widget.leadType)),
+                                                          ).then((r) {
+                                                            getData();
+                                                          });
+                                                        }
+                                                      },
+                                                      child: Card(
+                                                        margin: const EdgeInsets
+                                                            .all(20.0),
+                                                        child: Container(
+                                                          width:
+                                                              double.infinity,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5),
+                                                            color: leadDetailsAdditional!
+                                                                        .data
+                                                                        .followUpData[
+                                                                            index]
+                                                                        .isCalled ==
+                                                                    false
+                                                                ? Colors.green
+                                                                    .shade100
+                                                                : Colors.white,
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withOpacity(
+                                                                        0.5),
+                                                                spreadRadius: 4,
+                                                                blurRadius: 6,
+                                                                offset:
+                                                                    const Offset(
+                                                                        1, 1),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 40),
+                                                            child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                const SizedBox(
+                                                                    height: 10),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Container(
                                                                           constraints:
                                                                               const BoxConstraints(
-                                                                            minHeight:
-                                                                                20,
-                                                                            minWidth:
-                                                                                20,
                                                                             maxHeight:
-                                                                                40,
-                                                                            maxWidth:
-                                                                                40,
+                                                                                50,
                                                                           ),
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            border:
-                                                                                Border.all(color: Colors.white, width: 0),
-                                                                            boxShadow: const [
-                                                                              BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                            ],
-                                                                            color:
-                                                                                Colors.white,
-                                                                            shape:
-                                                                                BoxShape.circle,
-                                                                            image:
-                                                                                DecorationImage(fit: BoxFit.cover, image: NetworkImage(leadDetailsAdditional!.data.followUpData[index].proPicThumb.toString())),
-                                                                            // image: AssetImage(
-                                                                            //     'assets/images/img.jpeg')),
+                                                                          child:
+                                                                              Container(
+                                                                            constraints:
+                                                                                const BoxConstraints(
+                                                                              minHeight: 20,
+                                                                              minWidth: 20,
+                                                                              maxHeight: 40,
+                                                                              maxWidth: 40,
+                                                                            ),
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              border: Border.all(color: Colors.white, width: 0),
+                                                                              boxShadow: const [
+                                                                                BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
+                                                                              ],
+                                                                              color: Colors.white,
+                                                                              shape: BoxShape.circle,
+                                                                              image: DecorationImage(fit: BoxFit.cover, image: NetworkImage(leadDetailsAdditional!.data.followUpData[index].proPicThumb.toString())),
+                                                                              // image: AssetImage(
+                                                                              //     'assets/images/img.jpeg')),
+                                                                            ),
                                                                           ),
                                                                         ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            90,
-                                                                        child:
-                                                                            Text(
-                                                                          leadDetailsAdditional!
-                                                                              .data
-                                                                              .followUpData[index]
-                                                                              .staffName
-                                                                              .toString(),
-                                                                          style:
-                                                                              const TextStyle(fontWeight: FontWeight.bold),
-                                                                          maxLines:
-                                                                              2,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
                                                                         ),
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                  Row(
-                                                                    children: [
-                                                                      leadDetailsAdditional!.data.followUpData[index].isSetReminder ==
-                                                                              true
-                                                                          ? InkWell(
-                                                                              onTap: () {
-                                                                                timeBefore.text = leadDetailsAdditional!.data.followUpData[index].time.toString();
-                                                                                checked = leadDetailsAdditional!.data.followUpData[index].isReminder;
-                                                                                // print(callMasterId);
-                                                                                showGeneralDialog(
-                                                                                  barrierLabel: "showGeneralDialog",
-                                                                                  barrierDismissible: true,
-                                                                                  barrierColor: Colors.black.withOpacity(0.6),
-                                                                                  transitionDuration: const Duration(milliseconds: 400),
-                                                                                  context: context,
-                                                                                  pageBuilder: (context, _, __) {
-                                                                                    return StatefulBuilder(builder: (context, setState) {
-                                                                                      return Align(
-                                                                                        alignment: Alignment.center,
-                                                                                        child: IntrinsicHeight(
-                                                                                          child: Padding(
-                                                                                            padding: const EdgeInsets.only(left: 10, right: 10),
-                                                                                            child: Container(
-                                                                                              width: double.maxFinite,
-                                                                                              clipBehavior: Clip.antiAlias,
-                                                                                              padding: const EdgeInsets.all(16),
-                                                                                              decoration: const BoxDecoration(
-                                                                                                color: Colors.white,
-                                                                                                borderRadius: BorderRadius.only(
-                                                                                                  topLeft: Radius.circular(10),
-                                                                                                  topRight: Radius.circular(10),
-                                                                                                  bottomRight: Radius.circular(10),
-                                                                                                  bottomLeft: Radius.circular(10),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              80,
+                                                                          child:
+                                                                              Text(
+                                                                            leadDetailsAdditional!.data.followUpData[index].staffName.toString(),
+                                                                            style:
+                                                                                const TextStyle(fontWeight: FontWeight.bold),
+                                                                            maxLines:
+                                                                                2,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        leadDetailsAdditional!.data.followUpData[index].isSetReminder ==
+                                                                                true
+                                                                            ? InkWell(
+                                                                                onTap: () {
+                                                                                  timeBefore.text = leadDetailsAdditional!.data.followUpData[index].time.toString();
+                                                                                  checked = leadDetailsAdditional!.data.followUpData[index].isReminder;
+                                                                                  // print(callMasterId);
+                                                                                  showGeneralDialog(
+                                                                                    barrierLabel: "showGeneralDialog",
+                                                                                    barrierDismissible: true,
+                                                                                    barrierColor: Colors.black.withOpacity(0.6),
+                                                                                    transitionDuration: const Duration(milliseconds: 400),
+                                                                                    context: context,
+                                                                                    pageBuilder: (context, _, __) {
+                                                                                      return StatefulBuilder(builder: (context, setState) {
+                                                                                        return Align(
+                                                                                          alignment: Alignment.center,
+                                                                                          child: IntrinsicHeight(
+                                                                                            child: Padding(
+                                                                                              padding: const EdgeInsets.only(left: 10, right: 10),
+                                                                                              child: Container(
+                                                                                                width: double.maxFinite,
+                                                                                                clipBehavior: Clip.antiAlias,
+                                                                                                padding: const EdgeInsets.all(16),
+                                                                                                decoration: const BoxDecoration(
+                                                                                                  color: Colors.white,
+                                                                                                  borderRadius: BorderRadius.only(
+                                                                                                    topLeft: Radius.circular(10),
+                                                                                                    topRight: Radius.circular(10),
+                                                                                                    bottomRight: Radius.circular(10),
+                                                                                                    bottomLeft: Radius.circular(10),
+                                                                                                  ),
                                                                                                 ),
-                                                                                              ),
-                                                                                              child: Material(
-                                                                                                child: Column(
-                                                                                                  children: [
-                                                                                                    const SizedBox(height: 20),
-                                                                                                    const Text(
-                                                                                                      'Set Reminder',
-                                                                                                      style: TextStyle(
-                                                                                                        fontSize: 18,
-                                                                                                        fontWeight: FontWeight.w500,
+                                                                                                child: Material(
+                                                                                                  child: Column(
+                                                                                                    children: [
+                                                                                                      const SizedBox(height: 20),
+                                                                                                      const Text(
+                                                                                                        'Set Reminder',
+                                                                                                        style: TextStyle(
+                                                                                                          fontSize: 18,
+                                                                                                          fontWeight: FontWeight.w500,
+                                                                                                        ),
                                                                                                       ),
-                                                                                                    ),
-                                                                                                    const SizedBox(height: 20),
-                                                                                                    TextFormField(
-                                                                                                      controller: timeBefore,
-                                                                                                      keyboardType: TextInputType.number,
-                                                                                                      decoration: const InputDecoration(
-                                                                                                          contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                                                                                                          labelText: 'Time Before ( Min )',
-                                                                                                          fillColor: Colors.white,
-                                                                                                          filled: true,
-                                                                                                          prefixIcon: Icon(Icons.lock_clock, color: Colors.grey),
-                                                                                                          border: OutlineInputBorder(),
-                                                                                                          focusedBorder: OutlineInputBorder(
-                                                                                                            borderSide: BorderSide(color: Colors.grey),
-                                                                                                          ),
-                                                                                                          labelStyle: TextStyle(color: Colors.grey)),
-                                                                                                    ),
-                                                                                                    leadDetailsAdditional!.data.followUpData[index].isReminder == true
-                                                                                                        ? Align(
-                                                                                                            alignment: Alignment.topRight,
-                                                                                                            child: Padding(
-                                                                                                              padding: const EdgeInsets.only(top: 15),
-                                                                                                              child: InkWell(
-                                                                                                                  onTap: () async {
-                                                                                                                    UnsetReminderModel unsetReminder = await HttpService.unsetReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString());
-                                                                                                                    if (unsetReminder.data == true) {
-                                                                                                                      if (mounted) {
-                                                                                                                        Common.showProgressDialog(context, "Loading..");
-                                                                                                                        Navigator.push(
-                                                                                                                          context,
-                                                                                                                          MaterialPageRoute(
-                                                                                                                              builder: (context) => LeadDetails(
-                                                                                                                                    widget.token,
-                                                                                                                                    widget.editLead,
-                                                                                                                                    widget.deleteLead,
-                                                                                                                                    widget.cloudCall,
-                                                                                                                                    callMasterId,
-                                                                                                                                    pageName: widget.pageName,
-                                                                                                                                    status: widget.status,
-                                                                                                                                    staff: widget.staff,
-                                                                                                                                    isCalled: widget.isCalled,
-                                                                                                                                    fromDate: widget.fromDate,
-                                                                                                                                    toDate: widget.toDate,
-                                                                                                                                    category: widget.category,
-                                                                                                                                    searchKey: widget.searchKey,
-                                                                                                                                    leadType: widget.leadType,
-                                                                                                                                  )),
-                                                                                                                        );
-                                                                                                                      }
-                                                                                                                    } else {
-                                                                                                                      Common.toastMessaage(unsetReminder.message, Colors.red);
-                                                                                                                      if (context.mounted) {
-                                                                                                                        Navigator.of(context, rootNavigator: true).pop();
-                                                                                                                      }
-                                                                                                                    }
-                                                                                                                  },
-                                                                                                                  child: const Text(
-                                                                                                                    'Unset Reminder',
-                                                                                                                    style: TextStyle(fontSize: 13, color: Colors.red),
-                                                                                                                  )),
+                                                                                                      const SizedBox(height: 20),
+                                                                                                      TextFormField(
+                                                                                                        controller: timeBefore,
+                                                                                                        keyboardType: TextInputType.number,
+                                                                                                        decoration: const InputDecoration(
+                                                                                                            contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                                                                                                            labelText: 'Time Before ( Min )',
+                                                                                                            fillColor: Colors.white,
+                                                                                                            filled: true,
+                                                                                                            prefixIcon: Icon(Icons.lock_clock, color: Colors.grey),
+                                                                                                            border: OutlineInputBorder(),
+                                                                                                            focusedBorder: OutlineInputBorder(
+                                                                                                              borderSide: BorderSide(color: Colors.grey),
                                                                                                             ),
-                                                                                                          )
-                                                                                                        : const SizedBox(),
-                                                                                                    const SizedBox(
-                                                                                                      height: 25,
-                                                                                                    ),
-                                                                                                    Container(
-                                                                                                      height: 40,
-                                                                                                      width: double.maxFinite,
-                                                                                                      decoration: const BoxDecoration(
-                                                                                                        color: Color(0xFF3375e0),
-                                                                                                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                                                                                                            labelStyle: TextStyle(color: Colors.grey)),
                                                                                                       ),
-                                                                                                      child: RawMaterialButton(
-                                                                                                        onPressed: () async {
-                                                                                                          if (timeBefore.text.isEmpty || timeBefore.text == '0') {
-                                                                                                            Common.toastMessaage('Ser Time', Colors.red);
-                                                                                                          } else {
-                                                                                                            Common.showProgressDialog(context, "Loading..");
-                                                                                                            UpdateReminderSetting updateReminder = await HttpService.updateReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId, true, timeBefore.text);
-                                                                                                            if (updateReminder.status == true) {
-                                                                                                              Common.toastMessaage(updateReminder.message, Colors.green);
-                                                                                                              if (context.mounted) {
-                                                                                                                Navigator.push(
-                                                                                                                  context,
-                                                                                                                  MaterialPageRoute(
-                                                                                                                      builder: (context) => LeadDetails(
-                                                                                                                            widget.token,
-                                                                                                                            widget.editLead,
-                                                                                                                            widget.deleteLead,
-                                                                                                                            widget.cloudCall,
-                                                                                                                            callMasterId,
-                                                                                                                            pageName: widget.pageName,
-                                                                                                                            status: widget.status,
-                                                                                                                            staff: widget.staff,
-                                                                                                                            isCalled: widget.isCalled,
-                                                                                                                            fromDate: widget.fromDate,
-                                                                                                                            toDate: widget.toDate,
-                                                                                                                            category: widget.category,
-                                                                                                                            searchKey: widget.searchKey,
-                                                                                                                            leadType: widget.leadType,
-                                                                                                                          )),
-                                                                                                                );
-                                                                                                              }
+                                                                                                      leadDetailsAdditional!.data.followUpData[index].isReminder == true
+                                                                                                          ? Align(
+                                                                                                              alignment: Alignment.topRight,
+                                                                                                              child: Padding(
+                                                                                                                padding: const EdgeInsets.only(top: 15),
+                                                                                                                child: InkWell(
+                                                                                                                    onTap: () async {
+                                                                                                                      UnsetReminderModel unsetReminder = await HttpService.unsetReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString());
+                                                                                                                      if (unsetReminder.data == true) {
+                                                                                                                        if (mounted) {
+                                                                                                                          Common.showProgressDialog(context, "Loading..");
+                                                                                                                          Navigator.push(
+                                                                                                                            context,
+                                                                                                                            MaterialPageRoute(
+                                                                                                                                builder: (context) => LeadDetails(
+                                                                                                                                      widget.token,
+                                                                                                                                      widget.editLead,
+                                                                                                                                      widget.deleteLead,
+                                                                                                                                      widget.cloudCall,
+                                                                                                                                      callMasterId,
+                                                                                                                                      pageName: widget.pageName,
+                                                                                                                                      status: widget.status,
+                                                                                                                                      staff: widget.staff,
+                                                                                                                                      isCalled: widget.isCalled,
+                                                                                                                                      fromDate: widget.fromDate,
+                                                                                                                                      toDate: widget.toDate,
+                                                                                                                                      category: widget.category,
+                                                                                                                                      searchKey: widget.searchKey,
+                                                                                                                                      leadType: widget.leadType,
+                                                                                                                                    )),
+                                                                                                                          );
+                                                                                                                        }
+                                                                                                                      } else {
+                                                                                                                        Common.toastMessaage(unsetReminder.message, Colors.red);
+                                                                                                                        if (context.mounted) {
+                                                                                                                          Navigator.of(context, rootNavigator: true).pop();
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    },
+                                                                                                                    child: const Text(
+                                                                                                                      'Unset Reminder',
+                                                                                                                      style: TextStyle(fontSize: 13, color: Colors.red),
+                                                                                                                    )),
+                                                                                                              ),
+                                                                                                            )
+                                                                                                          : const SizedBox(),
+                                                                                                      const SizedBox(
+                                                                                                        height: 25,
+                                                                                                      ),
+                                                                                                      Container(
+                                                                                                        height: 40,
+                                                                                                        width: double.maxFinite,
+                                                                                                        decoration: const BoxDecoration(
+                                                                                                          color: Color(0xFF3375e0),
+                                                                                                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                                                                                                        ),
+                                                                                                        child: RawMaterialButton(
+                                                                                                          onPressed: () async {
+                                                                                                            if (timeBefore.text.isEmpty || timeBefore.text == '0') {
+                                                                                                              Common.toastMessaage('Ser Time', Colors.red);
                                                                                                             } else {
-                                                                                                              Common.toastMessaage(updateReminder.message, Colors.red);
-                                                                                                              if (context.mounted) {
-                                                                                                                Navigator.of(context, rootNavigator: true).pop();
+                                                                                                              Common.showProgressDialog(context, "Loading..");
+                                                                                                              UpdateReminderSetting updateReminder = await HttpService.updateReminder(widget.token, leadDetailsAdditional!.data.followUpData[index].callDetailsId, true, timeBefore.text);
+                                                                                                              if (updateReminder.status == true) {
+                                                                                                                Common.toastMessaage(updateReminder.message, Colors.green);
+                                                                                                                if (context.mounted) {
+                                                                                                                  Navigator.push(
+                                                                                                                    context,
+                                                                                                                    MaterialPageRoute(
+                                                                                                                        builder: (context) => LeadDetails(
+                                                                                                                              widget.token,
+                                                                                                                              widget.editLead,
+                                                                                                                              widget.deleteLead,
+                                                                                                                              widget.cloudCall,
+                                                                                                                              callMasterId,
+                                                                                                                              pageName: widget.pageName,
+                                                                                                                              status: widget.status,
+                                                                                                                              staff: widget.staff,
+                                                                                                                              isCalled: widget.isCalled,
+                                                                                                                              fromDate: widget.fromDate,
+                                                                                                                              toDate: widget.toDate,
+                                                                                                                              category: widget.category,
+                                                                                                                              searchKey: widget.searchKey,
+                                                                                                                              leadType: widget.leadType,
+                                                                                                                            )),
+                                                                                                                  );
+                                                                                                                }
+                                                                                                              } else {
+                                                                                                                Common.toastMessaage(updateReminder.message, Colors.red);
+                                                                                                                if (context.mounted) {
+                                                                                                                  Navigator.of(context, rootNavigator: true).pop();
+                                                                                                                }
                                                                                                               }
                                                                                                             }
-                                                                                                          }
-                                                                                                        },
-                                                                                                        child: const Center(
-                                                                                                          child: Text(
-                                                                                                            'Continue',
-                                                                                                            style: TextStyle(
-                                                                                                              color: Colors.white,
-                                                                                                              fontWeight: FontWeight.w500,
+                                                                                                          },
+                                                                                                          child: const Center(
+                                                                                                            child: Text(
+                                                                                                              'Continue',
+                                                                                                              style: TextStyle(
+                                                                                                                color: Colors.white,
+                                                                                                                fontWeight: FontWeight.w500,
+                                                                                                              ),
                                                                                                             ),
                                                                                                           ),
                                                                                                         ),
                                                                                                       ),
-                                                                                                    ),
-                                                                                                  ],
+                                                                                                    ],
+                                                                                                  ),
                                                                                                 ),
                                                                                               ),
                                                                                             ),
                                                                                           ),
-                                                                                        ),
+                                                                                        );
+                                                                                      });
+                                                                                    },
+                                                                                    transitionBuilder: (_, animation1, __, child) {
+                                                                                      return SlideTransition(
+                                                                                        position: Tween(
+                                                                                          begin: const Offset(0, 1),
+                                                                                          end: const Offset(0, 0),
+                                                                                        ).animate(animation1),
+                                                                                        child: child,
                                                                                       );
-                                                                                    });
-                                                                                  },
-                                                                                  transitionBuilder: (_, animation1, __, child) {
-                                                                                    return SlideTransition(
-                                                                                      position: Tween(
-                                                                                        begin: const Offset(0, 1),
-                                                                                        end: const Offset(0, 0),
-                                                                                      ).animate(animation1),
-                                                                                      child: child,
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                              child: Icon(
-                                                                                Icons.notifications,
-                                                                                color: leadDetailsAdditional!.data.followUpData[index].isReminder == true ? Colors.green : Colors.red,
-                                                                                size: 20,
-                                                                              ),
-                                                                            )
-                                                                          : const SizedBox(),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      if (leadDetailsAdditional!
-                                                                                  .data.createCustomerInvoice ==
-                                                                              true &&
-                                                                          leadDetailsAdditional!.data.followUpData[0].callResult ==
-                                                                              "Confirmed" &&
-                                                                          leadDetailsAdditional!.data.isCreateOrder ==
-                                                                              true)
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                  builder: (context) => PostConfirmedFollowup(
-                                                                                    callMasterId: widget.callMasterId,
-                                                                                    renewalPermission: leadDetailsAdditional!.data.createRenewal,
-                                                                                    installmentPermission: leadDetailsAdditional!.data.createInstallment,
-                                                                                  ),
-                                                                                )).then((r) {
-                                                                              getData();
-                                                                            });
-                                                                          },
-                                                                          child:
-                                                                              const Icon(
-                                                                            Icons.add,
-                                                                            color:
-                                                                                Colors.green,
-                                                                            size:
-                                                                                25,
-                                                                          ),
-                                                                        )
-                                                                      else if (leadDetailsAdditional!
-                                                                              .data
-                                                                              .followUpData[0]
-                                                                              .callResult ==
-                                                                          "Confirmed")
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(builder: (context) => ClientDetails(widget.token, leadDetailsAdditional!.data.customerId.toString())),
-                                                                            ).then((r) {
-                                                                              getData();
-                                                                            });
-                                                                          },
-                                                                          child:
-                                                                              const Icon(
-                                                                            Icons.menu,
-                                                                            color:
-                                                                                Colors.green,
-                                                                          ),
+                                                                                    },
+                                                                                  );
+                                                                                },
+                                                                                child: Icon(
+                                                                                  Icons.notifications,
+                                                                                  color: leadDetailsAdditional!.data.followUpData[index].isReminder == true ? Colors.green : Colors.red,
+                                                                                  size: 20,
+                                                                                ),
+                                                                              )
+                                                                            : const SizedBox(),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
                                                                         ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      leadDetailsAdditional!.data.followUpData[index].isEdit ==
-                                                                              true
-                                                                          ? InkWell(
-                                                                              onTap: () {
-                                                                                Navigator.push(
+                                                                        if (leadDetailsAdditional!.data.createCustomerInvoice == true &&
+                                                                            leadDetailsAdditional!.data.followUpData[0].callResult ==
+                                                                                "Confirmed" &&
+                                                                            leadDetailsAdditional!.data.isCreateOrder ==
+                                                                                true)
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
                                                                                   context,
                                                                                   MaterialPageRoute(
-                                                                                      builder: (context) => EditFollowup(
-                                                                                            widget.token,
-                                                                                            widget.editLead,
-                                                                                            widget.deleteLead,
-                                                                                            widget.cloudCall,
-                                                                                            callMasterId,
-                                                                                            leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
-                                                                                            pageName: widget.pageName,
-                                                                                            status: widget.status,
-                                                                                            staff: widget.staff,
-                                                                                            isCalled: widget.isCalled,
-                                                                                            fromDate: widget.fromDate,
-                                                                                            toDate: widget.toDate,
-                                                                                            category: widget.category,
-                                                                                            scrollToIndex: widget.scrollToIndex,
-                                                                                          )),
-                                                                                ).then((r) {
-                                                                                  getData();
-                                                                                });
-                                                                              },
-                                                                              child: const Icon(
-                                                                                Icons.edit,
-                                                                                color: Colors.blue,
-                                                                                size: 20,
-                                                                              ))
-                                                                          : const SizedBox(),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            5,
-                                                                      ),
-                                                                      leadDetailsAdditional!.data.followUpData[index].isDelete ==
-                                                                              true
-                                                                          ? InkWell(
-                                                                              onTap: () {
-                                                                                _deleteFollowup(context, leadDetailsAdditional!.data.followUpData[index].callDetailsId);
-                                                                              },
-                                                                              child: const Icon(
-                                                                                Icons.delete,
-                                                                                color: Colors.red,
-                                                                                size: 20,
-                                                                              ))
-                                                                          : const SizedBox(),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 15,
-                                                              ),
-                                                              Text(
-                                                                'Scheduled Date : ${leadDetailsAdditional!.data.followUpData[index].scheduledDate}',
-                                                                style: const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              Text(
-                                                                'Remark:${leadDetailsAdditional!.data.followUpData[index].remarks}',
-                                                                style: const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Row(
-                                                                    children: [
-                                                                      const Text(
-                                                                        'Status :',
-                                                                        style: TextStyle(
-                                                                            fontSize:
-                                                                                12,
-                                                                            fontWeight:
-                                                                                FontWeight.w400),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      Container(
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                _colors[int.parse(leadDetailsAdditional!.data.followUpData[index].callResultId.toString())],
-                                                                            borderRadius: BorderRadius.circular(5)),
-                                                                        child:
-                                                                            Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .only(
-                                                                              left: 5,
-                                                                              right: 5,
-                                                                              top: 2,
-                                                                              bottom: 2),
+                                                                                    builder: (context) => PostConfirmedFollowup(
+                                                                                      callMasterId: widget.callMasterId,
+                                                                                      renewalPermission: leadDetailsAdditional!.data.createRenewal,
+                                                                                      installmentPermission: leadDetailsAdditional!.data.createInstallment,
+                                                                                    ),
+                                                                                  )).then((r) {
+                                                                                getData();
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                const Icon(
+                                                                              Icons.add,
+                                                                              color: Colors.green,
+                                                                              size: 25,
+                                                                            ),
+                                                                          )
+                                                                        else if (leadDetailsAdditional!.data.followUpData[0].callResult ==
+                                                                            "Confirmed")
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(builder: (context) => ClientDetails(widget.token, leadDetailsAdditional!.data.customerId.toString())),
+                                                                              ).then((r) {
+                                                                                getData();
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                const Icon(
+                                                                              Icons.menu,
+                                                                              color: Colors.green,
+                                                                            ),
+                                                                          ),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        leadDetailsAdditional!.data.followUpData[index].isEdit ==
+                                                                                true
+                                                                            ? InkWell(
+                                                                                onTap: () {
+                                                                                  Navigator.push(
+                                                                                    context,
+                                                                                    MaterialPageRoute(
+                                                                                        builder: (context) => EditFollowup(
+                                                                                              widget.token,
+                                                                                              widget.editLead,
+                                                                                              widget.deleteLead,
+                                                                                              widget.cloudCall,
+                                                                                              callMasterId,
+                                                                                              leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
+                                                                                              pageName: widget.pageName,
+                                                                                              status: widget.status,
+                                                                                              staff: widget.staff,
+                                                                                              isCalled: widget.isCalled,
+                                                                                              fromDate: widget.fromDate,
+                                                                                              toDate: widget.toDate,
+                                                                                              category: widget.category,
+                                                                                              scrollToIndex: widget.scrollToIndex,
+                                                                                            )),
+                                                                                  ).then((r) {
+                                                                                    getData();
+                                                                                  });
+                                                                                },
+                                                                                child: const Icon(
+                                                                                  Icons.edit,
+                                                                                  color: Colors.blue,
+                                                                                  size: 20,
+                                                                                ))
+                                                                            : const SizedBox(),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              5,
+                                                                        ),
+                                                                        leadDetailsAdditional!.data.followUpData[index].isDelete ==
+                                                                                true
+                                                                            ? InkWell(
+                                                                                onTap: () {
+                                                                                  _deleteFollowup(context, leadDetailsAdditional!.data.followUpData[index].callDetailsId);
+                                                                                },
+                                                                                child: const Icon(
+                                                                                  Icons.delete,
+                                                                                  color: Colors.red,
+                                                                                  size: 20,
+                                                                                ))
+                                                                            : const SizedBox(),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 15,
+                                                                ),
+                                                                Text(
+                                                                  'Scheduled Date : ${leadDetailsAdditional!.data.followUpData[index].scheduledDate}',
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w400),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                Text(
+                                                                  'Remark:${leadDetailsAdditional!.data.followUpData[index].remarks}',
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w400),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        const Text(
+                                                                          'Status :',
+                                                                          style: TextStyle(
+                                                                              fontSize: 12,
+                                                                              fontWeight: FontWeight.w400),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        Container(
+                                                                          decoration: BoxDecoration(
+                                                                              color: _colors[int.parse(leadDetailsAdditional!.data.followUpData[index].callResultId.toString())],
+                                                                              borderRadius: BorderRadius.circular(5)),
                                                                           child:
-                                                                              Text(
-                                                                            leadDetailsAdditional!.data.followUpData[index].callResult.toString(),
-                                                                            style: const TextStyle(
-                                                                                fontSize: 13,
-                                                                                color: Colors.white,
-                                                                                fontWeight: FontWeight.w500),
+                                                                              Padding(
+                                                                            padding: const EdgeInsets.only(
+                                                                                left: 5,
+                                                                                right: 5,
+                                                                                top: 2,
+                                                                                bottom: 2),
+                                                                            child:
+                                                                                Text(
+                                                                              leadDetailsAdditional!.data.followUpData[index].callResult.toString(),
+                                                                              style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
+                                                                            ),
                                                                           ),
                                                                         ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      leadDetailsAdditional!.data.followUpData[index].isCalled ==
-                                                                              false
-                                                                          ? const Text(
-                                                                              '( Pending )',
-                                                                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
-                                                                          : const SizedBox()
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              leadDetailsAdditional!
-                                                                          .data
-                                                                          .followUpData[
-                                                                              index]
-                                                                          .reason !=
-                                                                      ''
-                                                                  ? Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          bottom:
-                                                                              8),
-                                                                      child:
-                                                                          Text(
-                                                                        'Reason: ${leadDetailsAdditional!.data.followUpData[index].reason}',
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        leadDetailsAdditional!.data.followUpData[index].isCalled ==
+                                                                                false
+                                                                            ? const Text('( Pending )',
+                                                                                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                                                                            : const SizedBox()
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                leadDetailsAdditional!
+                                                                            .data
+                                                                            .followUpData[index]
+                                                                            .reason !=
+                                                                        ''
+                                                                    ? Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            bottom:
+                                                                                8),
+                                                                        child:
+                                                                            Text(
+                                                                          'Reason: ${leadDetailsAdditional!.data.followUpData[index].reason}',
+                                                                          style: const TextStyle(
+                                                                              fontSize: 12,
+                                                                              color: Colors.black,
+                                                                              fontWeight: FontWeight.w400),
+                                                                        ),
+                                                                      )
+                                                                    : const SizedBox(),
+                                                                leadDetailsAdditional!
+                                                                            .data
+                                                                            .followUpData[index]
+                                                                            .callResponse !=
+                                                                        ''
+                                                                    ? Text(
+                                                                        'Call Response : ${leadDetailsAdditional!.data.followUpData[index].callResponse}',
                                                                         style: const TextStyle(
                                                                             fontSize:
                                                                                 12,
                                                                             color:
                                                                                 Colors.black,
                                                                             fontWeight: FontWeight.w400),
-                                                                      ),
-                                                                    )
-                                                                  : const SizedBox(),
-                                                              leadDetailsAdditional!
-                                                                          .data
-                                                                          .followUpData[
-                                                                              index]
-                                                                          .callResponse !=
-                                                                      ''
-                                                                  ? Text(
-                                                                      'Call Response : ${leadDetailsAdditional!.data.followUpData[index].callResponse}',
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              12,
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontWeight:
-                                                                              FontWeight.w400),
-                                                                    )
-                                                                  : const SizedBox(),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              leadDetailsAdditional!
-                                                                          .data
-                                                                          .followUpData[
-                                                                              index]
-                                                                          .playVoicePermission ==
-                                                                      true
-                                                                  ? Align(
-                                                                      alignment:
-                                                                          Alignment
-                                                                              .topLeft,
-                                                                      child:
-                                                                          InkWell(
-                                                                        onTap:
-                                                                            () {
-                                                                          showGeneralDialog(
-                                                                            barrierLabel:
-                                                                                "showGeneralDialog",
-                                                                            barrierDismissible:
-                                                                                false,
-                                                                            barrierColor:
-                                                                                Colors.black.withOpacity(0.6),
-                                                                            transitionDuration:
-                                                                                const Duration(milliseconds: 400),
-                                                                            context:
-                                                                                context,
-                                                                            pageBuilder: (context,
-                                                                                _,
-                                                                                __) {
-                                                                              return Obx(() {
-                                                                                return Align(
-                                                                                  alignment: Alignment.bottomCenter,
-                                                                                  child: IntrinsicHeight(
-                                                                                    child: Container(
-                                                                                      width: double.maxFinite,
-                                                                                      clipBehavior: Clip.antiAlias,
-                                                                                      decoration: const BoxDecoration(
-                                                                                        color: Colors.white,
-                                                                                        borderRadius: BorderRadius.only(
-                                                                                          topLeft: Radius.circular(16),
-                                                                                          topRight: Radius.circular(16),
-                                                                                        ),
-                                                                                      ),
-                                                                                      child: Material(
-                                                                                        child: Column(
-                                                                                          children: [
-                                                                                            Align(
-                                                                                              alignment: Alignment.topRight,
-                                                                                              child: IconButton(
-                                                                                                onPressed: () {
-                                                                                                  audioCreateController.stopTimer();
-                                                                                                  audioCreateController.audioPlayer.stop();
-                                                                                                  audioCreateController.resetTimer();
-                                                                                                  isPlay = false;
-                                                                                                  Get.back();
-                                                                                                },
-                                                                                                icon: const Icon(Icons.close_rounded),
-                                                                                                color: Colors.redAccent,
-                                                                                              ),
-                                                                                            ),
-                                                                                            const Text(
-                                                                                              'File Information',
-                                                                                              style: TextStyle(
-                                                                                                fontSize: 18,
-                                                                                                fontWeight: FontWeight.w500,
-                                                                                              ),
-                                                                                            ),
-                                                                                            const SizedBox(height: 20),
-                                                                                            Text(
-                                                                                              '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().toString().padLeft(2, '0')}',
-                                                                                              style: const TextStyle(fontSize: 30),
-                                                                                            ),
-                                                                                            Row(
-                                                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                                                              children: [
-                                                                                                isPlay == false
-                                                                                                    ? FloatingActionButton(
-                                                                                                        heroTag: "play tag",
-                                                                                                        onPressed: () async {
-                                                                                                          isPlay = true;
-                                                                                                          audioCreateController.playVoice(leadDetailsAdditional!.data.followUpData[index].voiceFile);
-                                                                                                        },
-                                                                                                        shape: const CircleBorder(),
-                                                                                                        backgroundColor: Colors.white,
-                                                                                                        foregroundColor: Colors.teal,
-                                                                                                        child: const Icon(
-                                                                                                          Icons.play_arrow_rounded,
-                                                                                                          color: Colors.green,
-                                                                                                          size: 30,
-                                                                                                        ))
-                                                                                                    : const SizedBox(),
-                                                                                                const SizedBox(
-                                                                                                  width: 10,
-                                                                                                ),
-                                                                                                FloatingActionButton(
-                                                                                                    heroTag: "stop tag",
-                                                                                                    onPressed: () {
-                                                                                                      audioCreateController.stopTimer();
-                                                                                                      audioCreateController.audioPlayer.stop();
-                                                                                                      audioCreateController.resetTimer();
-                                                                                                      isPlay = false;
-                                                                                                    },
-                                                                                                    shape: const CircleBorder(),
-                                                                                                    backgroundColor: Colors.white,
-                                                                                                    foregroundColor: Colors.teal,
-                                                                                                    child: const Icon(
-                                                                                                      Icons.stop,
-                                                                                                      color: Colors.red,
-                                                                                                      size: 30,
-                                                                                                    )),
-                                                                                              ],
-                                                                                            ),
-                                                                                            const SizedBox(
-                                                                                              height: 20,
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                );
-                                                                              });
-                                                                            },
-                                                                            transitionBuilder: (_,
-                                                                                animation1,
-                                                                                __,
-                                                                                child) {
-                                                                              return SlideTransition(
-                                                                                position: Tween(
-                                                                                  begin: const Offset(0, 1),
-                                                                                  end: const Offset(0, 0),
-                                                                                ).animate(animation1),
-                                                                                child: child,
-                                                                              );
-                                                                            },
-                                                                          );
-                                                                        },
+                                                                      )
+                                                                    : const SizedBox(),
+                                                                const SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                leadDetailsAdditional!
+                                                                            .data
+                                                                            .followUpData[
+                                                                                index]
+                                                                            .playVoicePermission ==
+                                                                        true
+                                                                    ? Align(
+                                                                        alignment:
+                                                                            Alignment.topLeft,
                                                                         child:
-                                                                            Row(
-                                                                          children: [
-                                                                            Container(
-                                                                                width: 85,
-                                                                                height: 35,
-                                                                                decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300), borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
-                                                                                child: const Center(
-                                                                                    child: Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                  children: [
-                                                                                    Icon(
-                                                                                      Icons.play_arrow,
-                                                                                      color: Colors.green,
-                                                                                    ),
-                                                                                    SizedBox(
-                                                                                      width: 5,
-                                                                                    ),
-                                                                                    Text(
-                                                                                      'Play',
-                                                                                      style: TextStyle(color: Colors.green),
-                                                                                    ),
-                                                                                  ],
-                                                                                ))),
                                                                             InkWell(
-                                                                              onTap: () {
-                                                                                showDialog(
-                                                                                    context: context,
-                                                                                    builder: (BuildContext context) {
-                                                                                      return AlertDialog(
-                                                                                        title: const Text('Please Confirm'),
-                                                                                        content: const Text('Are you sure to Remove this Voice?'),
-                                                                                        actions: [
-                                                                                          TextButton(
-                                                                                              onPressed: () {
-                                                                                                Navigator.of(context).pop();
-                                                                                              },
-                                                                                              child: const Text('No')),
-                                                                                          TextButton(
-                                                                                              onPressed: () async {
-                                                                                                Common.showProgressDialog(context, "Uploading..");
-                                                                                                DeleteLeadVoiceModel deleteVoice = await HttpService.deleteLeadVoice(
-                                                                                                  widget.token,
-                                                                                                  callMasterId,
-                                                                                                  leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
-                                                                                                );
-                                                                                                if (deleteVoice.data == true) {
-                                                                                                  getData();
-                                                                                                  if (mounted) {
-                                                                                                    Navigator.of(context).pop();
-                                                                                                    Navigator.of(context).pop();
-                                                                                                  }
-                                                                                                }
-                                                                                              },
-                                                                                              child: const Text('Yes')),
-                                                                                        ],
-                                                                                      );
-                                                                                    });
-                                                                              },
-                                                                              child: Container(
-                                                                                height: 35,
-                                                                                width: 30,
-                                                                                decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
-                                                                                child: const Icon(
-                                                                                  Icons.close,
-                                                                                  color: Colors.red,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    )
-                                                                  : leadDetailsAdditional!
-                                                                              .data
-                                                                              .followUpData[
-                                                                                  index]
-                                                                              .voiceUploadPermission ==
-                                                                          true
-                                                                      ? InkWell(
                                                                           onTap:
                                                                               () {
                                                                             showGeneralDialog(
@@ -3079,182 +2948,96 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               context: context,
                                                                               pageBuilder: (context, _, __) {
                                                                                 return Obx(() {
-                                                                                  return AlertDialog(
-                                                                                    content: IntrinsicHeight(
-                                                                                      child: Column(
-                                                                                        children: [
-                                                                                          audioCreateController.isRecording.value | audioCreateController.audioPath.isNotEmpty
-                                                                                              ? Column(
-                                                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                                                  children: [
-                                                                                                    Text(
-                                                                                                      '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
-                                                                                                      style: const TextStyle(fontSize: 30),
-                                                                                                    ),
-                                                                                                    if (audioCreateController.isRecording.value) const Text("Voice Recording..."),
-                                                                                                  ],
-                                                                                                )
-                                                                                              : const Column(
-                                                                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                                                                  children: [
-                                                                                                    SizedBox(
-                                                                                                      height: 10,
-                                                                                                    ),
-                                                                                                    Text(
-                                                                                                      'Voice Record ',
-                                                                                                      style: TextStyle(fontSize: 18),
-                                                                                                    ),
-                                                                                                    SizedBox(
-                                                                                                      height: 20,
-                                                                                                    ),
-                                                                                                    Text("Do you want to record voice?"),
-                                                                                                  ],
+                                                                                  return Align(
+                                                                                    alignment: Alignment.bottomCenter,
+                                                                                    child: IntrinsicHeight(
+                                                                                      child: Container(
+                                                                                        width: double.maxFinite,
+                                                                                        clipBehavior: Clip.antiAlias,
+                                                                                        decoration: const BoxDecoration(
+                                                                                          color: Colors.white,
+                                                                                          borderRadius: BorderRadius.only(
+                                                                                            topLeft: Radius.circular(16),
+                                                                                            topRight: Radius.circular(16),
+                                                                                          ),
+                                                                                        ),
+                                                                                        child: Material(
+                                                                                          child: Column(
+                                                                                            children: [
+                                                                                              Align(
+                                                                                                alignment: Alignment.topRight,
+                                                                                                child: IconButton(
+                                                                                                  onPressed: () {
+                                                                                                    audioCreateController.stopTimer();
+                                                                                                    audioCreateController.audioPlayer.stop();
+                                                                                                    audioCreateController.resetTimer();
+                                                                                                    isPlay = false;
+                                                                                                    Get.back();
+                                                                                                  },
+                                                                                                  icon: const Icon(Icons.close_rounded),
+                                                                                                  color: Colors.redAccent,
                                                                                                 ),
-                                                                                          const SizedBox(height: 20.0),
-                                                                                          Padding(
-                                                                                            padding: const EdgeInsets.only(bottom: 20.0),
-                                                                                            child: Row(
-                                                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                                                              children: [
-                                                                                                if (audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty)
+                                                                                              ),
+                                                                                              const Text(
+                                                                                                'File Information',
+                                                                                                style: TextStyle(
+                                                                                                  fontSize: 18,
+                                                                                                  fontWeight: FontWeight.w500,
+                                                                                                ),
+                                                                                              ),
+                                                                                              const SizedBox(height: 20),
+                                                                                              Text(
+                                                                                                '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().toString().padLeft(2, '0')}',
+                                                                                                style: const TextStyle(fontSize: 30),
+                                                                                              ),
+                                                                                              Row(
+                                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                                children: [
+                                                                                                  isPlay == false
+                                                                                                      ? FloatingActionButton(
+                                                                                                          heroTag: "play tag",
+                                                                                                          onPressed: () async {
+                                                                                                            isPlay = true;
+                                                                                                            audioCreateController.playVoice(leadDetailsAdditional!.data.followUpData[index].voiceFile);
+                                                                                                          },
+                                                                                                          shape: const CircleBorder(),
+                                                                                                          backgroundColor: Colors.white,
+                                                                                                          foregroundColor: Colors.teal,
+                                                                                                          child: const Icon(
+                                                                                                            Icons.play_arrow_rounded,
+                                                                                                            color: Colors.green,
+                                                                                                            size: 30,
+                                                                                                          ))
+                                                                                                      : const SizedBox(),
+                                                                                                  const SizedBox(
+                                                                                                    width: 10,
+                                                                                                  ),
                                                                                                   FloatingActionButton(
-                                                                                                      heroTag: "play tag",
+                                                                                                      heroTag: "stop tag",
                                                                                                       onPressed: () {
+                                                                                                        audioCreateController.stopTimer();
+                                                                                                        audioCreateController.audioPlayer.stop();
                                                                                                         audioCreateController.resetTimer();
-                                                                                                        audioCreateController.playRcording();
+                                                                                                        isPlay = false;
                                                                                                       },
                                                                                                       shape: const CircleBorder(),
                                                                                                       backgroundColor: Colors.white,
                                                                                                       foregroundColor: Colors.teal,
                                                                                                       child: const Icon(
-                                                                                                        Icons.play_arrow_rounded,
-                                                                                                        color: Colors.green,
-                                                                                                        size: 30,
-                                                                                                      )),
-                                                                                                const SizedBox(
-                                                                                                  width: 25,
-                                                                                                ),
-                                                                                                if (audioCreateController.isRecording.value == true)
-                                                                                                  FloatingActionButton(
-                                                                                                      heroTag: "start tag",
-                                                                                                      onPressed: () {
-                                                                                                        audioCreateController.stopRecording();
-                                                                                                        // recordController.stopTimer();
-                                                                                                      },
-                                                                                                      shape: const CircleBorder(),
-                                                                                                      backgroundColor: Colors.redAccent,
-                                                                                                      foregroundColor: Colors.white,
-                                                                                                      child: const Text("Stop")),
-                                                                                                const SizedBox(
-                                                                                                  width: 25,
-                                                                                                ),
-                                                                                                if (audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty)
-                                                                                                  FloatingActionButton(
-                                                                                                      heroTag: "delete tag",
-                                                                                                      onPressed: () {
-                                                                                                        showDialog(
-                                                                                                            context: context,
-                                                                                                            builder: (BuildContext context) {
-                                                                                                              return AlertDialog(
-                                                                                                                title: const Text('Are You Sure'),
-                                                                                                                iconColor: Colors.blue,
-                                                                                                                actions: <Widget>[
-                                                                                                                  TextButton(
-                                                                                                                    onPressed: () {
-                                                                                                                      Get.back();
-                                                                                                                    },
-                                                                                                                    child: const Text('Cancel'),
-                                                                                                                  ),
-                                                                                                                  TextButton(
-                                                                                                                    onPressed: () {
-                                                                                                                      audioCreateController.resetTimer();
-                                                                                                                      audioCreateController.audioPath.value = "";
-                                                                                                                      Get.back();
-                                                                                                                    },
-                                                                                                                    child: const Text('Delete'),
-                                                                                                                  ),
-                                                                                                                ],
-                                                                                                              );
-                                                                                                            });
-                                                                                                      },
-                                                                                                      shape: const CircleBorder(),
-                                                                                                      backgroundColor: Colors.white,
-                                                                                                      foregroundColor: Colors.red,
-                                                                                                      child: const Icon(
-                                                                                                        Icons.delete,
+                                                                                                        Icons.stop,
                                                                                                         color: Colors.red,
                                                                                                         size: 30,
                                                                                                       )),
-                                                                                              ],
-                                                                                            ),
+                                                                                                ],
+                                                                                              ),
+                                                                                              const SizedBox(
+                                                                                                height: 20,
+                                                                                              ),
+                                                                                            ],
                                                                                           ),
-                                                                                        ],
+                                                                                        ),
                                                                                       ),
                                                                                     ),
-                                                                                    actions: [
-                                                                                      audioCreateController.isRecording.value == false
-                                                                                          ? TextButton(
-                                                                                              onPressed: () async {
-                                                                                                if (audioCreateController.audioPath.value != '') {
-                                                                                                  audioCreateController.resetTimer();
-                                                                                                  audioCreateController.audioPath.value = "";
-                                                                                                }
-
-                                                                                                Get.back();
-                                                                                              },
-                                                                                              child: const Text(
-                                                                                                'Back',
-                                                                                                style: TextStyle(color: Colors.black),
-                                                                                              ),
-                                                                                            )
-                                                                                          : const SizedBox(),
-                                                                                      audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty
-                                                                                          ? TextButton(
-                                                                                              onPressed: () async {
-                                                                                                Common.showProgressDialog(context, "Uploading..");
-                                                                                                UploadAudioRecord uploadAudio = await HttpService.leadVoiceUpload(
-                                                                                                  widget.token,
-                                                                                                  callMasterId,
-                                                                                                  leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
-                                                                                                  audioCreateController.audioPath.value.toString(),
-                                                                                                );
-                                                                                                if (uploadAudio.data == true) {
-                                                                                                  audioCreateController.audioPath.value = '';
-                                                                                                  audioCreateController.resetTimer();
-                                                                                                  Common.toastMessaage(uploadAudio.message, Colors.green);
-
-                                                                                                  if (mounted) {
-                                                                                                    getData();
-                                                                                                    Get.back();
-                                                                                                    Get.back();
-                                                                                                  }
-                                                                                                }
-                                                                                              },
-                                                                                              child: const Text(
-                                                                                                'Save',
-                                                                                                style: TextStyle(color: Colors.green),
-                                                                                              ),
-                                                                                            )
-                                                                                          : audioCreateController.isRecording.value == false
-                                                                                              ? TextButton(
-                                                                                                  onPressed: () {
-                                                                                                    if (audioCreateController.audioPath.isNotEmpty) {
-                                                                                                      audioCreateController.isBack.value = true;
-                                                                                                      audioCreateController.resetTimer();
-
-                                                                                                      audioCreateController.startRecording();
-                                                                                                    } else {
-                                                                                                      audioCreateController.startRecording();
-                                                                                                    }
-                                                                                                    isBack = true;
-                                                                                                  },
-                                                                                                  child: const Text(
-                                                                                                    'Record',
-                                                                                                    style: TextStyle(color: Colors.black),
-                                                                                                  ),
-                                                                                                )
-                                                                                              : const SizedBox(),
-                                                                                    ],
                                                                                   );
                                                                                 });
                                                                               },
@@ -3269,37 +3052,315 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                               },
                                                                             );
                                                                           },
-                                                                          child: Container(
-                                                                              width: 95,
-                                                                              height: 30,
-                                                                              decoration: BoxDecoration(
-                                                                                color: Colors.white,
-                                                                                border: Border.all(color: Colors.grey.shade300),
-                                                                                borderRadius: BorderRadius.circular(8),
+                                                                          child:
+                                                                              Row(
+                                                                            children: [
+                                                                              Container(
+                                                                                  width: 85,
+                                                                                  height: 35,
+                                                                                  decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300), borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
+                                                                                  child: const Center(
+                                                                                      child: Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                    children: [
+                                                                                      Icon(
+                                                                                        Icons.play_arrow,
+                                                                                        color: Colors.green,
+                                                                                      ),
+                                                                                      SizedBox(
+                                                                                        width: 5,
+                                                                                      ),
+                                                                                      Text(
+                                                                                        'Play',
+                                                                                        style: TextStyle(color: Colors.green),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ))),
+                                                                              InkWell(
+                                                                                onTap: () {
+                                                                                  showDialog(
+                                                                                      context: context,
+                                                                                      builder: (BuildContext context) {
+                                                                                        return AlertDialog(
+                                                                                          title: const Text('Please Confirm'),
+                                                                                          content: const Text('Are you sure to Remove this Voice?'),
+                                                                                          actions: [
+                                                                                            TextButton(
+                                                                                                onPressed: () {
+                                                                                                  Navigator.of(context).pop();
+                                                                                                },
+                                                                                                child: const Text('No')),
+                                                                                            TextButton(
+                                                                                                onPressed: () async {
+                                                                                                  Common.showProgressDialog(context, "Uploading..");
+                                                                                                  DeleteLeadVoiceModel deleteVoice = await HttpService.deleteLeadVoice(
+                                                                                                    widget.token,
+                                                                                                    callMasterId,
+                                                                                                    leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
+                                                                                                  );
+                                                                                                  if (deleteVoice.data == true) {
+                                                                                                    getData();
+                                                                                                    if (mounted) {
+                                                                                                      Navigator.of(context).pop();
+                                                                                                      Navigator.of(context).pop();
+                                                                                                    }
+                                                                                                  }
+                                                                                                },
+                                                                                                child: const Text('Yes')),
+                                                                                          ],
+                                                                                        );
+                                                                                      });
+                                                                                },
+                                                                                child: Container(
+                                                                                  height: 35,
+                                                                                  width: 30,
+                                                                                  decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
+                                                                                  child: const Icon(
+                                                                                    Icons.close,
+                                                                                    color: Colors.red,
+                                                                                  ),
+                                                                                ),
                                                                               ),
-                                                                              child: const Center(
-                                                                                  child: Row(
-                                                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                                                crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                children: [
-                                                                                  Icon(
-                                                                                    Icons.mic,
-                                                                                    color: Colors.green,
-                                                                                  ),
-                                                                                  SizedBox(
-                                                                                    width: 5,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    'Upload',
-                                                                                    style: TextStyle(color: Colors.green),
-                                                                                  ),
-                                                                                ],
-                                                                              ))))
-                                                                      : const SizedBox(),
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                            ],
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      )
+                                                                    : leadDetailsAdditional!.data.followUpData[index].voiceUploadPermission ==
+                                                                            true
+                                                                        ? InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              showGeneralDialog(
+                                                                                barrierLabel: "showGeneralDialog",
+                                                                                barrierDismissible: false,
+                                                                                barrierColor: Colors.black.withOpacity(0.6),
+                                                                                transitionDuration: const Duration(milliseconds: 400),
+                                                                                context: context,
+                                                                                pageBuilder: (context, _, __) {
+                                                                                  return Obx(() {
+                                                                                    return AlertDialog(
+                                                                                      content: IntrinsicHeight(
+                                                                                        child: Column(
+                                                                                          children: [
+                                                                                            audioCreateController.isRecording.value | audioCreateController.audioPath.isNotEmpty
+                                                                                                ? Column(
+                                                                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                                                                    children: [
+                                                                                                      Text(
+                                                                                                        '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
+                                                                                                        style: const TextStyle(fontSize: 30),
+                                                                                                      ),
+                                                                                                      if (audioCreateController.isRecording.value) const Text("Voice Recording..."),
+                                                                                                    ],
+                                                                                                  )
+                                                                                                : const Column(
+                                                                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                                                                    children: [
+                                                                                                      SizedBox(
+                                                                                                        height: 10,
+                                                                                                      ),
+                                                                                                      Text(
+                                                                                                        'Voice Record ',
+                                                                                                        style: TextStyle(fontSize: 18),
+                                                                                                      ),
+                                                                                                      SizedBox(
+                                                                                                        height: 20,
+                                                                                                      ),
+                                                                                                      Text("Do you want to record voice?"),
+                                                                                                    ],
+                                                                                                  ),
+                                                                                            const SizedBox(height: 20.0),
+                                                                                            Padding(
+                                                                                              padding: const EdgeInsets.only(bottom: 20.0),
+                                                                                              child: Row(
+                                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                                children: [
+                                                                                                  if (audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty)
+                                                                                                    FloatingActionButton(
+                                                                                                        heroTag: "play tag",
+                                                                                                        onPressed: () {
+                                                                                                          audioCreateController.resetTimer();
+                                                                                                          audioCreateController.playRcording();
+                                                                                                        },
+                                                                                                        shape: const CircleBorder(),
+                                                                                                        backgroundColor: Colors.white,
+                                                                                                        foregroundColor: Colors.teal,
+                                                                                                        child: const Icon(
+                                                                                                          Icons.play_arrow_rounded,
+                                                                                                          color: Colors.green,
+                                                                                                          size: 30,
+                                                                                                        )),
+                                                                                                  const SizedBox(
+                                                                                                    width: 25,
+                                                                                                  ),
+                                                                                                  if (audioCreateController.isRecording.value == true)
+                                                                                                    FloatingActionButton(
+                                                                                                        heroTag: "start tag",
+                                                                                                        onPressed: () {
+                                                                                                          audioCreateController.stopRecording();
+                                                                                                          // recordController.stopTimer();
+                                                                                                        },
+                                                                                                        shape: const CircleBorder(),
+                                                                                                        backgroundColor: Colors.redAccent,
+                                                                                                        foregroundColor: Colors.white,
+                                                                                                        child: const Text("Stop")),
+                                                                                                  const SizedBox(
+                                                                                                    width: 25,
+                                                                                                  ),
+                                                                                                  if (audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty)
+                                                                                                    FloatingActionButton(
+                                                                                                        heroTag: "delete tag",
+                                                                                                        onPressed: () {
+                                                                                                          showDialog(
+                                                                                                              context: context,
+                                                                                                              builder: (BuildContext context) {
+                                                                                                                return AlertDialog(
+                                                                                                                  title: const Text('Are You Sure'),
+                                                                                                                  iconColor: Colors.blue,
+                                                                                                                  actions: <Widget>[
+                                                                                                                    TextButton(
+                                                                                                                      onPressed: () {
+                                                                                                                        Get.back();
+                                                                                                                      },
+                                                                                                                      child: const Text('Cancel'),
+                                                                                                                    ),
+                                                                                                                    TextButton(
+                                                                                                                      onPressed: () {
+                                                                                                                        audioCreateController.resetTimer();
+                                                                                                                        audioCreateController.audioPath.value = "";
+                                                                                                                        Get.back();
+                                                                                                                      },
+                                                                                                                      child: const Text('Delete'),
+                                                                                                                    ),
+                                                                                                                  ],
+                                                                                                                );
+                                                                                                              });
+                                                                                                        },
+                                                                                                        shape: const CircleBorder(),
+                                                                                                        backgroundColor: Colors.white,
+                                                                                                        foregroundColor: Colors.red,
+                                                                                                        child: const Icon(
+                                                                                                          Icons.delete,
+                                                                                                          color: Colors.red,
+                                                                                                          size: 30,
+                                                                                                        )),
+                                                                                                ],
+                                                                                              ),
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+                                                                                      ),
+                                                                                      actions: [
+                                                                                        audioCreateController.isRecording.value == false
+                                                                                            ? TextButton(
+                                                                                                onPressed: () async {
+                                                                                                  if (audioCreateController.audioPath.value != '') {
+                                                                                                    audioCreateController.resetTimer();
+                                                                                                    audioCreateController.audioPath.value = "";
+                                                                                                  }
+
+                                                                                                  Get.back();
+                                                                                                },
+                                                                                                child: const Text(
+                                                                                                  'Back',
+                                                                                                  style: TextStyle(color: Colors.black),
+                                                                                                ),
+                                                                                              )
+                                                                                            : const SizedBox(),
+                                                                                        audioCreateController.isRecording.value == false && audioCreateController.audioPath.isNotEmpty
+                                                                                            ? TextButton(
+                                                                                                onPressed: () async {
+                                                                                                  Common.showProgressDialog(context, "Uploading..");
+                                                                                                  UploadAudioRecord uploadAudio = await HttpService.leadVoiceUpload(
+                                                                                                    widget.token,
+                                                                                                    callMasterId,
+                                                                                                    leadDetailsAdditional!.data.followUpData[index].callDetailsId.toString(),
+                                                                                                    audioCreateController.audioPath.value.toString(),
+                                                                                                  );
+                                                                                                  if (uploadAudio.data == true) {
+                                                                                                    audioCreateController.audioPath.value = '';
+                                                                                                    audioCreateController.resetTimer();
+                                                                                                    Common.toastMessaage(uploadAudio.message, Colors.green);
+
+                                                                                                    if (mounted) {
+                                                                                                      getData();
+                                                                                                      Get.back();
+                                                                                                      Get.back();
+                                                                                                    }
+                                                                                                  }
+                                                                                                },
+                                                                                                child: const Text(
+                                                                                                  'Save',
+                                                                                                  style: TextStyle(color: Colors.green),
+                                                                                                ),
+                                                                                              )
+                                                                                            : audioCreateController.isRecording.value == false
+                                                                                                ? TextButton(
+                                                                                                    onPressed: () {
+                                                                                                      if (audioCreateController.audioPath.isNotEmpty) {
+                                                                                                        audioCreateController.isBack.value = true;
+                                                                                                        audioCreateController.resetTimer();
+
+                                                                                                        audioCreateController.startRecording();
+                                                                                                      } else {
+                                                                                                        audioCreateController.startRecording();
+                                                                                                      }
+                                                                                                      isBack = true;
+                                                                                                    },
+                                                                                                    child: const Text(
+                                                                                                      'Record',
+                                                                                                      style: TextStyle(color: Colors.black),
+                                                                                                    ),
+                                                                                                  )
+                                                                                                : const SizedBox(),
+                                                                                      ],
+                                                                                    );
+                                                                                  });
+                                                                                },
+                                                                                transitionBuilder: (_, animation1, __, child) {
+                                                                                  return SlideTransition(
+                                                                                    position: Tween(
+                                                                                      begin: const Offset(0, 1),
+                                                                                      end: const Offset(0, 0),
+                                                                                    ).animate(animation1),
+                                                                                    child: child,
+                                                                                  );
+                                                                                },
+                                                                              );
+                                                                            },
+                                                                            child: Container(
+                                                                                width: 95,
+                                                                                height: 30,
+                                                                                decoration: BoxDecoration(
+                                                                                  color: Colors.white,
+                                                                                  border: Border.all(color: Colors.grey.shade300),
+                                                                                  borderRadius: BorderRadius.circular(8),
+                                                                                ),
+                                                                                child: const Center(
+                                                                                    child: Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.mic,
+                                                                                      color: Colors.green,
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      width: 5,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      'Upload',
+                                                                                      style: TextStyle(color: Colors.green),
+                                                                                    ),
+                                                                                  ],
+                                                                                ))))
+                                                                        : const SizedBox(),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                              ],
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
@@ -3537,8 +3598,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         .toString(),
                                                     leadDetailsAdditional!.data
                                                         .voiceListerningPermission,
-                                                    leadDetailsAdditional!.data
-                                                        .callHistory[i].id
+                                                    leadDetailsAdditional!
+                                                        .data.callHistory[i].id
                                                         .toString(),
                                                     leadDetailsAdditional!
                                                         .data
@@ -4063,10 +4124,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                             const SizedBox(
                                               height: 10,
                                             ),
-                                            leadDetailsAdditional!
-                                                    .data
-                                                    .additionalFields
-                                                    .isNotEmpty
+                                            leadDetailsAdditional!.data
+                                                    .additionalFields.isNotEmpty
                                                 ? Padding(
                                                     padding:
                                                         const EdgeInsets.only(

@@ -142,11 +142,11 @@ class _EditLeadState extends State<EditLead> {
         priorityVal.text = leadDetails!.data!.priority.toString();
         code = leadDetails!.data!.countryCode.toString();
         for (int i = 0;
-            i < leadDetailsAdditional!.data!.additionalFields!.length;
+            i < leadDetailsAdditional!.data.additionalFields.length;
             i++) {
           _controllers.add(TextEditingController());
           _controllers[i].text = leadDetailsAdditional!
-              .data!.additionalFields![i].value
+              .data.additionalFields[i].value
               .toString();
         }
       });
@@ -993,7 +993,7 @@ class _EditLeadState extends State<EditLead> {
                     // ),
                     ListView.builder(
                       itemCount:
-                          leadDetailsAdditional!.data!.additionalFields!.length,
+                          leadDetailsAdditional!.data.additionalFields.length,
                       shrinkWrap: true,
                       physics: const ScrollPhysics(),
                       itemBuilder: (context, index) {
@@ -1137,9 +1137,9 @@ class _EditLeadState extends State<EditLead> {
                 descriptions.add("");
                 descriptions[index] = {
                   "id":
-                      leadDetailsAdditional!.data!.additionalFields![index].id,
+                      leadDetailsAdditional!.data.additionalFields[index].id,
                   "name": leadDetailsAdditional!
-                      .data!.additionalFields![index].name,
+                      .data.additionalFields[index].name,
                   "value": val
                 };
               },
@@ -1152,7 +1152,7 @@ class _EditLeadState extends State<EditLead> {
                   contentPadding:
                       const EdgeInsets.only(left: 10, top: 2, bottom: 2),
                   labelText: leadDetailsAdditional!
-                      .data!.additionalFields![index].name,
+                      .data.additionalFields[index].name,
                   fillColor: Colors.white,
                   filled: true,
                   prefixIcon: const Icon(Icons.arrow_drop_down_circle,

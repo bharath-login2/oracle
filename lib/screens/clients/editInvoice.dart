@@ -1623,11 +1623,16 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                                         return ListTile(
                                                                             onTap:
                                                                                 () {
+                                                                              if (productQty.text == "") {
+                                                                                productQty.text = "1";
+                                                                              }
                                                                               productName = filteredItems[index].productName!;
                                                                               productId = filteredItems[index].id!;
                                                                               productRate.text = filteredItems[index].sellingPrice!;
                                                                               productTaxPercent.text = filteredItems[index].taxPercent!;
                                                                               productTaxAmount.text = filteredItems[index].taxAmount!;
+                                                                              productTotalAmount.text = ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
+                                                                              productTotalAmount.text = double.parse(productTotalAmount.text).toStringAsFixed(2);
                                                                               setState(() {});
                                                                               if (context.mounted) {
                                                                                 Navigator.pop(context);
@@ -2222,7 +2227,10 @@ class _EditInvoiceState extends State<EditInvoice> {
                                         child: child,
                                       );
                                     },
-                                  );
+                                  ).then((_){
+                                    setState(() {
+                                    });
+                                  });
                                 },
                                 child: Container(
                                     decoration: BoxDecoration(

@@ -59,6 +59,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   String productId = "";
   String productName = "Choose Product";
   bool createRenewal = false;
+  String typeDuration = "";
 
   @override
   void initState() {
@@ -371,6 +372,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                                 ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
                                                                             productTotalAmount.text =
                                                                                 double.parse(productTotalAmount.text).toStringAsFixed(2);
+                                                                            typeDuration =
+                                                                                filteredItems[index].noOfDays;
+
                                                                             setState(() {});
                                                                             if (context.mounted) {
                                                                               Navigator.pop(context);
@@ -1883,6 +1887,10 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                 setState(() {
                                   startDate.text = DateFormat('dd-MM-yyyy')
                                       .format(selectedValue!);
+                                  final endValue = selectedValue.add(
+                                      Duration(days: int.parse(typeDuration)));
+                                  endDate.text =
+                                      DateFormat('dd-MM-yyyy').format(endValue);
                                 });
                               },
                               validator: (value) {
@@ -2001,7 +2009,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                             Common.toastMessaage(
                                 ' Payment Status is required to add invoice',
                                 Colors.red);
-                          } else if (paymentStatus == null &&
+                          } else if (paidAmount.text.isEmpty &&
                               paymentStatus != "unpaid") {
                             Common.toastMessaage(
                                 'Paid Amount is required to add invoice',
