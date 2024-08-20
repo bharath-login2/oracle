@@ -2,6 +2,7 @@
 //
 //     final leadDeatailsModelAdd = leadDeatailsModelAddFromJson(jsonString);
 
+import 'package:meta/meta.dart';
 import 'dart:convert';
 
 LeadDeatailsModelAdd leadDeatailsModelAddFromJson(String str) => LeadDeatailsModelAdd.fromJson(json.decode(str));
@@ -41,9 +42,9 @@ class Data {
     bool isCreateOrder;
     String customerId;
     List<FollowUpDatum> followUpData;
-    List<dynamic> callHistory;
+    List<CallHistory> callHistory;
     List<Activity> activities;
-    List<dynamic> additionalFields;
+    List<AdditionalField> additionalFields;
 
     Data({
         required this.voiceListerningPermission,
@@ -68,9 +69,9 @@ class Data {
         isCreateOrder: json["isCreateOrder"],
         customerId: json["customer_id"],
         followUpData: List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
-        callHistory: List<dynamic>.from(json["callHistory"].map((x) => x)),
+        callHistory: List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x))),
         activities: List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x))),
-        additionalFields: List<dynamic>.from(json["additionalFields"].map((x) => x)),
+        additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -82,7 +83,7 @@ class Data {
         "isCreateOrder": isCreateOrder,
         "customer_id": customerId,
         "followUpData": List<dynamic>.from(followUpData.map((x) => x.toJson())),
-        "callHistory": List<dynamic>.from(callHistory.map((x) => x)),
+        "callHistory": List<dynamic>.from(callHistory.map((x) => x.toJson())),
         "activities": List<dynamic>.from(activities.map((x) => x.toJson())),
         "additionalFields": List<dynamic>.from(additionalFields.map((x) => x)),
     };
@@ -115,6 +116,122 @@ class Activity {
         "pro_pic_thumb": proPicThumb,
     };
 }
+class AdditionalField {
+    String id;
+    String name;
+    String value;
+
+    AdditionalField({
+        required this.id,
+        required this.name,
+        required this.value,
+    });
+
+    factory AdditionalField.fromJson(Map<String, dynamic> json) => AdditionalField(
+        id: json["id"],
+        name: json["name"],
+        value: json["value"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "value": value,
+    };
+}
+
+class CallHistory {
+    String id;
+    String staffName;
+    String callHistoryImage;
+    String sourceNumber;
+    String destinationNumber;
+    String date;
+    String startTime;
+    String endTime;
+    String time;
+    int callDuration;
+    String callDurationHr;
+    String resourceUrl;
+    String status;
+    bool isAttended;
+    String direction;
+    bool isTransfered;
+    bool isplayed;
+    bool audioplayed;
+    int currentpos;
+    String currentpostlabel;
+
+    CallHistory({
+        required this.id,
+        required this.staffName,
+        required this.callHistoryImage,
+        required this.sourceNumber,
+        required this.destinationNumber,
+        required this.date,
+        required this.startTime,
+        required this.endTime,
+        required this.time,
+        required this.callDuration,
+        required this.callDurationHr,
+        required this.resourceUrl,
+        required this.status,
+        required this.isAttended,
+        required this.direction,
+        required this.isTransfered,
+        required this.isplayed,
+        required this.audioplayed,
+        required this.currentpos,
+        required this.currentpostlabel,
+    });
+
+    factory CallHistory.fromJson(Map<String, dynamic> json) => CallHistory(
+        id: json["id"],
+        staffName: json["staffName"],
+        callHistoryImage: json["callHistoryImage"],
+        sourceNumber: json["SourceNumber"],
+        destinationNumber: json["DestinationNumber"],
+        date: json["date"],
+        startTime: json["StartTime"],
+        endTime: json["EndTime"],
+        time: json["time"],
+        callDuration: json["CallDuration"],
+        callDurationHr: json["CallDurationHr"],
+        resourceUrl: json["ResourceURL"],
+        status: json["Status"],
+        isAttended: json["isAttended"],
+        direction: json["Direction"],
+        isTransfered: json["isTransfered"],
+        isplayed: json["isplayed"],
+        audioplayed: json["audioplayed"],
+        currentpos: json["currentpos"],
+        currentpostlabel: json["currentpostlabel"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "staffName": staffName,
+        "callHistoryImage": callHistoryImage,
+        "SourceNumber": sourceNumber,
+        "DestinationNumber": destinationNumber,
+        "date": date,
+        "StartTime": startTime,
+        "EndTime": endTime,
+        "time": time,
+        "CallDuration": callDuration,
+        "CallDurationHr": callDurationHr,
+        "ResourceURL": resourceUrl,
+        "Status": status,
+        "isAttended": isAttended,
+        "Direction": direction,
+        "isTransfered": isTransfered,
+        "isplayed": isplayed,
+        "audioplayed": audioplayed,
+        "currentpos": currentpos,
+        "currentpostlabel": currentpostlabel,
+    };
+}
+
 
 class FollowUpDatum {
     String callDetailsId;
@@ -227,3 +344,5 @@ class FollowUpDatum {
         "playVoicePermission": playVoicePermission,
     };
 }
+
+

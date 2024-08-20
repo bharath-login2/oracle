@@ -70,8 +70,8 @@ class _EditInvoiceState extends State<EditInvoice> {
   double allTotal = 0.00;
   bool isPaying = false;
   dynamic paymentMethod;
-  List<Products> items = [];
-  List<Products> filteredItems = [];
+  List<Product> items = [];
+  List<Product> filteredItems = [];
   String productId = "";
   String productName = "Choose Product";
   PostalCodeModel? billingPostal;

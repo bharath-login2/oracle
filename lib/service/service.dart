@@ -1790,8 +1790,10 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}lead_details_data",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-      LeadDeatailsModelAdd model = LeadDeatailsModelAdd.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        LeadDeatailsModelAdd model = LeadDeatailsModelAdd.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -2282,8 +2284,10 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}deleteReceipt",
           data: formData);
-      ReceiptDeleteModel model = ReceiptDeleteModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        ReceiptDeleteModel model = ReceiptDeleteModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -2369,8 +2373,10 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}postReceipt",
           data: formData);
-      ReceiptAddModel model = ReceiptAddModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        ReceiptAddModel model = ReceiptAddModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }

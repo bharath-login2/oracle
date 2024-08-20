@@ -34,8 +34,8 @@ class _ViewInvoiceState extends State<ViewInvoice> {
   ScreenshotController screenshotController = ScreenshotController();
 
   dynamic paymentMethod;
-  List<Products> items = [];
-  List<Products> filteredItems = [];
+  List<Product> items = [];
+  List<Product> filteredItems = [];
   @override
   void initState() {
     // TODO: implement initState

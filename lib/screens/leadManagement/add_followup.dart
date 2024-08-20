@@ -1,6 +1,5 @@
 // ignore_for_file: file_names
 
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -175,6 +174,7 @@ class _AddFollowupState extends State<AddFollowup> {
   }
 
   getData() async {
+    startDate.text = DateFormat('dd-MM-yyyy').format(invoiceDate);
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       if (connectivityResult == ConnectivityResult.mobile ||
@@ -1281,6 +1281,16 @@ class _AddFollowupState extends State<AddFollowup> {
                                                 setState(() {
                                                   invoiceDate =
                                                       DateTime.parse(value);
+                                                  startDate.text =
+                                                      DateFormat('dd-MM-yyyy')
+                                                          .format(invoiceDate);
+                                                  final endValue =
+                                                      invoiceDate.add(Duration(
+                                                          days: int.parse(
+                                                              typeDuration)));
+                                                  endDate.text =
+                                                      DateFormat('dd-MM-yyyy')
+                                                          .format(endValue);
                                                 });
                                               }
                                             },
@@ -1953,6 +1963,20 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                       .clear();
                                                                   productTotalAmount
                                                                       .clear();
+                                                                  startDate
+                                                                      .text = DateFormat(
+                                                                          'dd-MM-yyyy')
+                                                                      .format(
+                                                                          invoiceDate);
+                                                                  final endValue =
+                                                                      invoiceDate.add(
+                                                                          Duration(
+                                                                              days: int.parse(typeDuration)));
+                                                                  endDate
+                                                                      .text = DateFormat(
+                                                                          'dd-MM-yyyy')
+                                                                      .format(
+                                                                          endValue);
                                                                   Navigator.of(
                                                                           context)
                                                                       .pop();
@@ -3213,9 +3237,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                         final endValue = selectedValue.add(
                                             Duration(
                                                 days: int.parse(typeDuration)));
-                                        endDate.text =
-                                            DateFormat('dd-MM-yyyy')
-                                                .format(endValue);
+                                        endDate.text = DateFormat('dd-MM-yyyy')
+                                            .format(endValue);
                                       });
                                     },
                                     validator: (value) {

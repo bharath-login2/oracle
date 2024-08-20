@@ -2631,26 +2631,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                               if (updateReminder.status == true) {
                                                                                                                 Common.toastMessaage(updateReminder.message, Colors.green);
                                                                                                                 if (context.mounted) {
-                                                                                                                  Navigator.push(
-                                                                                                                    context,
-                                                                                                                    MaterialPageRoute(
-                                                                                                                        builder: (context) => LeadDetails(
-                                                                                                                              widget.token,
-                                                                                                                              widget.editLead,
-                                                                                                                              widget.deleteLead,
-                                                                                                                              widget.cloudCall,
-                                                                                                                              callMasterId,
-                                                                                                                              pageName: widget.pageName,
-                                                                                                                              status: widget.status,
-                                                                                                                              staff: widget.staff,
-                                                                                                                              isCalled: widget.isCalled,
-                                                                                                                              fromDate: widget.fromDate,
-                                                                                                                              toDate: widget.toDate,
-                                                                                                                              category: widget.category,
-                                                                                                                              searchKey: widget.searchKey,
-                                                                                                                              leadType: widget.leadType,
-                                                                                                                            )),
-                                                                                                                  );
+                                                                                                                  Navigator.pop(context);
+                                                                                                                  Navigator.pop(context);
                                                                                                                 }
                                                                                                               } else {
                                                                                                                 Common.toastMessaage(updateReminder.message, Colors.red);
@@ -3381,8 +3363,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   top: 30.0,
                                                   left: 15.0,
                                                   child: Container(
-                                                    height: 30.0,
-                                                    width: 80.0,
+                                                    // height: 60.0,
+                                                    // width: 105.0,
                                                     decoration:
                                                         const BoxDecoration(
                                                       boxShadow: [
@@ -3398,14 +3380,25 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               Radius.circular(
                                                                   10)),
                                                     ),
-                                                    child: Center(
-                                                        child: Text(
-                                                      leadDetailsAdditional!
-                                                          .data
-                                                          .followUpData[index]
-                                                          .dispalyDate
-                                                          .toString(),
-                                                    )),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4.0),
+                                                      child: Column(
+                                                        children: [
+                                                          Text(
+                                                            " F.NO : ${(leadDetailsAdditional!.data.followUpData.length - index).toString()}",
+                                                            style:
+                                                                const TextStyle(
+                                                                    color: Colors
+                                                                        .green),
+                                                          ),
+                                                          Text(
+                                                            "${leadDetailsAdditional!.data.followUpData[index].dispalyDate.toString()} ",
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
                                                   ),
                                                 )
                                               ],
@@ -3589,7 +3582,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     leadDetailsAdditional!
                                                         .data
                                                         .callHistory[i]
-                                                        .resourceURL
+                                                        .resourceUrl
                                                         .toString(),
                                                     leadDetailsAdditional!
                                                         .data

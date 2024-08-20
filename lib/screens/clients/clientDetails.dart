@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:login2/screens/clients/receiptByInvoice.dart';
 import 'package:login2/screens/clients/viewInvoice.dart';
 import 'package:login2/screens/clients/viewReceipt.dart';
+import 'package:login2/screens/renewal_mannagement/custom_renewal.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
@@ -516,6 +517,45 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                     child: Icon(
                                                       Icons.currency_rupee,
                                                       color: Colors.green,
+                                                      size: 18,
+                                                    ),
+                                                  )),
+                                            ),
+                                            const SizedBox(
+                                              height: 5,
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          CustomRenewal(
+                                                        custId: widget.clientId,
+                                                        custName:
+                                                            mainClientDetail!
+                                                                .data.name
+                                                                .toString(),
+                                                      ),
+                                                    ));
+                                              },
+                                              child: Container(
+                                                  decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5),
+                                                      border: Border.all(
+                                                          color:
+                                                              Colors.purple)),
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.only(
+                                                        left: 7,
+                                                        right: 7,
+                                                        top: 7,
+                                                        bottom: 7),
+                                                    child: Icon(
+                                                      Icons.restart_alt,
+                                                      color: Colors.purple,
                                                       size: 18,
                                                     ),
                                                   )),
@@ -1495,7 +1535,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                     ],
                                   )
                                 : const SizedBox(),
-                            SizedBox(
+                            const SizedBox(
                               height: 70,
                             )
                           ],

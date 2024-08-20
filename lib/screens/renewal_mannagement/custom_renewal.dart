@@ -14,8 +14,9 @@ import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
 
 class CustomRenewal extends StatefulWidget {
-  const CustomRenewal({super.key});
-
+  CustomRenewal({super.key, this.custId, this.custName});
+  String? custId;
+  String? custName;
   @override
   State<CustomRenewal> createState() => _CustomRenewalState();
 }
@@ -139,6 +140,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
   }
 
   getRenewalDetails() async {
+    if (widget.custId != null && widget.custName != null) {
+      customerIdExisting = widget.custId!;
+      customerNameExisting.text = widget.custName!;
+    }
     setState(() {
       isLoading = true;
     });
@@ -326,36 +331,46 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 ),
               ),
             ),
-            bottom: const TabBar(
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorColor: Colors.white,
-              labelColor: Colors.white,
-              tabs: [
-                Tab(
-                  text: 'Existing',
-                ), // Define tabs
-                Tab(text: 'New'),
-              ],
-            ),
+            bottom: widget.custId != null && widget.custName != null
+                ? null
+                : const TabBar(
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicatorColor: Colors.white,
+                    labelColor: Colors.white,
+                    tabs: [
+                      Tab(
+                        text: 'Existing',
+                      ), // Define tabs
+                      Tab(text: 'New'),
+                    ],
+                  ),
           ),
-          body: TabBarView(
-            children: [
-              isLoading == true
+          body: widget.custId != null && widget.custName != null
+              ? isLoading == true
                   ? const Center(
                       child: CircularProgressIndicator(
                         color: Colors.grey,
                       ),
                     )
-                  : existingWidget(context),
-              isLoading == true
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.grey,
-                      ),
-                    )
-                  : newWidget(context),
-            ],
-          )),
+                  : existingWidget(context)
+              : TabBarView(
+                  children: [
+                    isLoading == true
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.grey,
+                            ),
+                          )
+                        : existingWidget(context),
+                    isLoading == true
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.grey,
+                            ),
+                          )
+                        : newWidget(context),
+                  ],
+                )),
     );
   }
 
@@ -385,7 +400,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Customer *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -397,10 +413,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 ),
                 const SizedBox(height: 14.0),
                 TextFormField(
-                  
                   controller: invoiceNumber,
                   readOnly: true,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Number',
                     prefixIcon: Icon(Icons.receipt, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -432,7 +448,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Date',
                     prefixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -458,7 +475,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(
                             // Custom border
                             borderRadius: BorderRadius.circular(5),
@@ -486,7 +504,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   onTap: (() {
                     dropDialogExisting(context, "Products");
                   }),
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Product *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -506,7 +525,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         onChanged: (val) {
                           calculateTotalExisting();
                         },
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Rate *',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -564,7 +584,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
                                 ),
                                 labelStyle: const TextStyle(color: Colors.grey),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 8,),
+                                  horizontal: 8.0,
+                                  vertical: 8,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(5.0),
                                 ),
@@ -618,7 +640,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         },
                         keyboardType: TextInputType.number,
                         controller: prodTaxExisting,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Tax(in %)',
                             prefixIcon: Icon(Icons.percent, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -635,7 +658,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         readOnly: true,
                         controller: prodAmountExisting,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Amount',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -655,7 +679,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         maxLines: 2,
                         controller: prodDetailsExisting,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Details',
                             prefixIcon:
                                 Icon(Icons.receipt_long, color: Colors.grey),
@@ -788,7 +813,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: subTotalExisting,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Sub Total',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -821,7 +847,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalTaxExisting,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Tax',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -867,7 +894,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: discountExisting,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Discount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -913,7 +941,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeExisting,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Shipping Charge',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -946,7 +975,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalAmountExisting,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Amount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -986,7 +1016,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                     );
                   }).toList(),
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
@@ -1018,7 +1049,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: payStatExisting != "partial" ? true : false,
                         keyboardType: TextInputType.number,
                         controller: totalPaidAmountExisting,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Total Amount Paid',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1053,7 +1085,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -1090,7 +1123,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -1131,7 +1165,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Start Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -1161,7 +1196,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: endDateExisting,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'End Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -1178,7 +1214,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: remindMeExisting,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Remind Template ',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1190,7 +1227,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: remarkExisting,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Remarks',
                       prefixIcon: Icon(Icons.description, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1268,7 +1306,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Customer Name *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1282,7 +1321,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   controller: invoiceNumber,
                   readOnly: true,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Number',
                     prefixIcon: Icon(Icons.receipt, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1314,7 +1354,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Invoice Date',
                     prefixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1341,7 +1382,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Number *',
                     prefix: Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -1375,7 +1417,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   keyboardType: TextInputType.phone,
                   controller: whatsappNumber,
-                  decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'WhatsApp Number',
                     prefix: Padding(
                       padding: const EdgeInsets.only(right: 10),
@@ -1415,7 +1458,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.border_color, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -1427,7 +1471,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address1,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 1',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1440,7 +1485,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address2,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 2',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1453,7 +1499,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: address3,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Address Line 3',
                     prefixIcon: Icon(Icons.home, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1467,7 +1514,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   keyboardType: TextInputType.number,
                   controller: pinCode,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Pincode',
                     prefixIcon: Icon(Icons.pin_drop, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1480,7 +1528,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: postOffice,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Post Office',
                     prefixIcon:
                         Icon(Icons.local_post_office_sharp, color: Colors.grey),
@@ -1494,7 +1543,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: gstNumber,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'GST Number',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1520,7 +1570,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(
                             // Custom border
                             borderRadius: BorderRadius.circular(5),
@@ -1548,7 +1599,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   onTap: (() {
                     dropDialogNew(context, "Products");
                   }),
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     labelText: 'Product *',
                     prefixIcon: Icon(Icons.person, color: Colors.grey),
                     border: OutlineInputBorder(),
@@ -1568,7 +1620,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         onChanged: (val) {
                           calculateTotalNew();
                         },
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Rate *',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1680,7 +1733,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         },
                         keyboardType: TextInputType.number,
                         controller: prodTaxNew,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Tax(in %)',
                             prefixIcon: Icon(Icons.percent, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -1697,7 +1751,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         readOnly: true,
                         controller: prodAmountNew,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Amount',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -1717,7 +1772,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       child: TextFormField(
                         maxLines: 2,
                         controller: prodDetailsNew,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Details',
                             prefixIcon:
                                 Icon(Icons.receipt_long, color: Colors.grey),
@@ -1849,7 +1905,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: subTotalNew,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Sub Total',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1882,7 +1939,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalTaxNew,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Tax',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1926,7 +1984,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: discountNew,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Discount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -1970,7 +2029,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                               },
                               keyboardType: TextInputType.number,
                               controller: shippingChargeNew,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Shipping Charge',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -2003,7 +2063,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             child: TextFormField(
                               readOnly: true,
                               controller: totalAmountNew,
-                              decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
                                   labelText: 'Total Amount',
                                   prefixIcon: Icon(Icons.currency_rupee,
                                       color: Colors.grey),
@@ -2043,7 +2104,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       ),
                     );
                   }).toList(),
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.grey),
@@ -2074,7 +2136,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: payStatNew != "partial" ? true : false,
                         keyboardType: TextInputType.number,
                         controller: totalPaidAmountNew,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
                             labelText: 'Total Amount Paid',
                             prefixIcon:
                                 Icon(Icons.currency_rupee, color: Colors.grey),
@@ -2108,7 +2171,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -2144,7 +2208,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             ),
                           );
                         }).toList(),
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
                           focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
@@ -2185,7 +2250,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     }
                     return null;
                   },
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Start Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -2215,7 +2281,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: endDateNew,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'End Date *',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
@@ -2232,7 +2299,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   },
                   readOnly: true,
                   controller: remindMeNew,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Remind Template ',
                       prefixIcon: Icon(Icons.notifications, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -2244,7 +2312,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 const SizedBox(height: 14.0),
                 TextFormField(
                   controller: remarkNew,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.all(8),
+                  decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
                       labelText: 'Remarks',
                       prefixIcon: Icon(Icons.description, color: Colors.grey),
                       border: OutlineInputBorder(),

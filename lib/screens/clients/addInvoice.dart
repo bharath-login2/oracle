@@ -70,8 +70,10 @@ class _AddInvoiceState extends State<AddInvoice> {
   double allTotal = 0.00;
   bool isPaying = false;
   dynamic paymentMethod;
-  List<Products> items = [];
-  List<Products> filteredItems = [];
+  dynamic paymentStatus;
+  dynamic collectedStaff;
+  List<Product> items = [];
+  List<Product> filteredItems = [];
   String productId = "";
   String productName = "Choose Product";
   PostalCodeModel? billingPostal;
@@ -1155,6 +1157,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                 filteredItems[index].taxPercent!;
                                                                             productTaxAmount.text =
                                                                                 filteredItems[index].taxAmount!;
+                                                                            productTotalAmount.text =
+                                                                                ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
+                                                                            productTotalAmount.text =
+                                                                                double.parse(productTotalAmount.text).toStringAsFixed(2);
                                                                             setState(() {});
                                                                             if (context.mounted) {
                                                                               Navigator.pop(context);
@@ -1740,7 +1746,9 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       child: child,
                                     );
                                   },
-                                );
+                                ).then((_) {
+                                  setState(() {});
+                                });
                               },
                               child: Container(
                                   decoration: BoxDecoration(
@@ -2261,71 +2269,52 @@ class _AddInvoiceState extends State<AddInvoice> {
                               height: 5,
                             ),
                             const Divider(),
+                            const SizedBox(
+                              height: 5,
+                            ),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text('Paid Amount:'),
+                                  const Text(
+                                    'Total :',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w500),
+                                  ),
                                   const SizedBox(
                                     width: 10,
                                   ),
                                   SizedBox(
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
-                                    height: 35,
-                                    child: TextFormField(
-                                      style: TextStyle(color: paidColor),
-                                      onChanged: (val) {
-                                        if (double.parse(val) > allTotal) {
-                                          Common.toastMessaage(
-                                              'Enter valid amount', Colors.red);
-                                          paidColor = Colors.red;
-                                        } else {
-                                          paidColor = Colors.black;
-                                        }
-                                        setState(() {});
-                                      },
-                                      controller: paidAmount,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                          contentPadding: const EdgeInsets.only(
-                                              left: 10, top: 2, bottom: 2),
-                                          //labelText: 'Invoice Number',
-                                          fillColor: Colors.grey[300],
-                                          filled: true,
-                                          border: const OutlineInputBorder(
-                                            // width: 0.0 produces a thin "hairline" border
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(5)),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide: BorderSide(
-                                                color: Colors.grey.shade300),
-                                          ),
-                                          labelStyle: const TextStyle(
-                                              color: Colors.black)),
+                                    child: Text(
+                                      allTotal.toStringAsFixed(2),
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w500),
                                     ),
-                                  ),
+                                  )
                                 ],
                               ),
                             ),
                             const SizedBox(
-                              height: 10,
+                              height: 5,
                             ),
+                            const Divider(),
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Pay Method:'),
+                                  const Text('Pay Status * :'),
                                   const SizedBox(
                                     width: 10,
                                   ),
                                   SizedBox(
                                     width:
-                                        MediaQuery.of(context).size.width * 0.3,
+                                        MediaQuery.of(context).size.width * 0.5,
                                     height: 35,
                                     child: FormField<String>(
                                       builder: (FormFieldState<String> state) {
@@ -2333,7 +2322,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .width *
-                                              0.43,
+                                              0.5,
                                           decoration: BoxDecoration(
                                               color: Colors.grey.shade300,
                                               borderRadius:
@@ -2345,22 +2334,28 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               hint: const Padding(
                                                 padding:
                                                     EdgeInsets.only(left: 20),
-                                                child: Text('Method'),
+                                                child: Text('Status'),
                                               ),
-                                              value: paymentMethod,
+                                              value: paymentStatus,
                                               items: invDetails!
-                                                  .data!.paymentMethods!
+                                                  .data!.paymentStatus!
                                                   .map((data) {
                                                 return DropdownMenuItem(
-                                                  value: data.id.toString(),
+                                                  value: data.paymentStatus
+                                                      .toString(),
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.only(
                                                             left: 10),
                                                     child: SizedBox(
-                                                      width: 80,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.5,
                                                       child: Text(
-                                                        data.name.toString(),
+                                                        data.displaySts
+                                                            .toString(),
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
@@ -2370,7 +2365,11 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               }).toList(),
                                               onChanged: (newValue) {
                                                 setState(() {
-                                                  paymentMethod = newValue;
+                                                  paymentStatus = newValue;
+                                                  if (paymentStatus == "paid") {
+                                                    paidAmount.text =
+                                                        allTotal.toString();
+                                                  }
                                                 });
                                               },
                                             ),
@@ -2384,6 +2383,240 @@ class _AddInvoiceState extends State<AddInvoice> {
                             ),
                             const SizedBox(
                               height: 10,
+                            ),
+                            if (paymentStatus != "unpaid")
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const Text('Paid Amount * :'),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    SizedBox(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.5,
+                                      height: 35,
+                                      child: TextFormField(
+                                        readOnly: paymentStatus == "paid",
+                                        style: TextStyle(color: paidColor),
+                                        onChanged: (val) {
+                                          if (double.parse(val) > allTotal) {
+                                            Common.toastMessaage(
+                                                'Enter valid amount',
+                                                Colors.red);
+                                            paidColor = Colors.red;
+                                          } else {
+                                            paidColor = Colors.black;
+                                          }
+                                          setState(() {});
+                                        },
+                                        controller: paidAmount,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                            contentPadding:
+                                                const EdgeInsets.only(
+                                                    left: 10,
+                                                    top: 2,
+                                                    bottom: 2),
+                                            //labelText: 'Invoice Number',
+                                            fillColor: Colors.grey[300],
+                                            filled: true,
+                                            border: const OutlineInputBorder(
+                                              // width: 0.0 produces a thin "hairline" border
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(5)),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.grey.shade300),
+                                            ),
+                                            labelStyle: const TextStyle(
+                                                color: Colors.black)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Visibility(
+                              visible: paymentStatus == "paid" ||
+                                  paymentStatus == "partial",
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 10),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        const Text('Pay Method * :'),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.5,
+                                          height: 35,
+                                          child: FormField<String>(
+                                            builder:
+                                                (FormFieldState<String> state) {
+                                              return Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                decoration: BoxDecoration(
+                                                    color: Colors.grey.shade300,
+                                                    borderRadius:
+                                                        const BorderRadius.all(
+                                                            Radius.circular(
+                                                                5))),
+                                                child:
+                                                    DropdownButtonHideUnderline(
+                                                  child: DropdownButton<String>(
+                                                    isExpanded: true,
+                                                    hint: const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          left: 20),
+                                                      child: Text('Method'),
+                                                    ),
+                                                    value: paymentMethod,
+                                                    items: invDetails!
+                                                        .data!.paymentMethods!
+                                                        .map((data) {
+                                                      return DropdownMenuItem(
+                                                        value:
+                                                            data.id.toString(),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 10),
+                                                          child: SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.5,
+                                                            child: Text(
+                                                              data.name
+                                                                  .toString(),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (newValue) {
+                                                      setState(() {
+                                                        paymentMethod =
+                                                            newValue;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 10),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        const Text('Collected By * :'),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.5,
+                                          height: 35,
+                                          child: FormField<String>(
+                                            builder:
+                                                (FormFieldState<String> state) {
+                                              return Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                decoration: BoxDecoration(
+                                                    color: Colors.grey.shade300,
+                                                    borderRadius:
+                                                        const BorderRadius.all(
+                                                            Radius.circular(
+                                                                5))),
+                                                child:
+                                                    DropdownButtonHideUnderline(
+                                                  child: DropdownButton<String>(
+                                                    isExpanded: true,
+                                                    hint: const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          left: 20),
+                                                      child: Text('Staff'),
+                                                    ),
+                                                    value: collectedStaff,
+                                                    items: invDetails!
+                                                        .data.staff
+                                                        .map((data) {
+                                                      return DropdownMenuItem(
+                                                        value: data.accountId
+                                                            .toString(),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 10),
+                                                          child: SizedBox(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.5,
+                                                            child: Text(
+                                                              data.accountName
+                                                                  .toString(),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (newValue) {
+                                                      setState(() {
+                                                        collectedStaff =
+                                                            newValue;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             paymentMethod == '2'
                                 ? Container(
@@ -2582,6 +2815,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       'shipping_amount': shippingCharge.text,
                                       'total_invoice_amount': allTotal,
                                       'payment_method': paymentMethod,
+                                      'payment_status': paymentStatus,
+                                      'collected_staff': collectedStaff,
                                       'remarks': remarks.text,
                                       'billing_name': billingName.text,
                                       'billing_address': billingAddress.text,
@@ -3072,6 +3307,10 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                             allTotal,
                                                         'payment_method':
                                                             paymentMethod,
+                                                        'payment_status':
+                                                            paymentStatus,
+                                                        'collected_staff':
+                                                            collectedStaff,
                                                         'remarks': remarks.text,
                                                         'billing_name':
                                                             billingName.text,

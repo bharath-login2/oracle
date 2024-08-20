@@ -85,10 +85,8 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   getData() async {
-    if (search == false) {
       assignStaff = widget.name.toString();
       assignStaffId = widget.userId.toString();
-    }
     commonDetails = await HttpService.addLeadCommonData(widget.token);
     if (commonDetails != null) {
       setState(() {});

@@ -1997,7 +1997,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                               )
                             : const SizedBox(),
                         Visibility(
-                          visible: widget.pageName == "Total Called",
+                          visible: widget.pageName == "Total Called" ||widget.pageName == "Missed Leads" ,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
