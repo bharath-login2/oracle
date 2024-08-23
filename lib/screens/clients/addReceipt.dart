@@ -44,7 +44,6 @@ class _ReceiptAddState extends State<ReceiptAdd> {
   String? templateImage;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
   }

@@ -1,8 +1,7 @@
-// ignore_for_file: file_names, must_be_immutable, deprecated_member_use
+// ignore_for_file: file_names, must_be_immutable, deprecated_member_use, use_build_context_synchronously
 
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:country_picker/country_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -12,12 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/addReceipt.dart';
-import 'package:login2/screens/clients/clientList.dart';
 import 'package:login2/screens/clients/receiptList.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
-import '../../models/clients/addInvoiceCheckModel.dart';
 import '../../models/clients/addInvoiceModel.dart';
 import '../../models/clients/ivoiceAddCommonDetailsModel.dart';
 import '../../models/clients/postalCodeModel.dart';
@@ -63,10 +60,14 @@ class _AddInvoiceState extends State<AddInvoice> {
   TextEditingController paidAmount = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController search = TextEditingController();
+  TextEditingController startDate = TextEditingController();
+  TextEditingController endDate = TextEditingController();
+  TextEditingController renewalRemarks = TextEditingController();
+  TextEditingController reminderTemplate = TextEditingController();
 
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
-  double totalTaxAmount = 00;
+  double totalTaxAmount = 0.00;
   double allTotal = 0.00;
   bool isPaying = false;
   dynamic paymentMethod;
@@ -78,18 +79,15 @@ class _AddInvoiceState extends State<AddInvoice> {
   String productName = "Choose Product";
   PostalCodeModel? billingPostal;
   PostalCodeModel? shippingPostal;
-  bool isTextFieldVisible = false;
   bool header = true;
   bool headerContent = false;
   Color paidColor = Colors.black;
   var code = '91';
   String? templateImage;
-
-  void toggleTextFieldVisibility() {
-    setState(() {
-      isTextFieldVisible = !isTextFieldVisible;
-    });
-  }
+  bool createRenewal = false;
+  String typeDuration = "";
+  String templateId = "";
+  List<Template> filteredTemplates = [];
 
   void headerToggle() {
     setState(() {
@@ -120,46 +118,44 @@ class _AddInvoiceState extends State<AddInvoice> {
     invDetails =
         await HttpService.invoiceCommonDetails(widget.token, widget.clientId);
     if (invDetails != null) {
-      billingName.text =
-          invDetails!.data!.billingAddress!.billingName.toString();
+      filteredTemplates = invDetails!.data.template;
+      billingName.text = invDetails!.data.billingAddress.billingName.toString();
       billingAddress.text =
-          invDetails!.data!.billingAddress!.billingAddress.toString();
+          invDetails!.data.billingAddress.billingAddress.toString();
       billingPhone.text =
-          invDetails!.data!.billingAddress!.billingContactNo.toString();
-      billingGstNo.text =
-          invDetails!.data!.billingAddress!.billingGst.toString();
+          invDetails!.data.billingAddress.billingContactNo.toString();
+      billingGstNo.text = invDetails!.data.billingAddress.billingGst.toString();
       billingPinCode.text =
-          invDetails!.data!.billingAddress!.billingPincode.toString();
+          invDetails!.data.billingAddress.billingPincode.toString();
       billingPostOffice.text =
-          invDetails!.data!.billingAddress!.billingPostOffice.toString();
-      if (invDetails!.data!.billingAddress!.billingCountryCode.toString() !=
-          '') {
-        code = invDetails!.data!.billingAddress!.billingCountryCode.toString();
+          invDetails!.data.billingAddress.billingPostOffice.toString();
+      if (invDetails!.data.billingAddress.billingCountryCode.toString() != '') {
+        code = invDetails!.data.billingAddress.billingCountryCode.toString();
       }
       if (billingPinCode.text != '') {
         billingPostal = await HttpService.fetchPostOffice(billingPinCode.text);
       }
 
       shippingName.text =
-          invDetails!.data!.shippingAddress!.shippingName.toString();
+          invDetails!.data.shippingAddress.shippingName.toString();
       shippingAddress.text =
-          invDetails!.data!.shippingAddress!.shippingAddress.toString();
+          invDetails!.data.shippingAddress.shippingAddress.toString();
       shippingPhone.text =
-          invDetails!.data!.shippingAddress!.shippingContactNo.toString();
+          invDetails!.data.shippingAddress.shippingContactNo.toString();
       shippingGstNo.text =
-          invDetails!.data!.shippingAddress!.shippingGst.toString();
+          invDetails!.data.shippingAddress.shippingGst.toString();
       shippingPinCode.text =
-          invDetails!.data!.shippingAddress!.shippingPincode.toString();
+          invDetails!.data.shippingAddress.shippingPincode.toString();
       shippingPostOffice.text =
-          invDetails!.data!.shippingAddress!.shippingPostOffice.toString();
+          invDetails!.data.shippingAddress.shippingPostOffice.toString();
       if (shippingPinCode.text != '') {
         shippingPostal =
             await HttpService.fetchPostOffice(shippingPinCode.text);
       }
 
-      invoiceNumber.text = invDetails!.data!.displayInvoice.toString();
+      invoiceNumber.text = invDetails!.data.displayInvoice.toString();
 
-      items = invDetails!.data!.products!;
+      items = invDetails!.data.products;
       filteredItems.addAll(items);
 
       setState(() {});
@@ -231,7 +227,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 height: 10,
                               )
                             : const SizedBox(),
-                        invDetails!.data!.companyDetails!.isNotEmpty
+                        invDetails!.data.companyDetails.isNotEmpty
                             ? Column(
                                 children: [
                                   InkWell(
@@ -254,8 +250,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 child: Center(
                                                   child: Image.network(
                                                     invDetails!
-                                                        .data!
-                                                        .companyDetails![0]
+                                                        .data
+                                                        .companyDetails[0]
                                                         .companyLogo
                                                         .toString(),
                                                     width: 100,
@@ -275,8 +271,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyRegNo
                                                       .toString(),
                                                   style: const TextStyle(
@@ -295,8 +291,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyContactNo
                                                       .toString(),
                                                   style: const TextStyle(
@@ -338,8 +334,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     child: Center(
                                                       child: Image.network(
                                                         invDetails!
-                                                            .data!
-                                                            .companyDetails![0]
+                                                            .data
+                                                            .companyDetails[0]
                                                             .companyLogo
                                                             .toString(),
                                                         width: 150,
@@ -357,8 +353,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     width: 200,
                                                     child: Text(
                                                       invDetails!
-                                                          .data!
-                                                          .companyDetails![0]
+                                                          .data
+                                                          .companyDetails[0]
                                                           .companyAddress
                                                           .toString(),
                                                       style: const TextStyle(
@@ -366,8 +362,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     )),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyEmail
                                                       .toString(),
                                                   style: const TextStyle(
@@ -391,8 +387,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyRegNo
                                                       .toString(),
                                                   style: const TextStyle(
@@ -411,8 +407,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyContactNo
                                                       .toString(),
                                                   style: const TextStyle(
@@ -431,8 +427,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 Text(
                                                   invDetails!
-                                                      .data!
-                                                      .companyDetails![0]
+                                                      .data
+                                                      .companyDetails[0]
                                                       .companyPincode
                                                       .toString(),
                                                   style: const TextStyle(
@@ -1100,7 +1096,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                           () {
                                                                         filteredItems = items
                                                                             .where((item) =>
-                                                                                item.productName!.toLowerCase().contains(value.toLowerCase()))
+                                                                                item.productName.toLowerCase().contains(value.toLowerCase()))
                                                                             .toList();
                                                                       });
                                                                     },
@@ -1148,26 +1144,28 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                               productQty.text = "1";
                                                                             }
                                                                             productName =
-                                                                                filteredItems[index].productName!;
+                                                                                filteredItems[index].productName;
                                                                             productId =
-                                                                                filteredItems[index].id!;
+                                                                                filteredItems[index].id;
                                                                             productRate.text =
-                                                                                filteredItems[index].sellingPrice!;
+                                                                                filteredItems[index].sellingPrice;
                                                                             productTaxPercent.text =
-                                                                                filteredItems[index].taxPercent!;
+                                                                                filteredItems[index].taxPercent;
                                                                             productTaxAmount.text =
-                                                                                filteredItems[index].taxAmount!;
+                                                                                filteredItems[index].taxAmount;
                                                                             productTotalAmount.text =
                                                                                 ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
                                                                             productTotalAmount.text =
                                                                                 double.parse(productTotalAmount.text).toStringAsFixed(2);
+                                                                            typeDuration =
+                                                                                filteredItems[index].noOfDays;
                                                                             setState(() {});
                                                                             if (context.mounted) {
                                                                               Navigator.pop(context);
                                                                             }
                                                                           },
                                                                           title:
-                                                                              Text(filteredItems[index].productName!));
+                                                                              Text(filteredItems[index].productName));
                                                                     },
                                                                   ),
                                                                 )
@@ -2338,7 +2336,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               ),
                                               value: paymentStatus,
                                               items: invDetails!
-                                                  .data!.paymentStatus!
+                                                  .data.paymentStatus
                                                   .map((data) {
                                                 return DropdownMenuItem(
                                                   value: data.paymentStatus
@@ -2488,7 +2486,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                     ),
                                                     value: paymentMethod,
                                                     items: invDetails!
-                                                        .data!.paymentMethods!
+                                                        .data.paymentMethods
                                                         .map((data) {
                                                       return DropdownMenuItem(
                                                         value:
@@ -2623,7 +2621,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     child: templateImage == null
                                         ? Padding(
                                             padding: const EdgeInsets.only(
-                                                right: 10),
+                                                right: 10, top: 15),
                                             child: Align(
                                               alignment: Alignment.topRight,
                                               child: InkWell(
@@ -2656,7 +2654,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           )
                                         : Padding(
                                             padding: const EdgeInsets.only(
-                                                right: 10),
+                                                right: 10,top:15),
                                             child: Stack(
                                               children: [
                                                 Align(
@@ -2738,45 +2736,176 @@ class _AddInvoiceState extends State<AddInvoice> {
                         const SizedBox(
                           height: 10,
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
                         Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: InkWell(
-                            onTap: toggleTextFieldVisibility,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.end,
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: SizedBox(
+                            child: TextFormField(
+                              controller: remarks,
+                              maxLines: 1,
+                              decoration: InputDecoration(
+                                  labelText: 'Remarks',
+                                  fillColor: Colors.grey[300],
+                                  filled: true,
+                                  //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                  border: const OutlineInputBorder(
+                                    borderSide: BorderSide.none,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(5)),
+                                  ),
+                                  labelStyle:
+                                      const TextStyle(color: Colors.black)),
+                            ),
+                          ),
+                        ),
+                       
+                        if (invDetails!.data.createRenewal)
+                          CheckboxListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              title: const Text('Create Renewal'),
+                              value:
+                                  createRenewal, // initial value of the checkbox
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  createRenewal = value!;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading),
+                        Visibility(
+                          visible: createRenewal,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10.0),
+                            child: Column(
                               children: [
-                                const Text('Add Remark'),
-                                Icon(isTextFieldVisible == false
-                                    ? Icons.keyboard_arrow_down
-                                    : Icons.keyboard_arrow_up)
+                                TextFormField(
+                                  controller: startDate,
+                                  readOnly: true,
+                                  onTap: () async {
+                                    DateTime? selectedValue =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    setState(() {
+                                      startDate.text = DateFormat('dd-MM-yyyy')
+                                          .format(selectedValue!);
+                                      final endValue = selectedValue.add(
+                                          Duration(
+                                              days: int.parse(typeDuration)));
+                                      endDate.text = DateFormat('dd-MM-yyyy')
+                                          .format(endValue);
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "Select Start Date";
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      labelText: 'Start Date *',
+                                      prefixIcon: const Icon(
+                                          Icons.calendar_month,
+                                          color: Colors.black54),
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
+                                ),
+                                const SizedBox(height: 14.0),
+                                TextFormField(
+                                  onTap: () async {
+                                    DateTime? selectedEndDate =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    endDate.text = DateFormat('dd-MM-yyyy')
+                                        .format(selectedEndDate!);
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "Select End Date";
+                                    }
+                                    return null;
+                                  },
+                                  readOnly: true,
+                                  controller: endDate,
+                                  decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      labelText: 'End Date *',
+                                      prefixIcon: const Icon(
+                                          Icons.calendar_month,
+                                          color: Colors.black54),
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
+                                ),
+                                const SizedBox(height: 14.0),
+                                TextFormField(
+                                  onTap: () {
+                                    dropDialog(context);
+                                  },
+                                  readOnly: true,
+                                  controller: reminderTemplate,
+                                  decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      labelText: 'Remind Template ',
+                                      prefixIcon: const Icon(
+                                          Icons.notifications,
+                                          color: Colors.black54),
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
+                                ),
+                                const SizedBox(
+                                  height: 15,
+                                ),
+                                TextFormField(
+                                  controller: renewalRemarks,
+                                  maxLines: 1,
+                                  decoration: InputDecoration(
+                                      labelText: 'Remarks',
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
+                                ),
+                                const SizedBox(height: 20,)
                               ],
                             ),
                           ),
-                        ),
-                        Visibility(
-                          visible: isTextFieldVisible,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              child: TextFormField(
-                                maxLines: 3,
-                                controller: remarks,
-                                keyboardType: TextInputType.text,
-                                decoration: const InputDecoration(
-                                    hintText: 'Remark',
-                                    contentPadding: EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 10),
-                                    border: OutlineInputBorder()),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 20,
                         ),
                         Padding(
                           padding: const EdgeInsets.only(right: 10),
@@ -2791,406 +2920,219 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     double.parse(paidAmount.text) > allTotal) {
                                   Common.toastMessaage(
                                       'Enter valid paid amount', Colors.red);
+                                } else if (createRenewal == true &&
+                                    startDate.text == "") {
+                                  Common.toastMessaage(
+                                      'Start date is required to add renewal',
+                                      Colors.red);
+                                } else if (createRenewal == true &&
+                                    endDate.text == "") {
+                                  Common.toastMessaage(
+                                      'End date is required to add renewal',
+                                      Colors.red);
                                 } else {
                                   Common.showProgressDialog(
                                       context, "Loading..");
-                                  AddInvoiceCheckModel invCheck =
-                                      await HttpService.addInvoiceCheck(
-                                          widget.token,
-                                          code,
-                                          billingPhone.text);
-                                  if (invCheck.data == false) {
-                                    var body = FormData.fromMap({
-                                      "token": widget.token,
-                                      'invoice_number':
-                                          invDetails!.data!.invoiceNumber,
-                                      'invoice_date': DateFormat("dd-MM-yyyy")
-                                          .format(DateTime.parse(
-                                              fromdate.toString())),
-                                      'customer_id':
-                                          invDetails!.data!.customerId,
-                                      'sub_total': subTotal,
-                                      'estimated_tax': totalTaxAmount,
-                                      'discount_amount': discount.text,
-                                      'shipping_amount': shippingCharge.text,
-                                      'total_invoice_amount': allTotal,
-                                      'payment_method': paymentMethod,
-                                      'payment_status': paymentStatus,
-                                      'collected_staff': collectedStaff,
-                                      'remarks': remarks.text,
-                                      'billing_name': billingName.text,
-                                      'billing_address': billingAddress.text,
-                                      'billing_country_code': code,
-                                      'billing_contact_no': billingPhone.text,
-                                      'billing_gst': billingGstNo.text,
-                                      "billing_pincode": billingPinCode.text,
-                                      "billing_post_office":
-                                          billingPostOffice.text,
-                                      'shipping_name': shippingName.text,
-                                      'shipping_address': shippingAddress.text,
-                                      'shipping_contact_no': shippingPhone.text,
-                                      'shipping_gst': shippingGstNo.text,
-                                      "shipping_pincode": shippingPinCode.text,
-                                      'shipping_country_code': code,
-                                      "shipping_post_office":
-                                          shippingPostOffice.text,
-                                      'amount_paid': paidAmount.text,
-                                      'product_details': jsonEncode(products),
-                                      'upload_file': templateImage != null
-                                          ? await MultipartFile.fromFile(
-                                              templateImage.toString())
-                                          : ''
-                                    });
 
-                                    if (context.mounted) {
-                                      Common.showProgressDialog(
-                                          context, "Loading..");
-                                    }
-                                    AddInvoiceModel inv =
-                                        await HttpService.addInvoice(body);
-                                    if (inv.status == true) {
-                                      Common.toastMessaage(
-                                          inv.message, Colors.green);
-                                      if (mounted) {
-                                        showDialog(
-                                            barrierDismissible: false,
-                                            barrierColor:
-                                                Colors.white.withOpacity(.2),
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return WillPopScope(
-                                                onWillPop: () async {
-                                                  return false;
-                                                },
-                                                child: Material(
-                                                  type:
-                                                      MaterialType.transparency,
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            bottom: 50),
-                                                    child: Center(
-                                                      child: Container(
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                          color: Colors.white,
-                                                        ),
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.9,
-                                                        height: 300,
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 20,
-                                                                  right: 20),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .center,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              Image.asset(
-                                                                'assets/icons/check.png',
-                                                                width: 80,
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                              const Text(
-                                                                'Success',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        18,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              Text(
-                                                                inv.message
-                                                                    .toString(),
-                                                                style: const TextStyle(
-                                                                    fontSize:
-                                                                        15,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 15,
-                                                              ),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .push(
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                Dashboard(widget.token)),
-                                                                      );
-                                                                    },
+                                  var body = FormData.fromMap({
+                                    "token": widget.token,
+                                    'invoice_number':
+                                        invDetails!.data.invoiceNumber,
+                                    'invoice_date': DateFormat("dd-MM-yyyy")
+                                        .format(DateTime.parse(
+                                            fromdate.toString())),
+                                    'customer_id': invDetails!.data.customerId,
+                                    'sub_total': subTotal,
+                                    'estimated_tax': totalTaxAmount,
+                                    'discount_amount': discount.text,
+                                    'shipping_amount': shippingCharge.text,
+                                    'total_invoice_amount': allTotal,
+                                    'payment_method': paymentMethod,
+                                    'payment_status': paymentStatus,
+                                    'collected_staff': collectedStaff,
+                                    'billing_name': billingName.text,
+                                    'billing_address': billingAddress.text,
+                                    'billing_country_code': code,
+                                    'billing_contact_no': billingPhone.text,
+                                    'billing_gst': billingGstNo.text,
+                                    "billing_pincode": billingPinCode.text,
+                                    "billing_post_office":
+                                        billingPostOffice.text,
+                                    'shipping_name': shippingName.text,
+                                    'shipping_address': shippingAddress.text,
+                                    'shipping_contact_no': shippingPhone.text,
+                                    'shipping_gst': shippingGstNo.text,
+                                    "shipping_pincode": shippingPinCode.text,
+                                    'shipping_country_code': code,
+                                    "shipping_post_office":
+                                        shippingPostOffice.text,
+                                    'amount_paid': paidAmount.text,
+                                    'product_details': jsonEncode(products),
+                                    'upload_file': templateImage != null
+                                        ? await MultipartFile.fromFile(
+                                            templateImage.toString())
+                                        : '',
+                                    "reminder_template": templateId,
+                                    "start_date": startDate.text,
+                                    "end_date": endDate.text,
+                                    "create_type":
+                                        createRenewal ? 'renewal' : 'invoice',
+                                    "invoice_remarks": remarks.text,
+                                    "renewal_remarks": renewalRemarks.text,
+                                  });
+
+                                  if (context.mounted) {
+                                    Common.showProgressDialog(
+                                        context, "Loading..");
+                                  }
+                                  AddInvoiceModel inv =
+                                      await HttpService.addInvoice(body);
+                                  if (inv.status == true) {
+                                    Common.toastMessaage(
+                                        inv.message, Colors.green);
+                                    if (mounted) {
+                                      showDialog(
+                                          barrierDismissible: false,
+                                          barrierColor:
+                                              Colors.white.withOpacity(.2),
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return WillPopScope(
+                                              onWillPop: () async {
+                                                return false;
+                                              },
+                                              child: Material(
+                                                type: MaterialType.transparency,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 50),
+                                                  child: Center(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                        color: Colors.white,
+                                                      ),
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.9,
+                                                      height: 300,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                left: 20,
+                                                                right: 20),
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Image.asset(
+                                                              'assets/icons/check.png',
+                                                              width: 80,
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 10,
+                                                            ),
+                                                            const Text(
+                                                              'Success',
+                                                              style: TextStyle(
+                                                                  fontSize: 18,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 5,
+                                                            ),
+                                                            Text(
+                                                              inv.message
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 15,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 15,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              Dashboard(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    //  color: RandomColorModel().getColor(),
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
                                                                     child:
-                                                                        Container(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.25,
-                                                                      //  color: RandomColorModel().getColor(),
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10)),
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
                                                                       child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(5),
-                                                                        child:
-                                                                            Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(
-                                                                              Icons.dashboard,
-                                                                              size: 15,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 5,
-                                                                            ),
-                                                                            Text('Dashboard',
-                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
-                                                                        ),
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.dashboard,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Dashboard',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .push(
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                InvoiceList(widget.token)),
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.25,
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10)),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(5),
-                                                                        child:
-                                                                            Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(
-                                                                              Icons.list_alt,
-                                                                              size: 15,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 5,
-                                                                            ),
-                                                                            Text('Invoice',
-                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      if (double.parse(
-                                                                              paidAmount.text) <
-                                                                          allTotal) {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
-                                                                        );
-                                                                      } else {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ReceiptList(
-                                                                                    widget.token,
-                                                                                  )),
-                                                                        );
-                                                                      }
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.25,
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10)),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(5),
-                                                                        child:
-                                                                            Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(
-                                                                              Icons.currency_rupee,
-                                                                              size: 15,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 5,
-                                                                            ),
-                                                                            Text('Receipt',
-                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 8,
-                                                              ),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .push(
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                HomePage(widget.token)),
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.25,
-                                                                      //  color: RandomColorModel().getColor(),
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10)),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(5),
-                                                                        child:
-                                                                            Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(
-                                                                              Icons.home,
-                                                                              size: 15,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 5,
-                                                                            ),
-                                                                            Text('Home',
-                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 10,
-                                                                  ),
-                                                                  // InkWell(
-                                                                  //   onTap: () {
-                                                                  //     Navigator.of(
-                                                                  //             context)
-                                                                  //         .push(
-                                                                  //       MaterialPageRoute(
-                                                                  //           builder: (context) =>
-                                                                  //               ClientList(widget.token)),
-                                                                  //     );
-                                                                  //   },
-                                                                  //   child:
-                                                                  //       Container(
-                                                                  //     width: MediaQuery.of(context)
-                                                                  //             .size
-                                                                  //             .width *
-                                                                  //         0.25,
-                                                                  //     decoration: BoxDecoration(
-                                                                  //         color: Colors
-                                                                  //             .green
-                                                                  //             .shade100,
-                                                                  //         borderRadius:
-                                                                  //             BorderRadius.circular(10)),
-                                                                  //     child:
-                                                                  //         const Padding(
-                                                                  //       padding:
-                                                                  //           EdgeInsets.all(5),
-                                                                  //       child:
-                                                                  //           Column(
-                                                                  //         mainAxisAlignment:
-                                                                  //             MainAxisAlignment.spaceEvenly,
-                                                                  //         children: [
-                                                                  //           Icon(
-                                                                  //             Icons.person,
-                                                                  //             size: 15,
-                                                                  //           ),
-                                                                  //           SizedBox(
-                                                                  //             height: 5,
-                                                                  //           ),
-                                                                  //           Text('Clients',
-                                                                  //               style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                  //               textAlign: TextAlign.center),
-                                                                  //         ],
-                                                                  //       ),
-                                                                  //     ),
-                                                                  //   ),
-                                                                  // ),
-                                                                  Container(
+                                                                ),
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              InvoiceList(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
                                                                     width: MediaQuery.of(context)
                                                                             .size
                                                                             .width *
@@ -3212,7 +3154,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                             MainAxisAlignment.spaceEvenly,
                                                                         children: [
                                                                           Icon(
-                                                                            Icons.details,
+                                                                            Icons.list_alt,
                                                                             size:
                                                                                 15,
                                                                           ),
@@ -3221,462 +3163,260 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                                 5,
                                                                           ),
                                                                           Text(
-                                                                              'Others',
+                                                                              'Invoice',
                                                                               style: TextStyle(fontSize: 13, color: Colors.black),
                                                                               textAlign: TextAlign.center),
                                                                         ],
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
+                                                                ),
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    if (double.parse(
+                                                                            paidAmount.text) <
+                                                                        allTotal) {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
+                                                                        MaterialPageRoute(
+                                                                            builder: (context) => ReceiptAdd(
+                                                                                widget.token,
+                                                                                widget.clientId,
+                                                                                inv.data.toString())),
+                                                                      );
+                                                                    } else {
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .push(
+                                                                        MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                ReceiptList(
+                                                                                  widget.token,
+                                                                                )),
+                                                                      );
+                                                                    }
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.currency_rupee,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Receipt',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 8,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              HomePage(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    //  color: RandomColorModel().getColor(),
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.home,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Home',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                // InkWell(
+                                                                //   onTap: () {
+                                                                //     Navigator.of(
+                                                                //             context)
+                                                                //         .push(
+                                                                //       MaterialPageRoute(
+                                                                //           builder: (context) =>
+                                                                //               ClientList(widget.token)),
+                                                                //     );
+                                                                //   },
+                                                                //   child:
+                                                                //       Container(
+                                                                //     width: MediaQuery.of(context)
+                                                                //             .size
+                                                                //             .width *
+                                                                //         0.25,
+                                                                //     decoration: BoxDecoration(
+                                                                //         color: Colors
+                                                                //             .green
+                                                                //             .shade100,
+                                                                //         borderRadius:
+                                                                //             BorderRadius.circular(10)),
+                                                                //     child:
+                                                                //         const Padding(
+                                                                //       padding:
+                                                                //           EdgeInsets.all(5),
+                                                                //       child:
+                                                                //           Column(
+                                                                //         mainAxisAlignment:
+                                                                //             MainAxisAlignment.spaceEvenly,
+                                                                //         children: [
+                                                                //           Icon(
+                                                                //             Icons.person,
+                                                                //             size: 15,
+                                                                //           ),
+                                                                //           SizedBox(
+                                                                //             height: 5,
+                                                                //           ),
+                                                                //           Text('Clients',
+                                                                //               style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                //               textAlign: TextAlign.center),
+                                                                //         ],
+                                                                //       ),
+                                                                //     ),
+                                                                //   ),
+                                                                // ),
+                                                                Container(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.25,
+                                                                  decoration: BoxDecoration(
+                                                                      color: Colors
+                                                                          .green
+                                                                          .shade100,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              10)),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets
+                                                                            .all(5),
+                                                                    child:
+                                                                        Column(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceEvenly,
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .details,
+                                                                          size:
+                                                                              15,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              5,
+                                                                        ),
+                                                                        Text(
+                                                                            'Others',
+                                                                            style:
+                                                                                TextStyle(fontSize: 13, color: Colors.black),
+                                                                            textAlign: TextAlign.center),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
                                                     ),
                                                   ),
                                                 ),
-                                              );
-                                            });
-                                      }
-
-                                      // if (mounted) {
-                                      //   Navigator.push(
-                                      //     context,
-                                      //     MaterialPageRoute(
-                                      //         builder: (context) => InvoiceList(
-                                      //             widget.token)),
-                                      //   );
-                                      // }
-                                    } else {
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
-                                      }
-                                      Common.toastMessaage(
-                                          inv.message, Colors.green);
-                                    }
-                                  } else {
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop();
-                                      showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (BuildContext ctx) {
-                                            return AlertDialog(
-                                              title: const Text('Alert !!!'),
-                                              content: Text(
-                                                  invCheck.message.toString()),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .push(
-                                                              MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            Dashboard(
-                                                                widget.token),
-                                                      ));
-                                                    },
-                                                    child:
-                                                        const Text('Ignore')),
-                                                TextButton(
-                                                    onPressed: () async {
-                                                      var body =
-                                                          FormData.fromMap({
-                                                        "token": widget.token,
-                                                        'invoice_number':
-                                                            invDetails!.data!
-                                                                .invoiceNumber,
-                                                        'invoice_date': DateFormat(
-                                                                "dd-MM-yyyy")
-                                                            .format(DateTime
-                                                                .parse(fromdate
-                                                                    .toString())),
-                                                        'customer_id':
-                                                            invDetails!.data!
-                                                                .customerId,
-                                                        'sub_total': subTotal,
-                                                        'estimated_tax':
-                                                            totalTaxAmount,
-                                                        'discount_amount':
-                                                            discount.text,
-                                                        'shipping_amount':
-                                                            shippingCharge.text,
-                                                        'total_invoice_amount':
-                                                            allTotal,
-                                                        'payment_method':
-                                                            paymentMethod,
-                                                        'payment_status':
-                                                            paymentStatus,
-                                                        'collected_staff':
-                                                            collectedStaff,
-                                                        'remarks': remarks.text,
-                                                        'billing_name':
-                                                            billingName.text,
-                                                        'billing_address':
-                                                            billingAddress.text,
-                                                        'billing_country_code':
-                                                            code,
-                                                        'billing_contact_no':
-                                                            billingPhone.text,
-                                                        'billing_gst':
-                                                            billingGstNo.text,
-                                                        "billing_pincode":
-                                                            billingPinCode.text,
-                                                        "billing_post_office":
-                                                            billingPostOffice
-                                                                .text,
-                                                        'shipping_name':
-                                                            shippingName.text,
-                                                        'shipping_address':
-                                                            shippingAddress
-                                                                .text,
-                                                        'shipping_contact_no':
-                                                            shippingPhone.text,
-                                                        'shipping_gst':
-                                                            shippingGstNo.text,
-                                                        "shipping_pincode":
-                                                            shippingPinCode
-                                                                .text,
-                                                        'shipping_country_code':
-                                                            code,
-                                                        "shipping_post_office":
-                                                            shippingPostOffice
-                                                                .text,
-                                                        'amount_paid':
-                                                            paidAmount.text,
-                                                        'product_details':
-                                                            jsonEncode(
-                                                                products),
-                                                        'upload_file': templateImage !=
-                                                                null
-                                                            ? await MultipartFile
-                                                                .fromFile(
-                                                                    templateImage
-                                                                        .toString())
-                                                            : ''
-                                                      });
-
-                                                      if (context.mounted) {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                      }
-                                                      AddInvoiceModel inv =
-                                                          await HttpService
-                                                              .addInvoice(body);
-                                                      if (inv.status == true) {
-                                                        Common.toastMessaage(
-                                                            inv.message,
-                                                            Colors.green);
-                                                        if (context.mounted) {
-                                                          showDialog(
-                                                              barrierDismissible:
-                                                                  false,
-                                                              barrierColor: Colors
-                                                                  .white
-                                                                  .withOpacity(
-                                                                      .2),
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      context) {
-                                                                return WillPopScope(
-                                                                  onWillPop:
-                                                                      () async {
-                                                                    return false;
-                                                                  },
-                                                                  child:
-                                                                      Material(
-                                                                    type: MaterialType
-                                                                        .transparency,
-                                                                    child:
-                                                                        Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          bottom:
-                                                                              50),
-                                                                      child:
-                                                                          Center(
-                                                                        child:
-                                                                            Container(
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(10),
-                                                                            color:
-                                                                                Colors.white,
-                                                                          ),
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * 0.9,
-                                                                          height:
-                                                                              300,
-                                                                          child:
-                                                                              Padding(
-                                                                            padding:
-                                                                                const EdgeInsets.only(left: 20, right: 20),
-                                                                            child:
-                                                                                Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                                                              children: [
-                                                                                Image.asset(
-                                                                                  'assets/icons/check.png',
-                                                                                  width: 80,
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 10,
-                                                                                ),
-                                                                                const Text(
-                                                                                  'Success',
-                                                                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 5,
-                                                                                ),
-                                                                                Text(
-                                                                                  inv.message.toString(),
-                                                                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 15,
-                                                                                ),
-                                                                                Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                  children: [
-                                                                                    InkWell(
-                                                                                      onTap: () {
-                                                                                        Navigator.of(context).push(
-                                                                                          MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
-                                                                                        );
-                                                                                      },
-                                                                                      child: Container(
-                                                                                        width: MediaQuery.of(context).size.width * 0.25,
-                                                                                        //  color: RandomColorModel().getColor(),
-                                                                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                        child: const Padding(
-                                                                                          padding: EdgeInsets.all(5),
-                                                                                          child: Column(
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                            children: [
-                                                                                              Icon(
-                                                                                                Icons.dashboard,
-                                                                                                size: 15,
-                                                                                              ),
-                                                                                              SizedBox(
-                                                                                                height: 5,
-                                                                                              ),
-                                                                                              Text('Dashboard', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                    InkWell(
-                                                                                      onTap: () {
-                                                                                        Navigator.of(context).push(
-                                                                                          MaterialPageRoute(builder: (context) => InvoiceList(widget.token)),
-                                                                                        );
-                                                                                      },
-                                                                                      child: Container(
-                                                                                        width: MediaQuery.of(context).size.width * 0.25,
-                                                                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                        child: const Padding(
-                                                                                          padding: EdgeInsets.all(5),
-                                                                                          child: Column(
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                            children: [
-                                                                                              Icon(
-                                                                                                Icons.list_alt,
-                                                                                                size: 15,
-                                                                                              ),
-                                                                                              SizedBox(
-                                                                                                height: 5,
-                                                                                              ),
-                                                                                              Text('Invoice', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                    InkWell(
-                                                                                      onTap: () {
-                                                                                        if (double.parse(paidAmount.text) < allTotal) {
-                                                                                          Navigator.of(context).push(
-                                                                                            MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, widget.clientId, inv.data.toString())),
-                                                                                          );
-                                                                                        } else {
-                                                                                          Navigator.of(context).push(
-                                                                                            MaterialPageRoute(
-                                                                                                builder: (context) => ReceiptList(
-                                                                                                      widget.token,
-                                                                                                    )),
-                                                                                          );
-                                                                                        }
-                                                                                      },
-                                                                                      child: Container(
-                                                                                        width: MediaQuery.of(context).size.width * 0.25,
-                                                                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                        child: const Padding(
-                                                                                          padding: EdgeInsets.all(5),
-                                                                                          child: Column(
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                            children: [
-                                                                                              Icon(
-                                                                                                Icons.currency_rupee,
-                                                                                                size: 15,
-                                                                                              ),
-                                                                                              SizedBox(
-                                                                                                height: 5,
-                                                                                              ),
-                                                                                              Text('Receipt', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 8,
-                                                                                ),
-                                                                                Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                  children: [
-                                                                                    InkWell(
-                                                                                      onTap: () {
-                                                                                        Navigator.of(context).push(
-                                                                                          MaterialPageRoute(builder: (context) => HomePage(widget.token)),
-                                                                                        );
-                                                                                      },
-                                                                                      child: Container(
-                                                                                        width: MediaQuery.of(context).size.width * 0.25,
-                                                                                        //  color: RandomColorModel().getColor(),
-                                                                                        decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                        child: const Padding(
-                                                                                          padding: EdgeInsets.all(5),
-                                                                                          child: Column(
-                                                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                            children: [
-                                                                                              Icon(
-                                                                                                Icons.home,
-                                                                                                size: 15,
-                                                                                              ),
-                                                                                              SizedBox(
-                                                                                                height: 5,
-                                                                                              ),
-                                                                                              Text('Home', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                    const SizedBox(
-                                                                                      width: 10,
-                                                                                    ),
-                                                                                    // InkWell(
-                                                                                    //   onTap: () {
-                                                                                    //     Navigator.of(
-                                                                                    //             context)
-                                                                                    //         .push(
-                                                                                    //       MaterialPageRoute(
-                                                                                    //           builder: (context) =>
-                                                                                    //               ClientList(widget.token)),
-                                                                                    //     );
-                                                                                    //   },
-                                                                                    //   child:
-                                                                                    //       Container(
-                                                                                    //     width: MediaQuery.of(context)
-                                                                                    //             .size
-                                                                                    //             .width *
-                                                                                    //         0.25,
-                                                                                    //     decoration: BoxDecoration(
-                                                                                    //         color: Colors
-                                                                                    //             .green
-                                                                                    //             .shade100,
-                                                                                    //         borderRadius:
-                                                                                    //             BorderRadius.circular(10)),
-                                                                                    //     child:
-                                                                                    //         const Padding(
-                                                                                    //       padding:
-                                                                                    //           EdgeInsets.all(5),
-                                                                                    //       child:
-                                                                                    //           Column(
-                                                                                    //         mainAxisAlignment:
-                                                                                    //             MainAxisAlignment.spaceEvenly,
-                                                                                    //         children: [
-                                                                                    //           Icon(
-                                                                                    //             Icons.person,
-                                                                                    //             size: 15,
-                                                                                    //           ),
-                                                                                    //           SizedBox(
-                                                                                    //             height: 5,
-                                                                                    //           ),
-                                                                                    //           Text('Clients',
-                                                                                    //               style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                    //               textAlign: TextAlign.center),
-                                                                                    //         ],
-                                                                                    //       ),
-                                                                                    //     ),
-                                                                                    //   ),
-                                                                                    // ),
-                                                                                    Container(
-                                                                                      width: MediaQuery.of(context).size.width * 0.25,
-                                                                                      decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                                      child: const Padding(
-                                                                                        padding: EdgeInsets.all(5),
-                                                                                        child: Column(
-                                                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                          children: [
-                                                                                            Icon(
-                                                                                              Icons.details,
-                                                                                              size: 15,
-                                                                                            ),
-                                                                                            SizedBox(
-                                                                                              height: 5,
-                                                                                            ),
-                                                                                            Text('Others', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                          ],
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              });
-                                                        }
-
-                                                        // if (mounted) {
-                                                        //   Navigator.push(
-                                                        //     context,
-                                                        //     MaterialPageRoute(
-                                                        //         builder: (context) => InvoiceList(
-                                                        //             widget.token)),
-                                                        //   );
-                                                        // }
-                                                      } else {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        Common.toastMessaage(
-                                                            inv.message,
-                                                            Colors.green);
-                                                      }
-                                                    },
-                                                    child:
-                                                        const Text('Submit')),
-                                              ],
+                                              ),
                                             );
                                           });
                                     }
+
+                                    // if (mounted) {
+                                    //   Navigator.push(
+                                    //     context,
+                                    //     MaterialPageRoute(
+                                    //         builder: (context) => InvoiceList(
+                                    //             widget.token)),
+                                    //   );
+                                    // }
+                                  } else {
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                    Common.toastMessaage(
+                                        inv.message, Colors.green);
                                   }
                                 }
                               },
@@ -3832,5 +3572,90 @@ class _AddInvoiceState extends State<AddInvoice> {
         );
       }),
     );
+  }
+
+  Future<dynamic> dropDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Builder(builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+                scrollable: true,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * .6,
+                      height: 40,
+                      child: TextFormField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.only(left: 8),
+                          labelStyle: TextStyle(
+                            color: Colors.grey,
+                          ),
+                          labelText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                        ),
+                        onChanged: ((value) {
+                          setState(() {
+                            filterTemplates(value);
+                          });
+                        }),
+                      ),
+                    )
+                  ],
+                ),
+                content: SizedBox(
+                  height: MediaQuery.of(context).size.height * .4,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: filteredTemplates.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        onTap: () async {
+                          reminderTemplate.text =
+                              filteredTemplates[index].templateName;
+                          templateId = filteredTemplates[index].id;
+                          filterTemplates("");
+                          Navigator.pop(context);
+                        },
+                        title: SizedBox(
+                          width: 200,
+                          child: Text(
+                            filteredTemplates[index].templateName.toString(),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ));
+          });
+        });
+      },
+    );
+  }
+
+  void filterTemplates(
+    String query,
+  ) {
+    filteredTemplates = invDetails!.data.template
+        .where((map) =>
+            map.templateName.toLowerCase().contains(query.toLowerCase()))
+        .toList();
   }
 }

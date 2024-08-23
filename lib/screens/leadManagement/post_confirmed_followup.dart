@@ -1862,6 +1862,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           onChanged: (bool? value) {
                             setState(() {
                               createRenewal = value!;
+
                             });
                           },
                           controlAffinity: ListTileControlAffinity.leading),
@@ -2119,6 +2120,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                               filteredTemplates[index].templateName;
                           templateId = filteredTemplates[index].id;
                           filterTemplates("");
+                          Navigator.pop(context);
                         },
                         title: SizedBox(
                           width: 200,

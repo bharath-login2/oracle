@@ -62,6 +62,8 @@ class _CallLogsState extends State<CallLogs> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    assignStaff = widget.name.toString();
+    assignStaffId = widget.userId.toString();
     getSharedData();
     getPermission();
   }
@@ -85,8 +87,6 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   getData() async {
-      assignStaff = widget.name.toString();
-      assignStaffId = widget.userId.toString();
     commonDetails = await HttpService.addLeadCommonData(widget.token);
     if (commonDetails != null) {
       setState(() {});
@@ -392,6 +392,14 @@ class _CallLogsState extends State<CallLogs> {
                                             : const Color(0xFF717171),
                                       ),
                                     ),
+                                    Text(
+                                      ' (${_callLogEntries.length})',
+                                      style: TextStyle(
+                                        color: selectedIndex == 0
+                                            ? const Color(0xFF3c9f9a)
+                                            : const Color(0xFF717171),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -432,6 +440,15 @@ class _CallLogsState extends State<CallLogs> {
                                             : const Color(0xFF717171),
                                       ),
                                     ),
+                                    if (logHistory != null)
+                                      Text(
+                                        ' (${logHistory!.data!.length})',
+                                        style: TextStyle(
+                                          color: selectedIndex == 1
+                                              ? const Color(0xFF3c9f9a)
+                                              : const Color(0xFF717171),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -550,8 +567,12 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                        
-                                                                    Common.directCall(_callLogEntries.elementAt(indexStaff).number.toString());
+                                                        Common.directCall(
+                                                            _callLogEntries
+                                                                .elementAt(
+                                                                    indexStaff)
+                                                                .number
+                                                                .toString());
                                                       } else {
                                                         Navigator.push(
                                                             context,
@@ -1402,8 +1423,11 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                       
-                                                                    Common.directCall(logHistory!.data![index].phoneNumber.toString());
+                                                        Common.directCall(
+                                                            logHistory!
+                                                                .data![index]
+                                                                .phoneNumber
+                                                                .toString());
                                                       } else {
                                                         Navigator.push(
                                                             context,

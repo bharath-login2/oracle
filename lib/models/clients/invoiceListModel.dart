@@ -2,7 +2,6 @@
 //
 //     final invoiceListModel = invoiceListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 InvoiceListModel invoiceListModelFromJson(String str) =>
@@ -52,6 +51,9 @@ class Data {
 class ListElement {
   String id;
   String invType;
+  String renewalId;
+  // String renewalType;
+  String installmentId;
   String invoiceNumber;
   String invoiceDate;
   String customerName;
@@ -76,6 +78,9 @@ class ListElement {
     required this.status,
     required this.isPaid,
     required this.clientId,
+    required this.renewalId,
+    // required this.renewalType,
+    required this.installmentId,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -91,5 +96,8 @@ class ListElement {
         status: json["status"],
         isPaid: json["is_paid"],
         clientId: json["client_id"],
+        renewalId: json["renewal_id"],
+        // renewalType: json["renewal_id"],
+        installmentId: json["installment_id"],
       );
 }

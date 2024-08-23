@@ -116,6 +116,7 @@ import '../models/clients/editInvoiceDetailsModel.dart';
 import '../models/clients/editInvoiceModel.dart';
 import '../models/clients/editReceiptDetailsModel.dart';
 import '../models/clients/editReceiptModel.dart';
+import '../models/clients/getInvoiceSearchData.dart';
 import '../models/clients/invoiceListModel.dart';
 import '../models/clients/ivoiceAddCommonDetailsModel.dart';
 import '../models/clients/leadConvertToClientModel.dart';
@@ -2182,12 +2183,15 @@ class HttpService {
     }
   }
 
-  static Future invoiceList(token, fromDate, toDate, clientId) async {
+  static Future invoiceList(
+      token, fromDate, toDate, clientId, staff, type) async {
     var formData = FormData.fromMap({
       'token': token,
       'from_date': fromDate,
       'to_date': toDate,
-      'client_id': clientId
+      'client_id': clientId,
+      'collected_by': staff,
+      'invoice_type': type
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getInvoiceLists",
@@ -2240,6 +2244,21 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}getCustomerLists",
           queryParameters: params);
       CustomerListModel model = CustomerListModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getInvoiceSearch(
+    token,
+  ) async {
+    var formData = FormData.fromMap({"token": token});
+
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}getInvoiceSearchData", data: formData);
+      GetInvoiceSearchData model = GetInvoiceSearchData.fromJson(result.data);
       return model;
     } catch (e) {
       log("error: $e");
@@ -3216,22 +3235,6 @@ class HttpService {
   }
 
   ////// complaints ends  ///////
-
-  static Future addInvoiceCheck(token, code, phone) async {
-    var formData = FormData.fromMap({
-      "billing_country_code": code,
-      "billing_contact_no": phone,
-      "token": token
-    });
-    try {
-      var result = await _dio.post("${await Config.getUrl()}isInvoiceExists",
-          data: formData);
-      AddInvoiceCheckModel model = AddInvoiceCheckModel.fromJson(result.data);
-      return model;
-    } catch (e) {
-      log("error: $e");
-    }
-  }
 
   ///// Staff Dashboard //////
 

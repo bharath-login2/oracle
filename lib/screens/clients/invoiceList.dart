@@ -1,12 +1,13 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/screens/clients/receiptByInvoice.dart';
 import 'package:login2/screens/clients/viewInvoice.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
-import '../../models/clients/customerListModel.dart';
 import '../../models/clients/deleteInvoiceModel.dart';
 import '../../models/clients/invoiceListModel.dart';
 import '../../service/service.dart';
@@ -29,14 +30,21 @@ class _InvoiceListState extends State<InvoiceList> {
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
-  dynamic client;
   InvoiceListModel? invoiceList;
-  CustomerListModel? customerList;
+  GetInvoiceSearchData? searchData;
   bool result = true;
-  List<Customer> items = [];
-  List<Customer> filteredItems = [];
+  List<Customer> customers = [];
+  List<Customer> filteredCustomers = [];
   String customerId = "";
-  String customerName = "Customer";
+  String customerName = "Choose Customer";
+  List<Staff> staffs = [];
+  List<Staff> filteredStaffs = [];
+  String staffId = "";
+  String staffName = "Choose Staff";
+  List<Type> types = [];
+  List<Type> filteredTypes = [];
+  String typeId = "";
+  String typeName = "Choose Type";
   TextEditingController search = TextEditingController();
   bool isSearch = false;
 
@@ -61,11 +69,20 @@ class _InvoiceListState extends State<InvoiceList> {
     }
 
     invoiceList = await HttpService.invoiceList(
-        widget.token, fDate.toString(), tDate.toString(), client);
+        widget.token,
+        fDate == "From Date" ? "" : fDate.toString(),
+        tDate == "To Date" ? "" : tDate.toString(),
+        customerId,
+        staffId,
+        typeId);
     if (invoiceList != null) {
-      customerList = await HttpService.customerList(widget.token);
-      items = customerList!.data!;
-      filteredItems.addAll(items);
+      searchData = await HttpService.getInvoiceSearch(widget.token);
+      customers = searchData!.data.customers;
+      filteredCustomers.addAll(customers);
+      staffs = searchData!.data.staff;
+      filteredStaffs.addAll(staffs);
+      types = searchData!.data.types;
+      filteredTypes.addAll(types);
       if (isSearch == true) {
         isSearch = false;
         if (mounted) {
@@ -205,9 +222,9 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       (value) {
                                                                     setState(
                                                                         () {
-                                                                      filteredItems = items
+                                                                      filteredCustomers = customers
                                                                           .where((item) => item
-                                                                              .name!
+                                                                              .name
                                                                               .toLowerCase()
                                                                               .contains(value.toLowerCase()))
                                                                           .toList();
@@ -240,7 +257,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                 child: ListView
                                                                     .builder(
                                                                   itemCount:
-                                                                      filteredItems
+                                                                      filteredCustomers
                                                                           .length,
                                                                   physics:
                                                                       const ScrollPhysics(),
@@ -253,13 +270,13 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                         onTap:
                                                                             () {
                                                                           customerName =
-                                                                              filteredItems[index].name!;
+                                                                              filteredCustomers[index].name;
                                                                           customerId =
-                                                                              filteredItems[index].id!;
+                                                                              filteredCustomers[index].id;
                                                                           search
                                                                               .clear();
-                                                                          filteredItems
-                                                                              .addAll(items);
+                                                                          filteredCustomers
+                                                                              .addAll(customers);
                                                                           setState(
                                                                               () {});
                                                                           if (context
@@ -268,7 +285,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                           }
                                                                         },
                                                                         title: Text(
-                                                                            filteredItems[index].name!));
+                                                                            filteredCustomers[index].name));
                                                                   },
                                                                 ),
                                                               )
@@ -279,9 +296,9 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                 onPressed: () {
                                                                   search
                                                                       .clear();
-                                                                  filteredItems
+                                                                  filteredCustomers
                                                                       .addAll(
-                                                                          items);
+                                                                          customers);
                                                                   if (context
                                                                       .mounted) {
                                                                     Navigator.pop(
@@ -454,348 +471,48 @@ class _InvoiceListState extends State<InvoiceList> {
                     ),
                   ),
                 ),
-                body: invoiceList != null && customerList != null
+                body: invoiceList != null && searchData != null
                     ? Stack(
                         alignment: Alignment.bottomCenter,
                         children: [
                           SingleChildScrollView(
                             child: Column(
                               children: [
-                                const SizedBox(
-                                  height: 10,
-                                ),
                                 Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 1,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () async {
-                                            final selctedDatetimetemp =
-                                                await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime(
-                                                  DateTime.now().year,
-                                                  DateTime.now().month,
-                                                  1),
-                                              firstDate: DateTime(2000),
-                                              lastDate: DateTime.now(),
-                                            );
-                                            fDate = DateFormat('dd-MM-yyyy')
-                                                .format(selctedDatetimetemp!);
-                                            setState(() {});
-                                          },
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.45,
-                                            height: 45,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                color: Colors.white),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 10),
-                                                  child: Text(
-                                                    fDate,
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Container(
-                                                  width: 40,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            2),
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.calendar_month,
-                                                    color: Colors.grey,
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () async {
-                                            final toDateSelectTemp =
-                                                await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime(2000),
-                                              lastDate: DateTime(2100),
-                                            );
-                                            tDate = DateFormat('dd-MM-yyyy')
-                                                .format(toDateSelectTemp!);
-                                            setState(() {});
-                                          },
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.45,
-                                            height: 45,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                              color: Colors.white,
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 10),
-                                                  child: Text(
-                                                    tDate,
-                                                  ),
-                                                ),
-                                                Container(
-                                                  width: 40,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.calendar_month,
-                                                    color: Colors.grey,
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 8, right: 8),
+                                  padding: const EdgeInsets.only(
+                                      left: 15, right: 15, top: 15),
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      GestureDetector(
+                                      InkWell(
                                         onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return StatefulBuilder(
-                                                  builder: (context, setState) {
-                                                return AlertDialog(
-                                                  content: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8.0),
-                                                        child: TextField(
-                                                          controller: search,
-                                                          autocorrect: false,
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .visiblePassword,
-                                                          autofocus: true,
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              filteredItems = items
-                                                                  .where((item) => item
-                                                                      .name!
-                                                                      .toLowerCase()
-                                                                      .contains(
-                                                                          value
-                                                                              .toLowerCase()))
-                                                                  .toList();
-                                                            });
-                                                          },
-                                                          decoration:
-                                                              const InputDecoration(
-                                                            contentPadding:
-                                                                EdgeInsets.all(
-                                                                    8),
-                                                            hintText: 'Search',
-                                                            prefixIcon: Icon(
-                                                                Icons.search),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        height: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .height *
-                                                            .3,
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            .8,
-                                                        child: ListView.builder(
-                                                          itemCount:
-                                                              filteredItems
-                                                                  .length,
-                                                          physics:
-                                                              const ScrollPhysics(),
-                                                          shrinkWrap: true,
-                                                          itemBuilder:
-                                                              (context, index) {
-                                                            return ListTile(
-                                                                onTap: () {
-                                                                  customerName =
-                                                                      filteredItems[
-                                                                              index]
-                                                                          .name!;
-                                                                  customerId =
-                                                                      filteredItems[
-                                                                              index]
-                                                                          .id!;
-                                                                  search
-                                                                      .clear();
-                                                                  filteredItems
-                                                                      .addAll(
-                                                                          items);
-                                                                  setState(
-                                                                      () {});
-                                                                  if (context
-                                                                      .mounted) {
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                  }
-                                                                },
-                                                                title: Text(
-                                                                    filteredItems[
-                                                                            index]
-                                                                        .name!));
-                                                          },
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                        onPressed: () {
-                                                          search.clear();
-                                                          filteredItems
-                                                              .addAll(items);
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                          }
-                                                        },
-                                                        child: const Text(
-                                                            "Close")),
-                                                  ],
-                                                );
-                                              });
-                                            },
-                                          );
+                                          fDate = "From Date";
+                                          tDate = "To Date";
+                                          typeId = "";
+                                          typeName = "Choose Type";
+                                          staffId = "";
+                                          staffName = "Choose Staff";
+                                          customerId = "";
+                                          customerName = "Choose Customer";
+                                          filtrationSheet(context);
                                         },
                                         child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              .45,
+                                          width: 30,
+                                          height: 30,
                                           decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border:
-                                                Border.all(color: Colors.black),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                          ),
+                                              border: Border.all(
+                                                  color: Colors.grey),
+                                              color: const Color(0xFFd5f5f4),
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
                                           child: Center(
-                                              child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16.0,
-                                                vertical: 12.0),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.35,
-                                                    child: Text(
-                                                      customerName,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    )),
-                                              ],
-                                            ),
-                                          )),
+                                              child: Image.asset(
+                                                  "assets/icons/filter.png",
+                                                  width: 20)),
                                         ),
-                                      ),
-                                      const SizedBox(
-                                        width: 2,
-                                      ),
-                                      Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: InkWell(
-                                            onTap: () {
-                                              isSearch = true;
-                                              Common.showProgressDialog(
-                                                  context, "Searching..");
-                                              getData();
-                                            },
-                                            child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.43,
-                                              height: 45,
-                                              decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                  color:
-                                                      const Color(0xff2590cf)),
-                                              child: const Center(
-                                                child: Text("Search",
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    )),
-                                              ),
-                                            ),
-                                          ))
+                                      )
                                     ],
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 20,
                                 ),
                                 invoiceList!.data.lists.isNotEmpty
                                     ? Padding(
@@ -1193,11 +910,18 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                 ),
                                                                 Visibility(
                                                                   visible: invoiceList!
-                                                                          .data
-                                                                          .lists[
-                                                                              index]
-                                                                          .invType ==
-                                                                      "1",
+                                                                              .data
+                                                                              .lists[
+                                                                                  index]
+                                                                              .invType ==
+                                                                          "1"
+                                                                      //      ||
+                                                                      // invoiceList!
+                                                                      //         .data
+                                                                      //         .lists[index]
+                                                                      //         .invType ==
+                                                                      //     "2"
+                                                                          ,
                                                                   child: Row(
                                                                     children: [
                                                                       const SizedBox(
@@ -1229,11 +953,18 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                       InkWell(
                                                                         onTap:
                                                                             () {
-                                                                          Navigator
-                                                                              .push(
-                                                                            context,
-                                                                            MaterialPageRoute(builder: (context) => EditInvoice(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
-                                                                          );
+                                                                          if (invoiceList!.data.lists[index].invType ==
+                                                                              "2") {
+                                                                            //     Navigator.push(
+                                                                            //   context,
+                                                                            //   MaterialPageRoute(builder: (context) => EditCustomRenewal(renId: "invoiceList!.data.lists[index].clientId",renewalType: "",)),
+                                                                            // );
+                                                                          } else {
+                                                                            Navigator.push(
+                                                                              context,
+                                                                              MaterialPageRoute(builder: (context) => EditInvoice(widget.token, invoiceList!.data.lists[index].id.toString(), invoiceList!.data.lists[index].clientId.toString())),
+                                                                            );
+                                                                          }
                                                                         },
                                                                         child:
                                                                             Container(
@@ -1513,5 +1244,546 @@ class _InvoiceListState extends State<InvoiceList> {
                 ],
               ),
             ));
+  }
+
+  Future<dynamic> filtrationSheet(BuildContext context) {
+    return showModalBottomSheet(
+        isScrollControlled: true,
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.6,
+                width: double.maxFinite,
+                clipBehavior: Clip.antiAlias,
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.white,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Filtration',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("From Date"),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final selctedDatetimetemp =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime(DateTime.now().year,
+                                          DateTime.now().month, 1),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime.now(),
+                                    );
+                                    fDate = DateFormat('dd-MM-yyyy')
+                                        .format(selctedDatetimetemp!);
+                                    setState(() {});
+                                  },
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.45,
+                                    height: 45,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(),
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: Colors.white),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10),
+                                          child: Text(
+                                            fDate,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(2),
+                                            color: Colors.white,
+                                          ),
+                                          child: const Icon(
+                                            Icons.calendar_month,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("To Date"),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final toDateSelectTemp =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    tDate = DateFormat('dd-MM-yyyy')
+                                        .format(toDateSelectTemp!);
+                                    setState(() {});
+                                  },
+                                  child: Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.45,
+                                    height: 45,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(),
+                                      borderRadius: BorderRadius.circular(5),
+                                      color: Colors.white,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 10),
+                                          child: Text(
+                                            tDate,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            color: Colors.white,
+                                          ),
+                                          child: const Icon(
+                                            Icons.calendar_month,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Collected by"),
+                            GestureDetector(
+                              onTap: () {
+                                staffDialog(context);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                    child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0, vertical: 12.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.35,
+                                          child: Text(
+                                            staffName,
+                                            overflow: TextOverflow.ellipsis,
+                                          )),
+                                    ],
+                                  ),
+                                )),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Customer"),
+                            GestureDetector(
+                              onTap: () {
+                                customerDialog(context);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                    child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0, vertical: 12.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.35,
+                                          child: Text(
+                                            customerName,
+                                            overflow: TextOverflow.ellipsis,
+                                          )),
+                                    ],
+                                  ),
+                                )),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Types"),
+                            GestureDetector(
+                              onTap: () {
+                                typesDialog(context);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                    child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0, vertical: 12.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.35,
+                                          child: Text(
+                                            typeName,
+                                            overflow: TextOverflow.ellipsis,
+                                          )),
+                                    ],
+                                  ),
+                                )),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            isSearch = true;
+                            Common.showProgressDialog(context, "Searching..");
+                            getData();
+                          },
+                          child: Container(
+                            height: 40,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                color: const Color(0xff2590cf)),
+                            child: const Center(
+                              child: Text("Filter",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  )),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        });
+  }
+
+  Future<dynamic> staffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredStaffs = staffs
+                            .where((item) => item.accountName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredStaffs.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            staffName = filteredStaffs[index].accountName;
+                            staffId = filteredStaffs[index].accountId;
+                            search.clear();
+                            filteredStaffs.clear();
+                            filteredStaffs.addAll(staffs);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredStaffs[index].accountName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredStaffs.clear();
+                    filteredStaffs.addAll(staffs);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Future<dynamic> typesDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredTypes = types
+                            .where((item) => item.typeName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredTypes.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            typeName = filteredTypes[index].typeName;
+                            typeId = filteredTypes[index].id.toString();
+                            search.clear();
+                            filteredTypes.clear();
+                            filteredTypes.addAll(types);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredTypes[index].typeName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredTypes.clear();
+                    filteredTypes.addAll(types);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Future<dynamic> customerDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredCustomers = customers
+                            .where((item) => item.name
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredCustomers.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            customerName = filteredCustomers[index].name;
+                            customerId = filteredCustomers[index].id;
+                            search.clear();
+                            filteredCustomers.clear();
+                            filteredCustomers.addAll(customers);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredCustomers[index].name));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredCustomers.clear();
+                    filteredCustomers.addAll(customers);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
   }
 }

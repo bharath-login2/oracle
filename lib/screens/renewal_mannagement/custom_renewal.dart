@@ -33,7 +33,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   String customerIdExisting = "";
   String customerIdNew = "";
   String productDuration = "";
-  DateTime? selectedValue;
+  DateTime selectedValue = DateTime.now();
   double parseRateExisting = 0;
   double parseQtyExisting = 0;
   double parseTaxExisting = 0;
@@ -88,8 +88,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController postOffice = TextEditingController();
   TextEditingController gstNumber = TextEditingController();
   TextEditingController typeName = TextEditingController();
-  TextEditingController startDateExisting = TextEditingController();
-  TextEditingController startDateNew = TextEditingController();
+  TextEditingController startDateExisting = TextEditingController(
+      text: DateFormat('dd-MM-yyyy').format(DateTime.now()));
+  TextEditingController startDateNew = TextEditingController(
+      text: DateFormat('dd-MM-yyyy').format(DateTime.now()));
   TextEditingController endDateExisting = TextEditingController();
   TextEditingController endDateNew = TextEditingController();
   TextEditingController remindMeNew = TextEditingController();
@@ -430,15 +432,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   controller: invoiceDate,
                   onTap: () async {
-                    selectedValue = await showDatePicker(
+                    selectedValue = (await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                    );
+                    ))!;
                     setState(() {
                       invoiceDate.text =
-                          DateFormat('dd-MM-yyyy').format(selectedValue!);
+                          DateFormat('dd-MM-yyyy').format(selectedValue);
                     });
                   },
                   readOnly: true,
@@ -1144,16 +1146,16 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   controller: startDateExisting,
                   readOnly: true,
                   onTap: () async {
-                    selectedValue = await showDatePicker(
+                    selectedValue = (await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                    );
+                    ))!;
                     setState(() {
                       startDateExisting.text =
-                          DateFormat('dd-MM-yyyy').format(selectedValue!);
-                      final endValue = selectedValue!
+                          DateFormat('dd-MM-yyyy').format(selectedValue);
+                      final endValue = selectedValue
                           .add(Duration(days: int.parse(typeDuration)));
                       endDateExisting.text =
                           DateFormat('dd-MM-yyyy').format(endValue);
@@ -1336,15 +1338,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 TextFormField(
                   controller: invoiceDate,
                   onTap: () async {
-                    selectedValue = await showDatePicker(
+                    selectedValue = (await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                    );
+                    ))!;
                     setState(() {
                       invoiceDate.text =
-                          DateFormat('dd-MM-yyyy').format(selectedValue!);
+                          DateFormat('dd-MM-yyyy').format(selectedValue);
                     });
                   },
                   readOnly: true,
@@ -2229,16 +2231,16 @@ class _CustomRenewalState extends State<CustomRenewal> {
                   controller: startDateNew,
                   readOnly: true,
                   onTap: () async {
-                    selectedValue = await showDatePicker(
+                    selectedValue = (await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                    );
+                    ))!;
                     setState(() {
                       startDateNew.text =
-                          DateFormat('dd-MM-yyyy').format(selectedValue!);
-                      final endValue = selectedValue!
+                          DateFormat('dd-MM-yyyy').format(selectedValue);
+                      final endValue = selectedValue
                           .add(Duration(days: int.parse(typeDuration)));
                       endDateNew.text =
                           DateFormat('dd-MM-yyyy').format(endValue);
@@ -2654,6 +2656,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
                 shippingAmtExisting)
             .toString();
         totalPaidAmountExisting.text = totalAmountExisting.text;
+        final endValue =
+            selectedValue.add(Duration(days: int.parse(typeDuration)));
+        endDateExisting.text = DateFormat('dd-MM-yyyy').format(endValue);
         setState(() {});
       } else {
         Common.toastMessaage('Add a product', Colors.red);
@@ -2710,6 +2715,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
         totalAmountNew.text =
             (totalProductCostNew - discountAmtNew + shippingAmtNew).toString();
         totalPaidAmountNew.text = totalAmountNew.text;
+        final endValue =
+            selectedValue.add(Duration(days: int.parse(typeDuration)));
+        endDateNew.text = DateFormat('dd-MM-yyyy').format(endValue);
         setState(() {});
       } else {
         Common.toastMessaage('Add a product', Colors.red);

@@ -3753,7 +3753,7 @@ class _DashboardState extends State<Dashboard> {
                                                                       if (object1!
                                                                               .status ==
                                                                           true) {
-                                                                         if (context
+                                                                        if (context
                                                                             .mounted) {
                                                                           Navigator.pop(
                                                                               context);
@@ -6564,6 +6564,131 @@ class _DashboardState extends State<Dashboard> {
                                           )
                                         ],
                                       ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            )
+                          : const SizedBox(),
+                      object1!.data!.statusLeads!.isNotEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.only(bottom: 20),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Status Wise Lead',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox(),
+                      object1!.data!.statusLeads!.isNotEmpty
+                          ? SizedBox(
+                              height: 60 *
+                                  double.parse(object1!
+                                      .data!.statusLeads!.length
+                                      .toString()),
+                              // 70% height
+                              child: MediaQuery.removePadding(
+                                context: context,
+                                removeTop: true,
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: object1!.data!.statusLeads!.length,
+                                  itemBuilder: (context, i) {
+                                    return Column(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 15, right: 15),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                object1!.data!.statusLeads![i]
+                                                    .statusName
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Count : ${object1!.data!.statusLeads![i].statusCount}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 15, right: 15, top: 5),
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) => ViewLeads(
+                                                        widget.token,
+                                                        updateLeadPermission1,
+                                                        deleteLeadPermission1,
+                                                        cloudCallPermission1,
+                                                        pageName:
+                                                            'Total Called',
+                                                        fromDate:
+                                                            fromdate.toString(),
+                                                        toDate:
+                                                            todate.toString(),
+                                                        status: object1!
+                                                            .data!
+                                                            .statusLeads![i]
+                                                            .statusId
+                                                            .toString())),
+                                              ).then((r) {
+                                                getData(widget.token, fromdate,
+                                                    todate);
+                                                if (loadmore == true) {
+                                                  getStaffwise();
+                                                }
+                                              });
+                                            },
+                                            child: LinearPercentIndicator(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.82,
+                                              animation: true,
+                                              lineHeight: 15.0,
+                                              animationDuration: 2500,
+                                              percent: double.parse(object1!
+                                                  .data!
+                                                  .statusLeads![i]
+                                                  .statusPercentage
+                                                  .toString()),
+                                              progressColor: object1!.data!
+                                                          .statusLeads!.length >
+                                                      _colors.length
+                                                  ? Colors.red
+                                                  : _colors[i],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          height: 15,
+                                        )
+                                      ],
                                     );
                                   },
                                 ),

@@ -569,6 +569,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                         .size
                                                         .width *
                                                     .8,
+                                                    height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .46,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: commonDetails!
