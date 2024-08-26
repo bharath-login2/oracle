@@ -10,6 +10,7 @@ import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/renewal/add_customer_model.dart';
 import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
 
@@ -492,12 +493,41 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       )
                     : const SizedBox(),
                 const SizedBox(height: 14.0),
-                const Text(
-                  "Add Products",
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Add Products",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddProducts(),
+                            )).then((_) {
+                          getRenewalDetails();
+                        });
+                      },
+                      child: Container(
+                        height: 30,
+                        width: 30,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  ],
                 ),
                 const SizedBox(height: 5.0),
                 TextFormField(
@@ -1587,12 +1617,41 @@ class _CustomRenewalState extends State<CustomRenewal> {
                       )
                     : const SizedBox(),
                 const SizedBox(height: 14.0),
-                const Text(
-                  "Add Products",
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Add Products",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddProducts(),
+                            )).then((_) {
+                          getRenewalDetails();
+                        });
+                      },
+                      child: Container(
+                        height: 30,
+                        width: 30,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  ],
                 ),
                 const SizedBox(height: 5.0),
                 TextFormField(

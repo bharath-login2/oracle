@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/addReceipt.dart';
 import 'package:login2/screens/clients/receiptList.dart';
 import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/addInvoiceModel.dart';
@@ -1050,12 +1051,54 @@ class _AddInvoiceState extends State<AddInvoice> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                const Text(
-                                                  'Product Details',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 18),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    const Text(
+                                                      'Product Details',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 18),
+                                                    ),
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        Navigator.pop(context);
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  const AddProducts(),
+                                                            )).then((_) {
+                                                          getData();
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        height: 30,
+                                                        width: 30,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          gradient:
+                                                              const LinearGradient(
+                                                                  colors: [
+                                                                Color(
+                                                                    0xFF2a86c9),
+                                                                Color(
+                                                                    0xFF406dbe)
+                                                              ]),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(7),
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.add,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  ],
                                                 ),
                                                 const SizedBox(
                                                   height: 15,
@@ -2654,7 +2697,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           )
                                         : Padding(
                                             padding: const EdgeInsets.only(
-                                                right: 10,top:15),
+                                                right: 10, top: 15),
                                             child: Stack(
                                               children: [
                                                 Align(
@@ -2757,7 +2800,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                             ),
                           ),
                         ),
-                       
                         if (invDetails!.data.createRenewal)
                           CheckboxListTile(
                               contentPadding: const EdgeInsets.all(16),
@@ -2902,7 +2944,9 @@ class _AddInvoiceState extends State<AddInvoice> {
                                       labelStyle:
                                           const TextStyle(color: Colors.black)),
                                 ),
-                                const SizedBox(height: 20,)
+                                const SizedBox(
+                                  height: 20,
+                                )
                               ],
                             ),
                           ),

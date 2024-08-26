@@ -96,11 +96,8 @@ class _AddProductsState extends State<AddProducts> {
         description.text,
         productImage.toString());
     if (postResponse != null && postResponse!.status == true) {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ProductCategories(),
-          ));
+      Navigator.pop(context);
+      Navigator.pop(context);
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
       Navigator.pop(context);

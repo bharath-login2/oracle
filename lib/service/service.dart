@@ -2600,8 +2600,10 @@ class HttpService {
       var result = await _dio.post(
           "${await Config.getUrl()}add_follow_up_voice_note",
           data: formData);
-      UploadAudioRecord model = UploadAudioRecord.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        UploadAudioRecord model = UploadAudioRecord.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }

@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -6,12 +8,12 @@ import 'package:login2/screens/clients/receiptByInvoice.dart';
 import 'package:login2/screens/clients/viewInvoice.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
+import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/deleteInvoiceModel.dart';
 import '../../models/clients/invoiceListModel.dart';
 import '../../service/service.dart';
-import '../homePage.dart';
 import 'addInvoice.dart';
 import 'addReceipt.dart';
 import 'clientDetails.dart';
@@ -50,7 +52,6 @@ class _InvoiceListState extends State<InvoiceList> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
   }
@@ -914,14 +915,12 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                               .lists[
                                                                                   index]
                                                                               .invType ==
-                                                                          "1"
-                                                                      //      ||
-                                                                      // invoiceList!
-                                                                      //         .data
-                                                                      //         .lists[index]
-                                                                      //         .invType ==
-                                                                      //     "2"
-                                                                          ,
+                                                                          "1" ||
+                                                                      invoiceList!
+                                                                              .data
+                                                                              .lists[index]
+                                                                              .invType ==
+                                                                          "2",
                                                                   child: Row(
                                                                     children: [
                                                                       const SizedBox(
@@ -955,10 +954,24 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                             () {
                                                                           if (invoiceList!.data.lists[index].invType ==
                                                                               "2") {
-                                                                            //     Navigator.push(
-                                                                            //   context,
-                                                                            //   MaterialPageRoute(builder: (context) => EditCustomRenewal(renId: "invoiceList!.data.lists[index].clientId",renewalType: "",)),
-                                                                            // );
+                                                                            if (invoiceList!.data.lists[index].renewalType ==
+                                                                                "quick") {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                      builder: (context) => EditQuickRenewalScreen(
+                                                                                            id: invoiceList!.data.lists[index].renewalId,
+                                                                                            invoiceId: invoiceList!.data.lists[index].id,
+                                                                                          )));
+                                                                            } else {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                      builder: (context) => EditCustomRenewal(
+                                                                                            renId: invoiceList!.data.lists[index].renewalId,
+                                                                                            renewalType: invoiceList!.data.lists[index].renewalType,
+                                                                                          )));
+                                                                            }
                                                                           } else {
                                                                             Navigator.push(
                                                                               context,

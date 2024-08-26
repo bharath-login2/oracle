@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/clients/clientList.dart';
 import 'package:login2/screens/clients/invoiceList.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/clients/editInvoiceDetailsModel.dart';
@@ -1539,12 +1540,57 @@ class _EditInvoiceState extends State<EditInvoice> {
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
                                                 children: [
-                                                  const Text(
-                                                    'Product Details',
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 18),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      const Text(
+                                                        'Product Details',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 18),
+                                                      ),
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.pop(
+                                                              context);
+                                                          Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        const AddProducts(),
+                                                              )).then((_) {
+                                                            getData();
+                                                          });
+                                                        },
+                                                        child: Container(
+                                                          height: 30,
+                                                          width: 30,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            gradient:
+                                                                const LinearGradient(
+                                                                    colors: [
+                                                                  Color(
+                                                                      0xFF2a86c9),
+                                                                  Color(
+                                                                      0xFF406dbe)
+                                                                ]),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        7),
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons.add,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      )
+                                                    ],
                                                   ),
                                                   const SizedBox(
                                                     height: 15,
@@ -2227,9 +2273,8 @@ class _EditInvoiceState extends State<EditInvoice> {
                                         child: child,
                                       );
                                     },
-                                  ).then((_){
-                                    setState(() {
-                                    });
+                                  ).then((_) {
+                                    setState(() {});
                                   });
                                 },
                                 child: Container(

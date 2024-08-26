@@ -126,7 +126,9 @@ class _ProductListState extends State<ProductList> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const AddProducts(),
-                          ));
+                          )).then((_) {
+                        getProductLists();
+                      });
                     }),
                     child: const Icon(
                       Icons.add,
@@ -357,7 +359,7 @@ class _ProductListState extends State<ProductList> {
                                                     content: const Text(
                                                         'Are you sure?'),
                                                     actions: [
-                                                     TextButton(
+                                                      TextButton(
                                                           onPressed: () {
                                                             Navigator.of(
                                                                     context)
@@ -377,7 +379,6 @@ class _ProductListState extends State<ProductList> {
                                                           },
                                                           child: const Text(
                                                               'Yes')),
-                                                      
                                                     ],
                                                   );
                                                 });

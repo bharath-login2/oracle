@@ -584,6 +584,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                         .message,
                                                                     Colors
                                                                         .green);
+                                                                selectedIUsers
+                                                                    .clear();
                                                                 if (context
                                                                     .mounted) {
                                                                   Navigator.pop(
@@ -1997,7 +1999,8 @@ class _ViewLeadsState extends State<ViewLeads> {
                               )
                             : const SizedBox(),
                         Visibility(
-                          visible: widget.pageName == "Total Called" ||widget.pageName == "Missed Leads" ,
+                          visible: widget.pageName == "Total Called" ||
+                              widget.pageName == "Missed Leads",
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,

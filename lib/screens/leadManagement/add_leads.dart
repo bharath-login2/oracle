@@ -1,6 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
@@ -302,25 +304,65 @@ class _AddLeadsState extends State<AddLeads> {
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10, top: 15),
-                                  child: SizedBox(
-                                    child: TextFormField(
-                                      controller: clientName,
-                                      decoration: const InputDecoration(
-                                          contentPadding: EdgeInsets.only(
-                                              left: 10, top: 2, bottom: 2),
-                                          labelText: 'Customer Name *',
-                                          fillColor: Colors.white,
-                                          filled: true,
-                                          prefixIcon: Icon(Icons.person,
-                                              color: Colors.grey),
-                                          border: OutlineInputBorder(),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderSide:
-                                                BorderSide(color: Colors.grey),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: clientName,
+                                          decoration: const InputDecoration(
+                                              contentPadding: EdgeInsets.only(
+                                                  left: 10, top: 2, bottom: 2),
+                                              labelText: 'Customer Name *',
+                                              fillColor: Colors.white,
+                                              filled: true,
+                                              prefixIcon: Icon(Icons.person,
+                                                  color: Colors.grey),
+                                              border: OutlineInputBorder(),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey),
+                                              ),
+                                              labelStyle: TextStyle(
+                                                  color: Colors.grey)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10,),
+                                      GestureDetector(
+                                        onTap: () async {
+                                          final PhoneContact contact =
+                                              await FlutterContactPicker
+                                                  .pickPhoneContact();
+                                          String number = Common.trimPlus91(
+                                              contact.phoneNumber!.number
+                                                  .toString());
+                                          String name = contact.fullName!;
+                                          contactNo.text =
+                                              number.replaceAll(' ', '');
+                                          clientName.text = name;
+                                          setState(() {});
+                                        },
+                                        child: Container(
+                                          height: 45,
+                                          width: 60,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF2a86c9),
+                                                  Color(0xFF406dbe)
+                                                ]),
+                                            borderRadius:
+                                                BorderRadius.circular(7),
                                           ),
-                                          labelStyle:
-                                              TextStyle(color: Colors.grey)),
-                                    ),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Icon(
+                                              Icons.contacts,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(
@@ -569,7 +611,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                         .size
                                                         .width *
                                                     .8,
-                                                    height: MediaQuery.of(context)
+                                                height: MediaQuery.of(context)
                                                         .size
                                                         .height *
                                                     .46,
@@ -1360,29 +1402,30 @@ class _AddLeadsState extends State<AddLeads> {
                                                                     context,
                                                                     "Loading..");
                                                               }
-                                                              AddLeadModel object = await HttpService.addLeads(
-                                                                  widget.token,
-                                                                  branch,
-                                                                  clientName
-                                                                      .text,
-                                                                  leadTypeId,
-                                                                  leadSubTypeId,
-                                                                  contactNo
-                                                                      .text,
-                                                                  assignStaffId,
-                                                                  cost.text,
-                                                                  priorityId,
-                                                                  address.text,
-                                                                  remark.text,
-                                                                  callResultId,
-                                                                  nextFollowupDate1
-                                                                      .text,
-                                                                  descriptions,
-                                                                  code,
-                                                                  checked,
-                                                                  timeBefore,
-                                                                  // leadSourceId
-                                                                  );
+                                                              AddLeadModel
+                                                                  object =
+                                                                  await HttpService
+                                                                      .addLeads(
+                                                                widget.token,
+                                                                branch,
+                                                                clientName.text,
+                                                                leadTypeId,
+                                                                leadSubTypeId,
+                                                                contactNo.text,
+                                                                assignStaffId,
+                                                                cost.text,
+                                                                priorityId,
+                                                                address.text,
+                                                                remark.text,
+                                                                callResultId,
+                                                                nextFollowupDate1
+                                                                    .text,
+                                                                descriptions,
+                                                                code,
+                                                                checked,
+                                                                timeBefore,
+                                                                // leadSourceId
+                                                              );
                                                               if (object
                                                                       .status ==
                                                                   true) {
@@ -1401,7 +1444,6 @@ class _AddLeadsState extends State<AddLeads> {
                                                                   Navigator.pop(
                                                                       context);
                                                                 }
-                                                              
                                                               } else {
                                                                 Common.toastMessaage(
                                                                     object
@@ -1423,25 +1465,25 @@ class _AddLeadsState extends State<AddLeads> {
                                           } else {
                                             AddLeadModel object =
                                                 await HttpService.addLeads(
-                                                    widget.token,
-                                                    branch,
-                                                    clientName.text,
-                                                    leadTypeId,
-                                                    leadSubTypeId,
-                                                    contactNo.text,
-                                                    assignStaffId,
-                                                    cost.text,
-                                                    priorityId,
-                                                    address.text,
-                                                    remark.text,
-                                                    callResultId,
-                                                    nextFollowupDate1.text,
-                                                    descriptions,
-                                                    code,
-                                                    checked,
-                                                    timeBefore.text,
-                                                    //  leadSourceId
-                                                    );
+                                              widget.token,
+                                              branch,
+                                              clientName.text,
+                                              leadTypeId,
+                                              leadSubTypeId,
+                                              contactNo.text,
+                                              assignStaffId,
+                                              cost.text,
+                                              priorityId,
+                                              address.text,
+                                              remark.text,
+                                              callResultId,
+                                              nextFollowupDate1.text,
+                                              descriptions,
+                                              code,
+                                              checked,
+                                              timeBefore.text,
+                                              //  leadSourceId
+                                            );
                                             if (object.status == true) {
                                               Common.toastMessaage(
                                                   object.message, Colors.green);

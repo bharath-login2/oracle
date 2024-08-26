@@ -3,6 +3,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:login2/models/lead_management/addLeadFollowupModel.dart';
 import 'package:login2/models/renewal/renewal_followup_details.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../service/service.dart';
@@ -2339,10 +2340,42 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                 content: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Product Details',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Product Details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddProducts(),
+                                )).then((_) {
+                              getData();
+                            });
+                          },
+                          child: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [
+                                Color(0xFF2a86c9),
+                                Color(0xFF406dbe)
+                              ]),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                     const SizedBox(
                       height: 15,

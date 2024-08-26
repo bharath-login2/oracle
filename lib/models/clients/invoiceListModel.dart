@@ -52,7 +52,7 @@ class ListElement {
   String id;
   String invType;
   String renewalId;
-  // String renewalType;
+  String renewalType;
   String installmentId;
   String invoiceNumber;
   String invoiceDate;
@@ -79,7 +79,7 @@ class ListElement {
     required this.isPaid,
     required this.clientId,
     required this.renewalId,
-    // required this.renewalType,
+    required this.renewalType,
     required this.installmentId,
   });
 
@@ -97,7 +97,7 @@ class ListElement {
         isPaid: json["is_paid"],
         clientId: json["client_id"],
         renewalId: json["renewal_id"],
-        // renewalType: json["renewal_id"],
+        renewalType: json["renewal_id"],
         installmentId: json["installment_id"],
       );
 }

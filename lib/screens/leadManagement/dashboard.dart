@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/main.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
+import 'package:login2/screens/accounts/accounts_dashboard.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
@@ -525,6 +526,9 @@ class _DashboardState extends State<Dashboard> {
                                           onTap: () {
                                             _scaffoldKey.currentState!
                                                 .openEndDrawer();
+                                          },
+                                          onDoubleTap: () {
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) => const AccountsDashboard(),));
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.only(

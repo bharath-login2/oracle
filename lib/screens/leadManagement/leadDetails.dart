@@ -5687,7 +5687,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                   DeleteLeadMileStoneModel deleteMilestoneLead = await HttpService.deleteMileStoneLeads(widget.token, mileStone!.data!.leadMilestones![i].milestoneId.toString());
                                                                                   // print(updateAssignStaff.data);
                                                                                   if (deleteMilestoneLead.data == true) {
-                                                                                    if (mounted) {
+                                                                                    if (context.mounted) {
                                                                                       // print(updateAssignStaff.data);
                                                                                       Navigator.push(
                                                                                         context,
@@ -6398,7 +6398,6 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         fileSizeInMB =
                                                                         fileSizeInKB /
                                                                             1024;
-
                                                                     //print('file Size :$fileSizeInMB');
                                                                     if (fileName
                                                                             .text
@@ -6437,7 +6436,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                           Colors
                                                                               .red);
                                                                     } else {
-                                                                      if (mounted) {
+                                                                      if (context
+                                                                          .mounted) {
                                                                         Common.showProgressDialog(
                                                                             context,
                                                                             "Uploading..");
@@ -6470,7 +6470,17 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                             widget.token,
                                                                             callMasterId,
                                                                             listPath);
-                                                                        if (mounted) {
+                                                                        if (context
+                                                                            .mounted) {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        }
+                                                                      } else {
+                                                                        Common.toastMessaage(
+                                                                            uploadAudio.message,
+                                                                            Colors.red);
+                                                                        if (context
+                                                                            .mounted) {
                                                                           Navigator.pop(
                                                                               context);
                                                                         }
