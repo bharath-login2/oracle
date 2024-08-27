@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: file_names, must_be_immutable
 
 import 'dart:convert';
 
@@ -8,28 +8,31 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
-import 'package:login2/screens/clients/receiptList.dart';
+import 'package:login2/screens/accounts/clients/clientList.dart';
+import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:lottie/lottie.dart';
-import '../../core/common.dart';
-import '../../models/clients/addClientsModel.dart';
-import '../../models/clients/branchListModel.dart';
-import '../../models/clients/postalCodeModel.dart';
-import '../../service/service.dart';
-import '../homePage.dart';
-import '../leadManagement/dashboard.dart';
-import 'addInvoice.dart';
-import 'clientList.dart';
+import '../../../core/common.dart';
+import '../../../models/clients/branchListModel.dart';
+import '../../../models/clients/editClientDetailsModel.dart';
+import '../../../models/clients/editClientsModel.dart';
+import '../../../models/clients/postalCodeModel.dart';
+import '../../../service/service.dart';
+import '../../homePage.dart';
+import '../../leadManagement/dashboard.dart';
 import 'invoiceList.dart';
 
-class AddClients extends StatefulWidget {
+class EditClients extends StatefulWidget {
   String token;
-  AddClients(this.token, {Key? key}) : super(key: key);
+  String clientId;
+  EditClients(this.token, this.clientId, {Key? key}) : super(key: key);
 
   @override
-  State<AddClients> createState() => _AddClientsState();
+  State<EditClients> createState() => _EditClientsState();
 }
 
-class _AddClientsState extends State<AddClients> {
+class _EditClientsState extends State<EditClients> {
+  EditClientDetailsModel? mainClientDetail;
+  bool result = true;
   TextEditingController clientName = TextEditingController();
   TextEditingController phoneNumber = TextEditingController();
   TextEditingController email = TextEditingController();
@@ -40,23 +43,21 @@ class _AddClientsState extends State<AddClients> {
   TextEditingController gstNumber = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController postOffice = TextEditingController();
+  PostalCodeModel? postal;
   TextEditingController fieldName = TextEditingController();
   TextEditingController fieldValue = TextEditingController();
-
   List<Map<String, dynamic>> additionalFields = [];
-  bool addInvoice = false;
-
-  PostalCodeModel? postal;
   String roleId = '';
   String multiBranch = '';
   String? branch;
   BranchListModel? branchList;
-  bool result = true;
-  var code = '91';
   bool isExists = false;
   IsCustomerExistModel? isExist;
+  var code = '91';
+
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
     getData();
   }
@@ -79,10 +80,48 @@ class _AddClientsState extends State<AddClients> {
     if (branchList != null) {
       setState(() {});
     }
+    mainClientDetail =
+        await HttpService.editClientDetails(widget.token, widget.clientId);
+    if (mainClientDetail != null) {
+      clientName.text = mainClientDetail!.data.name.toString();
+      phoneNumber.text = mainClientDetail!.data.contactNo.toString();
+      email.text = mainClientDetail!.data.emailId.toString();
+      address1.text = mainClientDetail!.data.address1.toString();
+      address2.text = mainClientDetail!.data.address2.toString();
+      address3.text = mainClientDetail!.data.address3.toString();
+      pinCode.text = mainClientDetail!.data.pincode.toString();
+      gstNumber.text = mainClientDetail!.data.gstNum.toString();
+      remarks.text = mainClientDetail!.data.remarks.toString();
+      postOffice.text = mainClientDetail!.data.postOffice.toString();
+      if (mainClientDetail!.data.countryCode.toString() != '') {
+        code = mainClientDetail!.data.countryCode.toString();
+      }
+
+      if (pinCode.text != '') {
+        postal = await HttpService.fetchPostOffice(pinCode.text);
+      }
+      if (mainClientDetail!.data.branchId.toString() != '') {
+        branch = mainClientDetail!.data.branchId.toString();
+      }
+      if (mainClientDetail!.data.additionalFields.isNotEmpty) {
+        for (int i = 0;
+            i < mainClientDetail!.data.additionalFields.length;
+            i++) {
+          additionalFields.add({
+            // "product_name":productName.text,
+            "field_name": mainClientDetail!.data.additionalFields[i].fieldName,
+            "field_value":
+                mainClientDetail!.data.additionalFields[i].fieldValue,
+          });
+        }
+      }
+      setState(() {});
+    }
   }
 
   isCustomerExists() async {
-    isExist = await HttpService.isCustomerExists("", phoneNumber.text);
+    isExist =
+        await HttpService.isCustomerExists(widget.clientId, phoneNumber.text);
     if (isExist != null) {
       isExists = isExist!.data;
     }
@@ -147,7 +186,7 @@ class _AddClientsState extends State<AddClients> {
                               width: 25,
                             ),
                             const Text(
-                              'Add Customer',
+                              'Edit Customer',
                               style:
                                   TextStyle(color: Colors.white, fontSize: 18),
                             ),
@@ -158,7 +197,7 @@ class _AddClientsState extends State<AddClients> {
                   ),
                 ),
               ),
-              body: branchList != null
+              body: mainClientDetail != null && branchList != null
                   ? Padding(
                       padding: const EdgeInsets.only(left: 15, right: 15),
                       child: SingleChildScrollView(
@@ -250,23 +289,21 @@ class _AddClientsState extends State<AddClients> {
                                           setState(() {
                                             code = country.phoneCode;
                                           });
+
                                           // flag = country.flagEmoji;
                                           // print(countryPickerController.code.value);
                                           // print(flag);
                                         },
                                       );
                                     },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 5),
-                                      child: SizedBox(
-                                        // color: Colors.blue,
-                                        width: 70,
-                                        // width: MediaQuery.of(context).size.width/3.5,
-                                        child: Row(children: [
-                                          Text("+$code"),
-                                          const Icon(Icons.arrow_drop_down),
-                                        ]),
-                                      ),
+                                    child: SizedBox(
+                                      // color: Colors.blue,
+                                      width: 70,
+                                      // width: MediaQuery.of(context).size.width/3.5,
+                                      child: Row(children: [
+                                        Text("+$code"),
+                                        const Icon(Icons.arrow_drop_down),
+                                      ]),
                                     ),
                                   ),
                                   border: const OutlineInputBorder(),
@@ -356,7 +393,6 @@ class _AddClientsState extends State<AddClients> {
                               height: 15,
                             ),
                             TextFormField(
-                              controller: pinCode,
                               onChanged: (value) async {
                                 if (value.length >= 6) {
                                   postal =
@@ -368,6 +404,7 @@ class _AddClientsState extends State<AddClients> {
                                   setState(() {});
                                 }
                               },
+                              controller: pinCode,
                               decoration: const InputDecoration(
                                   contentPadding: EdgeInsets.only(
                                       left: 10, top: 2, bottom: 2),
@@ -398,24 +435,31 @@ class _AddClientsState extends State<AddClients> {
                                                 content: postal!.postOffice !=
                                                         null
                                                     ? SizedBox(
-                                                      height: MediaQuery.of(context).size.height*.32,
-                                                          width: MediaQuery.of(context).size.height*.8,
-                                                      child: ListView.builder(
+                                                        height: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .height *
+                                                            .32,
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .height *
+                                                            .8,
+                                                        child: ListView.builder(
                                                           shrinkWrap: true,
                                                           itemCount: postal!
-                                                              .postOffice!.length,
+                                                              .postOffice!
+                                                              .length,
                                                           itemBuilder:
                                                               (context, ind) {
                                                             return InkWell(
                                                               onTap: () {
                                                                 setState(() {
-                                                                  postOffice
-                                                                          .text =
-                                                                      postal!
-                                                                          .postOffice![
-                                                                              ind]
-                                                                          .name
-                                                                          .toString();
+                                                                  postOffice.text = postal!
+                                                                      .postOffice![
+                                                                          ind]
+                                                                      .name
+                                                                      .toString();
                                                                   Navigator.pop(
                                                                       context,
                                                                       true);
@@ -429,16 +473,15 @@ class _AddClientsState extends State<AddClients> {
                                                                           ind]
                                                                       .name
                                                                       .toString(),
-                                                                  style:
-                                                                      const TextStyle(
-                                                                          fontSize:
-                                                                              18),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          18),
                                                                 ),
                                                               ),
                                                             );
                                                           },
                                                         ),
-                                                    )
+                                                      )
                                                     : const Text(
                                                         'No Post Office Found'));
                                           });
@@ -661,6 +704,7 @@ class _AddClientsState extends State<AddClients> {
                                                                   'field_value'],
                                                         })),
                                                   );
+
                                                   setState(() {});
                                                 },
                                                 child: const Padding(
@@ -907,17 +951,6 @@ class _AddClientsState extends State<AddClients> {
                                 ],
                               ),
                             ),
-                            CheckboxListTile(
-                                title: const Text('Add  Invoice'),
-                                value:
-                                    addInvoice, // initial value of the checkbox
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    addInvoice = value!;
-                                  });
-                                },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading),
                             const SizedBox(
                               height: 20,
                             ),
@@ -927,27 +960,24 @@ class _AddClientsState extends State<AddClients> {
                                   Common.toastMessaage(
                                       'Customer Name cannot be empty',
                                       Colors.red);
+                                } else if (phoneNumber.text.isEmpty) {
+                                  Common.toastMessaage(
+                                      'phoneNumber Name cannot be empty',
+                                      Colors.red);
                                 } else if (isExists == true) {
                                   Common.toastMessaage(
                                       'PhoneNumber is already exists',
                                       Colors.red);
-                                } else if (phoneNumber.text.isEmpty) {
-                                  Common.toastMessaage(
-                                      'PhoneNumber Name cannot be empty',
-                                      Colors.red);
-                                } else if (address1.text.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Address1 cannot be empty', Colors.red);
                                 } else {
-                                  print(code + phoneNumber.text);
                                   if (context.mounted) {
                                     Common.showProgressDialog(
                                         context, "Loading..");
                                   }
                                   var body = FormData.fromMap({
                                     "token": widget.token,
+                                    'client_id': widget.clientId,
                                     'name': clientName.text,
-                                    "country_code": code,
+                                    'country_code': code,
                                     'contact_no': phoneNumber.text,
                                     'email_id': email.text,
                                     'address': address1.text,
@@ -961,360 +991,407 @@ class _AddClientsState extends State<AddClients> {
                                     'additional_fields':
                                         jsonEncode(additionalFields),
                                   });
-                                  AddClientsModel object =
-                                      await HttpService.addClients(body);
+                                  EditClientsModel object =
+                                      await HttpService.editClients(body);
                                   if (object.status == true) {
                                     Common.toastMessaage(
                                         object.message, Colors.green);
                                     if (mounted) {
-                                      if (addInvoice == true) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => AddInvoice(
-                                                  widget.token,
-                                                  object.data.toString())),
-                                        );
-                                      } else {
-                                        if (mounted) {
-                                          showDialog(
-                                              barrierDismissible: false,
-                                              barrierColor:
-                                                  Colors.white.withOpacity(.2),
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return WillPopScope(
-                                                  onWillPop: () async {
-                                                    return false;
-                                                  },
-                                                  child: Material(
-                                                    type: MaterialType
-                                                        .transparency,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              bottom: 50),
-                                                      child: Center(
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
-                                                            color: Colors.white,
-                                                          ),
-                                                          width: MediaQuery.of(
-                                                                      context)
+                                      showDialog(
+                                          barrierDismissible: false,
+                                          barrierColor:
+                                              Colors.white.withOpacity(.2),
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return WillPopScope(
+                                              onWillPop: () async {
+                                                return false;
+                                              },
+                                              child: Material(
+                                                type: MaterialType.transparency,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 50),
+                                                  child: Center(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                        color: Colors.white,
+                                                      ),
+                                                      width:
+                                                          MediaQuery.of(context)
                                                                   .size
                                                                   .width *
                                                               0.9,
-                                                          height: 300,
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 20,
-                                                                    right: 20),
-                                                            child: Column(
+                                                      height: 300,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                left: 20,
+                                                                right: 20),
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Image.asset(
+                                                              'assets/icons/check.png',
+                                                              width: 80,
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 10,
+                                                            ),
+                                                            const Text(
+                                                              'Success',
+                                                              style: TextStyle(
+                                                                  fontSize: 18,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 5,
+                                                            ),
+                                                            Text(
+                                                              object.message
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 15,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 15,
+                                                            ),
+                                                            Row(
                                                               mainAxisAlignment:
                                                                   MainAxisAlignment
-                                                                      .center,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .center,
+                                                                      .spaceBetween,
                                                               children: [
-                                                                Image.asset(
-                                                                  'assets/icons/check.png',
-                                                                  width: 80,
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 10,
-                                                                ),
-                                                                const Text(
-                                                                  'Success',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          18,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w400),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 5,
-                                                                ),
-                                                                Text(
-                                                                  object.message
-                                                                      .toString(),
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          15,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w400),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 15,
-                                                                ),
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => Dashboard(widget.token)),
-                                                                        );
-                                                                      },
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              Dashboard(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    //  color: RandomColorModel().getColor(),
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
                                                                       child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.25,
-                                                                        //  color: RandomColorModel().getColor(),
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.dashboard,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Dashboard', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.dashboard,
+                                                                            size:
+                                                                                15,
                                                                           ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => InvoiceList(widget.token)),
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.25,
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.list_alt,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Invoice', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
                                                                           ),
-                                                                        ),
+                                                                          Text(
+                                                                              'Dashboard',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
                                                                       ),
                                                                     ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ReceiptList(widget.token)),
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.25,
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.currency_rupee,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Receipt', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
+                                                                  ),
                                                                 ),
-                                                                const SizedBox(
-                                                                  height: 8,
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              InvoiceList(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.list_alt,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Invoice',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
                                                                 ),
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => HomePage(widget.token)),
-                                                                        );
-                                                                      },
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              ReceiptList(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
                                                                       child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.25,
-                                                                        //  color: RandomColorModel().getColor(),
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.home,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Home', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.currency_rupee,
+                                                                            size:
+                                                                                15,
                                                                           ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .push(
-                                                                          MaterialPageRoute(
-                                                                              builder: (context) => ClientList(widget.token)),
-                                                                        );
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.25,
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.person,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Clients', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
                                                                           ),
-                                                                        ),
+                                                                          Text(
+                                                                              'Receipt',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
                                                                       ),
                                                                     ),
-                                                                    Container(
-                                                                      width: MediaQuery.of(context)
-                                                                              .size
-                                                                              .width *
-                                                                          0.25,
-                                                                      decoration: BoxDecoration(
-                                                                          color: Colors
-                                                                              .green
-                                                                              .shade100,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(10)),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(5),
-                                                                        child:
-                                                                            Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceEvenly,
-                                                                          children: [
-                                                                            Icon(
-                                                                              Icons.details,
-                                                                              size: 15,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 5,
-                                                                            ),
-                                                                            Text('Others',
-                                                                                style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                                textAlign: TextAlign.center),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ),
-                                                          ),
+                                                            const SizedBox(
+                                                              height: 8,
+                                                            ),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              HomePage(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    //  color: RandomColorModel().getColor(),
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.home,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Home',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                InkWell(
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .push(
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              ClientList(widget.token)),
+                                                                    );
+                                                                  },
+                                                                  child:
+                                                                      Container(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.25,
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .green
+                                                                            .shade100,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(10)),
+                                                                    child:
+                                                                        const Padding(
+                                                                      padding:
+                                                                          EdgeInsets.all(
+                                                                              5),
+                                                                      child:
+                                                                          Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceEvenly,
+                                                                        children: [
+                                                                          Icon(
+                                                                            Icons.person,
+                                                                            size:
+                                                                                15,
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                5,
+                                                                          ),
+                                                                          Text(
+                                                                              'Clients',
+                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
+                                                                              textAlign: TextAlign.center),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                Container(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.25,
+                                                                  decoration: BoxDecoration(
+                                                                      color: Colors
+                                                                          .green
+                                                                          .shade100,
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              10)),
+                                                                  child:
+                                                                      const Padding(
+                                                                    padding:
+                                                                        EdgeInsets
+                                                                            .all(5),
+                                                                    child:
+                                                                        Column(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceEvenly,
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .details,
+                                                                          size:
+                                                                              15,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              5,
+                                                                        ),
+                                                                        Text(
+                                                                            'Others',
+                                                                            style:
+                                                                                TextStyle(fontSize: 13, color: Colors.black),
+                                                                            textAlign: TextAlign.center),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
                                                     ),
                                                   ),
-                                                );
-                                              });
-                                        }
-                                      }
+                                                ),
+                                              ),
+                                            );
+                                          });
                                     }
                                   } else {
                                     Common.toastMessaage(

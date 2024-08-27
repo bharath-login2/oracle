@@ -11,7 +11,7 @@ import 'package:login2/models/renewal/hide_model.dart';
 import 'package:login2/models/renewal/post_reminder.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
-import 'package:login2/screens/clients/clientDetails.dart';
+import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/renew_custom_renewal.dart';

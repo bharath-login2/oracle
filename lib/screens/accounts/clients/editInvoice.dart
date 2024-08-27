@@ -9,18 +9,18 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/screens/clients/clientList.dart';
-import 'package:login2/screens/clients/invoiceList.dart';
+import 'package:login2/screens/accounts/clients/clientList.dart';
+import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
-import '../../core/common.dart';
-import '../../models/clients/editInvoiceDetailsModel.dart';
-import '../../models/clients/editInvoiceModel.dart';
-import '../../models/clients/ivoiceAddCommonDetailsModel.dart';
-import '../../models/clients/postalCodeModel.dart';
-import '../../service/service.dart';
-import '../homePage.dart';
-import '../leadManagement/dashboard.dart';
+import '../../../core/common.dart';
+import '../../../models/clients/editInvoiceDetailsModel.dart';
+import '../../../models/clients/editInvoiceModel.dart';
+import '../../../models/clients/ivoiceAddCommonDetailsModel.dart';
+import '../../../models/clients/postalCodeModel.dart';
+import '../../../service/service.dart';
+import '../../homePage.dart';
+import '../../leadManagement/dashboard.dart';
 import 'addReceipt.dart';
 
 class EditInvoice extends StatefulWidget {

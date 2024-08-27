@@ -4,16 +4,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/clients/getInvoiceSearchData.dart';
-import 'package:login2/screens/clients/receiptByInvoice.dart';
-import 'package:login2/screens/clients/viewInvoice.dart';
+import 'package:login2/screens/accounts/clients/receiptByInvoice.dart';
+import 'package:login2/screens/accounts/clients/viewInvoice.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
 import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
 import 'package:lottie/lottie.dart';
-import '../../core/common.dart';
-import '../../models/clients/deleteInvoiceModel.dart';
-import '../../models/clients/invoiceListModel.dart';
-import '../../service/service.dart';
+import '../../../core/common.dart';
+import '../../../models/clients/deleteInvoiceModel.dart';
+import '../../../models/clients/invoiceListModel.dart';
+import '../../../service/service.dart';
 import 'addInvoice.dart';
 import 'addReceipt.dart';
 import 'clientDetails.dart';
@@ -1799,4 +1799,4 @@ class _InvoiceListState extends State<InvoiceList> {
       },
     );
   }
-}
+   }

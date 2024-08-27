@@ -8,7 +8,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/post_renew_details.dart';
 import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/models/renewal/renewal_by_id_model.dart';
-import 'package:login2/screens/clients/addInvoice.dart';
+import 'package:login2/screens/accounts/clients/addInvoice.dart';
 import 'package:login2/service/service.dart';
 
 class RenewQuickRenewal extends StatefulWidget {

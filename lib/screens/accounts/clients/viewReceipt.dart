@@ -3,13 +3,13 @@ import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:login2/screens/clients/receiptList.dart';
+import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../models/clients/viewReceiptPdfModel.dart';
-import '../../service/service.dart';
+import '../../../models/clients/viewReceiptPdfModel.dart';
+import '../../../service/service.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class ViewReceipt extends StatefulWidget {

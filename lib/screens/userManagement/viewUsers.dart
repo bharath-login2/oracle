@@ -1,6 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:login2/screens/clients/clientList.dart';
-import 'package:login2/screens/clients/invoiceList.dart';
+import 'package:login2/screens/accounts/clients/clientList.dart';
+import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/userManagement/editStaffPage.dart';
 import 'package:login2/screens/userManagement/staffDashboard.dart';
 import 'package:lottie/lottie.dart';
@@ -21,7 +21,7 @@ import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../clients/receiptList.dart';
+import '../accounts/clients/receiptList.dart';
 
 // ignore: must_be_immutable
 class ViewUsers extends StatefulWidget {

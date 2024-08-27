@@ -10,17 +10,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/screens/clients/addReceipt.dart';
-import 'package:login2/screens/clients/receiptList.dart';
+import 'package:login2/screens/accounts/clients/addReceipt.dart';
+import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
-import '../../core/common.dart';
-import '../../models/clients/addInvoiceModel.dart';
-import '../../models/clients/ivoiceAddCommonDetailsModel.dart';
-import '../../models/clients/postalCodeModel.dart';
-import '../../service/service.dart';
-import '../leadManagement/dashboard.dart';
+import '../../../core/common.dart';
+import '../../../models/clients/addInvoiceModel.dart';
+import '../../../models/clients/ivoiceAddCommonDetailsModel.dart';
+import '../../../models/clients/postalCodeModel.dart';
+import '../../../service/service.dart';
+import '../../leadManagement/dashboard.dart';
 import 'invoiceList.dart';
 
 class AddInvoice extends StatefulWidget {

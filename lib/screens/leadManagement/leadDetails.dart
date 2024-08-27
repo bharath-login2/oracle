@@ -14,7 +14,7 @@ import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/screens/clients/clientDetails.dart';
+import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/leadManagement/post_confirmed_followup.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
 import 'package:lottie/lottie.dart';

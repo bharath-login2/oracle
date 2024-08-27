@@ -6,16 +6,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:login2/screens/clients/invoiceList.dart';
-import 'package:login2/screens/clients/receiptList.dart';
+import 'package:login2/screens/accounts/clients/invoiceList.dart';
+import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../core/common.dart';
-import '../../models/clients/receiptAddCommonDetailsModel.dart';
-import '../../models/clients/receiptAddModel.dart';
-import '../../service/service.dart';
-import '../homePage.dart';
-import '../leadManagement/dashboard.dart';
+import '../../../core/common.dart';
+import '../../../models/clients/receiptAddCommonDetailsModel.dart';
+import '../../../models/clients/receiptAddModel.dart';
+import '../../../service/service.dart';
+import '../../homePage.dart';
+import '../../leadManagement/dashboard.dart';
 import 'clientList.dart';
 
 class ReceiptAdd extends StatefulWidget {
