@@ -5,6 +5,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/screens/accounts/expense/add_expense.dart';
+import 'package:login2/screens/accounts/expense/edit_expense.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -157,7 +158,12 @@ class _ExpenseListState extends State<ExpenseList> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const AddExpense(),
-                                  ));
+                                  )).then((_) {
+                                page = 1;
+                                add = 1;
+                                items.clear();
+                                getList();
+                              });
                             } else if (value == "1") {
                             } else if (value == "2") {
                               filtrationSheet(context);
@@ -296,7 +302,20 @@ class _ExpenseListState extends State<ExpenseList> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   GestureDetector(
-                                    onTap: () async {},
+                                    onTap: () async {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditExpense(
+                                              data: items[index],
+                                            ),
+                                          )).then((_) {
+                                        page = 1;
+                                        add = 1;
+                                        items.clear();
+                                        getList();
+                                      }); 
+                                    },
                                     child: Container(
                                       decoration: BoxDecoration(
                                           borderRadius:

@@ -9,6 +9,7 @@ import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
+import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
@@ -4533,8 +4534,8 @@ class HttpService {
       log("error: $e");
     }
   }
-  static Future expenseMasterData(
-      ) async {
+
+  static Future expenseMasterData() async {
     var params = {
       "token": await Common.getSharedPref('token'),
     };
@@ -4544,6 +4545,68 @@ class HttpService {
       if (kDebugMode) {}
       if (result.statusCode == 200) {
         ExpenseMasterData model = ExpenseMasterData.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postExpense(
+    String catId,
+    String amount,
+    String fromAcc,
+    String toAcc,
+    String date,
+    String remarks,
+  ) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "categoryId": catId,
+      "amount": amount,
+      "fromAccount": fromAcc,
+      "toPerson": toAcc,
+      "date": date,
+      "remarks": remarks,
+    };
+    try {
+      var result = await _dio.get("${await Config.getUrl()}add_expense",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future updateExpense(
+    String expId,
+    String catId,
+    String amount,
+    String fromAcc,
+    String toAcc,
+    String date,
+    String remarks,
+  ) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "cmpExpId": expId,
+      "categoryId": catId,
+      "amount": amount,
+      "fromAccount": fromAcc,
+      "toPerson": toAcc,
+      "date": date,
+      "remarks": remarks,
+    };
+    try {
+      var result = await _dio.get("${await Config.getUrl()}edit_expense",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

@@ -1,28 +1,33 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/service/service.dart';
 
-class AddExpense extends StatefulWidget {
-  const AddExpense({super.key});
+class EditExpense extends StatefulWidget {
+  Expense data;
+  EditExpense({super.key, required this.data});
 
   @override
-  State<AddExpense> createState() => _AddExpenseState();
+  State<EditExpense> createState() => _EditExpenseState();
 }
 
-class _AddExpenseState extends State<AddExpense> {
-  var date = DateTime.now();
+class _EditExpenseState extends State<EditExpense> {
+  var date;
   List<AccountHead> accountHeads = [];
   List<AccountHead> filteredAccounts = [];
   bool result = true;
   List<ExpenseType> categories = [];
   List<ExpenseType> filteredCategories = [];
   ExpenseMasterData? expenseMasterData;
-  ExpensePostModel? postResponse;
+  ExpensePostModel? updateResponse;
+  String expId = "";
   String categoryId = "";
   String categoryName = "Tap to select";
   String fromAcId = "";
@@ -40,6 +45,16 @@ class _AddExpenseState extends State<AddExpense> {
   }
 
   getData() async {
+    expId = widget.data.cmpnyExId;
+    date = DateTime.parse(widget.data.trnDate.toString());
+    fromAcId = widget.data.fromAccount;
+    toAcId = widget.data.tothePerson;
+    fromAcName = widget.data.fromAccountPerson;
+    toAcName = widget.data.toAccountPerson;
+    categoryId = widget.data.expCatid;
+    categoryName = widget.data.expCatName;
+    amountController.text = widget.data.amount;
+    remarkController.text = widget.data.remarks;
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -51,10 +66,24 @@ class _AddExpenseState extends State<AddExpense> {
         result = false;
       });
     }
-    getDetails();
+    // getDetailsById();
+    getMasterData();
   }
 
-  getDetails() async {
+  // getDetailsById() async {
+  //   expenseMasterData = await HttpService.expenseMasterData();
+  //   if (expenseMasterData != null && expenseMasterData!.status == true) {
+  //     categories = expenseMasterData!.data.expenseType;
+  //     filteredCategories.addAll(categories);
+  //     accountHeads = expenseMasterData!.data.accountHead;
+  //     filteredAccounts.addAll(accountHeads);
+  //     setState(() {});
+  //   } else {
+  //     setState(() {});
+  //   }
+  // }
+
+  getMasterData() async {
     expenseMasterData = await HttpService.expenseMasterData();
     if (expenseMasterData != null && expenseMasterData!.status == true) {
       categories = expenseMasterData!.data.expenseType;
@@ -67,22 +96,23 @@ class _AddExpenseState extends State<AddExpense> {
     }
   }
 
-  postExpense() async {
-    postResponse = await HttpService.postExpense(
+  updateExpense() async {
+    updateResponse = await HttpService.updateExpense(
+        expId,
         categoryId,
         amountController.text,
         fromAcId,
         toAcId,
         date.toString(),
         remarkController.text);
-    if (postResponse != null && postResponse!.status == true) {
-      Common.toastMessaage(postResponse!.message, Colors.green);
+    if (updateResponse != null && updateResponse!.status == true) {
+      Common.toastMessaage(updateResponse!.message, Colors.green);
       if (mounted) {
         Navigator.pop(context);
         Navigator.pop(context);
       }
     } else {
-      Common.toastMessaage(postResponse!.message, Colors.red);
+      Common.toastMessaage(updateResponse!.message, Colors.red);
       if (mounted) {
         Navigator.pop(context);
       }
@@ -382,7 +412,7 @@ class _AddExpenseState extends State<AddExpense> {
                           } else {
                             if (context.mounted) {
                               Common.showProgressDialog(context, "Loading..");
-                              postExpense();
+                              updateExpense();
                             }
                           }
                         },
