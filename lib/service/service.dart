@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
+import 'package:login2/models/expense/exp_category_list.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
@@ -4603,6 +4604,103 @@ class HttpService {
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}edit_expense",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future deleteExpense(
+    String expId,
+  ) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "cmpnyExId": expId,
+    };
+    try {
+      var result = await _dio.get("${await Config.getUrl()}delete_expense",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future expenseCategoryList() async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+    };
+    try {
+      var result = await _dio.get(
+          "${await Config.getUrl()}list_expense_category",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpenseCategoryList model = ExpenseCategoryList.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future addExpenseCategory(
+    String cat,
+  ) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "categoryName": cat,
+    };
+    try {
+      var result = await _dio.get(
+          "${await Config.getUrl()}expense_category_add",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future updateExpenseCategory(String cat, String catId) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "categoryName": cat,
+      "categoryId": catId
+    };
+    try {
+      var result = await _dio.get(
+          "${await Config.getUrl()}expense_category_edit",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+   static Future deleteExpenseCategory( String catId) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "categoryId": catId
+    };
+    try {
+      var result = await _dio.get(
+          "${await Config.getUrl()}expense_category_delete",
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {

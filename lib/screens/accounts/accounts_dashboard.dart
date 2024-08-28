@@ -1,5 +1,6 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
@@ -20,6 +21,16 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     "Pending invoices",
     "Receipts",
   ];
+  List colorList = [
+    const Color(0xFFddd8f5),
+    const Color(0xFFf0ebef),
+    const Color(0xFFd7e9f4),
+    const Color(0xFFf5e6d7),
+    const Color(0xFFdbe4e8),
+    const Color(0xFFf3d6d5),
+    const Color(0xFFe0f0c8),
+    const Color(0xFFf3e8d3),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -29,77 +40,108 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
           child: Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Container(
-                  height: MediaQuery.of(context).size.height * .2,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     gradient: const LinearGradient(
                         colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
                   ),
-                ),
-              ),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * .95,
-                height: MediaQuery.of(context).size.height * .2,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: list.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 15,
-                      crossAxisSpacing: 15,
-                      childAspectRatio: 3),
-                  itemBuilder: (context, i) {
-                    return InkWell(
-                      onTap: () {
-                        if (list[i] == "Expense") {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ExpenseList(),
-                              ));
-                        } else if (list[i] == "Invoices") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    InvoiceList(widget.token.toString())),
-                          );
-                        } else if (list[i] == "Pending invoices") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    PendingInvoice(widget.token.toString())),
-                          );
-                        } else if (list[i] == "Receipts") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    ReceiptList(widget.token.toString())),
-                          );
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFf0ebef),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            list[i],
-                            style: TextStyle(
-                                color: Colors.blue.shade900,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15),
+                  child: Column(
+                    children: [
+                      // Container(
+                      //   height: MediaQuery.of(context).size.height * .2,
+                      //   decoration: BoxDecoration(
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       image: DecorationImage(
+                      //           image: AssetImage("assets/main/logo.png"))),
+                      // ),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      const Text(
+                        "Account Management",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 25,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(2.0, 2.0),
+                                blurRadius: 5.0,
+                                color: Colors.grey,
+                              ),
+                            ]),
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * .95,
+                        height: MediaQuery.of(context).size.height * .2,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: list.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 15,
+                                    crossAxisSpacing: 15,
+                                    childAspectRatio: 3),
+                            itemBuilder: (context, i) {
+                              return InkWell(
+                                onTap: () {
+                                  if (list[i] == "Expense") {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ExpenseList(),
+                                        ));
+                                  } else if (list[i] == "Invoices") {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => InvoiceList(
+                                              widget.token.toString())),
+                                    );
+                                  } else if (list[i] == "Pending invoices") {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => PendingInvoice(
+                                              widget.token.toString())),
+                                    );
+                                  } else if (list[i] == "Receipts") {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ReceiptList(
+                                              widget.token.toString())),
+                                    );
+                                  }
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFf0ebef),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      list[i],
+                                      style: TextStyle(
+                                          color: Colors.blue.shade900,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
               ),
               SizedBox(
@@ -113,14 +155,22 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                       crossAxisSpacing: 15,
                       childAspectRatio: 1.5),
                   children: [
-                    gridItem("BANK ACCOUNT", "1000.00", Colors.green),
-                    gridItem("PENDING EXPENSE", "1000.00", Colors.red),
-                    gridItem("TODAYS INCOME", "1000.00", Colors.black),
-                    gridItem("TODAYS EXPENSE", "1000.00", Colors.black),
-                    gridItem("THIS MONTH INCOME", "1000.00", Colors.black),
-                    gridItem("THIS MONTH EXPENSE", "1000.00", Colors.black),
-                    gridItem("PENDING INVOICE", "1000.00", Colors.black),
-                    gridItem("ADVANCE AMOUNT", "1000.00", Colors.green),
+                    gridItem(
+                        "BANK ACCOUNT", "1000.00", Colors.green, colorList[0]),
+                    gridItem(
+                        "PENDING EXPENSE", "1000.00", Colors.red, colorList[1]),
+                    gridItem(
+                        "TODAYS INCOME", "1000.00", Colors.black, colorList[2]),
+                    gridItem("TODAYS EXPENSE", "1000.00", Colors.black,
+                        colorList[3]),
+                    gridItem("THIS MONTH INCOME", "1000.00", Colors.black,
+                        colorList[4]),
+                    gridItem("THIS MONTH EXPENSE", "1000.00", Colors.black,
+                        colorList[5]),
+                    gridItem("PENDING INVOICE", "1000.00", Colors.black,
+                        colorList[6]),
+                    gridItem("ADVANCE AMOUNT", "1000.00", Colors.green,
+                        colorList[7]),
                   ],
                 ),
               ),
@@ -283,10 +333,11 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     );
   }
 
-  Container gridItem(String name, String value, Color color) {
+  Container gridItem(
+      String name, String value, Color amountColor, Color backGround) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFf0ebef),
+        color: backGround,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Column(
@@ -305,7 +356,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
           Text(
             value,
             style: TextStyle(
-                color: color, fontWeight: FontWeight.bold, fontSize: 20),
+                color: amountColor, fontWeight: FontWeight.bold, fontSize: 20),
           ),
         ],
       ),
