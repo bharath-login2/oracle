@@ -1,10 +1,15 @@
 // ignore_for_file: must_be_immutable
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
+import 'package:login2/service/service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class AccountsDashboard extends StatefulWidget {
   String token;
@@ -15,6 +20,12 @@ class AccountsDashboard extends StatefulWidget {
 }
 
 class _AccountsDashboardState extends State<AccountsDashboard> {
+  bool result = true;
+  bool isLoading = true;
+  AccountDashboardModel? dashboard;
+  String fDate = DateFormat('dd-MM-yyyy')
+      .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
+  String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
   List list = [
     "Expense",
     "Invoices",
@@ -31,270 +42,588 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     const Color(0xFFe0f0c8),
     const Color(0xFFf3e8d3),
   ];
+  getData() async {
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi) {
+      setState(() {
+        result = true;
+      });
+    } else {
+      setState(() {
+        result = false;
+      });
+    }
+    getList();
+  }
+
+  getList() async {
+    dashboard = await HttpService.accountsDashboard(fDate, tDate);
+    if (dashboard != null && dashboard!.status == true) {
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    getData();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                        colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                  ),
-                  child: Column(
-                    children: [
-                      // Container(
-                      //   height: MediaQuery.of(context).size.height * .2,
-                      //   decoration: BoxDecoration(
-                      //       borderRadius: BorderRadius.circular(12),
-                      //       image: DecorationImage(
-                      //           image: AssetImage("assets/main/logo.png"))),
-                      // ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      const Text(
-                        "Account Management",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 25,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(2.0, 2.0),
-                                blurRadius: 5.0,
-                                color: Colors.grey,
+    return result == true
+        ? Scaffold(
+            appBar: PreferredSize(
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
+              child: Container(
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 10.0, top: 10.0, bottom: 10.0, right: 0),
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: 25,
+                                width: 25,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.white),
+                                    shape: BoxShape.circle),
+                                child: const Icon(
+                                  Icons.arrow_back_ios_outlined,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                               ),
-                            ]),
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * .95,
-                        height: MediaQuery.of(context).size.height * .2,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: list.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 15,
-                                    crossAxisSpacing: 15,
-                                    childAspectRatio: 3),
-                            itemBuilder: (context, i) {
-                              return InkWell(
-                                onTap: () {
-                                  if (list[i] == "Expense") {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const ExpenseList(),
-                                        ));
-                                  } else if (list[i] == "Invoices") {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => InvoiceList(
-                                              widget.token.toString())),
-                                    );
-                                  } else if (list[i] == "Pending invoices") {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => PendingInvoice(
-                                              widget.token.toString())),
-                                    );
-                                  } else if (list[i] == "Receipts") {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => ReceiptList(
-                                              widget.token.toString())),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFf0ebef),
-                                    borderRadius: BorderRadius.circular(12),
+                            ),
+                            const SizedBox(
+                              width: 25,
+                            ),
+                            const Text(
+                              "Account Management",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ]),
+                ),
+              ),
+            ),
+            body: isLoading == true
+                ? buildLoaderListItem()
+                : SafeArea(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: const LinearGradient(colors: [
+                                  Color(0xFF2a86c9),
+                                  Color(0xFF406dbe)
+                                ]),
+                              ),
+                              child: Column(
+                                children: [
+                                  // Container(
+                                  //   height: MediaQuery.of(context).size.height * .2,
+                                  //   decoration: BoxDecoration(
+                                  //       borderRadius: BorderRadius.circular(12),
+                                  //       image: DecorationImage(
+                                  //           image: AssetImage("assets/main/logo.png"))),
+                                  // ),
+                                  const SizedBox(
+                                    height: 20,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      list[i],
-                                      style: TextStyle(
-                                          color: Colors.blue.shade900,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15),
+                                  const Text(
+                                    "Account Management",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 25,
+                                        shadows: [
+                                          Shadow(
+                                            offset: Offset(2.0, 2.0),
+                                            blurRadius: 5.0,
+                                            color: Colors.grey,
+                                          ),
+                                        ]),
+                                  ),
+                                  SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * .95,
+                                    height:
+                                        MediaQuery.of(context).size.height * .2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: GridView.builder(
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: list.length,
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                mainAxisSpacing: 15,
+                                                crossAxisSpacing: 15,
+                                                childAspectRatio: 3),
+                                        itemBuilder: (context, i) {
+                                          return InkWell(
+                                            onTap: () {
+                                              if (list[i] == "Expense") {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const ExpenseList(),
+                                                    ));
+                                              } else if (list[i] ==
+                                                  "Invoices") {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          InvoiceList(widget
+                                                              .token
+                                                              .toString())),
+                                                );
+                                              } else if (list[i] ==
+                                                  "Pending invoices") {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          PendingInvoice(widget
+                                                              .token
+                                                              .toString())),
+                                                );
+                                              } else if (list[i] ==
+                                                  "Receipts") {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ReceiptList(widget
+                                                              .token
+                                                              .toString())),
+                                                );
+                                              }
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFf0ebef),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  list[i],
+                                                  style: TextStyle(
+                                                      color:
+                                                          Colors.blue.shade900,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 15),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * .9,
+                            height: MediaQuery.of(context).size.height * .67,
+                            child: GridView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 15,
+                                      crossAxisSpacing: 15,
+                                      childAspectRatio: 1.5),
+                              children: [
+                                gridItem(
+                                    "BANK ACCOUNT",
+                                    dashboard!.data.bankAccount,
+                                    Colors.green,
+                                    colorList[0]),
+                                gridItem(
+                                    "PENDING EXPENSE",
+                                    dashboard!.data.pendingExpense,
+                                    Colors.red,
+                                    colorList[1]),
+                                gridItem(
+                                    "TODAYS INCOME",
+                                    dashboard!.data.todaysIncome,
+                                    Colors.black,
+                                    colorList[2]),
+                                gridItem(
+                                    "TODAYS EXPENSE",
+                                    dashboard!.data.todayExpense,
+                                    Colors.black,
+                                    colorList[3]),
+                                gridItem(
+                                    "THIS MONTH INCOME",
+                                    dashboard!.data.monthlyIncome,
+                                    Colors.black,
+                                    colorList[4]),
+                                gridItem(
+                                    "THIS MONTH EXPENSE",
+                                    dashboard!.data.monthlyExpense,
+                                    Colors.black,
+                                    colorList[5]),
+                                gridItem(
+                                    "PENDING INVOICE",
+                                    dashboard!.data.pendingIncome,
+                                    Colors.black,
+                                    colorList[6]),
+                                gridItem(
+                                    "ADVANCE AMOUNT",
+                                    dashboard!.data.advanceAmount,
+                                    Colors.green,
+                                    colorList[7]),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 12.0,
+                              right: 12.0,
+                              bottom: 25.0,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFf0ebef),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 26.0,
+                                        bottom: 16,
+                                        left: 16.0,
+                                        right: 16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final selctedDatetimetemp =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime(
+                                                  DateTime.now().year,
+                                                  DateTime.now().month,
+                                                  1),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime.now(),
+                                            );
+                                            fDate = DateFormat('dd-MM-yyyy')
+                                                .format(selctedDatetimetemp!);
+                                            getList();
+                                            setState(() {});
+                                          },
+                                          child: Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.37,
+                                            height: 45,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                      blurRadius: 0.5,
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      offset: Offset(2.5, 2.5))
+                                                ],
+                                                color: Colors.white),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: Text(
+                                                    fDate,
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            2),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.calendar_month,
+                                                    color: Colors.grey,
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.arrow_forward,
+                                          size: 16,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () async {
+                                            final toDateSelectTemp =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime(2100),
+                                            );
+                                            tDate = DateFormat('dd-MM-yyyy')
+                                                .format(toDateSelectTemp!);
+                                            getList();
+                                            setState(() {});
+                                          },
+                                          child: Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width *
+                                                0.37,
+                                            height: 45,
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                                color: Colors.white,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                      blurRadius: 0.5,
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      offset: const Offset(
+                                                          2.5, 2.5))
+                                                ]),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: Text(
+                                                    tDate,
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.calendar_month,
+                                                    color: Colors.grey,
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(
+                                            bottom: 16.0,
+                                            left: 16.0,
+                                            right: 16.0),
+                                        child: Text(
+                                          "Income",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 25),
+                                        ),
+                                      ),
+                                      if (dashboard!
+                                          .data.incomeGraph.isNotEmpty)
+                                        ListView.builder(
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            itemCount: dashboard!
+                                                .data.incomeGraph.length,
+                                            itemBuilder: (context, i) {
+                                              return progressItem(
+                                                  dashboard!.data.incomeGraph[i]
+                                                      .category,
+                                                  dashboard!.data.incomeGraph[i]
+                                                      .totalExpense,
+                                                  double.parse(dashboard!.data
+                                                      .incomeGraph[i].perc));
+                                            })
+                                      else
+                                        const Padding(
+                                          padding:
+                                              EdgeInsets.only(bottom: 26.0),
+                                          child: Text(
+                                            "Empty",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  if (dashboard!.data.expenseGraph.isNotEmpty)
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 16.0, horizontal: 16.0),
+                                          child: Text(
+                                            "Expense",
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 25),
+                                          ),
+                                        ),
+                                        ListView.builder(
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            itemCount: dashboard!
+                                                .data.expenseGraph.length,
+                                            itemBuilder: (context, i) {
+                                              return progressItem(
+                                                  dashboard!
+                                                      .data
+                                                      .expenseGraph[i]
+                                                      .expCatName,
+                                                  dashboard!
+                                                      .data
+                                                      .expenseGraph[i]
+                                                      .totalExpense,
+                                                  double.parse(dashboard!.data
+                                                      .expenseGraph[i].perc));
+                                            }),
+                                      ],
+                                    )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          )
+        : Scaffold(
+            backgroundColor: Colors.white,
+            body: SizedBox(
+              width: MediaQuery.of(context).size.width * 1,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 300,
+                    height: 300,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/icons/noNetwork.jpg'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    'No Network Found !',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      getData();
+                    },
+                    child: SizedBox(
+                      width: 120,
+                      height: 35,
+                      child: Padding(
+                        padding: const EdgeInsets.all(1.5),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade400,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Try Again',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * .9,
-                height: MediaQuery.of(context).size.height * .67,
-                child: GridView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 15,
-                      crossAxisSpacing: 15,
-                      childAspectRatio: 1.5),
-                  children: [
-                    gridItem(
-                        "BANK ACCOUNT", "1000.00", Colors.green, colorList[0]),
-                    gridItem(
-                        "PENDING EXPENSE", "1000.00", Colors.red, colorList[1]),
-                    gridItem(
-                        "TODAYS INCOME", "1000.00", Colors.black, colorList[2]),
-                    gridItem("TODAYS EXPENSE", "1000.00", Colors.black,
-                        colorList[3]),
-                    gridItem("THIS MONTH INCOME", "1000.00", Colors.black,
-                        colorList[4]),
-                    gridItem("THIS MONTH EXPENSE", "1000.00", Colors.black,
-                        colorList[5]),
-                    gridItem("PENDING INVOICE", "1000.00", Colors.black,
-                        colorList[6]),
-                    gridItem("ADVANCE AMOUNT", "1000.00", Colors.green,
-                        colorList[7]),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 12.0,
-                  right: 12.0,
-                  bottom: 25.0,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFf0ebef),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 16.0, horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Income",
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  "14-05-2000",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontSize: 14),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward,
-                                  size: 16,
-                                ),
-                                Text(
-                                  "14-05-2020",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      progressItem("Customer", "350.00", 35),
-                      progressItem("Renewal", "600.00", 60),
-                      progressItem("Installment", "50.00", 5),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 12.0,
-                  right: 12.0,
-                  bottom: 25.0,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFf0ebef),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 16.0, horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Expense",
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  "14-05-2000",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontSize: 14),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward,
-                                  size: 16,
-                                ),
-                                Text(
-                                  "14-05-2020",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      progressItem("Staff", "350.00", 35),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+            ));
   }
 
   Padding progressItem(String name, String amount, double value) {
@@ -337,9 +666,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       String name, String value, Color amountColor, Color backGround) {
     return Container(
       decoration: BoxDecoration(
-        color: backGround,
-        borderRadius: BorderRadius.circular(5),
-      ),
+          color: backGround,
+          borderRadius: BorderRadius.circular(5),
+          boxShadow: [
+            BoxShadow(
+                blurRadius: 0.5,
+                color: Colors.grey.shade300,
+                offset: const Offset(2.5, 2.5))
+          ]),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -361,5 +695,54 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
         ],
       ),
     );
+  }
+
+  Widget buildLoaderListItem() {
+    return Shimmer.fromColors(
+        enabled: true,
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * .95,
+                  height: MediaQuery.of(context).size.height * .25,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.black),
+                ),
+              ),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * .9,
+                height: MediaQuery.of(context).size.height * .67,
+                child: GridView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 15,
+                      crossAxisSpacing: 15,
+                      childAspectRatio: 1.5),
+                  children: [
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                    gridItem("", "", Colors.black, Colors.black),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }

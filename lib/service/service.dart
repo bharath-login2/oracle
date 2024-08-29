@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
+import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/expense/exp_category_list.dart';
+import 'package:login2/models/expense/exp_history.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
@@ -4693,7 +4695,8 @@ class HttpService {
       log("error: $e");
     }
   }
-   static Future deleteExpenseCategory( String catId) async {
+
+  static Future deleteExpenseCategory(String catId) async {
     var params = {
       "token": await Common.getSharedPref('token'),
       "categoryId": catId
@@ -4705,6 +4708,43 @@ class HttpService {
       if (kDebugMode) {}
       if (result.statusCode == 200) {
         ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future expenseHistory(String expId) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "expense_id": expId
+    };
+    try {
+      var result = await _dio.get("${await Config.getUrl()}expense_history",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        ExpensehistoryModel model = ExpensehistoryModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future accountsDashboard(fDate, tdate) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "fromDate": fDate,
+      "toDate": tdate
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}expense_dashboard",
+          data: formData);
+      if (result.statusCode == 200) {
+        AccountDashboardModel model =
+            AccountDashboardModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

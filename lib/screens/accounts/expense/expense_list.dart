@@ -8,6 +8,7 @@ import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/screens/accounts/expense/add_expense.dart';
 import 'package:login2/screens/accounts/expense/edit_expense.dart';
 import 'package:login2/screens/accounts/expense/expense_categories.dart';
+import 'package:login2/screens/accounts/expense/expense_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -124,6 +125,7 @@ class _ExpenseListState extends State<ExpenseList> {
   Widget build(BuildContext context) {
     return result == true
         ? Scaffold(
+            backgroundColor: Colors.grey.shade300,
             appBar: PreferredSize(
               preferredSize:
                   Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
@@ -244,50 +246,81 @@ class _ExpenseListState extends State<ExpenseList> {
                         child: Container(
                           width: MediaQuery.of(context).size.width * .9,
                           decoration: BoxDecoration(
-                              color: const Color(0xFFf0ebef),
+                              color: Colors.white,
+                              boxShadow: const [
+                                BoxShadow(
+                                  blurRadius: 0.95,
+                                  color: Colors.black12,
+                                )
+                              ],
                               borderRadius: BorderRadius.circular(8)),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                CircleAvatar(
+                                    radius: 15,
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    child: Text(
+                                      (index + 1).toString(),
+                                      style: const TextStyle(),
+                                    )),
                                 SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * .75,
+                                  width: MediaQuery.of(context).size.width * .6,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .7,
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              "${items[index].fromAccountPerson} ",
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            const Icon(
+                                              Icons.arrow_forward,
+                                              size: 18,
+                                            ),
+                                            Text(
+                                              " ${items[index].toAccountPerson}",
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .7,
+                                        child: Text(
+                                          "Created by: ${items[index].staffName}",
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
                                       Text(
                                         "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(fontSize: 14),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .7,
-                                        child: Text(
-                                          "From account: ${items[index].fromAccountPerson}",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .7,
-                                        child: Text(
-                                          "To account: ${items[index].toAccountPerson}",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -307,10 +340,9 @@ class _ExpenseListState extends State<ExpenseList> {
                                       SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
-                                                .7,
+                                                .5,
                                         child: Text(
-                                          "Created by:: ${items[index].staffName}",
-                                          overflow: TextOverflow.ellipsis,
+                                          "Remarks: ${items[index].remarks}",
                                           style: const TextStyle(fontSize: 14),
                                         ),
                                       ),
@@ -395,7 +427,16 @@ class _ExpenseListState extends State<ExpenseList> {
                                       height: 10,
                                     ),
                                     GestureDetector(
-                                      onTap: () async {},
+                                      onTap: () async {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpenseHistory(
+                                                expId: items[index].cmpnyExId,
+                                              ),
+                                            ));
+                                      },
                                       child: Container(
                                         decoration: BoxDecoration(
                                             borderRadius:

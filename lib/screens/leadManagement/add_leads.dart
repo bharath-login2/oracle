@@ -326,18 +326,19 @@ class _AddLeadsState extends State<AddLeads> {
                                                   color: Colors.grey)),
                                         ),
                                       ),
-                                      const SizedBox(width: 10,),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
                                       GestureDetector(
                                         onTap: () async {
                                           final PhoneContact contact =
                                               await FlutterContactPicker
                                                   .pickPhoneContact();
-                                          String number = Common.trimPlus91(
-                                              contact.phoneNumber!.number
-                                                  .toString());
+                                          String number = contact.phoneNumber!.number
+                                                  .toString();
                                           String name = contact.fullName!;
-                                          contactNo.text =
-                                              number.replaceAll(' ', '');
+                                          contactNo.text = Common.trimPlus91(
+                                              number.replaceAll(RegExp(r'[ ()-]'), ''));
                                           clientName.text = name;
                                           setState(() {});
                                         },

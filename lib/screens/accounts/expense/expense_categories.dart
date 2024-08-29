@@ -159,7 +159,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
               ),
             ),
             body: isLoading == true
-                ? const LinearProgressIndicator()
+                ?  LinearProgressIndicator(color: Colors.blue.shade900,)
                 : expenseList == null
                     ? const Center(
                         child: Text(

@@ -50,7 +50,7 @@ class Common {
 
   static saveSharedPref(String key, String val) async {
     final prefs = await SharedPreferences.getInstance();
-     prefs.setString(key, val);
+    prefs.setString(key, val);
   }
 
   static getSharedPref(String key) async {
