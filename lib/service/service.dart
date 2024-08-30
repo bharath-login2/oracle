@@ -2233,8 +2233,10 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}deleteInvoice",
           queryParameters: params);
-      DeleteInvoiceModel model = DeleteInvoiceModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        DeleteInvoiceModel model = DeleteInvoiceModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }

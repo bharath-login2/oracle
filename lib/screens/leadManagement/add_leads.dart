@@ -65,6 +65,7 @@ class _AddLeadsState extends State<AddLeads> {
   // String leadSourceId = "";
   String priority = 'Normal';
   String priorityId = '2';
+  String? contactPermission = '';
   TextEditingController clientName = TextEditingController();
   TextEditingController contactNo = TextEditingController();
   TextEditingController cost = TextEditingController();
@@ -112,6 +113,7 @@ class _AddLeadsState extends State<AddLeads> {
   }
 
   getData() async {
+    contactPermission = await Common.getSharedPref("getContactPermission");
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -331,16 +333,11 @@ class _AddLeadsState extends State<AddLeads> {
                                       ),
                                       GestureDetector(
                                         onTap: () async {
-                                          final PhoneContact contact =
-                                              await FlutterContactPicker
-                                                  .pickPhoneContact();
-                                          String number = contact.phoneNumber!.number
-                                                  .toString();
-                                          String name = contact.fullName!;
-                                          contactNo.text = Common.trimPlus91(
-                                              number.replaceAll(RegExp(r'[ ()-]'), ''));
-                                          clientName.text = name;
-                                          setState(() {});
+                                          if (contactPermission == 'true') {
+                                            selectContact();
+                                          } else {
+                                            contactPermissionDialog(context);
+                                          }
                                         },
                                         child: Container(
                                           height: 45,
@@ -1671,6 +1668,109 @@ class _AddLeadsState extends State<AddLeads> {
             ));
   }
 
+  Future<dynamic> contactPermissionDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 50),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                ),
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Permission",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          // decoration: TextDecoration.none,
+                          //fontFamily: Theme.of(context).textTheme,
+                        ),
+                      ),
+                      const Text(
+                        "Our app accesses your contact book to help you efficiently manage and organize your contacts. Specifically, we allow you to save or update contact information directly in your device’s contact list.",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: const Color(0xffe94040)),
+                              child: const Center(
+                                child: Text("Deny",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              Navigator.pop(context);
+                              contactPermission = "true";
+                              setState(() {
+                                Common.saveSharedPref(
+                                    "getContactPermission", 'true');
+                                selectContact();
+                              });
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.green),
+                              child: const Center(
+                                child: Text("Allow",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _upgrade(BuildContext context) {
     showDialog(
         context: context,
@@ -1736,5 +1836,15 @@ class _AddLeadsState extends State<AddLeads> {
         ],
       ),
     );
+  }
+
+  selectContact() async {
+    final PhoneContact contact = await FlutterContactPicker.pickPhoneContact();
+    String number = contact.phoneNumber!.number.toString();
+    String name = contact.fullName!;
+    contactNo.text =
+        Common.trimPlus91(number.replaceAll(RegExp(r'[ ()-]'), ''));
+    clientName.text = name;
+    setState(() {});
   }
 }

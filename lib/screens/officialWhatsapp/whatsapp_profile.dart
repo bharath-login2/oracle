@@ -42,6 +42,7 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
   TextEditingController numberTextController = TextEditingController();
   final editKey = GlobalKey<FormState>();
   final contactKey = GlobalKey<FormState>();
+  String? contactPermission = '';
   String code = '91';
   DateTime? createdDate;
   String? formattedDate;
@@ -51,20 +52,27 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
     groupTextController.text = widget.groupName;
     createdDate = DateTime.parse(widget.createdDate);
     formattedDate = DateFormat('dd-MM-yyyy').format(createdDate!);
+    permission();
     super.initState();
+  }
+
+  permission() async {
+    contactPermission = await Common.getSharedPref("getContactPermission");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:AppBar(
+      appBar: AppBar(
         backgroundColor: ColorConstant.barGreen,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: const Icon(Icons.arrow_back,color: Colors.white,)),
-        
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: const Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+            )),
       ),
       body: SingleChildScrollView(
         child: SafeArea(
@@ -135,7 +143,11 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
                               borderRadius: BorderRadius.circular(12)),
                           child: IconButton(
                               onPressed: () {
-                                addContactDialog(context);
+                                if (contactPermission == 'true') {
+                                  addContactDialog(context);
+                                } else {
+                                  contactPermissionDialog(context);
+                                }
                               },
                               icon: const Icon(Icons.person_add,
                                   color: ColorConstant.barGreen))),
@@ -307,7 +319,6 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
 
   addContactDialog(context) {
     String code = '91';
-    
 
     showDialog(
       context: context,
@@ -414,8 +425,8 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
                       onTap: () async {
                         final PhoneContact contact =
                             await FlutterContactPicker.pickPhoneContact();
-                        String number =
-                          Common.trimPlus91(contact.phoneNumber!.number.toString());
+                        String number = Common.trimPlus91(
+                            contact.phoneNumber!.number.toString());
                         String name = contact.fullName!;
                         numberTextController.text = number.replaceAll(' ', '');
                         nameTextController.text = name;
@@ -618,11 +629,8 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
   }
 
   addContacts() async {
-    samResponse = await HttpService.addCampaignContact(
-        widget.groupId,
-        nameTextController.text,
-        code,
-        numberTextController.text);
+    samResponse = await HttpService.addCampaignContact(widget.groupId,
+        nameTextController.text, code, numberTextController.text);
     if (samResponse != null && samResponse!.status == true) {
       if (mounted) {
         Navigator.pop(context);
@@ -633,5 +641,108 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
     } else {
       Common.toastMessaage("Failed", Colors.red);
     }
+  }
+
+  Future<dynamic> contactPermissionDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 50),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                ),
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Permission",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          // decoration: TextDecoration.none,
+                          //fontFamily: Theme.of(context).textTheme,
+                        ),
+                      ),
+                      const Text(
+                        "Our app accesses your contact book to help you efficiently manage and organize your contacts. Specifically, we allow you to save or update contact information directly in your device’s contact list.",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: const Color(0xffe94040)),
+                              child: const Center(
+                                child: Text("Deny",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              Navigator.pop(context);
+                              contactPermission = "true";
+                              setState(() {
+                                Common.saveSharedPref(
+                                    "getContactPermission", 'true');
+                                addContactDialog(context);
+                              });
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.green),
+                              child: const Center(
+                                child: Text("Allow",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

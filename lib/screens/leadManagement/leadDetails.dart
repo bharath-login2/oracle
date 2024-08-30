@@ -152,6 +152,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   ListFolderNameModel? listFolder;
   FileManagerPermissionModel? fileManagerPermission;
   LeadDeatailsModelAdd? leadDetailsAdditional;
+  String? contactPermission = '';
 
   LeadMileStoneListModel? mileStone;
   bool? result = true;
@@ -192,6 +193,7 @@ class _LeadDetailsState extends State<LeadDetails> {
   }
 
   getData() async {
+    contactPermission = await Common.getSharedPref("saveContactPermission");
     setState(() {
       timeOut = false;
     });
@@ -448,335 +450,11 @@ class _LeadDetailsState extends State<LeadDetails> {
                               const SizedBox(width: 10),
                               InkWell(
                                 onTap: () async {
-                                  showGeneralDialog(
-                                    barrierLabel: "showGeneralDialog",
-                                    barrierDismissible: true,
-                                    barrierColor: Colors.black.withOpacity(0.6),
-                                    transitionDuration:
-                                        const Duration(milliseconds: 400),
-                                    context: context,
-                                    pageBuilder: (context, _, __) {
-                                      return StatefulBuilder(
-                                        builder: (context, setState) {
-                                          return Align(
-                                            alignment: Alignment.bottomCenter,
-                                            child: Padding(
-                                              padding: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context)
-                                                      .viewInsets
-                                                      .bottom),
-                                              child: IntrinsicHeight(
-                                                child: Container(
-                                                  width: double.maxFinite,
-                                                  clipBehavior: Clip.antiAlias,
-                                                  padding:
-                                                      const EdgeInsets.all(16),
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    color: Colors.white,
-                                                    borderRadius:
-                                                        BorderRadius.only(
-                                                      topLeft:
-                                                          Radius.circular(16),
-                                                      topRight:
-                                                          Radius.circular(16),
-                                                    ),
-                                                  ),
-                                                  child: Material(
-                                                    child: Column(
-                                                      children: [
-                                                        const SizedBox(
-                                                            height: 20),
-                                                        const Text(
-                                                          'Save Contact to Phone',
-                                                          style: TextStyle(
-                                                            fontSize: 18,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 20),
-                                                        TextFormField(
-                                                          controller:
-                                                              contactFName,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                  contentPadding:
-                                                                      EdgeInsets.only(
-                                                                          left:
-                                                                              10,
-                                                                          top:
-                                                                              2,
-                                                                          bottom:
-                                                                              2),
-                                                                  labelText:
-                                                                      'First Name',
-                                                                  fillColor:
-                                                                      Colors
-                                                                          .white,
-                                                                  filled: true,
-                                                                  prefixIcon: Icon(
-                                                                      Icons
-                                                                          .person,
-                                                                      color: Colors
-                                                                          .grey),
-                                                                  border:
-                                                                      OutlineInputBorder(),
-                                                                  focusedBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderSide:
-                                                                        BorderSide(
-                                                                            color:
-                                                                                Colors.grey),
-                                                                  ),
-                                                                  labelStyle:
-                                                                      TextStyle(
-                                                                          color:
-                                                                              Colors.grey)),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 13,
-                                                        ),
-                                                        TextFormField(
-                                                          controller:
-                                                              contactLName,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                  contentPadding:
-                                                                      EdgeInsets.only(
-                                                                          left:
-                                                                              10,
-                                                                          top:
-                                                                              2,
-                                                                          bottom:
-                                                                              2),
-                                                                  labelText:
-                                                                      'Last Name',
-                                                                  fillColor:
-                                                                      Colors
-                                                                          .white,
-                                                                  filled: true,
-                                                                  prefixIcon: Icon(
-                                                                      Icons
-                                                                          .person,
-                                                                      color: Colors
-                                                                          .grey),
-                                                                  border:
-                                                                      OutlineInputBorder(),
-                                                                  focusedBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderSide:
-                                                                        BorderSide(
-                                                                            color:
-                                                                                Colors.grey),
-                                                                  ),
-                                                                  labelStyle:
-                                                                      TextStyle(
-                                                                          color:
-                                                                              Colors.grey)),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 13,
-                                                        ),
-                                                        TextFormField(
-                                                          controller:
-                                                              contactMobile,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                                  contentPadding:
-                                                                      EdgeInsets.only(
-                                                                          left:
-                                                                              10,
-                                                                          top:
-                                                                              2,
-                                                                          bottom:
-                                                                              2),
-                                                                  labelText:
-                                                                      'Mobile Number',
-                                                                  fillColor:
-                                                                      Colors
-                                                                          .white,
-                                                                  filled: true,
-                                                                  prefixIcon: Icon(
-                                                                      Icons
-                                                                          .phone_android_rounded,
-                                                                      color: Colors
-                                                                          .grey),
-                                                                  border:
-                                                                      OutlineInputBorder(),
-                                                                  focusedBorder:
-                                                                      OutlineInputBorder(
-                                                                    borderSide:
-                                                                        BorderSide(
-                                                                            color:
-                                                                                Colors.grey),
-                                                                  ),
-                                                                  labelStyle:
-                                                                      TextStyle(
-                                                                          color:
-                                                                              Colors.grey)),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 10,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 16),
-                                                        Container(
-                                                          height: 40,
-                                                          width:
-                                                              double.maxFinite,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                            color: Color(
-                                                                0xFF3375e0),
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .all(Radius
-                                                                        .circular(
-                                                                            8)),
-                                                          ),
-                                                          child:
-                                                              RawMaterialButton(
-                                                            onPressed:
-                                                                () async {
-                                                              if (contactFName
-                                                                  .text
-                                                                  .isEmpty) {
-                                                                Common.toastMessaage(
-                                                                    'Enter the first name',
-                                                                    Colors.red);
-                                                              } else if (contactMobile
-                                                                  .text
-                                                                  .isEmpty) {
-                                                                Common.toastMessaage(
-                                                                    'Enter the Mobile number',
-                                                                    Colors.red);
-                                                              } else {
-                                                                PermissionStatus
-                                                                    permission =
-                                                                    await Permission
-                                                                        .contacts
-                                                                        .status;
-
-                                                                if (permission !=
-                                                                    PermissionStatus
-                                                                        .granted) {
-                                                                  await Permission
-                                                                      .contacts
-                                                                      .request();
-                                                                  PermissionStatus
-                                                                      permission =
-                                                                      await Permission
-                                                                          .contacts
-                                                                          .status;
-
-                                                                  if (permission ==
-                                                                      PermissionStatus
-                                                                          .granted) {
-                                                                    Contact
-                                                                        newContact =
-                                                                        Contact();
-                                                                    newContact
-                                                                            .givenName =
-                                                                        contactFName
-                                                                            .text;
-                                                                    newContact
-                                                                            .familyName =
-                                                                        contactLName
-                                                                            .text;
-                                                                    newContact
-                                                                        .phones = [
-                                                                      Item(
-                                                                          label:
-                                                                              "mobile",
-                                                                          value:
-                                                                              contactMobile.text)
-                                                                    ];
-                                                                    await ContactsService
-                                                                        .addContact(
-                                                                            newContact);
-                                                                    Common.toastMessaage(
-                                                                        'Saved',
-                                                                        Colors
-                                                                            .green);
-                                                                  } else {
-                                                                    //_handleInvalidPermissions(context);
-                                                                  }
-                                                                } else {
-                                                                  Contact
-                                                                      newContact =
-                                                                      Contact();
-                                                                  newContact
-                                                                          .givenName =
-                                                                      contactFName
-                                                                          .text;
-                                                                  newContact
-                                                                          .familyName =
-                                                                      contactLName
-                                                                          .text;
-                                                                  newContact
-                                                                      .phones = [
-                                                                    Item(
-                                                                        label:
-                                                                            "mobile",
-                                                                        value: contactMobile
-                                                                            .text)
-                                                                  ];
-                                                                  await ContactsService
-                                                                      .addContact(
-                                                                          newContact);
-                                                                  Common.toastMessaage(
-                                                                      'Contact Saved',
-                                                                      Colors
-                                                                          .green);
-                                                                }
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.of(
-                                                                          context,
-                                                                          rootNavigator:
-                                                                              true)
-                                                                      .pop();
-                                                                }
-                                                              }
-                                                            },
-                                                            child: const Center(
-                                                              child: Text(
-                                                                'Save',
-                                                                style:
-                                                                    TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    transitionBuilder:
-                                        (_, animation1, __, child) {
-                                      return SlideTransition(
-                                        position: Tween(
-                                          begin: const Offset(0, 1),
-                                          end: const Offset(0, 0),
-                                        ).animate(animation1),
-                                        child: child,
-                                      );
-                                    },
-                                  );
+                                  if (contactPermission == 'true') {
+                                    saveContactDialog(context);
+                                  } else {
+                                    contactPermissionDialog(context);
+                                  }
                                 },
                                 child: Container(
                                   width: 35,
@@ -7309,6 +6987,301 @@ class _LeadDetailsState extends State<LeadDetails> {
     );
   }
 
+  Future<dynamic> contactPermissionDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 50),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                ),
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Permission",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          // decoration: TextDecoration.none,
+                          //fontFamily: Theme.of(context).textTheme,
+                        ),
+                      ),
+                      const Text(
+                        "Our app accesses your contact list to help you easily add leads to our CRM system. This feature allows you to select contacts from your address book and save them as leads in the CRM, making it easier to manage your client relationships.",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: const Color(0xffe94040)),
+                              child: const Center(
+                                child: Text("Deny",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              contactPermission = "true";
+                              Navigator.pop(context);
+                              setState(() {
+                                Common.saveSharedPref(
+                                    "saveContactPermission", 'true');
+                                saveContactDialog(context);
+                              });
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.green),
+                              child: const Center(
+                                child: Text("Allow",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<Object?> saveContactDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: IntrinsicHeight(
+                  child: Container(
+                    width: double.maxFinite,
+                    clipBehavior: Clip.antiAlias,
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Material(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Save Contact to Phone',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: contactFName,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'First Name',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.person, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(
+                            height: 13,
+                          ),
+                          TextFormField(
+                            controller: contactLName,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Last Name',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon:
+                                    Icon(Icons.person, color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(
+                            height: 13,
+                          ),
+                          TextFormField(
+                            controller: contactMobile,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Mobile Number',
+                                fillColor: Colors.white,
+                                filled: true,
+                                prefixIcon: Icon(Icons.phone_android_rounded,
+                                    color: Colors.grey),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 40,
+                            width: double.maxFinite,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF3375e0),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(8)),
+                            ),
+                            child: RawMaterialButton(
+                              onPressed: () async {
+                                if (contactFName.text.isEmpty) {
+                                  Common.toastMessaage(
+                                      'Enter the first name', Colors.red);
+                                } else if (contactMobile.text.isEmpty) {
+                                  Common.toastMessaage(
+                                      'Enter the Mobile number', Colors.red);
+                                } else {
+                                  PermissionStatus permission =
+                                      await Permission.contacts.status;
+
+                                  if (permission != PermissionStatus.granted) {
+                                    await Permission.contacts.request();
+                                    PermissionStatus permission =
+                                        await Permission.contacts.status;
+
+                                    if (permission ==
+                                        PermissionStatus.granted) {
+                                      Contact newContact = Contact();
+                                      newContact.givenName = contactFName.text;
+                                      newContact.familyName = contactLName.text;
+                                      newContact.phones = [
+                                        Item(
+                                            label: "mobile",
+                                            value: contactMobile.text)
+                                      ];
+                                      await ContactsService.addContact(
+                                          newContact);
+                                      Common.toastMessaage(
+                                          'Saved', Colors.green);
+                                    } else {
+                                      //_handleInvalidPermissions(context);
+                                    }
+                                  } else {
+                                    Contact newContact = Contact();
+                                    newContact.givenName = contactFName.text;
+                                    newContact.familyName = contactLName.text;
+                                    newContact.phones = [
+                                      Item(
+                                          label: "mobile",
+                                          value: contactMobile.text)
+                                    ];
+                                    await ContactsService.addContact(
+                                        newContact);
+                                    Common.toastMessaage(
+                                        'Contact Saved', Colors.green);
+                                  }
+                                  if (context.mounted) {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  }
+                                }
+                              },
+                              child: const Center(
+                                child: Text(
+                                  'Save',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
+  }
+ 
   Future<dynamic> chooseCallDialog(BuildContext context) {
     return showDialog(
         context: context,
@@ -7484,6 +7457,8 @@ class _LeadDetailsState extends State<LeadDetails> {
   }
 }
 
+
+ 
 // ignore: must_be_immutable
 class AudioItem extends StatefulWidget {
   String direction;

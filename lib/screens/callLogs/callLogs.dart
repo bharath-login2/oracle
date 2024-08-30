@@ -1735,7 +1735,7 @@ class _CallLogsState extends State<CallLogs> {
                               height: 10,
                             ),
                             const Text(
-                              "We want to inform you that Login2 collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
+                              "We want to inform you that our app collects and uploads your call logs, including call duration and timestamps, to our secure servers. This data is shared with your company's super admin to enable them to track call activities.Your privacy is important to us, and we want to assure you that all data is handled with the utmost care and in accordance with our privacy policy. The information uploaded is encrypted to ensure its security during transmission and storage.",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,

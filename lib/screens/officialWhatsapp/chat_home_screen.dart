@@ -33,6 +33,7 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   bool isLoading = true;
   bool isSearch = false;
   late final WebSocketChannel socket;
+  String? contactPermission = '';
 
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
@@ -139,8 +140,13 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                           key: scaffoldKey,
                           floatingActionButton: FloatingActionButton(
                             onPressed: () {
-                              addContactPopUp(context, nameTextController,
-                                  numberTextController);
+                              if (contactPermission == 'true') {
+                                addContactPopUp(context, nameTextController,
+                                    numberTextController);
+                              } else {
+                                contactPermissionDialog(context);
+                              }
+
                               // // print(auth.currentUser!.uid);
                               // Get.to(() => const ComposeScreen(),
                               //     transition: Transition.downToUp);
@@ -206,7 +212,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                                                         autofocus: true,
                                                         controller:
                                                             searchController,
-                                                        onChanged: (value) async{
+                                                        onChanged:
+                                                            (value) async {
                                                           page = 1;
                                                           add = 1;
                                                           items.clear();
@@ -537,6 +544,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
   }
 
   chats(search) async {
+    contactPermission = await Common.getSharedPref("getContactPermission");
+
     chatListModel = await HttpService.fetchChatList(search, page, pageSize);
     if (chatListModel != null) {
       setState(() {
@@ -738,5 +747,109 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
             ),
           ],
         ));
+  }
+
+  Future<dynamic> contactPermissionDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 50),
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white,
+                ),
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Permission",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                          // decoration: TextDecoration.none,
+                          //fontFamily: Theme.of(context).textTheme,
+                        ),
+                      ),
+                      const Text(
+                        "Our app accesses your contact book to help you efficiently manage and organize your contacts. Specifically, we allow you to save or update contact information directly in your device’s contact list.",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: const Color(0xffe94040)),
+                              child: const Center(
+                                child: Text("Deny",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              Navigator.pop(context);
+                              contactPermission = "true";
+                              Common.saveSharedPref(
+                                    "getContactPermission", 'true');
+                              setState(() {
+                                addContactPopUp(context, nameTextController,
+                                    numberTextController);
+                              });
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.35,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.green),
+                              child: const Center(
+                                child: Text("Allow",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.none,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

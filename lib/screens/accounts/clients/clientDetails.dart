@@ -369,7 +369,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                           EditClients(
                                                               widget.token,
                                                               widget.clientId)),
-                                                );
+                                                ).then((_) {
+                                                  getData();
+                                                });
                                               },
                                               child: Container(
                                                   decoration: BoxDecoration(
@@ -438,14 +440,12 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                           .green);
                                                                   if (context
                                                                       .mounted) {
-                                                                    Navigator
-                                                                        .push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => ClientDetails(
-                                                                              widget.token,
-                                                                              widget.clientId)),
-                                                                    );
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    Navigator.pop(
+                                                                        context);
                                                                   }
                                                                 } else {
                                                                   Common.toastMessaage(
@@ -499,7 +499,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                           AddInvoice(
                                                               widget.token,
                                                               widget.clientId)),
-                                                );
+                                                ).then((_) {
+                                                  getData();
+                                                });
                                               },
                                               child: Container(
                                                   decoration: BoxDecoration(
@@ -537,7 +539,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                 .data.name
                                                                 .toString(),
                                                       ),
-                                                    ));
+                                                    )).then((_) {
+                                                  getData();
+                                                });
                                               },
                                               child: Container(
                                                   decoration: BoxDecoration(
@@ -715,7 +719,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             index]
                                                                         .invid
                                                                         .toString())),
-                                                          );
+                                                          ).then((_) {
+                                                            getData();
+                                                          });
                                                         },
                                                         child: Container(
                                                           decoration: BoxDecoration(
@@ -969,7 +975,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             Navigator.push(
                                                                               context,
                                                                               MaterialPageRoute(builder: (context) => ViewInvoice(widget.token, mainClientDetail!.data.invoice[index].invid.toString(), widget.clientId, mainClientDetail!.data.invoice[index].invoiceNumber.toString())),
-                                                                            );
+                                                                            ).then((_) {
+                                                                              getData();
+                                                                            });
                                                                           },
                                                                           child:
                                                                               Container(
@@ -997,7 +1005,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                                   Navigator.push(
                                                                                     context,
                                                                                     MaterialPageRoute(builder: (context) => ReceiptAdd(widget.token, widget.clientId, mainClientDetail!.data.invoice[index].invid.toString())),
-                                                                                  );
+                                                                                  ).then((_) {
+                                                                                    getData();
+                                                                                  });
                                                                                 },
                                                                                 child: Container(
                                                                                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), color: const Color(0xffe9d9fd)),
@@ -1018,7 +1028,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             Navigator.push(
                                                                               context,
                                                                               MaterialPageRoute(builder: (context) => EditInvoice(widget.token, mainClientDetail!.data.invoice[index].invid.toString(), widget.clientId)),
-                                                                            );
+                                                                            ).then((_) {
+                                                                              getData();
+                                                                            });
                                                                           },
                                                                           child:
                                                                               Container(
@@ -1058,10 +1070,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                                             if (deleteInvoice.data == true) {
                                                                                               Common.toastMessaage(deleteInvoice.message, Colors.green);
                                                                                               if (context.mounted) {
-                                                                                                Navigator.push(
-                                                                                                  context,
-                                                                                                  MaterialPageRoute(builder: (context) => ClientDetails(widget.token, widget.clientId)),
-                                                                                                );
+                                                                                                Navigator.pop(context);
+                                                                                                Navigator.pop(context);
                                                                                               }
                                                                                             } else {
                                                                                               Common.toastMessaage(deleteInvoice.message, Colors.red);
@@ -1435,10 +1445,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                                         if (deleteReceipt.data == true) {
                                                                                           Common.toastMessaage(deleteReceipt.message, Colors.green);
                                                                                           if (context.mounted) {
-                                                                                            Navigator.push(
-                                                                                              context,
-                                                                                              MaterialPageRoute(builder: (context) => ClientDetails(widget.token, widget.clientId)),
-                                                                                            );
+                                                                                            Navigator.pop(context);
+                                                                                            Navigator.pop(context);
                                                                                           }
                                                                                         } else {
                                                                                           Common.toastMessaage(deleteReceipt.message, Colors.red);
