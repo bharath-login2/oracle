@@ -145,309 +145,47 @@ class _InvoiceListState extends State<InvoiceList> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () async {
-                          showGeneralDialog(
-                            barrierLabel: "showGeneralDialog",
-                            barrierDismissible: true,
-                            barrierColor: Colors.black.withOpacity(0.6),
-                            transitionDuration:
-                                const Duration(milliseconds: 400),
-                            context: context,
-                            pageBuilder: (context, _, __) {
-                              return StatefulBuilder(
-                                  builder: (context, setState) {
-                                return Align(
-                                  alignment: Alignment.center,
-                                  child: SingleChildScrollView(
-                                    child: AlertDialog(
-                                      content: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'Customer  Details',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18),
-                                          ),
-                                          const SizedBox(
-                                            height: 20,
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return StatefulBuilder(
-                                                      builder:
-                                                          (context, setState) {
-                                                    return AlertDialog(
-                                                      content: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(8.0),
-                                                            child: TextField(
-                                                              controller:
-                                                                  search,
-                                                              autocorrect:
-                                                                  false,
-                                                              keyboardType:
-                                                                  TextInputType
-                                                                      .visiblePassword,
-                                                              autofocus: true,
-                                                              onChanged:
-                                                                  (value) {
-                                                                setState(() {
-                                                                  filteredCustomers = customers
-                                                                      .where((item) => item
-                                                                          .name
-                                                                          .toLowerCase()
-                                                                          .contains(
-                                                                              value.toLowerCase()))
-                                                                      .toList();
-                                                                });
-                                                              },
-                                                              decoration:
-                                                                  const InputDecoration(
-                                                                contentPadding:
-                                                                    EdgeInsets
-                                                                        .all(8),
-                                                                hintText:
-                                                                    'Search',
-                                                                prefixIcon:
-                                                                    Icon(Icons
-                                                                        .search),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          SizedBox(
-                                                            height: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .height *
-                                                                .3,
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .8,
-                                                            child: ListView
-                                                                .builder(
-                                                              itemCount:
-                                                                  filteredCustomers
-                                                                      .length,
-                                                              physics:
-                                                                  const ScrollPhysics(),
-                                                              shrinkWrap: true,
-                                                              itemBuilder:
-                                                                  (context,
-                                                                      index) {
-                                                                return ListTile(
-                                                                    onTap: () {
-                                                                      customerName =
-                                                                          filteredCustomers[index]
-                                                                              .name;
-                                                                      customerId =
-                                                                          filteredCustomers[index]
-                                                                              .id;
-                                                                      search
-                                                                          .clear();
-                                                                      filteredCustomers
-                                                                          .addAll(
-                                                                              customers);
-                                                                      setState(
-                                                                          () {});
-                                                                      if (context
-                                                                          .mounted) {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      }
-                                                                    },
-                                                                    title: Text(
-                                                                        filteredCustomers[index]
-                                                                            .name));
-                                                              },
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              search.clear();
-                                                              filteredCustomers
-                                                                  .addAll(
-                                                                      customers);
-                                                              if (context
-                                                                  .mounted) {
-                                                                Navigator.pop(
-                                                                    context);
-                                                              }
-                                                            },
-                                                            child: const Text(
-                                                                "Close")),
-                                                      ],
-                                                    );
-                                                  });
-                                                },
-                                              );
-                                            },
-                                            child: Container(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  1,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                border: Border.all(
-                                                    color: Colors.black),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Center(
-                                                  child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 16.0,
-                                                        vertical: 12.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.5,
-                                                        child: Text(
-                                                          customerName,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        )),
-                                                  ],
-                                                ),
-                                              )),
-                                            ),
-                                          ),
-                                          // Container(
-                                          //   width: MediaQuery.of(context)
-                                          //       .size
-                                          //       .width *
-                                          //       0.9,
-                                          //   decoration: BoxDecoration(
-                                          //       border: Border.all(
-                                          //           color: Colors
-                                          //               .grey.shade900,
-                                          //           width:
-                                          //           0),
-                                          //       color: Colors
-                                          //           .white,
-                                          //       borderRadius: const BorderRadius
-                                          //           .all(
-                                          //           Radius.circular(5))),
-                                          //   child:
-                                          //   DropdownButtonHideUnderline(
-                                          //     child: DropdownButton<
-                                          //         String>(
-                                          //       isExpanded:
-                                          //       true,
-                                          //       hint:
-                                          //       const Padding(
-                                          //         padding:
-                                          //         EdgeInsets.only(left: 20),
-                                          //         child:
-                                          //         Text('Customer'),
-                                          //       ),
-                                          //       value: newClient,
-                                          //       items:customerList!.data!.map((data) {
-                                          //         return DropdownMenuItem(
-                                          //           value: data.id.toString(),
-                                          //           child: Padding(
-                                          //             padding: const EdgeInsets.only(left: 20),
-                                          //             child: Text(data.name.toString()),
-                                          //           ),
-                                          //         );
-                                          //       }).toList(),
-                                          //       onChanged:
-                                          //           (newValue1) {
-                                          //         setState(() {
-                                          //           newClient = newValue1;
-                                          //         });
-                                          //       },
-                                          //     ),
-                                          //   ),
-                                          // ),
-                                          const SizedBox(
-                                            height: 20,
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              if (customerId == '') {
-                                                Common.toastMessaage(
-                                                    'Choose Client',
-                                                    Colors.red);
-                                              } else {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          AddInvoice(
-                                                              widget.token,
-                                                              customerId)),
-                                                ).then((_) {
-                                                  getData();
-                                                });
-                                              }
-                                            },
-                                            child: Container(
-                                                decoration: BoxDecoration(
-                                                    color: Colors.green,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5)),
-                                                child: const Padding(
-                                                  padding: EdgeInsets.only(
-                                                      top: 10,
-                                                      bottom: 10,
-                                                      left: 25,
-                                                      right: 25),
-                                                  child: Text(
-                                                    'Submit',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                )),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              });
+                      Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: InkWell(
+                              onTap: () {
+                                fDate = "From Date";
+                                tDate = "To Date";
+                                typeId = "";
+                                typeName = "Choose Type";
+                                staffId = "";
+                                staffName = "Choose Staff";
+                                customerId = "";
+                                customerName = "Choose Customer";
+                                filtrationSheet(context);
+                              },
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    color: const Color(0xFFd5f5f4),
+                                    borderRadius: BorderRadius.circular(5)),
+                                child: Center(
+                                    child: Image.asset(
+                                        "assets/icons/filter.png",
+                                        width: 20)),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              addInvoiceDialog(context);
                             },
-                            transitionBuilder: (_, animation1, __, child) {
-                              return SlideTransition(
-                                position: Tween(
-                                  begin: const Offset(0, 1),
-                                  end: const Offset(0, 0),
-                                ).animate(animation1),
-                                child: child,
-                              );
-                            },
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.add_circle,
-                          color: Colors.white,
-                          size: 30,
-                        ),
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -463,48 +201,9 @@ class _InvoiceListState extends State<InvoiceList> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.only(
-                                  left: 15, right: 15, top: 15),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      fDate = "From Date";
-                                      tDate = "To Date";
-                                      typeId = "";
-                                      typeName = "Choose Type";
-                                      staffId = "";
-                                      staffName = "Choose Staff";
-                                      customerId = "";
-                                      customerName = "Choose Customer";
-                                      filtrationSheet(context);
-                                    },
-                                    child: Container(
-                                      width: 30,
-                                      height: 30,
-                                      decoration: BoxDecoration(
-                                          border:
-                                              Border.all(color: Colors.grey),
-                                          color: const Color(0xFFd5f5f4),
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Center(
-                                          child: Image.asset(
-                                              "assets/icons/filter.png",
-                                              width: 20)),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                            invoiceList!.data.lists.isNotEmpty
-                                ? Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 12,
-                                        right: 12,
-                                        top: 12,
-                                        bottom: 80),
-                                    child: ListView.builder(
+                                  left: 12, right: 12, top: 12, bottom: 80),
+                              child: invoiceList!.data.lists.isNotEmpty
+                                  ? ListView.builder(
                                       physics:
                                           const NeverScrollableScrollPhysics(),
                                       shrinkWrap: true,
@@ -1088,31 +787,31 @@ class _InvoiceListState extends State<InvoiceList> {
                                           ),
                                         );
                                       },
-                                    ),
-                                  )
-                                : Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                          width: 180,
-                                          height: 180,
-                                          child: Image.asset(
-                                            "assets/icons/nodatafound.png",
+                                    )
+                                  : Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: 180,
+                                            height: 180,
+                                            child: Image.asset(
+                                              "assets/icons/nodatafound.png",
+                                            ),
                                           ),
-                                        ),
-                                        const Text(
-                                          'No Data Found',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
+                                          const Text(
+                                            'No Data Found',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                            )
                           ],
                         ),
                       ),
@@ -1274,6 +973,241 @@ class _InvoiceListState extends State<InvoiceList> {
                 ],
               ),
             ));
+  }
+
+  Future<Object?> addInvoiceDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Customer  Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return StatefulBuilder(
+                                builder: (context, setState) {
+                              return AlertDialog(
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: TextField(
+                                        controller: search,
+                                        autocorrect: false,
+                                        keyboardType:
+                                            TextInputType.visiblePassword,
+                                        autofocus: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            filteredCustomers = customers
+                                                .where((item) => item.name
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        value.toLowerCase()))
+                                                .toList();
+                                          });
+                                        },
+                                        decoration: const InputDecoration(
+                                          contentPadding: EdgeInsets.all(8),
+                                          hintText: 'Search',
+                                          prefixIcon: Icon(Icons.search),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .3,
+                                      width: MediaQuery.of(context).size.width *
+                                          .8,
+                                      child: ListView.builder(
+                                        itemCount: filteredCustomers.length,
+                                        physics: const ScrollPhysics(),
+                                        shrinkWrap: true,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                              onTap: () {
+                                                customerName =
+                                                    filteredCustomers[index]
+                                                        .name;
+                                                customerId =
+                                                    filteredCustomers[index].id;
+                                                search.clear();
+                                                filteredCustomers
+                                                    .addAll(customers);
+                                                setState(() {});
+                                                if (context.mounted) {
+                                                  Navigator.pop(context);
+                                                }
+                                              },
+                                              title: Text(
+                                                  filteredCustomers[index]
+                                                      .name));
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () {
+                                        search.clear();
+                                        filteredCustomers.addAll(customers);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                      child: const Text("Close")),
+                                ],
+                              );
+                            });
+                          },
+                        );
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    customerName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                    // Container(
+                    //   width: MediaQuery.of(context)
+                    //       .size
+                    //       .width *
+                    //       0.9,
+                    //   decoration: BoxDecoration(
+                    //       border: Border.all(
+                    //           color: Colors
+                    //               .grey.shade900,
+                    //           width:
+                    //           0),
+                    //       color: Colors
+                    //           .white,
+                    //       borderRadius: const BorderRadius
+                    //           .all(
+                    //           Radius.circular(5))),
+                    //   child:
+                    //   DropdownButtonHideUnderline(
+                    //     child: DropdownButton<
+                    //         String>(
+                    //       isExpanded:
+                    //       true,
+                    //       hint:
+                    //       const Padding(
+                    //         padding:
+                    //         EdgeInsets.only(left: 20),
+                    //         child:
+                    //         Text('Customer'),
+                    //       ),
+                    //       value: newClient,
+                    //       items:customerList!.data!.map((data) {
+                    //         return DropdownMenuItem(
+                    //           value: data.id.toString(),
+                    //           child: Padding(
+                    //             padding: const EdgeInsets.only(left: 20),
+                    //             child: Text(data.name.toString()),
+                    //           ),
+                    //         );
+                    //       }).toList(),
+                    //       onChanged:
+                    //           (newValue1) {
+                    //         setState(() {
+                    //           newClient = newValue1;
+                    //         });
+                    //       },
+                    //     ),
+                    //   ),
+                    // ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        if (customerId == '') {
+                          Common.toastMessaage('Choose Client', Colors.red);
+                        } else {
+                          search.clear();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddInvoice(widget.token, customerId)),
+                          ).then((_) {
+                            getData();
+                          });
+                        }
+                      },
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(5)),
+                          child: const Padding(
+                            padding: EdgeInsets.only(
+                                top: 10, bottom: 10, left: 25, right: 25),
+                            child: Text(
+                              'Submit',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
   }
 
   Future<dynamic> filtrationSheet(BuildContext context) {

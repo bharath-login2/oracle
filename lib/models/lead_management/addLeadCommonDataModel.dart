@@ -40,7 +40,7 @@ class Data {
   List<CallResult> callResult;
   List<CallResultNew> callResultNew;
   List<Branch> branch;
-  List<Staff> staff;
+  List<StaffList> staff;
   List<TransferStaff> transferStaffs;
   List<Priority> priority;
   List<CallResponseStatus> callResponseStatus;
@@ -81,7 +81,7 @@ class Data {
             json["call_result_new"].map((x) => CallResultNew.fromJson(x))),
         branch:
             List<Branch>.from(json["branch"].map((x) => Branch.fromJson(x))),
-        staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
+        staff: List<StaffList>.from(json["staff"].map((x) => StaffList.fromJson(x))),
         transferStaffs: List<TransferStaff>.from(
             json["transfer_staffs"].map((x) => TransferStaff.fromJson(x))),
         priority: List<Priority>.from(
@@ -286,16 +286,16 @@ class Priority {
       };
 }
 
-class Staff {
+class StaffList {
   String staffId;
   String staffName;
 
-  Staff({
+  StaffList({
     required this.staffId,
     required this.staffName,
   });
 
-  factory Staff.fromJson(Map<String, dynamic> json) => Staff(
+  factory StaffList.fromJson(Map<String, dynamic> json) => StaffList(
         staffId: json["staff_id"],
         staffName: json["staff_name"],
       );

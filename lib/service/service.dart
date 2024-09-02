@@ -2209,12 +2209,9 @@ class HttpService {
     }
   }
 
-  static Future pendingInvoiceList(token, fromDate, toDate, clientId) async {
+  static Future pendingInvoiceList(token) async {
     var formData = FormData.fromMap({
       'token': token,
-      'from_date': fromDate,
-      'to_date': toDate,
-      'client_id': clientId
     });
     try {
       var result = await _dio.post(

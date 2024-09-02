@@ -95,8 +95,13 @@ class _LoginState extends State<Login> {
           LoginModel? object = await HttpService.login(
               username.text, password.text, firebaseToken!);
           if (object!.status == true) {
+            Common.saveSharedPref(
+                "accountName", object.data!.accountName.toString());
+            Common.saveSharedPref(
+                "accountId", object.data!.accountId.toString());
             UserPermissionModel object1 =
                 await HttpService.userPermissionCheck(object.data!.token);
+
             if (object1.status == true) {
               Common.saveSharedPref("isVisible", 'true');
               Common.saveSharedPref(

@@ -3,6 +3,7 @@
 import 'dart:developer';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/branchListModel.dart';
@@ -52,8 +53,11 @@ class _CustomRenewalState extends State<CustomRenewal> {
   dynamic branchExisting;
   dynamic payStatExisting;
   dynamic payMethodExisting;
-  dynamic collectedExisting;
-  dynamic collectedNew;
+  List<Staff> filteredStaff = [];
+  TextEditingController collectedExisting = TextEditingController();
+  TextEditingController collectedNew = TextEditingController();
+  String collectedStaffIdExisting = "";
+  String collectedStaffIdNew = "";
   dynamic payMethodNew;
   dynamic payStatNew;
   dynamic branchNew;
@@ -127,6 +131,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
   TextEditingController shippingChargeExisting = TextEditingController();
   TextEditingController totalAmountExisting = TextEditingController();
   TextEditingController totalPaidAmountExisting = TextEditingController();
+  TextEditingController search = TextEditingController();
 
   getBranch() async {
     multiBranch = await Common.getSharedPref("multiBranch");
@@ -159,6 +164,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
       invoiceSlNum = detailsResponse!.data.slNumber;
       invoiceNumber.text = detailsResponse!.data.invoiceNumber.toString();
       invoiceDate.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+      filteredStaff.addAll(detailsResponse!.data.staff);
       await getBranch();
       setState(() {
         isLoading = false;
@@ -219,7 +225,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           totalPaidAmountExisting.text,
           payStatExisting,
           payMethodExisting,
-          collectedExisting);
+          collectedStaffIdExisting);
 
       if (postExistingResponse != null &&
           postExistingResponse!.status == true) {
@@ -279,7 +285,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
           totalPaidAmountNew.text,
           payStatNew,
           payMethodNew,
-          collectedNew);
+          collectedStaffIdNew);
       if (postNewResponse != null && postNewResponse!.status == true) {
         Common.toastMessaage(postNewResponse!.message, Colors.green);
         Navigator.push(
@@ -1131,7 +1137,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         ),
                       ),
                       const SizedBox(height: 14.0),
-                      DropdownButtonFormField(
+                      TextFormField(
+                        readOnly: true,
                         validator: (value) {
                           if (payStatExisting == "partial" ||
                               payStatExisting == "paid") {
@@ -1141,20 +1148,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                           }
                           return null;
                         },
-                        value: collectedExisting,
-                        onChanged: (value) async {
-                          setState(() {
-                            collectedExisting = value.toString();
-                          });
+                        onTap: () {
+                          collectedStaffDialog(context, "existing");
                         },
-                        items: detailsResponse!.data.staff.map((data) {
-                          return DropdownMenuItem<String>(
-                            value: data.userId.toString(),
-                            child: Text(
-                              data.staffName.toString(),
-                            ),
-                          );
-                        }).toList(),
+                        controller: collectedExisting,
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
@@ -2246,7 +2243,8 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         ),
                       ),
                       const SizedBox(height: 14.0),
-                      DropdownButtonFormField(
+                      TextFormField(
+                        readOnly: true,
                         validator: (value) {
                           if (payStatNew == "partial" || payStatNew == "paid") {
                             if (value == "" || value == null) {
@@ -2255,20 +2253,10 @@ class _CustomRenewalState extends State<CustomRenewal> {
                           }
                           return null;
                         },
-                        value: collectedNew,
-                        onChanged: (value) async {
-                          setState(() {
-                            collectedNew = value.toString();
-                          });
+                        onTap: () {
+                          collectedStaffDialog(context, "new");
                         },
-                        items: detailsResponse!.data.staff.map((data) {
-                          return DropdownMenuItem<String>(
-                            value: data.userId.toString(),
-                            child: Text(
-                              data.staffName.toString(),
-                            ),
-                          );
-                        }).toList(),
+                        controller: collectedNew,
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.all(8),
                           border: OutlineInputBorder(),
@@ -2782,5 +2770,88 @@ class _CustomRenewalState extends State<CustomRenewal> {
         Common.toastMessaage('Add a product', Colors.red);
       }
     }
+  }
+
+  Future<dynamic> collectedStaffDialog(BuildContext context, String type) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredStaff = detailsResponse!.data.staff
+                            .where((item) => item.staffName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredStaff.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            if (type == "new") {
+                              collectedNew.text =
+                                  filteredStaff[index].staffName;
+                              collectedStaffIdNew =
+                                  filteredStaff[index].userId;
+                            } else {
+                              collectedExisting.text =
+                                  filteredStaff[index].staffName;
+                              collectedStaffIdExisting =
+                                  filteredStaff[index].userId;
+                            }
+                            search.clear();
+                            filteredStaff.addAll(detailsResponse!.data.staff);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredStaff[index].staffName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredStaff.addAll(detailsResponse!.data.staff);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
   }
 }

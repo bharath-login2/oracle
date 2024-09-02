@@ -47,7 +47,7 @@ class OfficialMessageModel {
         createdTime: DateTime.parse(json["created_time"]),
         campaignId: json["campaign_id"] ?? "",
         profilePhoto: json["profile_photo"] ?? "",
-        timeDiff: json["timeDiff"] ?? "",
+        timeDiff: json["timeDiff"] ?? 0,
         canSend: json["canSend"] ?? "",
         messages: json["messages"] == null
             ? []

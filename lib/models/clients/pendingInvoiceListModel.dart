@@ -30,9 +30,9 @@ class Data {
 
   Data(
       {this.lists,
-        this.totalInvoiceAmount,
-        this.totalInvoicePaid,
-        this.balanceAmount});
+      this.totalInvoiceAmount,
+      this.totalInvoicePaid,
+      this.balanceAmount});
 
   Data.fromJson(Map<String, dynamic> json) {
     if (json['lists'] != null) {
@@ -75,18 +75,18 @@ class Lists {
 
   Lists(
       {this.id,
-        this.invoiceNumber,
-        this.invoiceDate,
-        this.customerName,
-        this.paymentMode,
-        this.totalAmount,
-        this.totalPaid,
-        this.balance,
-        this.status,
-        this.isPaid,
-        this.receiptId,
-        this.recieptAmount,
-        this.clientId});
+      this.invoiceNumber,
+      this.invoiceDate,
+      this.customerName,
+      this.paymentMode,
+      this.totalAmount,
+      this.totalPaid,
+      this.balance,
+      this.status,
+      this.isPaid,
+      this.receiptId,
+      this.recieptAmount,
+      this.clientId});
 
   Lists.fromJson(Map<String, dynamic> json) {
     id = json['id'];

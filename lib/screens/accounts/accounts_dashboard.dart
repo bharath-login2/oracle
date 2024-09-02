@@ -27,10 +27,16 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
   List list = [
-    "Expense",
     "Invoices",
     "Pending invoices",
     "Receipts",
+    "Expense",
+  ];
+  List tabColors = [
+    Colors.green,
+    Colors.orange,
+    Colors.blue,
+    Colors.red,
   ];
   List colorList = [
     const Color(0xFFddd8f5),
@@ -242,8 +248,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                 child: Text(
                                                   list[i],
                                                   style: TextStyle(
-                                                      color:
-                                                          Colors.blue.shade900,
+                                                      color: tabColors[i],
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       fontSize: 15),

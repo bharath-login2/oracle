@@ -29,6 +29,7 @@ class Data {
   String? displayInvNumber;
   String? receiptDate;
   String? collectedBy;
+  String? collectedStaff;
   String? paymentMethod;
   String? totalAmount;
   String? amountDue;
@@ -47,6 +48,7 @@ class Data {
         this.displayInvNumber,
         this.receiptDate,
         this.collectedBy,
+        this.collectedStaff,
         this.paymentMethod,
         this.totalAmount,
         this.amountDue,
@@ -65,6 +67,7 @@ class Data {
     displayInvNumber = json['display_inv_number'];
     receiptDate = json['receipt_date'];
     collectedBy = json['collected_by'];
+    collectedStaff = json['collected_staff'];
     paymentMethod = json['payment_method'];
     totalAmount = json['total_amount'];
     amountDue = json['amount_due'];

@@ -61,6 +61,8 @@ class _AddExpenseState extends State<AddExpense> {
       filteredCategories.addAll(categories);
       accountHeads = expenseMasterData!.data.accountHead;
       filteredAccounts.addAll(accountHeads);
+      fromAcId = await Common.getSharedPref("accountId");
+      fromAcName = await Common.getSharedPref("accountName");
       setState(() {});
     } else {
       setState(() {});

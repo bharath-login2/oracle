@@ -54,13 +54,15 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   bool isPaying = false;
   dynamic paymentMethod;
   dynamic paymentStatus;
-  dynamic collectedStaff;
   List<Product> items = [];
   List<Product> filteredItems = [];
   String productId = "";
   String productName = "Choose Product";
   bool createRenewal = false;
   String typeDuration = "";
+  List<Staff> filteredStaff = [];
+  String staffId = "";
+  String staffName = "Staff";
 
   @override
   void initState() {
@@ -75,6 +77,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
       items = detailsResponse!.data.products;
       filteredTemplates = detailsResponse!.data.template;
       filteredItems.addAll(items);
+      filteredStaff.clear();
+      filteredStaff.addAll(detailsResponse!.data.staff);
     }
     setState(() {});
   }
@@ -99,7 +103,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
         shippingCharge.text,
         paymentMethod,
         paidAmount.text,
-        collectedStaff);
+        staffId);
     if (object1.status == true) {
       Common.toastMessaage(object1.message, Colors.green);
       if (mounted) {
@@ -1797,68 +1801,49 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   .width *
                                               0.5,
                                           height: 35,
-                                          child: FormField<String>(
-                                            builder:
-                                                (FormFieldState<String> state) {
-                                              return Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.5,
-                                                decoration: BoxDecoration(
-                                                    color: Colors.grey.shade300,
-                                                    borderRadius:
-                                                        const BorderRadius.all(
-                                                            Radius.circular(
-                                                                5))),
-                                                child:
-                                                    DropdownButtonHideUnderline(
-                                                  child: DropdownButton<String>(
-                                                    isExpanded: true,
-                                                    hint: const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 20),
-                                                      child: Text('Staff'),
-                                                    ),
-                                                    value: collectedStaff,
-                                                    items: detailsResponse!
-                                                        .data.staff
-                                                        .map((data) {
-                                                      return DropdownMenuItem(
-                                                        value: data.userId
-                                                            .toString(),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10),
-                                                          child: SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.5,
-                                                            child: Text(
-                                                              data.staffName
-                                                                  .toString(),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }).toList(),
-                                                    onChanged: (newValue) {
-                                                      setState(() {
-                                                        collectedStaff =
-                                                            newValue;
-                                                      });
-                                                    },
-                                                  ),
-                                                ),
-                                              );
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              collectedStaffDialog(context);
                                             },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Center(
+                                                  child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 16.0),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            0.38,
+                                                        child: Text(
+                                                          staffName,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        )),
+                                                    Icon(
+                                                      Icons.arrow_drop_down,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )
+                                                  ],
+                                                ),
+                                              )),
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -2063,7 +2048,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                 'Payment Method is required to add invoice',
                                 Colors.red);
                           } else if (paymentStatus != "unpaid" &&
-                              collectedStaff == null) {
+                              staffId == "") {
                             Common.toastMessaage(
                                 'Collected Staff is required to add invoice',
                                 Colors.red);
@@ -2105,6 +2090,80 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                 ),
               ),
             ),
+    );
+  }
+
+  Future<dynamic> collectedStaffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredStaff = detailsResponse!.data.staff
+                            .where((item) => item.staffName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredStaff.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            staffName = filteredStaff[index].staffName;
+                            staffId = filteredStaff[index].userId;
+                            search.clear();
+                            filteredStaff.addAll(detailsResponse!.data.staff);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredStaff[index].staffName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredStaff.addAll(detailsResponse!.data.staff);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
     );
   }
 

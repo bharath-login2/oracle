@@ -280,65 +280,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                   const SizedBox(
                                     height: 5,
                                   ),
-                                  // SizedBox(
-                                  //   width: MediaQuery.of(context).size.width *
-                                  //       0.45,
-                                  //   child: FormField<
-                                  //       String>(
-                                  //     builder: (FormFieldState<
-                                  //         String>
-                                  //     state) {
-                                  //       return Container(
-                                  //         width: MediaQuery.of(context)
-                                  //             .size
-                                  //             .width *
-                                  //             0.43,
-                                  //         decoration: BoxDecoration(
-                                  //             border: Border.all(
-                                  //                 color: Colors
-                                  //                     .grey.shade900,
-                                  //                 width:
-                                  //                 0),
-                                  //             color: Colors
-                                  //                 .white,
-                                  //             borderRadius: const BorderRadius
-                                  //                 .all(
-                                  //                 Radius.circular(5))),
-                                  //         child:
-                                  //         DropdownButtonHideUnderline(
-                                  //           child: DropdownButton<
-                                  //               String>(
-                                  //             isExpanded:
-                                  //             true,
-                                  //             hint:
-                                  //             const Padding(
-                                  //               padding:
-                                  //               EdgeInsets.only(left: 20),
-                                  //               child:
-                                  //               Text('Collected by'),
-                                  //             ),
-                                  //             value: collectedBy,
-                                  //             items:receiptDetails!.data!.staff!.map((data) {
-                                  //               return DropdownMenuItem(
-                                  //                 value: data.userId.toString(),
-                                  //                 child: Padding(
-                                  //                   padding: const EdgeInsets.only(left: 20),
-                                  //                   child: Text(data.staffName.toString()),
-                                  //                 ),
-                                  //               );
-                                  //             }).toList(),
-                                  //             onChanged:
-                                  //                 (newValue1) {
-                                  //               setState(() {
-                                  //                 collectedBy = newValue1;
-                                  //               });
-                                  //             },
-                                  //           ),
-                                  //         ),
-                                  //       );
-                                  //     },
-                                  //   ),
-                                  // ),
+                                 
                                   SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.45,
