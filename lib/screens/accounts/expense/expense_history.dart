@@ -105,58 +105,68 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(left: 16.0,top: 16.0,bottom: 6.0),
+                        padding: const EdgeInsets.only(
+                            left: 16.0, top: 16.0, bottom: 6.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
                                 SizedBox(
-                                  width: MediaQuery.of(context).size.width*.28,
+                                  width:
+                                      MediaQuery.of(context).size.width * .28,
                                   child: const Text(
                                     "Category: ",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 15),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15),
                                   ),
                                 ),
                                 Text(
-                                 history!.data.category,
+                                  history!.data.category,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
                                 ),
                               ],
                             ),
                             Row(
                               children: [
                                 SizedBox(
-                                  width: MediaQuery.of(context).size.width*.28,
+                                  width:
+                                      MediaQuery.of(context).size.width * .28,
                                   child: const Text(
                                     "Amount: ",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 15),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15),
                                   ),
                                 ),
                                 Text(
                                   history!.data.amount,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
                                 ),
                               ],
                             ),
                             Row(
                               children: [
                                 SizedBox(
-                                  width: MediaQuery.of(context).size.width*.28,
+                                  width:
+                                      MediaQuery.of(context).size.width * .28,
                                   child: const Text(
                                     "Expense Date: ",
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold, fontSize: 15),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15),
                                   ),
                                 ),
-                                 Text(
+                                Text(
                                   history!.data.expenseDate,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 15),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
                                 ),
                               ],
                             ),
@@ -168,30 +178,54 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, index) {
-                          return  Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
                             child: Card(
                               color: Colors.white,
                               child: ListTile(
-                                leading:  CircleAvatar(
-                                    backgroundColor:index==0? Colors.teal:Colors.blue,
-                                    child: Icon(
-                                   index==0? Icons.receipt:  Icons.edit,
-                                      color: Colors.white,
-                                    )),
-                                title: Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 16.0, bottom: 4, left: 8, right: 8),
-                                  child: Text(
-                                    history!.data.history[index].staffName,
-                                    style: const TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold),
-                                  ),
+                                // leading:  ,
+                                title: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                              backgroundColor: index == 0
+                                                  ? Colors.teal
+                                                  : Colors.blue,
+                                              child: Icon(
+                                                index == 0
+                                                    ? Icons.receipt
+                                                    : Icons.edit,
+                                                color: Colors.white,
+                                              )),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 8, right: 8),
+                                            child: Text(
+                                              history!.data.history[index]
+                                                  .staffName,
+                                              style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      history!.data.history[index].createdAt,
+                                      style: const TextStyle(fontSize: 13),
+                                    )
+                                  ],
                                 ),
                                 subtitle: Padding(
                                   padding: const EdgeInsets.only(
-                                      bottom: 16.0, top: 4, left: 8, right: 8),
+                                      bottom: 4.0, top: 2, left: 8, right: 8),
                                   child: Text(
                                     history!.data.history[index].logData,
                                     style: const TextStyle(
@@ -199,7 +233,7 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                                         fontWeight: FontWeight.normal),
                                   ),
                                 ),
-                                trailing: Text(history!.data.history[index].createdAt),
+                                // trailing: ,
                               ),
                             ),
                           );

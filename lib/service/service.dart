@@ -46,6 +46,7 @@ import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_followup_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/models/renewal/rivert_client.dart';
+import 'package:login2/models/search/search.dart';
 import 'package:login2/models/staff_report/staff_call_details_model.dart';
 import 'package:login2/models/staff_report/staff_details_model.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
@@ -727,7 +728,9 @@ class HttpService {
       shippingAmount,
       paymentMethod,
       paidAmount,
-      collectedStaff) async {
+      collectedStaff,
+      isDiff,
+      renProducts) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -762,6 +765,8 @@ class HttpService {
       "payment_method": paymentMethod,
       "amount_paid_customer": paidAmount,
       "collected_staff": collectedStaff,
+      "next_cost_diff": isDiff,
+      "next_renewal_product": jsonEncode(renProducts),
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",
@@ -792,7 +797,9 @@ class HttpService {
       shippingAmount,
       paymentMethod,
       paidAmount,
-      collectedStaff) async {
+      collectedStaff,
+      isDiff,
+      renProducts) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "invoice_remarks": invoiceRemarks,
@@ -814,6 +821,8 @@ class HttpService {
       "payment_method": paymentMethod,
       "amount_paid_customer": paidAmount,
       "collected_staff": collectedStaff,
+      "next_cost_diff": isDiff,
+      "next_renewal_product": jsonEncode(renProducts),
     });
     try {
       var result = await _dio.post(
@@ -4744,6 +4753,24 @@ class HttpService {
       if (result.statusCode == 200) {
         AccountDashboardModel model =
             AccountDashboardModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+  static Future getSearchData(String searchKey) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "searchKey": searchKey,
+
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getSearchData",
+          data: formData);
+      if (result.statusCode == 200) {
+        SearchDataModel model =
+            SearchDataModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

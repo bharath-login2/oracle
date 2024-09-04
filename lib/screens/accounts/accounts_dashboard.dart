@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
+import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
@@ -26,17 +27,20 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
   String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  bool toggle = false;
   List list = [
     "Invoices",
-    "Pending invoices",
+    "Pending Invoices",
     "Receipts",
     "Expense",
+    "Customers",
   ];
   List tabColors = [
     Colors.green,
     Colors.orange,
     Colors.blue,
     Colors.red,
+    Colors.teal,
   ];
   List colorList = [
     const Color(0xFFddd8f5),
@@ -144,7 +148,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                       child: Column(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 20.0, horizontal: 8),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
@@ -165,101 +170,140 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                   const SizedBox(
                                     height: 20,
                                   ),
-                                  const Text(
-                                    "Account Management",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 25,
-                                        shadows: [
-                                          Shadow(
-                                            offset: Offset(2.0, 2.0),
-                                            blurRadius: 5.0,
-                                            color: Colors.grey,
-                                          ),
-                                        ]),
-                                  ),
-                                  SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * .95,
-                                    height:
-                                        MediaQuery.of(context).size.height * .2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: GridView.builder(
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        itemCount: list.length,
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: 2,
-                                                mainAxisSpacing: 15,
-                                                crossAxisSpacing: 15,
-                                                childAspectRatio: 3),
-                                        itemBuilder: (context, i) {
-                                          return InkWell(
-                                            onTap: () {
-                                              if (list[i] == "Expense") {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const ExpenseList(),
-                                                    ));
-                                              } else if (list[i] ==
-                                                  "Invoices") {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          InvoiceList(widget
-                                                              .token
-                                                              .toString())),
-                                                );
-                                              } else if (list[i] ==
-                                                  "Pending invoices") {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          PendingInvoice(widget
-                                                              .token
-                                                              .toString())),
-                                                );
-                                              } else if (list[i] ==
-                                                  "Receipts") {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ReceiptList(widget
-                                                              .token
-                                                              .toString())),
-                                                );
-                                              }
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFf0ebef),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  list[i],
-                                                  style: TextStyle(
-                                                      color: tabColors[i],
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      const SizedBox(
+                                        width: 20,
                                       ),
-                                    ),
+                                      const Text(
+                                        "Account Management",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 25,
+                                            shadows: [
+                                              Shadow(
+                                                offset: Offset(2.0, 2.0),
+                                                blurRadius: 5.0,
+                                                color: Colors.grey,
+                                              ),
+                                            ]),
+                                      ),
+                                      GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              toggle = !toggle;
+                                            });
+                                          },
+                                          child: const Icon(
+                                            Icons
+                                                .arrow_drop_down_circle_outlined,
+                                            color: Colors.white,
+                                            size: 25,
+                                          ))
+                                    ],
                                   ),
+                                  toggle
+                                      ? SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              .95,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .3,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: GridView.builder(
+                                              physics:
+                                                  const NeverScrollableScrollPhysics(),
+                                              itemCount: list.length,
+                                              gridDelegate:
+                                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: 2,
+                                                      mainAxisSpacing: 15,
+                                                      crossAxisSpacing: 15,
+                                                      childAspectRatio: 3),
+                                              itemBuilder: (context, i) {
+                                                return InkWell(
+                                                  onTap: () {
+                                                    if (list[i] == "Expense") {
+                                                      Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                const ExpenseList(),
+                                                          ));
+                                                    } else if (list[i] ==
+                                                        "Invoices") {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                InvoiceList(widget
+                                                                    .token
+                                                                    .toString())),
+                                                      );
+                                                    } else if (list[i] ==
+                                                        "Pending Invoices") {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                PendingInvoice(
+                                                                    widget.token
+                                                                        .toString())),
+                                                      );
+                                                    } else if (list[i] ==
+                                                        "Receipts") {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                ReceiptList(widget
+                                                                    .token
+                                                                    .toString())),
+                                                      );
+                                                    } else {
+                                                     Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) =>
+                                                                          ClientList(
+                                                                              widget.token!)),
+                                                                );
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                          0xFFf0ebef),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        list[i],
+                                                        style: TextStyle(
+                                                            color: tabColors[i],
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 15),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        )
+                                      : const SizedBox(
+                                          height: 20,
+                                        ),
                                 ],
                               ),
                             ),

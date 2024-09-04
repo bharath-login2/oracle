@@ -65,6 +65,13 @@ class _AddInvoiceState extends State<AddInvoice> {
   TextEditingController endDate = TextEditingController();
   TextEditingController renewalRemarks = TextEditingController();
   TextEditingController reminderTemplate = TextEditingController();
+  bool isDifrent = false;
+  List<Map<String, dynamic>> renProducts = [];
+  TextEditingController renProductRate = TextEditingController();
+  TextEditingController renProductQty = TextEditingController(text: "1");
+  TextEditingController renProductTaxPercent = TextEditingController();
+  TextEditingController renProductTaxAmount = TextEditingController();
+  TextEditingController renProductTotalAmount = TextEditingController();
 
   List<Map<String, dynamic>> products = [];
   double subTotal = 0.00;
@@ -73,13 +80,15 @@ class _AddInvoiceState extends State<AddInvoice> {
   bool isPaying = false;
   dynamic paymentMethod;
   dynamic paymentStatus;
-   List<Staff> filteredStaff = [];
+  List<Staff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
   List<Product> items = [];
   List<Product> filteredItems = [];
   String productId = "";
   String productName = "Choose Product";
+  String renProductId = "";
+  String renProductName = "";
   PostalCodeModel? billingPostal;
   PostalCodeModel? shippingPostal;
   bool header = true;
@@ -1108,132 +1117,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                 ),
                                                 GestureDetector(
                                                   onTap: () {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) {
-                                                        return StatefulBuilder(
-                                                            builder: (context,
-                                                                setState) {
-                                                          return AlertDialog(
-                                                            content: Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          8.0),
-                                                                  child:
-                                                                      TextField(
-                                                                    controller:
-                                                                        search,
-                                                                    autocorrect:
-                                                                        false,
-                                                                    keyboardType:
-                                                                        TextInputType
-                                                                            .visiblePassword,
-                                                                    autofocus:
-                                                                        true,
-                                                                    onChanged:
-                                                                        (value) {
-                                                                      setState(
-                                                                          () {
-                                                                        filteredItems = items
-                                                                            .where((item) =>
-                                                                                item.productName.toLowerCase().contains(value.toLowerCase()))
-                                                                            .toList();
-                                                                      });
-                                                                    },
-                                                                    decoration:
-                                                                        const InputDecoration(
-                                                                      contentPadding:
-                                                                          EdgeInsets.all(
-                                                                              8),
-                                                                      hintText:
-                                                                          'Search',
-                                                                      prefixIcon:
-                                                                          Icon(Icons
-                                                                              .search),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                SizedBox(
-                                                                  height: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .height *
-                                                                      .3,
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      .8,
-                                                                  child: ListView
-                                                                      .builder(
-                                                                    itemCount:
-                                                                        filteredItems
-                                                                            .length,
-                                                                    physics:
-                                                                        const ScrollPhysics(),
-                                                                    shrinkWrap:
-                                                                        true,
-                                                                    itemBuilder:
-                                                                        (context,
-                                                                            index) {
-                                                                      return ListTile(
-                                                                          onTap:
-                                                                              () {
-                                                                            if (productQty.text ==
-                                                                                "") {
-                                                                              productQty.text = "1";
-                                                                            }
-                                                                            productName =
-                                                                                filteredItems[index].productName;
-                                                                            productId =
-                                                                                filteredItems[index].id;
-                                                                            productRate.text =
-                                                                                filteredItems[index].sellingPrice;
-                                                                            productTaxPercent.text =
-                                                                                filteredItems[index].taxPercent;
-                                                                            productTaxAmount.text =
-                                                                                filteredItems[index].taxAmount;
-                                                                            productTotalAmount.text =
-                                                                                ((double.parse(productRate.text) + double.parse(productTaxAmount.text)) * double.parse(productQty.text)).toString();
-                                                                            productTotalAmount.text =
-                                                                                double.parse(productTotalAmount.text).toStringAsFixed(2);
-                                                                            typeDuration =
-                                                                                filteredItems[index].noOfDays;
-                                                                            setState(() {});
-                                                                            if (context.mounted) {
-                                                                              Navigator.pop(context);
-                                                                            }
-                                                                          },
-                                                                          title:
-                                                                              Text(filteredItems[index].productName));
-                                                                    },
-                                                                  ),
-                                                                )
-                                                              ],
-                                                            ),
-                                                            actions: [
-                                                              TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    if (context
-                                                                        .mounted) {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    }
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Close")),
-                                                            ],
-                                                          );
-                                                        });
-                                                      },
-                                                    );
+                                                    productDialog(
+                                                        context, "add");
                                                   },
                                                   child: Container(
                                                     width:
@@ -1705,6 +1590,29 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                                 productTotalAmount
                                                                     .text,
                                                           });
+                                                          renProducts.add({
+                                                            "product_name":
+                                                                productName,
+                                                            "product_id":
+                                                                productId,
+                                                            "description":
+                                                                productDescription
+                                                                    .text,
+                                                            "product_rate":
+                                                                productRate
+                                                                    .text,
+                                                            "quantity":
+                                                                productQty.text,
+                                                            "tax_percent":
+                                                                productTaxPercent
+                                                                    .text,
+                                                            "total_tax_amount":
+                                                                productTaxAmount
+                                                                    .text,
+                                                            "total_amount":
+                                                                productTotalAmount
+                                                                    .text,
+                                                          });
 
                                                           subTotal = subTotal +
                                                               double.parse(
@@ -2031,36 +1939,38 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                       discount.text == ''
                                                           ? '0'
                                                           : discount.text);
-                                              products.removeWhere(
-                                                (item) => mapEquals(
-                                                    item,
-                                                    ({
-                                                      "product_name":
-                                                          products[index]
-                                                              ['product_name'],
-                                                      "product_id":
-                                                          products[index]
-                                                              ['product_id'],
-                                                      "description":
-                                                          products[index]
-                                                              ['description'],
-                                                      "product_rate":
-                                                          products[index]
-                                                              ['product_rate'],
-                                                      "quantity":
-                                                          products[index]
-                                                              ['quantity'],
-                                                      "tax_percent":
-                                                          products[index]
-                                                              ['tax_percent'],
-                                                      "total_tax_amount":
-                                                          products[index][
-                                                              'total_tax_amount'],
-                                                      "total_amount":
-                                                          products[index]
-                                                              ['total_amount'],
-                                                    })),
-                                              );
+                                              // products.removeWhere(
+                                              //   (item) => mapEquals(
+                                              //       item,
+                                              //       ({
+                                              //         "product_name":
+                                              //             products[index]
+                                              //                 ['product_name'],
+                                              //         "product_id":
+                                              //             products[index]
+                                              //                 ['product_id'],
+                                              //         "description":
+                                              //             products[index]
+                                              //                 ['description'],
+                                              //         "product_rate":
+                                              //             products[index]
+                                              //                 ['product_rate'],
+                                              //         "quantity":
+                                              //             products[index]
+                                              //                 ['quantity'],
+                                              //         "tax_percent":
+                                              //             products[index]
+                                              //                 ['tax_percent'],
+                                              //         "total_tax_amount":
+                                              //             products[index][
+                                              //                 'total_tax_amount'],
+                                              //         "total_amount":
+                                              //             products[index]
+                                              //                 ['total_amount'],
+                                              //       })),
+                                              // );
+                                              products.removeAt(index);
+                                              renProducts.removeAt(index);
                                               if (products.isEmpty) {
                                                 discount.clear();
                                                 shippingCharge.clear();
@@ -2586,7 +2496,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         const SizedBox(
                                           width: 10,
                                         ),
-                                            SizedBox(
+                                        SizedBox(
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .width *
@@ -2637,8 +2547,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                             ),
                                           ),
                                         ),
-                                     
-                                    ],
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -2930,6 +2839,379 @@ class _AddInvoiceState extends State<AddInvoice> {
                                           const TextStyle(color: Colors.black)),
                                 ),
                                 const SizedBox(
+                                  height: 14,
+                                ),
+                                CheckboxListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text(
+                                        'Is renewal amount diffrent?'),
+                                    value:
+                                        isDifrent, // initial value of the checkbox
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        isDifrent = value!;
+                                      });
+                                    },
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading),
+                                const SizedBox(
+                                  height: 14,
+                                ),
+                                Visibility(
+                                  visible: isDifrent,
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(1),
+                                        child: Table(
+                                          columnWidths: {
+                                            0: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.2), // Using 10%
+                                            1: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.14), // Using 30%
+                                            2: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.14),
+                                            3: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.14), // Using 20%
+                                            4: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.20),
+                                            5: FixedColumnWidth(
+                                                MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.10),
+                                          },
+                                          children: [
+                                            TableRow(
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(1),
+                                                color: const Color(0xFFece9fd),
+                                              ),
+                                              children: const [
+                                                Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('Product',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('Rate',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text('Qty',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.all(
+                                                    8.0,
+                                                  ),
+                                                  child: Text('Tax',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                    'Amount',
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.all(
+                                                    8.0,
+                                                  ),
+                                                  child: Text(' ',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                      textAlign:
+                                                          TextAlign.center),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      renProducts.isEmpty
+                                          ? const Padding(
+                                              padding: EdgeInsets.all(16.0),
+                                              child: Text(
+                                                "No Products !",
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            )
+                                          : SingleChildScrollView(
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const BouncingScrollPhysics(),
+                                                itemCount: renProducts.length,
+                                                itemBuilder: (context, index) {
+                                                  Color color = index % 2 == 0
+                                                      ? const Color(0xFFF3F3F3)
+                                                      : const Color(0xFFece9fd);
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            1.0),
+                                                    child: Table(
+                                                      columnWidths: {
+                                                        0: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.2), // Using 10%
+                                                        1: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.14), // Using 30%
+                                                        2: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.14),
+                                                        3: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.14), // Using 20%
+                                                        4: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.20),
+                                                        5: FixedColumnWidth(
+                                                            MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.10),
+                                                      },
+                                                      children: [
+                                                        // Each TableRow represents a row in the Table
+                                                        TableRow(
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        1),
+                                                            color: color,
+                                                          ),
+                                                          children: [
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                renProducts[
+                                                                        index][
+                                                                    'product_name'],
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            12),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                renProducts[
+                                                                        index][
+                                                                    'product_rate'],
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            12),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                renProducts[
+                                                                        index][
+                                                                    'quantity'],
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            12),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                renProducts[
+                                                                        index][
+                                                                    'total_tax_amount'],
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            12),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                renProducts[
+                                                                        index][
+                                                                    'total_amount'],
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            12),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                            GestureDetector(
+                                                              onTap: () {
+                                                                changeAmount(
+                                                                        context,
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'product_name'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'product_rate'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'quantity'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'total_tax_amount'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'tax_percent'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'total_amount'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'product_id'],
+                                                                        renProducts[index]
+                                                                            [
+                                                                            'description'],
+                                                                        index)
+                                                                    .then((_) {
+                                                                  setState(
+                                                                      () {});
+                                                                });
+                                                              },
+                                                              child:
+                                                                  const Padding(
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            8.0),
+                                                                child: Icon(
+                                                                  Icons.edit,
+                                                                  color: Colors
+                                                                      .blue,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(
                                   height: 20,
                                 )
                               ],
@@ -3008,6 +3290,9 @@ class _AddInvoiceState extends State<AddInvoice> {
                                         createRenewal ? 'renewal' : 'invoice',
                                     "invoice_remarks": remarks.text,
                                     "renewal_remarks": renewalRemarks.text,
+                                    "next_cost_diff": isDifrent,
+                                    "next_renewal_product":
+                                        jsonEncode(renProducts),
                                   });
 
                                   if (context.mounted) {
@@ -3020,416 +3305,9 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     Common.toastMessaage(
                                         inv.message, Colors.green);
                                     if (mounted) {
-                                      showDialog(
-                                          barrierDismissible: false,
-                                          barrierColor:
-                                              Colors.white.withOpacity(.2),
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return WillPopScope(
-                                              onWillPop: () async {
-                                                return false;
-                                              },
-                                              child: Material(
-                                                type: MaterialType.transparency,
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 50),
-                                                  child: Center(
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
-                                                        color: Colors.white,
-                                                      ),
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.9,
-                                                      height: 300,
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                left: 20,
-                                                                right: 20),
-                                                        child: Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            Image.asset(
-                                                              'assets/icons/check.png',
-                                                              width: 80,
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 10,
-                                                            ),
-                                                            const Text(
-                                                              'Success',
-                                                              style: TextStyle(
-                                                                  fontSize: 18,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w400),
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 5,
-                                                            ),
-                                                            Text(
-                                                              inv.message
-                                                                  .toString(),
-                                                              style: const TextStyle(
-                                                                  fontSize: 15,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w400),
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 15,
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .push(
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              Dashboard(widget.token)),
-                                                                    );
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    //  color: RandomColorModel().getColor(),
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .green
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              5),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.dashboard,
-                                                                            size:
-                                                                                15,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          Text(
-                                                                              'Dashboard',
-                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                              textAlign: TextAlign.center),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .push(
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              InvoiceList(widget.token)),
-                                                                    );
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .green
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              5),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.list_alt,
-                                                                            size:
-                                                                                15,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          Text(
-                                                                              'Invoice',
-                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                              textAlign: TextAlign.center),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    if (double.parse(
-                                                                            paidAmount.text) <
-                                                                        allTotal) {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .push(
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) => ReceiptAdd(
-                                                                                widget.token,
-                                                                                widget.clientId,
-                                                                                inv.data.toString())),
-                                                                      );
-                                                                    } else {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .push(
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                ReceiptList(
-                                                                                  widget.token,
-                                                                                )),
-                                                                      );
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .green
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              5),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.currency_rupee,
-                                                                            size:
-                                                                                15,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          Text(
-                                                                              'Receipt',
-                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                              textAlign: TextAlign.center),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 8,
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                InkWell(
-                                                                  onTap: () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .push(
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              HomePage(widget.token)),
-                                                                    );
-                                                                  },
-                                                                  child:
-                                                                      Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    //  color: RandomColorModel().getColor(),
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .green
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(10)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding:
-                                                                          EdgeInsets.all(
-                                                                              5),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceEvenly,
-                                                                        children: [
-                                                                          Icon(
-                                                                            Icons.home,
-                                                                            size:
-                                                                                15,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          Text(
-                                                                              'Home',
-                                                                              style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                              textAlign: TextAlign.center),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                // InkWell(
-                                                                //   onTap: () {
-                                                                //     Navigator.of(
-                                                                //             context)
-                                                                //         .push(
-                                                                //       MaterialPageRoute(
-                                                                //           builder: (context) =>
-                                                                //               ClientList(widget.token)),
-                                                                //     );
-                                                                //   },
-                                                                //   child:
-                                                                //       Container(
-                                                                //     width: MediaQuery.of(context)
-                                                                //             .size
-                                                                //             .width *
-                                                                //         0.25,
-                                                                //     decoration: BoxDecoration(
-                                                                //         color: Colors
-                                                                //             .green
-                                                                //             .shade100,
-                                                                //         borderRadius:
-                                                                //             BorderRadius.circular(10)),
-                                                                //     child:
-                                                                //         const Padding(
-                                                                //       padding:
-                                                                //           EdgeInsets.all(5),
-                                                                //       child:
-                                                                //           Column(
-                                                                //         mainAxisAlignment:
-                                                                //             MainAxisAlignment.spaceEvenly,
-                                                                //         children: [
-                                                                //           Icon(
-                                                                //             Icons.person,
-                                                                //             size: 15,
-                                                                //           ),
-                                                                //           SizedBox(
-                                                                //             height: 5,
-                                                                //           ),
-                                                                //           Text('Clients',
-                                                                //               style: TextStyle(fontSize: 13, color: Colors.black),
-                                                                //               textAlign: TextAlign.center),
-                                                                //         ],
-                                                                //       ),
-                                                                //     ),
-                                                                //   ),
-                                                                // ),
-                                                                Container(
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      0.25,
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .green
-                                                                          .shade100,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              10)),
-                                                                  child:
-                                                                      const Padding(
-                                                                    padding:
-                                                                        EdgeInsets
-                                                                            .all(5),
-                                                                    child:
-                                                                        Column(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .spaceEvenly,
-                                                                      children: [
-                                                                        Icon(
-                                                                          Icons
-                                                                              .details,
-                                                                          size:
-                                                                              15,
-                                                                        ),
-                                                                        SizedBox(
-                                                                          height:
-                                                                              5,
-                                                                        ),
-                                                                        Text(
-                                                                            'Others',
-                                                                            style:
-                                                                                TextStyle(fontSize: 13, color: Colors.black),
-                                                                            textAlign: TextAlign.center),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          });
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
+                                      Navigator.pop(context);
                                     }
 
                                     // if (mounted) {
@@ -3457,8 +3335,8 @@ class _AddInvoiceState extends State<AddInvoice> {
                                     padding: EdgeInsets.only(
                                         top: 10,
                                         bottom: 10,
-                                        left: 25,
-                                        right: 25),
+                                        left: 70,
+                                        right: 70),
                                     child: Text(
                                       'Submit',
                                       style: TextStyle(color: Colors.white),
@@ -3687,6 +3565,7 @@ class _AddInvoiceState extends State<AddInvoice> {
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
+
   Future<dynamic> collectedStaffDialog(BuildContext context) {
     return showDialog(
       context: context,
@@ -3755,6 +3634,452 @@ class _AddInvoiceState extends State<AddInvoice> {
             ],
           );
         });
+      },
+    );
+  }
+
+  Future<dynamic> productDialog(BuildContext context, String type) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredItems = items
+                            .where((item) => item.productName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredItems.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            if (type == "add") {
+                              if (productQty.text == "") {
+                                productQty.text = "1";
+                              }
+                              productName = filteredItems[index].productName;
+                              productId = filteredItems[index].id;
+                              productRate.text =
+                                  filteredItems[index].sellingPrice;
+                              productTaxPercent.text =
+                                  filteredItems[index].taxPercent;
+                              productTaxAmount.text =
+                                  filteredItems[index].taxAmount;
+                              productTotalAmount
+                                  .text = ((double.parse(productRate.text) +
+                                          double.parse(productTaxAmount.text)) *
+                                      double.parse(productQty.text))
+                                  .toString();
+                              productTotalAmount.text =
+                                  double.parse(productTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              if (paymentStatus == "paid") {
+                                paidAmount.text = productTotalAmount.text;
+                              }
+                              typeDuration = filteredItems[index].noOfDays;
+                            } else {
+                              if (renProductQty.text == "") {
+                                renProductQty.text = "1";
+                              }
+                              renProductName = filteredItems[index].productName;
+                              renProductId = filteredItems[index].id;
+                              renProductRate.text =
+                                  filteredItems[index].sellingPrice;
+                              renProductTaxPercent.text =
+                                  filteredItems[index].taxPercent;
+                              renProductTaxAmount.text =
+                                  filteredItems[index].taxAmount;
+                              renProductTotalAmount.text =
+                                  ((double.parse(renProductRate.text) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(renProductQty.text))
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                            }
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredItems[index].productName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Future<Object?> changeAmount(
+      BuildContext context,
+      String name,
+      String rate,
+      String qty,
+      String tax,
+      String taxPerccent,
+      String amount,
+      String id,
+      String des,
+      int index) {
+    renProductQty.text = qty;
+    renProductRate.text = rate;
+    renProductTaxPercent.text = taxPerccent;
+    renProductTaxAmount.text = tax;
+    renProductTotalAmount.text = amount;
+    renProductName = id;
+    renProductName = name;
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Product Details',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        productDialog(context, "edit");
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.black),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    renProductName,
+                                    overflow: TextOverflow.ellipsis,
+                                  )),
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              renProductTaxAmount.text = (double.parse(value) *
+                                      double.parse(renProductTaxPercent.text) /
+                                      100)
+                                  .toString();
+                              renProductTotalAmount.text =
+                                  ((double.parse(value) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(renProductQty.text))
+                                      .toString();
+
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                            },
+                            controller: renProductRate,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Rate',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              renProductTotalAmount.text =
+                                  ((double.parse(renProductRate.text) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(value))
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                            },
+                            controller: renProductQty,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Qty',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value == '') {
+                                value = '0';
+                              }
+                              renProductTaxAmount.text =
+                                  (double.parse(renProductRate.text) *
+                                          double.parse(value) /
+                                          100)
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  ((double.parse(renProductRate.text) +
+                                              double.parse(
+                                                  renProductTaxAmount.text)) *
+                                          double.parse(renProductQty.text))
+                                      .toString();
+                              renProductTotalAmount.text =
+                                  double.parse(renProductTotalAmount.text)
+                                      .toStringAsFixed(2);
+                              setState(() {});
+                            },
+                            controller: renProductTaxPercent,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Percent',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            controller: renProductTaxAmount,
+                            keyboardType: TextInputType.number,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                labelText: 'Tax Amount',
+                                fillColor: Colors.white,
+                                filled: true,
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    SizedBox(
+                      child: TextFormField(
+                        controller: renProductTotalAmount,
+                        keyboardType: TextInputType.number,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                            labelText: 'Total Amount',
+                            fillColor: Colors.white,
+                            filled: true,
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 30, right: 30),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              )),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            if (renProductRate.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Rate', Colors.red);
+                            } else if (renProductQty.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Qty', Colors.red);
+                            } else if (renProductTaxPercent.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Percent', Colors.red);
+                            } else if (renProductTaxAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Tax Amount', Colors.red);
+                            } else if (renProductTotalAmount.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter Product Total Amount', Colors.red);
+                            } else {
+                              renProducts[index] = {
+                                "product_name": renProductName,
+                                "product_id": renProductId,
+                                "description": des,
+                                "product_rate": renProductRate.text,
+                                "quantity": renProductQty.text,
+                                "tax_percent": renProductTaxPercent.text,
+                                "total_tax_amount": renProductTaxAmount.text,
+                                "total_amount": renProductTotalAmount.text,
+                              };
+                              Navigator.of(context).pop();
+                              setState(() {});
+                            }
+                          },
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(5)),
+                              child: const Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, bottom: 10, left: 25, right: 25),
+                                child: Text(
+                                  'Change',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
       },
     );
   }

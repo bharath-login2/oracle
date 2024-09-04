@@ -59,6 +59,7 @@ class Data {
   bool createInvoice;
   bool createReceipt;
   List<InvoiceList> invoiceLists;
+  List<NextRenewalDetail> nextRenewalDetails;
   List<PaymentStatusList> paymentStatusList;
   List<Customer> paymentMethods;
   List<RenewalTemplate> renewalTemplate;
@@ -93,6 +94,7 @@ class Data {
     required this.receiptCount,
     required this.paidAmount,
     required this.invoiceLists,
+    required this.nextRenewalDetails,
     required this.paymentStatusList,
     required this.paymentMethods,
     required this.renewalTemplate,
@@ -143,6 +145,7 @@ class Data {
         createReceipt: json["create_receipt"] ?? false,
         invoiceLists: List<InvoiceList>.from(
             json["invoice_lists"].map((x) => InvoiceList.fromJson(x))),
+            nextRenewalDetails: List<NextRenewalDetail>.from(json["next_renewal_details"].map((x) => NextRenewalDetail.fromJson(x))),
         paymentStatusList: List<PaymentStatusList>.from(
             json["payment_status_list"]
                 .map((x) => PaymentStatusList.fromJson(x))),
@@ -235,6 +238,42 @@ class InvoiceList {
         taxAmount: json["tax_amount"] ?? "0",
         amount: json["amount"] ?? "",
       );
+}
+
+class NextRenewalDetail {
+    String nextRowId;
+    String nextPrdId;
+    String nextPrdName;
+    String nextPrdDescription;
+    String nextPrdRate;
+    String nextPrdQty;
+    String nextPrdTaxPc;
+    String nextPrdTaxAmount;
+    String nextPrdAmount;
+
+    NextRenewalDetail({
+        required this.nextRowId,
+        required this.nextPrdId,
+        required this.nextPrdName,
+        required this.nextPrdDescription,
+        required this.nextPrdRate,
+        required this.nextPrdQty,
+        required this.nextPrdTaxPc,
+        required this.nextPrdTaxAmount,
+        required this.nextPrdAmount,
+    });
+
+    factory NextRenewalDetail.fromJson(Map<String, dynamic> json) => NextRenewalDetail(
+        nextRowId: json["next_row_id"],
+        nextPrdId: json["next_prd_id"],
+        nextPrdName: json["next_prd_name"],
+        nextPrdDescription: json["next_prd_description"],
+        nextPrdRate: json["next_prd_rate"],
+        nextPrdQty: json["next_prd_qty"],
+        nextPrdTaxPc: json["next_prd_tax_pc"],
+        nextPrdTaxAmount: json["next_prd_tax_amount"],
+        nextPrdAmount: json["next_prd_amount"],
+    );
 }
 
 class PaymentStatusList {

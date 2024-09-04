@@ -278,27 +278,11 @@ class _ExpenseListState extends State<ExpenseList> {
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 .7,
-                                        child: Row(
-                                          children: [
-                                            Text(
-                                              "${items[index].fromAccountPerson} ",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            const Icon(
-                                              Icons.arrow_forward,
-                                              size: 18,
-                                            ),
-                                            Text(
-                                              " ${items[index].toAccountPerson}",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ],
+                                        child: Text(
+                                          "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                       const SizedBox(
@@ -460,6 +444,23 @@ class _ExpenseListState extends State<ExpenseList> {
                       );
                     }
                   }),
+            ),
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddExpense(),
+                    )).then((_) {
+                  page = 1;
+                  add = 1;
+                  items.clear();
+                  getList();
+                });
+              },
+              child: const Icon(Icons.add),
             ),
           )
         : Scaffold(

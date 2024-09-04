@@ -833,6 +833,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                                 Common.toastMessaage(deleteReceipt.message, Colors.green);
                                                                                 if (context.mounted) {
                                                                                   Navigator.pop(context);
+                                                                                  Navigator.pop(context);
                                                                                 }
                                                                               } else {
                                                                                 Common.toastMessaage(deleteReceipt.message, Colors.red);
