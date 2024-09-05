@@ -2076,18 +2076,23 @@ class HttpService {
     }
   }
 
-  static Future mainClients(token, searchKey, fromDate, toDate) async {
+  static Future mainClients(
+      token, searchKey, fromDate, toDate, page, pageSize) async {
     var params = {
       "token": token,
       "search_key": searchKey,
-      "from_date": fromDate,
-      "to_date": toDate
+      "from_date": fromDate == "From Date" ? "" : fromDate,
+      "to_date": toDate == "To Date" ? "" : toDate,
+      "page": page,
+      "page_size": pageSize
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}mainClientList",
           queryParameters: params);
-      MainClientListModel model = MainClientListModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        MainClientListModel model = MainClientListModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -2279,18 +2284,23 @@ class HttpService {
     }
   }
 
-  static Future receptList(token, fromDate, toDate, clientId) async {
+  static Future receptList(
+      token, fromDate, toDate, page, pageSize, searchKey) async {
     var formData = FormData.fromMap({
       'token': token,
-      'from_date': fromDate,
-      'to_date': toDate,
-      'client_id': clientId
+      'from_date': fromDate == "From Date" ? "" : fromDate,
+      'to_date': toDate == "To Date" ? "" : toDate,
+      'page': page,
+      'page_size': pageSize,
+      'search_key': searchKey,
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getReceiptLists",
           data: formData);
-      ReceiptListModel model = ReceiptListModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        ReceiptListModel model = ReceiptListModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -4759,18 +4769,17 @@ class HttpService {
       log("error: $e");
     }
   }
+
   static Future getSearchData(String searchKey) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "searchKey": searchKey,
-
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getSearchData",
           data: formData);
       if (result.statusCode == 200) {
-        SearchDataModel model =
-            SearchDataModel.fromJson(result.data);
+        SearchDataModel model = SearchDataModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

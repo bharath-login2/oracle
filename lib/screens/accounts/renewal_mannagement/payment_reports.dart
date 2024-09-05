@@ -5,8 +5,8 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/payment_report.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/screens/accounts/clients/addReceipt.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_list.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 

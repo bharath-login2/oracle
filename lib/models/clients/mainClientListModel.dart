@@ -1,81 +1,86 @@
+// To parse this JSON data, do
+//
+//     final mainClientListModel = mainClientListModelFromJson(jsonString);
+
+import 'package:meta/meta.dart';
+import 'dart:convert';
+
+MainClientListModel mainClientListModelFromJson(String str) => MainClientListModel.fromJson(json.decode(str));
+
+String mainClientListModelToJson(MainClientListModel data) => json.encode(data.toJson());
+
 class MainClientListModel {
-  bool? status;
-  String? message;
-  List<Data>? data;
+    bool status;
+    String message;
+    List<ClientLists> data;
 
-  MainClientListModel({this.status, this.message, this.data});
+    MainClientListModel({
+        required this.status,
+        required this.message,
+        required this.data,
+    });
 
-  MainClientListModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
-    message = json['message'];
-    if (json['data'] != null) {
-      data = <Data>[];
-      json['data'].forEach((v) {
-        data!.add(Data.fromJson(v));
-      });
-    }
-  }
+    factory MainClientListModel.fromJson(Map<String, dynamic> json) => MainClientListModel(
+        status: json["status"],
+        message: json["message"],
+        data: List<ClientLists>.from(json["data"].map((x) => ClientLists.fromJson(x))),
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['status'] = status;
-    data['message'] = message;
-    if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "status": status,
+        "message": message,
+        "data": List<dynamic>.from(data.map((x) => x.toJson())),
+    };
 }
 
-class Data {
-  String? id;
-  String? clientName;
-  String? phoneNumber;
-  String? location;
-  String? pincode;
-  String? postOffice;
-  String? createdBy;
-  String? createdAt;
-  String? totalDue;
-  String? totalInvoiceCount;
+class ClientLists {
+    String id;
+    String clientName;
+    String phoneNumber;
+    String location;
+    String pincode;
+    String postOffice;
+    String createdBy;
+    String createdAt;
+    String totalDue;
+    String totalInvoiceCount;
 
-  Data(
-      {this.id,
-        this.clientName,
-        this.phoneNumber,
-        this.location,
-        this.pincode,
-        this.postOffice,
-        this.createdBy,
-        this.createdAt,
-        this.totalDue,
-        this.totalInvoiceCount});
+    ClientLists({
+        required this.id,
+        required this.clientName,
+        required this.phoneNumber,
+        required this.location,
+        required this.pincode,
+        required this.postOffice,
+        required this.createdBy,
+        required this.createdAt,
+        required this.totalDue,
+        required this.totalInvoiceCount,
+    });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    clientName = json['clientName'];
-    phoneNumber = json['phoneNumber'];
-    location = json['location'];
-    pincode = json['pincode'];
-    postOffice = json['post_office'];
-    createdBy = json['created_by'];
-    createdAt = json['created_at'];
-    totalDue = json['total_due'];
-    totalInvoiceCount = json['total_invoice_count'];
-  }
+    factory ClientLists.fromJson(Map<String, dynamic> json) => ClientLists(
+        id: json["id"],
+        clientName: json["clientName"],
+        phoneNumber: json["phoneNumber"],
+        location: json["location"],
+        pincode: json["pincode"],
+        postOffice: json["post_office"],
+        createdBy: json["created_by"],
+        createdAt: json["created_at"],
+        totalDue: json["total_due"],
+        totalInvoiceCount: json["total_invoice_count"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = id;
-    data['clientName'] = clientName;
-    data['phoneNumber'] = phoneNumber;
-    data['location'] = location;
-    data['pincode'] = pincode;
-    data['post_office'] = postOffice;
-    data['created_by'] = createdBy;
-    data['created_at'] = createdAt;
-    data['total_due'] = totalDue;
-    data['total_invoice_count'] = totalInvoiceCount;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "clientName": clientName,
+        "phoneNumber": phoneNumber,
+        "location": location,
+        "pincode": pincode,
+        "post_office": postOffice,
+        "created_by": createdBy,
+        "created_at": createdAt,
+        "total_due": totalDue,
+        "total_invoice_count": totalInvoiceCount,
+    };
 }

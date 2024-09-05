@@ -5,8 +5,8 @@ import 'package:login2/models/lead_management/addLeadFollowupModel.dart';
 import 'package:login2/models/renewal/renewal_followup_details.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
-import '../../core/common.dart';
-import '../../service/service.dart';
+import '../../../core/common.dart';
+import '../../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

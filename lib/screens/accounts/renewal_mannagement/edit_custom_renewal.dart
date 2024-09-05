@@ -11,7 +11,7 @@ import 'package:login2/models/renewal/post_renewal.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/service/service.dart';
 
-import '../../models/clients/branchListModel.dart';
+import '../../../models/clients/branchListModel.dart';
 
 class EditCustomRenewal extends StatefulWidget {
   String renId;

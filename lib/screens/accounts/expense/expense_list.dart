@@ -12,7 +12,7 @@ import 'package:login2/screens/accounts/expense/expense_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../../renewal_mannagement/renewal_list.dart';
+import '../renewal_mannagement/renewal_list.dart';
 
 class ExpenseList extends StatefulWidget {
   const ExpenseList({super.key});

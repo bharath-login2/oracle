@@ -134,7 +134,7 @@ class _AddFollowupState extends State<AddFollowup> {
   bool isPaying = false;
   dynamic paymentMethod;
   dynamic paymentStatus;
-  List<StaffList> filteredStaff = [];
+  List<ColloctedStaff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
   List<Product> items = [];
@@ -208,7 +208,7 @@ class _AddFollowupState extends State<AddFollowup> {
       }
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (commonDetails != null) {
-        filteredStaff.addAll(commonDetails!.data.staff);
+        filteredStaff.addAll(commonDetails!.data.colloctedStaff);
         callResultReasonList();
         if (widget.leadTypeId != '') {
           leadSubTypeList = await HttpService.leadSubType(widget.leadTypeId);
@@ -4034,8 +4034,8 @@ class _AddFollowupState extends State<AddFollowup> {
                     autofocus: true,
                     onChanged: (value) {
                       setState(() {
-                        filteredStaff = commonDetails!.data.staff
-                            .where((item) => item.staffName
+                        filteredStaff = commonDetails!.data.colloctedStaff
+                            .where((item) => item.accountName
                                 .toLowerCase()
                                 .contains(value.toLowerCase()))
                             .toList();
@@ -4058,16 +4058,16 @@ class _AddFollowupState extends State<AddFollowup> {
                     itemBuilder: (context, index) {
                       return ListTile(
                           onTap: () {
-                            staffName = filteredStaff[index].staffName;
-                            staffId = filteredStaff[index].staffId;
+                            staffName = filteredStaff[index].accountName;
+                            staffId = filteredStaff[index].accountId;
                             search.clear();
-                            filteredStaff.addAll(commonDetails!.data.staff);
+                            filteredStaff.addAll(commonDetails!.data.colloctedStaff);
                             setState(() {});
                             if (context.mounted) {
                               Navigator.pop(context);
                             }
                           },
-                          title: Text(filteredStaff[index].staffName));
+                          title: Text(filteredStaff[index].accountName));
                     },
                   ),
                 )
@@ -4077,7 +4077,7 @@ class _AddFollowupState extends State<AddFollowup> {
               TextButton(
                   onPressed: () {
                     search.clear();
-                    filteredStaff.addAll(commonDetails!.data.staff);
+                    filteredStaff.addAll(commonDetails!.data.colloctedStaff);
                     if (context.mounted) {
                       Navigator.pop(context);
                     }
@@ -4091,138 +4091,146 @@ class _AddFollowupState extends State<AddFollowup> {
   }
 
   postFollowup() async {
-    final connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-      if (callResultId == '') {
-        Common.toastMessaage('Choose any Status', Colors.red);
-      }
-      if (callResponseId == '') {
-        Common.toastMessaage('Choose call response', Colors.red);
-      } else if (callResultId == '2' && nextFollowupDate1.text.isEmpty) {
-        Common.toastMessaage('Choose next followup date', Colors.red);
-      } else if (createOrder == true &&
-          products.isEmpty &&
-          commonDetails!.data.customerAddInvoicePermission) {
-        Common.toastMessaage('Please add a product to continue', Colors.red);
-      } else if (createOrder == true &&
-          commonDetails!.data.customerAddInvoicePermission &&
-          paymentStatus == null) {
-        Common.toastMessaage(
-            'Payment Status is required to add invoice', Colors.red);
-      } else if (createOrder == true &&
-          paidAmount.text.isEmpty &&
-          commonDetails!.data.customerAddInvoicePermission &&
-          paymentStatus != "unpaid") {
-        Common.toastMessaage(
-            'Paid Amount is required to add invoice', Colors.red);
-      } else if (createOrder == true &&
-          paymentStatus != "unpaid" &&
-          commonDetails!.data.customerAddInvoicePermission &&
-          paymentMethod == null) {
-        Common.toastMessaage(
-            'Payment Method is required to add invoice', Colors.red);
-      } else if (createOrder == true &&
-          commonDetails!.data.customerAddInvoicePermission &&
-          paymentStatus != "unpaid" &&
-          staffId == "") {
-        Common.toastMessaage(
-            'Collected Staff is required to add invoice', Colors.red);
-      } else if (createRenewal == true &&
-          commonDetails!.data.isRenewal &&
-          startDate.text == "") {
-        Common.toastMessaage(
-            'Start date is required to add renewal', Colors.red);
-      } else if (createRenewal == true &&
-          commonDetails!.data.isRenewal &&
-          endDate.text == "") {
-        Common.toastMessaage('End date is required to add renewal', Colors.red);
-      } else {
-        if (mounted) {
-          Common.showProgressDialog(context, "Loading..");
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      if (connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi) {
+        if (callResultId == '') {
+          Common.toastMessaage('Choose any Status', Colors.red);
         }
-        AddLeadFollowupModel object1 = await HttpService.addLeadsFollowup(
-            widget.token,
-            callResultId,
-            nextFollowupDate1.text,
-            cost.text,
-            address.text,
-            leadTypeId,
-            leadSubTypeId,
-            remarks.text,
-            widget.callMasterId,
-            calledDate1.text,
-            callHistoryId,
-            priorityId,
-            checked,
-            timeBefore.text,
-            callResponseId,
-            callResultReasonId,
-            createOrder,
-            createRenewal ? "renewal" : "invoice",
-            detailsResponse!.data.checkId,
-            invoiceDate,
-            products,
-            reminderTemplate.text,
-            allTotal,
-            startDate.text,
-            endDate.text,
-            paymentStatus,
-            subTotal,
-            totalTaxAmount,
-            discount.text,
-            shippingCharge.text,
-            paymentMethod,
-            paidAmount.text,
-            staffId,
-            isDifrent,
-            renProducts);
-        if (object1.status == true) {
-          Common.toastMessaage(object1.message, Colors.green);
-          if (mounted) {
-            Navigator.pop(context);
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => LeadDetails(
-                        widget.token!,
-                        widget.editLead,
-                        widget.deleteLead,
-                        widget.cloudCall,
-                        widget.callMasterId,
-                        pageName: widget.pageName.toString(),
-                        fromDate: widget.fromDate,
-                        toDate: widget.toDate,
-                        status: widget.status,
-                        category: widget.category,
-                        staff: widget.staff,
-                        isCalled: widget.isCalled,
-                        searchKey: widget.searchKey,
-                        scrollToIndex: widget.scrollToIndex,
-                        leadType: widget.leadType1,
-                      )),
-            );
-            Navigator.pop(context);
-          }
+        if (callResponseId == '') {
+          Common.toastMessaage('Choose call response', Colors.red);
+        } else if (callResultId == '2' && nextFollowupDate1.text.isEmpty) {
+          Common.toastMessaage('Choose next followup date', Colors.red);
+        } else if (createOrder == true &&
+            products.isEmpty &&
+            commonDetails!.data.customerAddInvoicePermission) {
+          Common.toastMessaage('Please add a product to continue', Colors.red);
+        } else if (createOrder == true &&
+            commonDetails!.data.customerAddInvoicePermission &&
+            paymentStatus == null) {
+          Common.toastMessaage(
+              'Payment Status is required to add invoice', Colors.red);
+        } else if (createOrder == true &&
+            paidAmount.text.isEmpty &&
+            commonDetails!.data.customerAddInvoicePermission &&
+            paymentStatus != "unpaid") {
+          Common.toastMessaage(
+              'Paid Amount is required to add invoice', Colors.red);
+        } else if (createOrder == true &&
+            paymentStatus != "unpaid" &&
+            commonDetails!.data.customerAddInvoicePermission &&
+            paymentMethod == null) {
+          Common.toastMessaage(
+              'Payment Method is required to add invoice', Colors.red);
+        } else if (createOrder == true &&
+            commonDetails!.data.customerAddInvoicePermission &&
+            paymentStatus != "unpaid" &&
+            staffId == "") {
+          Common.toastMessaage(
+              'Collected Staff is required to add invoice', Colors.red);
+        } else if (createRenewal == true &&
+            commonDetails!.data.isRenewal &&
+            startDate.text == "") {
+          Common.toastMessaage(
+              'Start date is required to add renewal', Colors.red);
+        } else if (createRenewal == true &&
+            commonDetails!.data.isRenewal &&
+            endDate.text == "") {
+          Common.toastMessaage(
+              'End date is required to add renewal', Colors.red);
         } else {
-          Common.toastMessaage(object1.message, Colors.red);
           if (mounted) {
-            Navigator.pop(context);
+            Common.showProgressDialog(context, "Loading..");
+          }
+          AddLeadFollowupModel object1 = await HttpService.addLeadsFollowup(
+              widget.token,
+              callResultId,
+              nextFollowupDate1.text,
+              cost.text,
+              address.text,
+              leadTypeId,
+              leadSubTypeId,
+              remarks.text,
+              widget.callMasterId,
+              calledDate1.text,
+              callHistoryId,
+              priorityId,
+              checked,
+              timeBefore.text,
+              callResponseId,
+              callResultReasonId,
+              createOrder,
+              createRenewal ? "renewal" : "invoice",
+              detailsResponse!.data.checkId,
+              invoiceDate,
+              products,
+              reminderTemplate.text,
+              allTotal,
+              startDate.text,
+              endDate.text,
+              paymentStatus,
+              subTotal,
+              totalTaxAmount,
+              discount.text,
+              shippingCharge.text,
+              paymentMethod,
+              paidAmount.text,
+              staffId,
+              isDifrent,
+              renProducts);
+          if (object1.status == true) {
+            Common.toastMessaage(object1.message, Colors.green);
+            if (mounted) {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => LeadDetails(
+                          widget.token!,
+                          widget.editLead,
+                          widget.deleteLead,
+                          widget.cloudCall,
+                          widget.callMasterId,
+                          pageName: widget.pageName.toString(),
+                          fromDate: widget.fromDate,
+                          toDate: widget.toDate,
+                          status: widget.status,
+                          category: widget.category,
+                          staff: widget.staff,
+                          isCalled: widget.isCalled,
+                          searchKey: widget.searchKey,
+                          scrollToIndex: widget.scrollToIndex,
+                          leadType: widget.leadType1,
+                        )),
+              );
+              Navigator.pop(context);
+            }
+          } else {
+            Common.toastMessaage(object1.message, Colors.red);
+            if (mounted) {
+              Navigator.pop(context);
+            }
           }
         }
+      } else {
+        setState(() {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No Network Found..Try Again Later..'),
+              backgroundColor: Colors.redAccent,
+              elevation: 10,
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.all(10),
+            ),
+          );
+        });
       }
-    } else {
-      setState(() {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No Network Found..Try Again Later..'),
-            backgroundColor: Colors.redAccent,
-            elevation: 10,
-            behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(10),
-          ),
-        );
-      });
+    } catch (e) {
+      if (mounted) {
+            Common.toastMessaage("Failed !", Colors.red);
+        Navigator.pop(context);
+      }
     }
   }
 }

@@ -11,7 +11,7 @@ import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/product_mannagement/categories.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';

@@ -1,98 +1,104 @@
+// To parse this JSON data, do
+//
+//     final receiptListModel = receiptListModelFromJson(jsonString);
+
+import 'package:meta/meta.dart';
+import 'dart:convert';
+
+ReceiptListModel receiptListModelFromJson(String str) => ReceiptListModel.fromJson(json.decode(str));
+
+String receiptListModelToJson(ReceiptListModel data) => json.encode(data.toJson());
+
 class ReceiptListModel {
-  Data? data;
-  bool? status;
-  String? message;
+    Data data;
+    bool status;
+    String message;
 
-  ReceiptListModel({this.data, this.status, this.message});
+    ReceiptListModel({
+        required this.data,
+        required this.status,
+        required this.message,
+    });
 
-  ReceiptListModel.fromJson(Map<String, dynamic> json) {
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    status = json['status'];
-    message = json['message'];
-  }
+    factory ReceiptListModel.fromJson(Map<String, dynamic> json) => ReceiptListModel(
+        data: Data.fromJson(json["data"]),
+        status: json["status"],
+        message: json["message"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    data['status'] = status;
-    data['message'] = message;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "data": data.toJson(),
+        "status": status,
+        "message": message,
+    };
 }
 
 class Data {
-  List<Lists>? lists;
-  String? receiptSum;
+    List<ListElement> lists;
+    String receiptSum;
 
-  Data({this.lists, this.receiptSum});
+    Data({
+        required this.lists,
+        required this.receiptSum,
+    });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    if (json['lists'] != null) {
-      lists = <Lists>[];
-      json['lists'].forEach((v) {
-        lists!.add(Lists.fromJson(v));
-      });
-    }
-    receiptSum = json['receipt_sum'];
-  }
+    factory Data.fromJson(Map<String, dynamic> json) => Data(
+        lists: List<ListElement>.from(json["lists"].map((x) => ListElement.fromJson(x))),
+        receiptSum: json["receipt_sum"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    if (lists != null) {
-      data['lists'] = lists!.map((v) => v.toJson()).toList();
-    }
-    data['receipt_sum'] = receiptSum;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "lists": List<dynamic>.from(lists.map((x) => x.toJson())),
+        "receipt_sum": receiptSum,
+    };
 }
 
-class Lists {
-  String? id;
-  String? receiptNumber;
-  String? invoiceNumber;
-  String? receiptDate;
-  String? clientId;
-  String? customerName;
-  String? recieptAmount;
-  String? collectedStaff;
-  String? uploadedFile;
+class ListElement {
+    String id;
+    String receiptNumber;
+    String invoiceNumber;
+    String receiptDate;
+    String clientId;
+    String customerName;
+    String recieptAmount;
+    String collectedStaff;
+    String uploadedFile;
 
-  Lists(
-      {this.id,
-        this.receiptNumber,
-        this.invoiceNumber,
-        this.receiptDate,
-        this.clientId,
-        this.customerName,
-        this.recieptAmount,
-        this.collectedStaff,
-        this.uploadedFile});
+    ListElement({
+        required this.id,
+        required this.receiptNumber,
+        required this.invoiceNumber,
+        required this.receiptDate,
+        required this.clientId,
+        required this.customerName,
+        required this.recieptAmount,
+        required this.collectedStaff,
+        required this.uploadedFile,
+    });
 
-  Lists.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    receiptNumber = json['receipt_number'];
-    invoiceNumber = json['invoice_number'];
-    receiptDate = json['receipt_date'];
-    clientId = json['client_id'];
-    customerName = json['customer_name'];
-    recieptAmount = json['reciept_amount'];
-    collectedStaff = json['collected_staff'];
-    uploadedFile = json['uploaded_file'];
-  }
+    factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
+        id: json["id"],
+        receiptNumber: json["receipt_number"],
+        invoiceNumber: json["invoice_number"],
+        receiptDate: json["receipt_date"],
+        clientId: json["client_id"],
+        customerName: json["customer_name"],
+        recieptAmount: json["reciept_amount"],
+        collectedStaff: json["collected_staff"],
+        uploadedFile: json["uploaded_file"],
+    );
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['receipt_number'] = receiptNumber;
-    data['invoice_number'] = invoiceNumber;
-    data['receipt_date'] = receiptDate;
-    data['client_id'] = clientId;
-    data['customer_name'] = customerName;
-    data['reciept_amount'] = recieptAmount;
-    data['collected_staff'] = collectedStaff;
-    data['uploaded_file'] = uploadedFile;
-    return data;
-  }
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "receipt_number": receiptNumber,
+        "invoice_number": invoiceNumber,
+        "receipt_date": receiptDate,
+        "client_id": clientId,
+        "customer_name": customerName,
+        "reciept_amount": recieptAmount,
+        "collected_staff": collectedStaff,
+        "uploaded_file": uploadedFile,
+    };
 }
+
+

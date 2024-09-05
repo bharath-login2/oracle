@@ -1,7 +1,5 @@
 // ignore_for_file: must_be_immutable, use_build_context_synchronously
 
-import 'dart:developer';
-
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -12,13 +10,13 @@ import 'package:login2/models/renewal/post_reminder.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
-import 'package:login2/screens/renewal_mannagement/edit_custom_renewal.dart';
-import 'package:login2/screens/renewal_mannagement/edit_quick_renewal.dart';
-import 'package:login2/screens/renewal_mannagement/renew_custom_renewal.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/edit_custom_renewal.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renew_custom_renewal.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/models/renewal/renewal_template_model.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_followup.dart';
-import 'package:login2/screens/renewal_mannagement/view_history.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/view_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';

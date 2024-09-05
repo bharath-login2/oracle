@@ -13,7 +13,7 @@ import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/product_mannagement/categories.dart';
-import 'package:login2/screens/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/staff_reports/staff_list.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -179,6 +179,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   getData(token, fromDate, toDate) async {
+    String tog = await Common.getSharedPref("acc_toggle") ?? "";
+    toggle = tog == "true" ? true : false;
     setState(() {
       timeOut = false;
     });
@@ -757,7 +759,17 @@ class _DashboardState extends State<Dashboard> {
                                                                             .token
                                                                             .toString(),
                                                                       ),
-                                                                    ));
+                                                                    )).then((_) {
+                                                                  getData(
+                                                                      widget
+                                                                          .token,
+                                                                      fromdate,
+                                                                      todate);
+                                                                  if (loadmore ==
+                                                                      true) {
+                                                                    getStaffwise();
+                                                                  }
+                                                                });
                                                               } else if (userDashboard!
                                                                       .data!
                                                                       .modules![
@@ -5184,6 +5196,9 @@ class _DashboardState extends State<Dashboard> {
                                                         setState(() {
                                                           toggle = !toggle;
                                                         });
+                                                        Common.saveSharedPref(
+                                                            "acc_toggle",
+                                                            toggle.toString());
                                                       },
                                                       child: const Icon(
                                                         Icons
@@ -5319,7 +5334,7 @@ class _DashboardState extends State<Dashboard> {
                                           .9,
                                       height:
                                           MediaQuery.of(context).size.height *
-                                              .67,
+                                              .64,
                                       child: GridView(
                                         physics:
                                             const NeverScrollableScrollPhysics(),
@@ -6688,7 +6703,7 @@ class _DashboardState extends State<Dashboard> {
               ),
               SizedBox(
                 width: MediaQuery.of(context).size.width * .9,
-                height: MediaQuery.of(context).size.height * .67,
+                height: MediaQuery.of(context).size.height * .64,
                 child: GridView(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
