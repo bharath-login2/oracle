@@ -46,6 +46,7 @@ class Data {
     String totalReceiptAmount;
     List<Invoice> invoice;
     List<Receipt> receipts;
+    List<RenewalList> renewalLists;
 
     Data({
         required this.id,
@@ -60,6 +61,7 @@ class Data {
         required this.totalReceiptAmount,
         required this.invoice,
         required this.receipts,
+        required this.renewalLists,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -75,6 +77,7 @@ class Data {
         totalReceiptAmount: json["total_receipt_amount"],
         invoice: List<Invoice>.from(json["invoice"].map((x) => Invoice.fromJson(x))),
         receipts: List<Receipt>.from(json["receipts"].map((x) => Receipt.fromJson(x))),
+        renewalLists: List<RenewalList>.from(json["renewal_lists"].map((x) => RenewalList.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -90,6 +93,7 @@ class Data {
         "total_receipt_amount": totalReceiptAmount,
         "invoice": List<dynamic>.from(invoice.map((x) => x.toJson())),
         "receipts": List<dynamic>.from(receipts.map((x) => x.toJson())),
+        "renewal_lists": List<dynamic>.from(renewalLists.map((x) => x.toJson())),
     };
 }
 
@@ -182,5 +186,105 @@ class Receipt {
         "paymentMethod": paymentMethod,
         "collectedBy": collectedBy,
         "uploaded_file": uploadedFile,
+    };
+}
+
+class RenewalList {
+    String id;
+    String invoiceId;
+    String clientId;
+    String clientName;
+    String contactNo;
+    String startDate;
+    String endDate;
+    String remainingDays;
+    String products;
+    String cost;
+    bool isRenewed;
+    bool isExpired;
+    bool isPaid;
+    String renewalType;
+    List<ProductId> productId;
+
+    RenewalList({
+        required this.id,
+        required this.invoiceId,
+        required this.clientId,
+        required this.clientName,
+        required this.contactNo,
+        required this.startDate,
+        required this.endDate,
+        required this.remainingDays,
+        required this.products,
+        required this.cost,
+        required this.isRenewed,
+        required this.isExpired,
+        required this.isPaid,
+        required this.renewalType,
+        required this.productId,
+    });
+
+    factory RenewalList.fromJson(Map<String, dynamic> json) => RenewalList(
+        id: json["id"],
+        invoiceId: json["invoice_id"],
+        clientId: json["client_id"],
+        clientName: json["client_name"],
+        contactNo: json["contact_no"],
+        startDate: json["start_date"],
+        endDate: json["end_date"],
+        remainingDays: json["remaining_days"],
+        products: json["products"],
+        cost: json["cost"],
+        isRenewed: json["is_renewed"],
+        isExpired: json["is_expired"],
+        isPaid: json["is_paid"],
+        renewalType: json["renewal_type"],
+        productId: List<ProductId>.from(json["product_id"].map((x) => ProductId.fromJson(x))),
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "invoice_id": invoiceId,
+        "client_id": clientId,
+        "client_name": clientName,
+        "contact_no": contactNo,
+        "start_date": startDate,
+        "end_date": endDate,
+        "remaining_days": remainingDays,
+        "products": products,
+        "cost": cost,
+        "is_renewed": isRenewed,
+        "is_expired": isExpired,
+        "is_paid": isPaid,
+        "renewal_type": renewalType,
+        "product_id": List<dynamic>.from(productId.map((x) => x.toJson())),
+    };
+}
+
+class ProductId {
+    String prdId;
+    String prdName;
+    String prdCost;
+    String prdQty;
+
+    ProductId({
+        required this.prdId,
+        required this.prdName,
+        required this.prdCost,
+        required this.prdQty,
+    });
+
+    factory ProductId.fromJson(Map<String, dynamic> json) => ProductId(
+        prdId: json["prd_id"],
+        prdName: json["prd_name"],
+        prdCost: json["prd_cost"],
+        prdQty: json["prd_qty"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "prd_id": prdId,
+        "prd_name": prdName,
+        "prd_cost": prdCost,
+        "prd_qty": prdQty,
     };
 }
