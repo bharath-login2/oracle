@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'dart:developer';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -115,7 +117,6 @@ class _AddFollowupState extends State<AddFollowup> {
   TextEditingController discount = TextEditingController();
   TextEditingController shippingCharge = TextEditingController();
   TextEditingController paidAmount = TextEditingController();
-  TextEditingController search = TextEditingController();
   TextEditingController startDate = TextEditingController();
   TextEditingController endDate = TextEditingController();
   TextEditingController reminderTemplate = TextEditingController();
@@ -3498,7 +3499,6 @@ class _AddFollowupState extends State<AddFollowup> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
@@ -4028,7 +4028,6 @@ class _AddFollowupState extends State<AddFollowup> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
@@ -4060,7 +4059,6 @@ class _AddFollowupState extends State<AddFollowup> {
                           onTap: () {
                             staffName = filteredStaff[index].accountName;
                             staffId = filteredStaff[index].accountId;
-                            search.clear();
                             filteredStaff.addAll(commonDetails!.data.colloctedStaff);
                             setState(() {});
                             if (context.mounted) {
@@ -4076,7 +4074,6 @@ class _AddFollowupState extends State<AddFollowup> {
             actions: [
               TextButton(
                   onPressed: () {
-                    search.clear();
                     filteredStaff.addAll(commonDetails!.data.colloctedStaff);
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -4228,6 +4225,7 @@ class _AddFollowupState extends State<AddFollowup> {
       }
     } catch (e) {
       if (mounted) {
+        log(e.toString());
             Common.toastMessaage("Failed !", Colors.red);
         Navigator.pop(context);
       }

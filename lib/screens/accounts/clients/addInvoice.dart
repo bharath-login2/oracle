@@ -10,9 +10,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/screens/accounts/clients/addReceipt.dart';
-import 'package:login2/screens/accounts/clients/receiptList.dart';
-import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:lottie/lottie.dart';
 import '../../../core/common.dart';
@@ -20,8 +17,6 @@ import '../../../models/clients/addInvoiceModel.dart';
 import '../../../models/clients/ivoiceAddCommonDetailsModel.dart';
 import '../../../models/clients/postalCodeModel.dart';
 import '../../../service/service.dart';
-import '../../leadManagement/dashboard.dart';
-import 'invoiceList.dart';
 
 class AddInvoice extends StatefulWidget {
   String token;
@@ -60,7 +55,6 @@ class _AddInvoiceState extends State<AddInvoice> {
   TextEditingController shippingCharge = TextEditingController();
   TextEditingController paidAmount = TextEditingController();
   TextEditingController remarks = TextEditingController();
-  TextEditingController search = TextEditingController();
   TextEditingController startDate = TextEditingController();
   TextEditingController endDate = TextEditingController();
   TextEditingController renewalRemarks = TextEditingController();
@@ -167,7 +161,7 @@ class _AddInvoiceState extends State<AddInvoice> {
       }
 
       invoiceNumber.text = invDetails!.data.displayInvoice.toString();
-
+      startDate.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       items = invDetails!.data.products;
       filteredItems.addAll(items);
 
@@ -1651,6 +1645,16 @@ class _AddInvoiceState extends State<AddInvoice> {
                                                               .clear();
                                                           productTotalAmount
                                                               .clear();
+
+                                                          final endValue = DateTime
+                                                                  .now()
+                                                              .add(Duration(
+                                                                  days: int.parse(
+                                                                      typeDuration)));
+                                                          endDate
+                                                              .text = DateFormat(
+                                                                  'dd-MM-yyyy')
+                                                              .format(endValue);
                                                           Navigator.of(context)
                                                               .pop();
                                                           setState(() {});
@@ -3578,7 +3582,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
@@ -3650,7 +3653,6 @@ class _AddInvoiceState extends State<AddInvoice> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,

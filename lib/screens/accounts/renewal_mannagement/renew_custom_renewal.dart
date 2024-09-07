@@ -27,6 +27,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
   List filteredProducts = [];
   List filteredNames = [];
   List productName = [];
+  bool productSwitch = false;
   RenewalByIdModel? renewalDetails;
   TextEditingController subTotal = TextEditingController();
   TextEditingController totalTax = TextEditingController();
@@ -151,7 +152,7 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
       totalAmount.text = renewalDetails!.data.totalAmount;
       customerName.text = renewalDetails!.data.customerName;
       customerId = renewalDetails!.data.clientId;
-      totalPaidAmount.text = renewalDetails!.data.paidAmount;
+      totalPaidAmount.text = renewalDetails!.data.totalAmount;
       startDate.text = renewalDetails!.data.nextStartDate;
       endDate.text = renewalDetails!.data.nextEndDate;
       remindMe.text = renewalDetails!.data.templateName;
@@ -366,236 +367,273 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                       )
                     : const SizedBox(),
                 const SizedBox(height: 14.0),
-                const Text(
-                  "Add Products",
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18),
-                ),
-                const SizedBox(height: 5.0),
-                TextFormField(
-                  controller: productNameController,
-                  readOnly: true,
-                  onTap: (() {
-                    dropDialog(context, "Products");
-                  }),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.all(8),
-                    labelText: 'Product *',
-                    prefixIcon: Icon(Icons.person, color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                    ),
-                    labelStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 14.0),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        controller: prodRate,
-                        onChanged: (val) {
-                          calculateTotal();
-                        },
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Rate *',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                    const Text(
+                      "Products",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          productSwitch = !productSwitch;
+                        });
+                      },
+                      child: Container(
+                        height: 30,
+                        width: 30,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Icon(
+                          productSwitch ? Icons.close : Icons.add,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              int currentValue =
-                                  int.parse(productQuantity.text);
-                              setState(() {
-                                currentValue--;
-                                productQuantity.text =
-                                    (currentValue > 0 ? currentValue : 0)
-                                        .toString(); // decrementing value
-                              });
-                              calculateTotal();
-                            },
-                            child: Container(
-                              height: 45,
-                              width: 30,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: const BorderRadius.only(
-                                      bottomLeft: Radius.circular(8),
-                                      topLeft: Radius.circular(8))),
-                              child: const Center(
-                                  child: Icon(
-                                Icons.arrow_left,
-                                size: 30,
-                              )),
-                            ),
+                  ],
+                ),
+                const SizedBox(height: 5.0),
+                Visibility(
+                  visible: products.isEmpty || productSwitch,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: productNameController,
+                        readOnly: true,
+                        onTap: (() {
+                          dropDialog(context, "Products");
+                        }),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'Product *',
+                          prefixIcon: Icon(Icons.person, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
                           Expanded(
-                            flex: 1,
                             child: TextFormField(
+                              keyboardType: TextInputType.number,
+                              controller: prodRate,
                               onChanged: (val) {
                                 calculateTotal();
                               },
-                              textAlign: TextAlign.center,
-                              decoration: InputDecoration(
-                                labelText: "Quantity",
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: const TextStyle(color: Colors.grey),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 8),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                              ),
-                              controller: productQuantity,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: false,
-                                signed: true,
-                              ),
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Rate *',
+                                  prefixIcon: Icon(Icons.currency_rupee,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              int currentValue =
-                                  int.parse(productQuantity.text);
-                              setState(() {
-                                currentValue++;
-                                productQuantity.text = (currentValue)
-                                    .toString(); // incrementing value
-                              });
-                              calculateTotal();
-                            },
-                            child: Container(
-                              height: 45,
-                              width: 30,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: const BorderRadius.only(
-                                      bottomRight: Radius.circular(8),
-                                      topRight: Radius.circular(8))),
-                              child: const Center(
-                                  child: Icon(
-                                Icons.arrow_right,
-                                size: 30,
-                              )),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    int currentValue =
+                                        int.parse(productQuantity.text);
+                                    setState(() {
+                                      currentValue--;
+                                      productQuantity.text =
+                                          (currentValue > 0 ? currentValue : 0)
+                                              .toString(); // decrementing value
+                                    });
+                                    calculateTotal();
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 30,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(8),
+                                            topLeft: Radius.circular(8))),
+                                    child: const Center(
+                                        child: Icon(
+                                      Icons.arrow_left,
+                                      size: 30,
+                                    )),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: TextFormField(
+                                    onChanged: (val) {
+                                      calculateTotal();
+                                    },
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      labelText: "Quantity",
+                                      focusedBorder: const OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 8.0, vertical: 8),
+                                      border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5.0),
+                                      ),
+                                    ),
+                                    controller: productQuantity,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: false,
+                                      signed: true,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    int currentValue =
+                                        int.parse(productQuantity.text);
+                                    setState(() {
+                                      currentValue++;
+                                      productQuantity.text = (currentValue)
+                                          .toString(); // incrementing value
+                                    });
+                                    calculateTotal();
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 30,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: const BorderRadius.only(
+                                            bottomRight: Radius.circular(8),
+                                            topRight: Radius.circular(8))),
+                                    child: const Center(
+                                        child: Icon(
+                                      Icons.arrow_right,
+                                      size: 30,
+                                    )),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              onChanged: (val) {
+                                calculateTotal();
+                              },
+                              keyboardType: TextInputType.number,
+                              controller: prodTax,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Tax(in %)',
+                                  prefixIcon:
+                                      Icon(Icons.percent, color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              readOnly: true,
+                              controller: prodAmount,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Amount',
+                                  prefixIcon: Icon(Icons.currency_rupee,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              maxLines: 2,
+                              controller: prodDetails,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Details',
+                                  prefixIcon: Icon(Icons.receipt_long,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              addProduct();
+                            },
+                            child: Container(
+                              height: 50,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  Text(
+                                    " Add",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 14.0),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 14.0),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        onChanged: (val) {
-                          calculateTotal();
-                        },
-                        keyboardType: TextInputType.number,
-                        controller: prodTax,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Tax(in %)',
-                            prefixIcon: Icon(Icons.percent, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        readOnly: true,
-                        controller: prodAmount,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Amount',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14.0),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        maxLines: 2,
-                        controller: prodDetails,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Details',
-                            prefixIcon:
-                                Icon(Icons.receipt_long, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        addProduct();
-                      },
-                      child: Container(
-                        height: 50,
-                        width: 100,
-                        decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add,
-                              color: Colors.white,
-                            ),
-                            Text(
-                              " Add",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 14.0),
                 ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

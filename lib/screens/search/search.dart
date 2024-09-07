@@ -31,7 +31,7 @@ class _SearchState extends State<Search> {
   TextEditingController searchController = TextEditingController();
   SearchDataModel? response;
   bool result = true;
-  bool isLoading = false;
+  bool isLoading = false;     
   bool custSwitch = true;
   bool leadSwitch = true;
   final List<Color> _colors = [
@@ -88,7 +88,7 @@ class _SearchState extends State<Search> {
       setState(() {
         isLoading = false;
       });
-    }
+    } 
   }
 
   @override

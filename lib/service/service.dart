@@ -771,8 +771,10 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",
           data: formData);
-      AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        AddLeadFollowupModel model = AddLeadFollowupModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -4783,7 +4785,7 @@ class HttpService {
       if (result.statusCode == 200) {
         SearchDataModel model = SearchDataModel.fromJson(result.data);
         return model;
-      } 
+      }
     } catch (e) {
       log("error: $e");
     }

@@ -35,7 +35,6 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   TextEditingController discount = TextEditingController();
   TextEditingController shippingCharge = TextEditingController();
   TextEditingController paidAmount = TextEditingController();
-  TextEditingController search = TextEditingController();
   TextEditingController startDate = TextEditingController();
   TextEditingController endDate = TextEditingController();
   TextEditingController invoiceRemarks = TextEditingController();
@@ -308,15 +307,12 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                     child: Container(
                                                       height: 30,
                                                       width: 30,
-                                                      decoration:
-                                                          BoxDecoration(
+                                                      decoration: BoxDecoration(
                                                         gradient:
                                                             const LinearGradient(
                                                                 colors: [
-                                                              Color(
-                                                                  0xFF2a86c9),
-                                                              Color(
-                                                                  0xFF406dbe)
+                                                              Color(0xFF2a86c9),
+                                                              Color(0xFF406dbe)
                                                             ]),
                                                         borderRadius:
                                                             BorderRadius
@@ -338,11 +334,10 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   productDialog(context, "add");
                                                 },
                                                 child: Container(
-                                                  width:
-                                                      MediaQuery.of(context)
-                                                              .size
-                                                              .width *
-                                                          1,
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      1,
                                                   decoration: BoxDecoration(
                                                     color: Colors.white,
                                                     border: Border.all(
@@ -379,7 +374,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   )),
                                                 ),
                                               ),
-                        
+
                                               // Padding(
                                               //   padding: const EdgeInsets.all(8.0),
                                               //   child: SizedBox(
@@ -427,34 +422,29 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                     productQty
                                                                         .text))
                                                             .toString();
-                        
+
                                                         productTotalAmount
                                                             .text = double.parse(
                                                                 productTotalAmount
                                                                     .text)
-                                                            .toStringAsFixed(
-                                                                2);
-                        
+                                                            .toStringAsFixed(2);
+
                                                         setState(() {});
                                                       },
                                                       controller: productRate,
                                                       keyboardType:
-                                                          TextInputType
-                                                              .number,
+                                                          TextInputType.number,
                                                       decoration:
                                                           const InputDecoration(
                                                               contentPadding:
                                                                   EdgeInsets.only(
-                                                                      left:
-                                                                          10,
+                                                                      left: 10,
                                                                       top: 2,
                                                                       bottom:
                                                                           2),
-                                                              labelText:
-                                                                  'Rate',
+                                                              labelText: 'Rate',
                                                               fillColor:
-                                                                  Colors
-                                                                      .white,
+                                                                  Colors.white,
                                                               filled: true,
                                                               prefixIcon: Icon(
                                                                   Icons
@@ -466,10 +456,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                   OutlineInputBorder(),
                                                               focusedBorder:
                                                                   OutlineInputBorder(
-                                                                borderSide:
-                                                                    BorderSide(
-                                                                        color:
-                                                                            Colors.grey),
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
                                                               ),
                                                               labelStyle: TextStyle(
                                                                   color: Colors
@@ -500,28 +489,23 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                             .text = double.parse(
                                                                 productTotalAmount
                                                                     .text)
-                                                            .toStringAsFixed(
-                                                                2);
+                                                            .toStringAsFixed(2);
                                                         setState(() {});
                                                       },
                                                       controller: productQty,
                                                       keyboardType:
-                                                          TextInputType
-                                                              .number,
+                                                          TextInputType.number,
                                                       decoration:
                                                           const InputDecoration(
                                                               contentPadding:
                                                                   EdgeInsets.only(
-                                                                      left:
-                                                                          10,
+                                                                      left: 10,
                                                                       top: 2,
                                                                       bottom:
                                                                           2),
-                                                              labelText:
-                                                                  'Qty',
+                                                              labelText: 'Qty',
                                                               fillColor:
-                                                                  Colors
-                                                                      .white,
+                                                                  Colors.white,
                                                               filled: true,
                                                               prefixIcon: Icon(
                                                                   Icons
@@ -533,10 +517,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                   OutlineInputBorder(),
                                                               focusedBorder:
                                                                   OutlineInputBorder(
-                                                                borderSide:
-                                                                    BorderSide(
-                                                                        color:
-                                                                            Colors.grey),
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
                                                               ),
                                                               labelStyle: TextStyle(
                                                                   color: Colors
@@ -548,7 +531,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                               const SizedBox(
                                                 height: 15,
                                               ),
-                        
+
                                               Row(
                                                 children: [
                                                   SizedBox(
@@ -581,29 +564,25 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                             .text = double.parse(
                                                                 productTotalAmount
                                                                     .text)
-                                                            .toStringAsFixed(
-                                                                2);
+                                                            .toStringAsFixed(2);
                                                         setState(() {});
                                                       },
                                                       controller:
                                                           productTaxPercent,
                                                       keyboardType:
-                                                          TextInputType
-                                                              .number,
+                                                          TextInputType.number,
                                                       decoration:
                                                           const InputDecoration(
                                                               contentPadding:
                                                                   EdgeInsets.only(
-                                                                      left:
-                                                                          10,
+                                                                      left: 10,
                                                                       top: 2,
                                                                       bottom:
                                                                           2),
                                                               labelText:
                                                                   'Tax Percent',
                                                               fillColor:
-                                                                  Colors
-                                                                      .white,
+                                                                  Colors.white,
                                                               filled: true,
                                                               prefixIcon: Icon(
                                                                   Icons
@@ -615,10 +594,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                   OutlineInputBorder(),
                                                               focusedBorder:
                                                                   OutlineInputBorder(
-                                                                borderSide:
-                                                                    BorderSide(
-                                                                        color:
-                                                                            Colors.grey),
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
                                                               ),
                                                               labelStyle: TextStyle(
                                                                   color: Colors
@@ -634,23 +612,20 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                       controller:
                                                           productTaxAmount,
                                                       keyboardType:
-                                                          TextInputType
-                                                              .number,
+                                                          TextInputType.number,
                                                       readOnly: true,
                                                       decoration:
                                                           const InputDecoration(
                                                               contentPadding:
                                                                   EdgeInsets.only(
-                                                                      left:
-                                                                          10,
+                                                                      left: 10,
                                                                       top: 2,
                                                                       bottom:
                                                                           2),
                                                               labelText:
                                                                   'Tax Amount',
                                                               fillColor:
-                                                                  Colors
-                                                                      .white,
+                                                                  Colors.white,
                                                               filled: true,
                                                               prefixIcon: Icon(
                                                                   Icons
@@ -662,10 +637,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                   OutlineInputBorder(),
                                                               focusedBorder:
                                                                   OutlineInputBorder(
-                                                                borderSide:
-                                                                    BorderSide(
-                                                                        color:
-                                                                            Colors.grey),
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
                                                               ),
                                                               labelStyle: TextStyle(
                                                                   color: Colors
@@ -674,7 +648,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   ),
                                                 ],
                                               ),
-                        
+
                                               const SizedBox(
                                                 height: 15,
                                               ),
@@ -698,10 +672,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                               Colors.white,
                                                           filled: true,
                                                           prefixIcon: Icon(
-                                                              Icons
-                                                                  .arrow_right,
-                                                              color: Colors
-                                                                  .grey),
+                                                              Icons.arrow_right,
+                                                              color:
+                                                                  Colors.grey),
                                                           border:
                                                               OutlineInputBorder(),
                                                           focusedBorder:
@@ -711,13 +684,12 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                     color: Colors
                                                                         .grey),
                                                           ),
-                                                          labelStyle:
-                                                              TextStyle(
-                                                                  color: Colors
-                                                                      .grey)),
+                                                          labelStyle: TextStyle(
+                                                              color:
+                                                                  Colors.grey)),
                                                 ),
                                               ),
-                        
+
                                               const SizedBox(
                                                 height: 10,
                                               ),
@@ -732,8 +704,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                     },
                                                     child: Container(
                                                         decoration: BoxDecoration(
-                                                            color:
-                                                                Colors.white,
+                                                            color: Colors.white,
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
@@ -793,8 +764,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                               productDescription
                                                                   .text,
                                                           "product_rate":
-                                                              productRate
-                                                                  .text,
+                                                              productRate.text,
                                                           "quantity":
                                                               productQty.text,
                                                           "tax_percent":
@@ -816,8 +786,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                               productDescription
                                                                   .text,
                                                           "product_rate":
-                                                              productRate
-                                                                  .text,
+                                                              productRate.text,
                                                           "quantity":
                                                               productQty.text,
                                                           "tax_percent":
@@ -830,7 +799,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                               productTotalAmount
                                                                   .text,
                                                         });
-                        
+
                                                         subTotal = subTotal +
                                                             double.parse(
                                                                 productTotalAmount
@@ -875,8 +844,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                     },
                                                     child: Container(
                                                         decoration: BoxDecoration(
-                                                            color:
-                                                                Colors.green,
+                                                            color: Colors.green,
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
@@ -905,8 +873,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                     );
                                   });
                                 },
-                                transitionBuilder:
-                                    (_, animation1, __, child) {
+                                transitionBuilder: (_, animation1, __, child) {
                                   return SlideTransition(
                                     position: Tween(
                                       begin: const Offset(0, 1),
@@ -1251,21 +1218,19 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                   width: 10,
                                 ),
                                 Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.3,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
                                     height: 35,
                                     decoration: BoxDecoration(
                                         color: Colors.grey.shade300,
-                                        borderRadius:
-                                            BorderRadius.circular(5)),
+                                        borderRadius: BorderRadius.circular(5)),
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                           left: 10,
                                           right: 10,
                                           top: 5,
                                           bottom: 5),
-                                      child:
-                                          Text(subTotal.toStringAsFixed(2)),
+                                      child: Text(subTotal.toStringAsFixed(2)),
                                     ))
                               ],
                             ),
@@ -1280,13 +1245,12 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                   width: 10,
                                 ),
                                 Container(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.3,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
                                     height: 35,
                                     decoration: BoxDecoration(
                                         color: Colors.grey.shade300,
-                                        borderRadius:
-                                            BorderRadius.circular(5)),
+                                        borderRadius: BorderRadius.circular(5)),
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                           left: 10,
@@ -1377,7 +1341,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                         if (value == '') {
                                           value = '0';
                                         }
-                            
+
                                         allTotal = subTotal +
                                             double.parse(value) -
                                             double.parse(discount.text == ''
@@ -1464,10 +1428,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                   child: FormField<String>(
                                     builder: (FormFieldState<String> state) {
                                       return Container(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.5,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
                                         decoration: BoxDecoration(
                                             color: Colors.grey.shade300,
                                             borderRadius:
@@ -1501,8 +1464,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                     child: Text(
                                                       data.displaySts
                                                           .toString(),
-                                                      overflow: TextOverflow
-                                                          .ellipsis,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ),
@@ -1537,8 +1500,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                     width: 10,
                                   ),
                                   SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.5,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.5,
                                     height: 35,
                                     child: TextFormField(
                                       readOnly: paymentStatus == "paid",
@@ -1546,8 +1509,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                       onChanged: (val) {
                                         if (double.parse(val) > allTotal) {
                                           Common.toastMessaage(
-                                              'Enter valid amount',
-                                              Colors.red);
+                                              'Enter valid amount', Colors.red);
                                           paidColor = Colors.red;
                                         } else {
                                           paidColor = Colors.black;
@@ -1557,11 +1519,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                       controller: paidAmount,
                                       keyboardType: TextInputType.number,
                                       decoration: InputDecoration(
-                                          contentPadding:
-                                              const EdgeInsets.only(
-                                                  left: 10,
-                                                  top: 2,
-                                                  bottom: 2),
+                                          contentPadding: const EdgeInsets.only(
+                                              left: 10, top: 2, bottom: 2),
                                           //labelText: 'Invoice Number',
                                           fillColor: Colors.grey[300],
                                           filled: true,
@@ -1597,10 +1556,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                         width: 10,
                                       ),
                                       SizedBox(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.5,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
                                         height: 35,
                                         child: FormField<String>(
                                           builder:
@@ -1614,8 +1572,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   color: Colors.grey.shade300,
                                                   borderRadius:
                                                       const BorderRadius.all(
-                                                          Radius.circular(
-                                                              5))),
+                                                          Radius.circular(5))),
                                               child:
                                                   DropdownButtonHideUnderline(
                                                 child: DropdownButton<String>(
@@ -1630,13 +1587,11 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                       .data.paymentMethods
                                                       .map((data) {
                                                     return DropdownMenuItem(
-                                                      value:
-                                                          data.id.toString(),
+                                                      value: data.id.toString(),
                                                       child: Padding(
                                                         padding:
                                                             const EdgeInsets
-                                                                .only(
-                                                                left: 10),
+                                                                .only(left: 10),
                                                         child: SizedBox(
                                                           width: MediaQuery.of(
                                                                       context)
@@ -1656,8 +1611,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   }).toList(),
                                                   onChanged: (newValue) {
                                                     setState(() {
-                                                      paymentMethod =
-                                                          newValue;
+                                                      paymentMethod = newValue;
                                                     });
                                                   },
                                                 ),
@@ -1679,10 +1633,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                         width: 10,
                                       ),
                                       SizedBox(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.5,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.5,
                                         height: 35,
                                         child: GestureDetector(
                                           onTap: () {
@@ -1704,11 +1657,11 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                         .spaceBetween,
                                                 children: [
                                                   SizedBox(
-                                                      width: MediaQuery.of(
-                                                                  context)
-                                                              .size
-                                                              .width *
-                                                          0.38,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.38,
                                                       child: Text(
                                                         staffName,
                                                         overflow: TextOverflow
@@ -1720,8 +1673,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                       )),
                                                   Icon(
                                                     Icons.arrow_drop_down,
-                                                    color:
-                                                        Colors.grey.shade600,
+                                                    color: Colors.grey.shade600,
                                                   )
                                                 ],
                                               ),
@@ -1822,8 +1774,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           const SizedBox(height: 14.0),
                           TextFormField(
                             onTap: () async {
-                              DateTime? selectedEndDate =
-                                  await showDatePicker(
+                              DateTime? selectedEndDate = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime(2000),
@@ -1903,17 +1854,14 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           ),
                           CheckboxListTile(
                               contentPadding: EdgeInsets.zero,
-                              title:
-                                  const Text('Is renewal amount diffrent?'),
-                              value:
-                                  isDifrent, // initial value of the checkbox
+                              title: const Text('Is renewal amount diffrent?'),
+                              value: isDifrent, // initial value of the checkbox
                               onChanged: (bool? value) {
                                 setState(() {
                                   isDifrent = value!;
                                 });
                               },
-                              controlAffinity:
-                                  ListTileControlAffinity.leading),
+                              controlAffinity: ListTileControlAffinity.leading),
                           const SizedBox(
                             height: 14,
                           ),
@@ -1996,8 +1944,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                               'Amount',
                                               style: TextStyle(
                                                   fontSize: 12,
-                                                  fontWeight:
-                                                      FontWeight.bold),
+                                                  fontWeight: FontWeight.bold),
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
@@ -2076,8 +2023,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   TableRow(
                                                     decoration: BoxDecoration(
                                                       borderRadius:
-                                                          BorderRadius
-                                                              .circular(1),
+                                                          BorderRadius.circular(
+                                                              1),
                                                       color: color,
                                                     ),
                                                     children: [
@@ -2086,18 +2033,16 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                             const EdgeInsets
                                                                 .all(8.0),
                                                         child: Text(
-                                                          renProducts[index][
-                                                              'product_name'],
+                                                          renProducts[index]
+                                                              ['product_name'],
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      12),
-                                                          textAlign: TextAlign
-                                                              .center,
+                                                                  fontSize: 12),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                       Padding(
@@ -2105,18 +2050,16 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                             const EdgeInsets
                                                                 .all(8.0),
                                                         child: Text(
-                                                          renProducts[index][
-                                                              'product_rate'],
+                                                          renProducts[index]
+                                                              ['product_rate'],
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      12),
-                                                          textAlign: TextAlign
-                                                              .center,
+                                                                  fontSize: 12),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                       Padding(
@@ -2127,15 +2070,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                           renProducts[index]
                                                               ['quantity'],
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      12),
-                                                          textAlign: TextAlign
-                                                              .center,
+                                                                  fontSize: 12),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                       Padding(
@@ -2146,15 +2087,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                           renProducts[index][
                                                               'total_tax_amount'],
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      12),
-                                                          textAlign: TextAlign
-                                                              .center,
+                                                                  fontSize: 12),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                       Padding(
@@ -2162,18 +2101,16 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                             const EdgeInsets
                                                                 .all(8.0),
                                                         child: Text(
-                                                          renProducts[index][
-                                                              'total_amount'],
+                                                          renProducts[index]
+                                                              ['total_amount'],
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow
-                                                                  .ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
-                                                                  fontSize:
-                                                                      12),
-                                                          textAlign: TextAlign
-                                                              .center,
+                                                                  fontSize: 12),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                       GestureDetector(
@@ -2223,8 +2160,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                   8.0),
                                                           child: Icon(
                                                             Icons.edit,
-                                                            color:
-                                                                Colors.blue,
+                                                            color: Colors.blue,
                                                           ),
                                                         ),
                                                       ),
@@ -2321,7 +2257,6 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
@@ -2353,7 +2288,6 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           onTap: () {
                             staffName = filteredStaff[index].staffName;
                             staffId = filteredStaff[index].userId;
-                            search.clear();
                             filteredStaff.addAll(detailsResponse!.data.staff);
                             setState(() {});
                             if (context.mounted) {
@@ -2369,7 +2303,6 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
             actions: [
               TextButton(
                   onPressed: () {
-                    search.clear();
                     filteredStaff.addAll(detailsResponse!.data.staff);
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -2459,7 +2392,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
     );
   }
 
-    Future<dynamic> productDialog(BuildContext context, String type) {
+  Future<dynamic> productDialog(BuildContext context, String type) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -2471,7 +2404,6 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
-                    controller: search,
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
                     autofocus: true,
@@ -2573,9 +2505,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
     );
   }
 
-  
-
-Future<Object?> changeAmount(
+  Future<Object?> changeAmount(
       BuildContext context,
       String name,
       String rate,
@@ -2906,6 +2836,7 @@ Future<Object?> changeAmount(
       },
     );
   }
+
   void filterTemplates(
     String query,
   ) {
