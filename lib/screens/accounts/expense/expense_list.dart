@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -11,12 +13,12 @@ import 'package:login2/screens/accounts/expense/expense_categories.dart';
 import 'package:login2/screens/accounts/expense/expense_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-
 import '../renewal_mannagement/renewal_list.dart';
 
 class ExpenseList extends StatefulWidget {
-  const ExpenseList({super.key});
-
+  String? fdate;
+  String? tdate;
+  ExpenseList({super.key, this.fdate, this.tdate});
   @override
   State<ExpenseList> createState() => _ExpenseListState();
 }
@@ -54,6 +56,10 @@ class _ExpenseListState extends State<ExpenseList> {
   }
 
   getData() async {
+    if (widget.fdate != null && widget.tdate != null) {
+      fDate = widget.fdate!;
+      tDate = widget.tdate!;
+    }
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {

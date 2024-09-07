@@ -18,7 +18,9 @@ import 'clientDetails.dart';
 // ignore: must_be_immutable
 class ReceiptList extends StatefulWidget {
   String token;
-  ReceiptList(this.token, {Key? key}) : super(key: key);
+  String? fdate;
+  String? tdate;
+  ReceiptList(this.token, {Key? key, this.fdate, this.tdate}) : super(key: key);
 
   @override
   State<ReceiptList> createState() => _ReceiptListState();
@@ -55,6 +57,10 @@ class _ReceiptListState extends State<ReceiptList> {
   }
 
   getData() async {
+    if (widget.fdate != null && widget.tdate != null) {
+      fDate = widget.fdate!;
+      tDate = widget.tdate!;
+    }
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -659,7 +665,12 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                           items[index]
                                                                               .id
                                                                               .toString())),
-                                                                );
+                                                                ).then((_) {
+                                                                  items.clear();
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  getData();
+                                                                });
                                                               },
                                                               child: Container(
                                                                 decoration: BoxDecoration(

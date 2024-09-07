@@ -663,7 +663,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                   const Padding(
                                     padding: EdgeInsets.only(
                                         left: 8, right: 8, top: 15),
-                                    child: Text('Amount to Pay',
+                                    child: Text('Amount Received',
                                         style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold),
@@ -961,7 +961,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                 double.parse(receiptDetails!.data!.checkAmount
                                     .toString())) {
                               Common.toastMessaage(
-                                  'Maximum Amount to pay is ${receiptDetails!.data!.checkAmount}',
+                                  'Maximum Amount Received can be ${receiptDetails!.data!.checkAmount}',
                                   Colors.red);
                             } else {
                               if (context.mounted) {

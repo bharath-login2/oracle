@@ -2116,8 +2116,11 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}deleteMainClients",
           queryParameters: params);
-      DeleteMainClientModel model = DeleteMainClientModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        DeleteMainClientModel model =
+            DeleteMainClientModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -4660,8 +4663,7 @@ class HttpService {
       "token": await Common.getSharedPref('token'),
     };
     try {
-      var result = await _dio.get(
-          "${await Config.getUrl()}list_expense_category",
+      var result = await _dio.get("${await Config.getUrl()}getPendingExpense",
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
@@ -4781,7 +4783,7 @@ class HttpService {
       if (result.statusCode == 200) {
         SearchDataModel model = SearchDataModel.fromJson(result.data);
         return model;
-      }
+      } 
     } catch (e) {
       log("error: $e");
     }

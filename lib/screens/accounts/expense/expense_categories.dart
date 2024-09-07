@@ -13,7 +13,7 @@ class ExpenseCategories extends StatefulWidget {
 }
 
 class _ExpenseCategoriesState extends State<ExpenseCategories> {
-  ExpenseCategoryList? expenseList;
+  ExpenseCategoryList? expenseCategories;
   ExpensePostModel? response;
 
   bool result = true;
@@ -46,8 +46,8 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
     setState(() {
       isLoading = true;
     });
-    expenseList = await HttpService.expenseCategoryList();
-    if (expenseList != null && expenseList!.status == true) {
+    expenseCategories = await HttpService.expenseCategoryList();
+    if (expenseCategories != null && expenseCategories!.status == true) {
       setState(() {
         isLoading = false;
       });
@@ -160,7 +160,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
             ),
             body: isLoading == true
                 ?  LinearProgressIndicator(color: Colors.blue.shade900,)
-                : expenseList == null
+                : expenseCategories == null
                     ? const Center(
                         child: Text(
                           "Something went wrong !",
@@ -168,7 +168,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                         ),
                       )
                     : ListView.builder(
-                        itemCount: expenseList!.data.length,
+                        itemCount: expenseCategories!.data.length,
                         itemBuilder: (context, index) {
                           return ListTile(
                             shape: const Border(
@@ -185,7 +185,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                               ),
                             ),
                             title: Text(
-                              expenseList!.data[index].typeName,
+                              expenseCategories!.data[index].typeName,
                               style: TextStyle(
                                   color: Colors.blue.shade900,
                                   fontWeight: FontWeight.bold),
@@ -206,8 +206,8 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                                     onTap: () {
                                       categoryBottomsheet(
                                           "Edit Category",
-                                          expenseList!.data[index].typeName,
-                                          expenseList!.data[index].typeId
+                                          expenseCategories!.data[index].typeName,
+                                          expenseCategories!.data[index].typeId
                                               .toString());
                                     },
                                     child: Icon(
@@ -219,7 +219,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                                     onTap: () {
                                       deleteDialog(
                                           context,
-                                          expenseList!.data[index].typeId
+                                          expenseCategories!.data[index].typeId
                                               .toString());
                                     },
                                     child: const Icon(
