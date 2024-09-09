@@ -1854,7 +1854,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           ),
                           CheckboxListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: const Text('Is renewal amount diffrent?'),
+                              title: const Text('Is renewal amount is diffrent?'),
                               value: isDifrent, // initial value of the checkbox
                               onChanged: (bool? value) {
                                 setState(() {
@@ -2521,7 +2521,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
     renProductTaxPercent.text = taxPerccent;
     renProductTaxAmount.text = tax;
     renProductTotalAmount.text = amount;
-    renProductName = id;
+    renProductId = id;
     renProductName = name;
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",

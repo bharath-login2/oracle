@@ -2,7 +2,6 @@
 //
 //     final leadDeatailsModelAdd = leadDeatailsModelAddFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 LeadDeatailsModelAdd leadDeatailsModelAddFromJson(String str) => LeadDeatailsModelAdd.fromJson(json.decode(str));

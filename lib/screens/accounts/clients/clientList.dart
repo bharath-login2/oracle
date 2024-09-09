@@ -331,10 +331,10 @@ class _ClientListState extends State<ClientList> {
                         ),
                         Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: items.isNotEmpty
+                          child: mainClients!.data.isNotEmpty
                               ? SizedBox(
                                   height:
-                                      MediaQuery.of(context).size.height * .645,
+                                      MediaQuery.of(context).size.height * .66,
                                   child: ScrollablePositionedList.builder(
                                     shrinkWrap: true,
                                     itemScrollController: itemScrollController,

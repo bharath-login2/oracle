@@ -329,7 +329,7 @@ class _ReceiptListState extends State<ReceiptList> {
                           Padding(
                             padding: const EdgeInsets.only(
                                 left: 12, right: 12, top: 5, bottom: 15),
-                            child: items.isNotEmpty
+                            child: receiptList!.data.lists.isNotEmpty
                                 ? SizedBox(
                                     height: MediaQuery.of(context).size.height *
                                         .66,

@@ -31,7 +31,7 @@ class _SearchState extends State<Search> {
   TextEditingController searchController = TextEditingController();
   SearchDataModel? response;
   bool result = true;
-  bool isLoading = false;     
+  bool isLoading = false;
   bool custSwitch = true;
   bool leadSwitch = true;
   final List<Color> _colors = [
@@ -88,7 +88,7 @@ class _SearchState extends State<Search> {
       setState(() {
         isLoading = false;
       });
-    } 
+    }
   }
 
   @override
@@ -164,6 +164,7 @@ class _SearchState extends State<Search> {
                         SizedBox(
                           width: MediaQuery.of(context).size.width * 0.6,
                           child: TextFormField(
+                            autofocus: true,
                             style: const TextStyle(
                               color: Colors.black,
                             ),
@@ -171,7 +172,7 @@ class _SearchState extends State<Search> {
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.all(8),
                               hintStyle: const TextStyle(color: Colors.grey),
-                              hintText: 'search',
+                              hintText: 'Search',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
@@ -188,6 +189,7 @@ class _SearchState extends State<Search> {
                         ),
                         InkWell(
                           onTap: () {
+                            FocusScope.of(context).unfocus();
                             setState(() {
                               getList();
                             });

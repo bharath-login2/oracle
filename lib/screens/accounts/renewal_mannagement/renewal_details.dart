@@ -2,7 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
-import 'package:login2/models/lead_management/leadDeatailsModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModel.dart';
 import 'package:login2/service/service.dart';
 
 class RenewalDetails extends StatefulWidget {

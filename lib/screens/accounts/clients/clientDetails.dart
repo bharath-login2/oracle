@@ -700,7 +700,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                                     const SizedBox(
                                       width: 10,
                                     ),
-                                    mainClientDetail!.data.renewalLists.isNotEmpty
+                                    mainClientDetail!
+                                            .data.renewalLists.isNotEmpty
                                         ? InkWell(
                                             onTap: () async {
                                               setState(() {
@@ -1611,7 +1612,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                 const EdgeInsets
                                                                     .only(
                                                                     bottom: 8.0,
-                                                                    top: 8.0),
+                                                                    top: 0.0),
                                                             child:
                                                                 GestureDetector(
                                                               onTap: () {
@@ -1664,28 +1665,21 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             crossAxisAlignment:
                                                                                 CrossAxisAlignment.start,
                                                                             children: [
-                                                                              GestureDetector(
-                                                                                onTap: () async {
-                                                                                  String token = await Common.getSharedPref("token");
-                                                                                  Navigator.push(
-                                                                                      context,
-                                                                                      MaterialPageRoute(
-                                                                                        builder: (context) => ClientDetails(token, mainClientDetail!.data.renewalLists[index].clientId),
-                                                                                      ));
-                                                                                },
-                                                                                child: Row(
-                                                                                  children: [
-                                                                                    const Text("ID : ", style:  TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                                                                    SizedBox(
-                                                                                      width: MediaQuery.of(context).size.width * .40,
-                                                                                      child: Text(
-                                                                                        overflow: TextOverflow.ellipsis,
-                                                                                        " ${mainClientDetail!.data.renewalLists[index].id}",
-                                                                                        style: const TextStyle(fontSize: 16,fontWeight: FontWeight.bold),
-                                                                                      ),
+                                                                              Row(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  const Icon(
+                                                                                    Icons.shopping_basket,
+                                                                                    size: 20,
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    width: MediaQuery.of(context).size.width * .50,
+                                                                                    child: Text(
+                                                                                      " ${mainClientDetail!.data.renewalLists[index].products}",
+                                                                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                                                                     ),
-                                                                                  ],
-                                                                                ),
+                                                                                  ),
+                                                                                ],
                                                                               ),
                                                                               const SizedBox(
                                                                                 height: 10,
@@ -1720,25 +1714,6 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                                     child: Text(
                                                                                       overflow: TextOverflow.ellipsis,
                                                                                       " ${mainClientDetail!.data.renewalLists[index].startDate} To ${mainClientDetail!.data.renewalLists[index].endDate}",
-                                                                                      style: const TextStyle(fontSize: 14),
-                                                                                    ),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 10,
-                                                                              ),
-                                                                              Row(
-                                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                children: [
-                                                                                  const Icon(
-                                                                                    Icons.shopping_basket,
-                                                                                    size: 18,
-                                                                                  ),
-                                                                                  SizedBox(
-                                                                                    width: MediaQuery.of(context).size.width * .50,
-                                                                                    child: Text(
-                                                                                      " ${mainClientDetail!.data.renewalLists[index].products}",
                                                                                       style: const TextStyle(fontSize: 14),
                                                                                     ),
                                                                                   ),

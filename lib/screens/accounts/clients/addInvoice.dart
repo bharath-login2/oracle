@@ -2848,7 +2848,7 @@ class _AddInvoiceState extends State<AddInvoice> {
                                 CheckboxListTile(
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text(
-                                        'Is renewal amount diffrent?'),
+                                        'Is renewal amount is diffrent?'),
                                     value:
                                         isDifrent, // initial value of the checkbox
                                     onChanged: (bool? value) {
@@ -3770,7 +3770,7 @@ class _AddInvoiceState extends State<AddInvoice> {
     renProductTaxPercent.text = taxPerccent;
     renProductTaxAmount.text = tax;
     renProductTotalAmount.text = amount;
-    renProductName = id;
+    renProductId = id;
     renProductName = name;
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",

@@ -9,6 +9,7 @@ import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
+import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/pending_expense.dart';
 import 'package:login2/service/service.dart';
@@ -329,7 +330,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                             ),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * .9,
-                              height: MediaQuery.of(context).size.height * .64,
+                              height: MediaQuery.of(context).size.height * .63,
                               child: GridView(
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
@@ -340,6 +341,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                         childAspectRatio: 1.5),
                                 children: [
                                   InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const BankAccount(),
+                                          ));
+                                    },
                                     child: gridItem(
                                         "BANK ACCOUNT",
                                         dashboard!.data.bankAccount,
@@ -348,12 +357,12 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const PendingExpense(),
-                                          ));
+                                      // Navigator.push(
+                                      //     context,
+                                      //     MaterialPageRoute(
+                                      //       builder: (context) =>
+                                      //           const PendingExpense(),
+                                      //     ));
                                     },
                                     child: gridItem(
                                         "PENDING EXPENSE",

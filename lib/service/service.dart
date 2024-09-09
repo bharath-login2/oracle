@@ -8,6 +8,7 @@ import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
+import 'package:login2/models/expense/bank_acc_list.dart';
 import 'package:login2/models/expense/exp_category_list.dart';
 import 'package:login2/models/expense/exp_history.dart';
 import 'package:login2/models/expense/exp_list.dart';
@@ -78,7 +79,7 @@ import '../../models/lead_management/editLeadModel.dart';
 import '../../models/lead_management/followupDetailsModel.dart';
 import '../../models/lead_management/leadCategoryDeleteModel.dart';
 import '../../models/lead_management/leadDashboardModel.dart';
-import '../../models/lead_management/leadDeatailsModel.dart';
+import '../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
 import '../../models/lead_management/leadTransferModel.dart';
 import '../../models/lead_management/searchModel.dart';
@@ -164,7 +165,7 @@ import '../models/lead_management/deleteLeadVoiceModel.dart';
 import '../models/lead_management/delete_notification.dart';
 import '../models/lead_management/editLeadSubCategoryModel.dart';
 import '../models/lead_management/leadCategoryStaffWiseModel.dart';
-import '../models/lead_management/leadDeatailsModelAdd.dart';
+import '../models/lead_management/leadDetailsModelAdd.dart';
 import '../models/lead_management/leadMileStoneListModel.dart';
 import '../models/lead_management/leadNotificationListModel.dart';
 import '../models/lead_management/leadSubCategoryDeleteModel.dart';
@@ -4670,6 +4671,27 @@ class HttpService {
       if (kDebugMode) {}
       if (result.statusCode == 200) {
         ExpenseCategoryList model = ExpenseCategoryList.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getBankAccountDetails(fdate, tdate, staff) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "staff": staff,
+      "from_date": fdate,    
+      "to_date": tdate
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getBankAccountDetails",
+          data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        BankAccountList model = BankAccountList.fromJson(result.data);
         return model;
       }
     } catch (e) {

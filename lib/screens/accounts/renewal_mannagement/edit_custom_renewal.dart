@@ -85,9 +85,6 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   }
 
   getRenewalDetails() async {
-    setState(() {
-      isLoading = true;
-    });
     renewalDetails = await HttpService.getRenewalDetailsById(
         widget.renId, widget.renewalType);
 
@@ -387,7 +384,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      "Add Products",
+                      "Products",
                       style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
@@ -395,12 +392,13 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                     ),
                     GestureDetector(
                       onTap: () {
+                        products.clear();
                         Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const AddProducts(),
                             )).then((_) {
-                          getRenewalDetails();
+                          getRenewalDetails(); 
                         });
                       },
                       child: Container(

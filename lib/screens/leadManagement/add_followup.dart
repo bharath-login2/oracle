@@ -2603,7 +2603,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                   CheckboxListTile(
                                       contentPadding: EdgeInsets.zero,
                                       title: const Text(
-                                          'Is renewal amount diffrent?'),
+                                          'Is renewal amount is diffrent?'),
                                       value:
                                           isDifrent, // initial value of the checkbox
                                       onChanged: (bool? value) {
@@ -3616,7 +3616,7 @@ class _AddFollowupState extends State<AddFollowup> {
     renProductTaxPercent.text = taxPerccent;
     renProductTaxAmount.text = tax;
     renProductTotalAmount.text = amount;
-    renProductName = id;
+    renProductId = id;
     renProductName = name;
     return showGeneralDialog(
       barrierLabel: "showGeneralDialog",

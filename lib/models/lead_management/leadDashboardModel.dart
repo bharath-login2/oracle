@@ -2,7 +2,6 @@
 //
 //     final leadDashboardModel = leadDashboardModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 LeadDashboardModel leadDashboardModelFromJson(String str) => LeadDashboardModel.fromJson(json.decode(str));
