@@ -3,7 +3,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
@@ -163,7 +162,7 @@ class _EditExpenseState extends State<EditExpense> {
                         width: 25,
                       ),
                       const Text(
-                        "Add Expense",
+                        "Edit Expense",
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],

@@ -7,7 +7,9 @@ import 'package:login2/models/expense/bank_acc_list.dart';
 import 'package:login2/service/service.dart';
 
 class BankAccount extends StatefulWidget {
-  const BankAccount({super.key});
+  String accId;
+  String accName;
+  BankAccount({super.key, required this.accId, required this.accName});
 
   @override
   State<BankAccount> createState() => _BankAccountState();
@@ -35,6 +37,8 @@ class _BankAccountState extends State<BankAccount> {
   }
 
   getData() async {
+    staffId = widget.accId;
+    staffName = widget.accName;
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -49,8 +53,6 @@ class _BankAccountState extends State<BankAccount> {
     String token = await Common.getSharedPref('token');
     searchData = await HttpService.getInvoiceSearch(token);
     staffs = searchData!.data.staff;
-    staffId = staffs[0].accountId;
-    staffName = staffs[0].accountName;
     filteredStaffs.addAll(staffs);
     getList();
   }
@@ -116,7 +118,7 @@ class _BankAccountState extends State<BankAccount> {
                             width: 25,
                           ),
                           const Text(
-                            "Debit/Credit",
+                            "Account Statement",
                             style: TextStyle(color: Colors.white, fontSize: 18),
                           ),
                         ],
@@ -160,7 +162,7 @@ class _BankAccountState extends State<BankAccount> {
                         children: [
                           SizedBox(
                             height: MediaQuery.of(context).size.height,
-                            child: Padding(
+                            child:listResponse!.data.lists.isEmpty?noResultWidget(context,"No Transactions"): Padding(
                               padding: EdgeInsets.only(
                                   top:
                                       MediaQuery.of(context).size.height * .10),

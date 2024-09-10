@@ -64,6 +64,7 @@ class ListElement {
   String status;
   bool isPaid;
   String clientId;
+  List<Product> products;
 
   ListElement({
     required this.id,
@@ -81,6 +82,7 @@ class ListElement {
     required this.renewalId,
     required this.renewalType,
     required this.installmentId,
+    required this.products,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -99,5 +101,35 @@ class ListElement {
         renewalId: json["renewal_id"],
         renewalType: json["renewal_id"],
         installmentId: json["installment_id"],
+        products: List<Product>.from(
+            json["products"].map((x) => Product.fromJson(x))),
       );
+}
+
+class Product {
+  String productId;
+  String qty;
+  String amount;
+  String productName;
+
+  Product({
+    required this.productId,
+    required this.qty,
+    required this.amount,
+    required this.productName,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) => Product(
+        productId: json["product_id"],
+        qty: json["qty"],
+        amount: json["amount"],
+        productName: json["product_name"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "product_id": productId,
+        "qty": qty,
+        "amount": amount,
+        "product_name": productName,
+      };
 }

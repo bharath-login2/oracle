@@ -30,8 +30,8 @@ class _PendingInvoiceState extends State<PendingInvoice> {
   bool result = true;
   List<Customer> items = [];
   List<Customer> filteredItems = [];
-  List<Lists> invoices = [];
-  List<Lists> filteredInvoices = [];
+  List<ListElement> invoices = [];
+  List<ListElement> filteredInvoices = [];
   String customerId = "";
   String customerName = "Customer";
   TextEditingController search = TextEditingController();
@@ -78,7 +78,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
     setState(() {
       filteredInvoices = invoices
           .where((item) =>
-              item.customerName!.toLowerCase().contains(value.toLowerCase()))
+              item.customerName.toLowerCase().contains(value.toLowerCase()))
           .toList();
     });
   }
@@ -633,6 +633,32 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                   const SizedBox(
                                                     height: 5,
                                                   ),
+                                                  SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                      child: Text(
+                                                        filteredInvoices[
+                                                                        index]
+                                                                    .products
+                                                                    .length !=
+                                                                1
+                                                            ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
+                                                            : "Products : ${filteredInvoices[index].products[0].productName}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 5,
+                                                    ),
                                                   SizedBox(
                                                     width:
                                                         MediaQuery.of(context)

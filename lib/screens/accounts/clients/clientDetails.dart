@@ -888,6 +888,39 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                             .width *
                                                                         0.41,
                                                                     child: Text(
+                                                                      mainClientDetail!.data.invoice[index].products.length !=
+                                                                              1
+                                                                          ? "Products : ${mainClientDetail!.data.invoice[index].products[0].productName} + ${mainClientDetail!.data.invoice[index].products.length - 1} more..."
+                                                                          : "Products : ${mainClientDetail!.data.invoice[index].products[0].productName}",
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        fontSize:
+                                                                            14,
+                                                                        fontWeight:
+                                                                            FontWeight.w400,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      0.6,
+                                                                  child:
+                                                                      SizedBox(
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.41,
+                                                                    child: Text(
                                                                       "Total Amount : ₹ ${mainClientDetail!.data.invoice[index].totalAmount}",
                                                                       overflow:
                                                                           TextOverflow
@@ -953,9 +986,11 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                           TextOverflow
                                                                               .ellipsis,
                                                                       style:
-                                                                          const TextStyle(
-                                                                        color: Colors
-                                                                            .red,
+                                                                          TextStyle(
+                                                                        color: double.parse(mainClientDetail!.data.invoice[index].balanceAmount) >
+                                                                                0
+                                                                            ? Colors.red
+                                                                            : Colors.black,
                                                                         fontSize:
                                                                             14,
                                                                         fontWeight:

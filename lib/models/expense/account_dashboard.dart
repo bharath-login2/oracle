@@ -42,6 +42,9 @@ class Data {
     String todaysIncome;
     String monthlyIncome;
     String pendingIncome;
+    String bankAccCount;
+    String bankAccountId;
+    String bankAccountName;
     List<IncomeGraph> incomeGraph;
     List<ExpenseGraph> expenseGraph;
 
@@ -54,6 +57,9 @@ class Data {
         required this.todaysIncome,
         required this.monthlyIncome,
         required this.pendingIncome,
+        required this.bankAccCount,
+        required this.bankAccountId,
+        required this.bankAccountName,
         required this.incomeGraph,
         required this.expenseGraph,
     });
@@ -67,6 +73,9 @@ class Data {
         todaysIncome: json["todaysIncome"],
         monthlyIncome: json["monthlyIncome"],
         pendingIncome: json["pendingIncome"],
+        bankAccCount: json["bank_acc_count"],
+        bankAccountId: json["bank_account_id"],
+        bankAccountName: json["bank_account_name"],
         incomeGraph: List<IncomeGraph>.from(json["income_graph"].map((x) => IncomeGraph.fromJson(x))),
         expenseGraph: List<ExpenseGraph>.from(json["expense_graph"].map((x) => ExpenseGraph.fromJson(x))),
     );
@@ -80,6 +89,9 @@ class Data {
         "todaysIncome": todaysIncome,
         "monthlyIncome": monthlyIncome,
         "pendingIncome": pendingIncome,
+        "bank_acc_count": bankAccCount,
+        "bank_account_id": bankAccountId,
+        "bank_account_name": bankAccountName,
         "income_graph": List<dynamic>.from(incomeGraph.map((x) => x.toJson())),
         "expense_graph": List<dynamic>.from(expenseGraph.map((x) => x.toJson())),
     };

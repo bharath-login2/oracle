@@ -11,7 +11,7 @@ import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
-import 'package:login2/screens/accounts/expense/pending_expense.dart';
+import 'package:login2/screens/accounts/expense/advance&expense.dart';
 import 'package:login2/service/service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -342,12 +342,32 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const BankAccount(),
-                                          ));
+                                      if (dashboard!.data.bankAccCount == "1") {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => BankAccount(
+                                                accId: dashboard!
+                                                    .data.bankAccountId,
+                                                accName: dashboard!
+                                                    .data.bankAccountName,
+                                              ),
+                                            ));
+                                      } else if (dashboard!.data.bankAccCount ==
+                                          "0") {
+                                        Common.toastMessaage(
+                                            "Please add a 'BANK ACCOUNT'",
+                                            Colors.red);
+                                      } else {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PendingExpense(
+                                                status: "1",
+                                              ),
+                                            ));
+                                      }
                                     },
                                     child: gridItem(
                                         "BANK ACCOUNT",
@@ -357,12 +377,14 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      // Navigator.push(
-                                      //     context,
-                                      //     MaterialPageRoute(
-                                      //       builder: (context) =>
-                                      //           const PendingExpense(),
-                                      //     ));
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PendingExpense(
+                                              status: "2",
+                                            ),
+                                          ));
                                     },
                                     child: gridItem(
                                         "PENDING EXPENSE",
@@ -470,6 +492,16 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                         colorList[6]),
                                   ),
                                   InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PendingExpense(
+                                              status: "3",
+                                            ),
+                                          ));
+                                    },
                                     child: gridItem(
                                         "ADVANCE AMOUNT",
                                         dashboard!.data.advanceAmount,
@@ -671,17 +703,37 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                               itemCount: dashboard!
                                                   .data.incomeGraph.length,
                                               itemBuilder: (context, i) {
-                                                return progressItem(
-                                                    dashboard!
-                                                        .data
-                                                        .incomeGraph[i]
-                                                        .category,
-                                                    dashboard!
-                                                        .data
-                                                        .incomeGraph[i]
-                                                        .totalExpense,
-                                                    double.parse(dashboard!.data
-                                                        .incomeGraph[i].perc));
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ReceiptList(
+                                                                widget.token
+                                                                    .toString(),
+                                                                type: dashboard!
+                                                                    .data
+                                                                    .incomeGraph[
+                                                                        i]
+                                                                    .type,
+                                                              )),
+                                                    );
+                                                  },
+                                                  child: progressItem(
+                                                      dashboard!
+                                                          .data
+                                                          .incomeGraph[i]
+                                                          .category,
+                                                      dashboard!
+                                                          .data
+                                                          .incomeGraph[i]
+                                                          .totalExpense,
+                                                      double.parse(dashboard!
+                                                          .data
+                                                          .incomeGraph[i]
+                                                          .perc)),
+                                                );
                                               })
                                         else
                                           const Padding(
@@ -719,17 +771,38 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                               itemCount: dashboard!
                                                   .data.expenseGraph.length,
                                               itemBuilder: (context, i) {
-                                                return progressItem(
-                                                    dashboard!
-                                                        .data
-                                                        .expenseGraph[i]
-                                                        .expCatName,
-                                                    dashboard!
-                                                        .data
-                                                        .expenseGraph[i]
-                                                        .totalExpense,
-                                                    double.parse(dashboard!.data
-                                                        .expenseGraph[i].perc));
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              ExpenseList(
+                                                            catId: dashboard!
+                                                                .data
+                                                                .expenseGraph[i]
+                                                                .expCatid,
+                                                            catName: dashboard!
+                                                                .data
+                                                                .expenseGraph[i]
+                                                                .expCatName,
+                                                          ),
+                                                        ));
+                                                  },
+                                                  child: progressItem(
+                                                      dashboard!
+                                                          .data
+                                                          .expenseGraph[i]
+                                                          .expCatName,
+                                                      dashboard!
+                                                          .data
+                                                          .expenseGraph[i]
+                                                          .totalExpense,
+                                                      double.parse(dashboard!
+                                                          .data
+                                                          .expenseGraph[i]
+                                                          .perc)),
+                                                );
                                               }),
                                         ],
                                       )

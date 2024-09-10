@@ -14,6 +14,7 @@ import 'package:login2/models/expense/exp_history.dart';
 import 'package:login2/models/expense/exp_list.dart';
 import 'package:login2/models/expense/exp_master_data.dart';
 import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/models/expense/pending_expense.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
@@ -2106,9 +2107,11 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}mainClientDetails",
           queryParameters: params);
-      MainClientDetailsModel model =
-          MainClientDetailsModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        MainClientDetailsModel model =
+            MainClientDetailsModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -2291,7 +2294,7 @@ class HttpService {
   }
 
   static Future receptList(
-      token, fromDate, toDate, page, pageSize, searchKey) async {
+      token, fromDate, toDate, page, pageSize, searchKey,type) async {
     var formData = FormData.fromMap({
       'token': token,
       'from_date': fromDate == "From Date" ? "" : fromDate,
@@ -2299,6 +2302,7 @@ class HttpService {
       'page': page,
       'page_size': pageSize,
       'search_key': searchKey,
+      "type":type
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getReceiptLists",
@@ -2728,7 +2732,7 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
     } catch (e) {
-      // print("Exception: $e");
+      log("Exception: $e");
     }
   }
 
@@ -4539,15 +4543,16 @@ class HttpService {
 
   ///------ Expense ------///
   static Future expenseList(
-      fdate, tdate, page, pageSize, catId, staffId) async {
+      fdate, tdate, page, pageSize, catId, staffId, searchKey) async {
     var params = {
       "token": await Common.getSharedPref('token'),
-      "from_date": fdate,
-      "to_date": tdate,
+      "from_date": fdate == "Tap to select" ? "" : fdate,
+      "to_date": tdate == "Tap to select" ? "" : tdate,
       "page": page,
       "page_size": pageSize,
       "category_id": catId,
       "staff_id": staffId,
+      "search_key": searchKey
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}expense_list",
@@ -4682,7 +4687,7 @@ class HttpService {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "staff": staff,
-      "from_date": fdate,    
+      "from_date": fdate,
       "to_date": tdate
     });
     try {
@@ -4692,6 +4697,24 @@ class HttpService {
       if (kDebugMode) {}
       if (result.statusCode == 200) {
         BankAccountList model = BankAccountList.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getPendingExpense(status) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "status": status,
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getPendingExpense",
+          data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        PendingExpenseModel model = PendingExpenseModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

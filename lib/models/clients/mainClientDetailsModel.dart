@@ -2,7 +2,6 @@
 //
 //     final mainClientDetailsModel = mainClientDetailsModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 MainClientDetailsModel mainClientDetailsModelFromJson(String str) => MainClientDetailsModel.fromJson(json.decode(str));
@@ -107,6 +106,7 @@ class Invoice {
     String balanceAmount;
     String paymentMethod;
     bool isPaid;
+    List<Product> products;
 
     Invoice({
         required this.invid,
@@ -118,6 +118,7 @@ class Invoice {
         required this.balanceAmount,
         required this.paymentMethod,
         required this.isPaid,
+        required this.products
     });
 
     factory Invoice.fromJson(Map<String, dynamic> json) => Invoice(
@@ -130,6 +131,7 @@ class Invoice {
         balanceAmount: json["balanceAmount"],
         paymentMethod: json["paymentMethod"],
         isPaid: json["isPaid"],
+        products: List<Product>.from(json["products"].map((x) => Product.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -286,5 +288,32 @@ class ProductId {
         "prd_name": prdName,
         "prd_cost": prdCost,
         "prd_qty": prdQty,
+    };
+}
+class Product {
+    String productId;
+    String qty;
+    String amount;
+    String productName;
+
+    Product({
+        required this.productId,
+        required this.qty,
+        required this.amount,
+        required this.productName,
+    });
+
+    factory Product.fromJson(Map<String, dynamic> json) => Product(
+        productId: json["product_id"],
+        qty: json["qty"],
+        amount: json["amount"],
+        productName: json["product_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "product_id": productId,
+        "qty": qty,
+        "amount": amount,
+        "product_name": productName,
     };
 }

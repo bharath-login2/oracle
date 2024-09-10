@@ -1,23 +1,26 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:login2/models/expense/exp_category_list.dart';
-import 'package:login2/models/expense/expense_post.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/models/expense/pending_expense.dart';
+import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/service/service.dart';
 
+// ignore: must_be_immutable
 class PendingExpense extends StatefulWidget {
-  const PendingExpense({super.key});
+  String status;
+  PendingExpense({super.key, required this.status});
 
   @override
   State<PendingExpense> createState() => _PendingExpenseState();
 }
 
 class _PendingExpenseState extends State<PendingExpense> {
-  ExpenseCategoryList? expenseList;
-  ExpensePostModel? response;
+  PendingExpenseModel? expenseList;
 
   bool result = true;
   bool isLoading = true;
+  List<ListElement> filteredExpenses = [];
   final formKey = GlobalKey<FormState>();
   final TextEditingController category = TextEditingController();
   final TextEditingController search = TextEditingController();
@@ -44,11 +47,9 @@ class _PendingExpenseState extends State<PendingExpense> {
   }
 
   getList() async {
-    setState(() {
-      isLoading = true;
-    });
-    expenseList = await HttpService.expenseCategoryList();
+    expenseList = await HttpService.getPendingExpense(widget.status);
     if (expenseList != null && expenseList!.status == true) {
+      filteredExpenses.addAll(expenseList!.data.lists);
       setState(() {
         isLoading = false;
       });
@@ -58,16 +59,15 @@ class _PendingExpenseState extends State<PendingExpense> {
       });
     }
   }
-  
-  //  filterInvoices(String value) {
-  //   setState(() {
-  //     filteredInvoices = invoices
-  //         .where((item) =>
-  //             item.customerName!.toLowerCase().contains(value.toLowerCase()))
-  //         .toList();
-  //   });
-  // }
 
+  filterExpense(String value) {
+    setState(() {
+      filteredExpenses = expenseList!.data.lists
+          .where((item) =>
+              item.accountName.toLowerCase().contains(value.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,10 +110,14 @@ class _PendingExpenseState extends State<PendingExpense> {
                       const SizedBox(
                         width: 25,
                       ),
-                      const Text(
-                        "Pending Expense",
+                      Text(
+                        widget.status == "1"
+                            ? "Bank Accounts"
+                            : widget.status == "2"
+                                ? "Pending Expense"
+                                : "Advance Amount",
                         style:
-                            TextStyle(color: Colors.white, fontSize: 18),
+                            const TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],
                   ),
@@ -121,16 +125,14 @@ class _PendingExpenseState extends State<PendingExpense> {
               ),
             ),
             body: isLoading == true
-                ?  LinearProgressIndicator(color: Colors.blue.shade900,)
+                ? LinearProgressIndicator(
+                    color: Colors.blue.shade900,
+                  )
                 : expenseList == null
-                    ? const Center(
-                        child: Text(
-                          "Something went wrong !",
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      )
-                    : Column(
-                      children: [
+                    ? noResultWidget(context,"No Result Found")
+                    : SingleChildScrollView(
+                        child: Column(
+                          children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8.0, vertical: 16),
@@ -140,7 +142,7 @@ class _PendingExpenseState extends State<PendingExpense> {
                                 keyboardType: TextInputType.visiblePassword,
                                 autofocus: true,
                                 onChanged: (value) {
-                                  // filterInvoices(value);
+                                  filterExpense(value);
                                 },
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(8),
@@ -155,43 +157,61 @@ class _PendingExpenseState extends State<PendingExpense> {
                                 ),
                               ),
                             ),
-                          
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                            itemCount: expenseList!.data.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                shape: const Border(
-                                  bottom: BorderSide(color: Colors.grey),
-                                ),
-                                leading: CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: Colors.grey.shade300,
-                                  child: Text(
-                                    (index + 1).toString(),
-                                    style:  TextStyle(
-                                        color: Colors.blue.shade900,
-                                        fontWeight: FontWeight.bold),
+                            filteredExpenses.isEmpty
+                                ? noResultWidget(context,"No Result Found")
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: filteredExpenses.length,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        onTap: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    BankAccount(
+                                                  accId: filteredExpenses[index]
+                                                      .accountId,
+                                                  accName:
+                                                      filteredExpenses[index]
+                                                          .accountName,
+                                                ),
+                                              ));
+                                        },
+                                        shape: const Border(
+                                          bottom:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        leading: CircleAvatar(
+                                          radius: 15,
+                                          backgroundColor: Colors.grey.shade300,
+                                          child: Text(
+                                            (index + 1).toString(),
+                                            style: TextStyle(
+                                                color: Colors.blue.shade900,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          filteredExpenses[index].accountName,
+                                          style: TextStyle(
+                                              color: Colors.blue.shade900,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        subtitle: Text(
+                                          "Balance: ${filteredExpenses[index].balanceAmount}",
+                                          style: const TextStyle(
+                                              color: Colors.teal,
+                                              fontWeight: FontWeight.normal),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ),
-                                title: Text(
-                                  expenseList!.data[index].typeName,
-                                  style: TextStyle(
-                                      color: Colors.blue.shade900,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                subtitle:  Text(
-                                  "Balance: ${expenseList!.data[index].typeName}",
-                                  style: const TextStyle(
-                                      color: Colors.teal,
-                                      fontWeight: FontWeight.normal),
-                                ),
-                              );
-                            },
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      ),
           )
         : Scaffold(
             backgroundColor: Colors.white,
@@ -249,6 +269,4 @@ class _PendingExpenseState extends State<PendingExpense> {
               ),
             ));
   }
-
- 
 }

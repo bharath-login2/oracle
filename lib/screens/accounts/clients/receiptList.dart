@@ -20,7 +20,9 @@ class ReceiptList extends StatefulWidget {
   String token;
   String? fdate;
   String? tdate;
-  ReceiptList(this.token, {Key? key, this.fdate, this.tdate}) : super(key: key);
+  String? type;
+  ReceiptList(this.token, {Key? key, this.fdate, this.tdate, this.type})
+      : super(key: key);
 
   @override
   State<ReceiptList> createState() => _ReceiptListState();
@@ -29,6 +31,7 @@ class ReceiptList extends StatefulWidget {
 class _ReceiptListState extends State<ReceiptList> {
   String fDate = "From Date";
   String tDate = "To Date";
+  String type = "";
   List<ListElement> items = [];
   ReceiptListModel? receiptList;
   bool result = true;
@@ -57,6 +60,7 @@ class _ReceiptListState extends State<ReceiptList> {
   }
 
   getData() async {
+    type = widget.type ?? "0";
     if (widget.fdate != null && widget.tdate != null) {
       fDate = widget.fdate!;
       tDate = widget.tdate!;
@@ -77,7 +81,7 @@ class _ReceiptListState extends State<ReceiptList> {
 
   getList() async {
     receiptList = await HttpService.receptList(widget.token, fDate.toString(),
-        tDate.toString(), page, pageSize, search.text);
+        tDate.toString(), page, pageSize, search.text, type);
     if (receiptList != null) {
       items.addAll(receiptList!.data.lists);
       page++;
@@ -845,7 +849,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                   child: Text(
                                 'Total : ${receiptList!.data.receiptSum}',
                                 style: const TextStyle(
-                                    color: Colors.red,
+                                    color: Colors.green,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold),
                               )),

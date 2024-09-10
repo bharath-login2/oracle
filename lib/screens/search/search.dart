@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/service/service.dart';
 
@@ -218,10 +219,10 @@ class _SearchState extends State<Search> {
                           color: Colors.blue.shade600,
                         )
                       : response == null
-                          ? noResultWidget()
+                          ? noResultWidget(context,"No Result Found")
                           : response!.data.customers.isEmpty &&
                                   response!.data.leadData.isEmpty
-                              ? noResultWidget()
+                              ? noResultWidget(context,"No Result Found")
                               : Column(
                                   children: [
                                     if (response!.data.customers.isNotEmpty)
@@ -370,25 +371,6 @@ class _SearchState extends State<Search> {
         : noInternetWidget(context);
   }
 
-  Center noResultWidget() {
-    return Center(
-      child: Column(
-        children: [
-          SizedBox(
-            width: 200,
-            height: 200,
-            child: Image.asset(
-              "assets/icons/nodatafound.png",
-            ),
-          ),
-          const Text(
-            'No Result Found',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          )
-        ],
-      ),
-    );
-  }
 
   Scaffold noInternetWidget(BuildContext context) {
     return Scaffold(

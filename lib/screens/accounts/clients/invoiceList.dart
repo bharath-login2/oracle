@@ -358,22 +358,14 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   .size
                                                                   .width *
                                                               0.6,
-                                                      child: SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.41,
-                                                        child: Text(
-                                                          "Invoice No : ${invoiceList!.data.lists[index].invoiceNumber}",
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                          ),
+                                                      child: Text(
+                                                        "Invoice No : ${invoiceList!.data.lists[index].invoiceNumber}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
                                                         ),
                                                       ),
                                                     ),
@@ -386,22 +378,22 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   .size
                                                                   .width *
                                                               0.6,
-                                                      child: SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.41,
-                                                        child: Text(
-                                                          "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                          ),
+                                                      child: Text(
+                                                        invoiceList!
+                                                                    .data
+                                                                    .lists[
+                                                                        index]
+                                                                    .products
+                                                                    .length !=
+                                                                1
+                                                            ? "Products : ${invoiceList!.data.lists[index].products[0].productName} + ${invoiceList!.data.lists[index].products.length - 1} more..."
+                                                            : "Products : ${invoiceList!.data.lists[index].products[0].productName}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
                                                         ),
                                                       ),
                                                     ),
@@ -414,52 +406,67 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   .size
                                                                   .width *
                                                               0.6,
-                                                      child: SizedBox(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            0.41,
-                                                        child: Text(
-                                                          "Paid Amount : ₹ ${invoiceList!.data.lists[index].totalPaid}",
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                          ),
+                                                      child: Text(
+                                                        "Total Amount : ₹ ${invoiceList!.data.lists[index].totalAmount}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
                                                         ),
                                                       ),
                                                     ),
                                                     const SizedBox(
                                                       height: 5,
+                                                    ),
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.6,
+                                                      child: Text(
+                                                        "Paid Amount : ₹ ${invoiceList!.data.lists[index].totalPaid}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
                                                     ),
                                                     invoiceList!
                                                                 .data
                                                                 .lists[index]
                                                                 .balance !=
                                                             '0.00'
-                                                        ? SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.6,
-                                                            child: Text(
-                                                              "Balance Amount : ₹ ${invoiceList!.data.lists[index].balance}",
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style:
-                                                                  const TextStyle(
-                                                                color:
-                                                                    Colors.red,
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400,
+                                                        ? Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 5.0),
+                                                            child: SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.6,
+                                                              child: Text(
+                                                                "Balance Amount : ₹ ${invoiceList!.data.lists[index].balance}",
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color: Colors
+                                                                      .red,
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
+                                                                ),
                                                               ),
                                                             ),
                                                           )
