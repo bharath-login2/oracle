@@ -377,7 +377,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                           MediaQuery.of(context)
                                                                   .size
                                                                   .width *
-                                                              0.6,
+                                                              0.8,
                                                       child: Text(
                                                         invoiceList!
                                                                     .data
@@ -749,6 +749,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                                           Navigator.pop(context);
                                                                                           Navigator.pop(context);
                                                                                         }
+                                                                                        getData();
                                                                                       } else {
                                                                                         Common.toastMessaage(deleteInvoice.message, Colors.red);
                                                                                         if (context.mounted) {

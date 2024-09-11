@@ -1854,7 +1854,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                           ),
                           CheckboxListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: const Text('Is renewal amount is diffrent?'),
+                              title:
+                                  const Text('Is renewal amount is diffrent?'),
                               value: isDifrent, // initial value of the checkbox
                               onChanged: (bool? value) {
                                 setState(() {

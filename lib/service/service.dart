@@ -2294,7 +2294,7 @@ class HttpService {
   }
 
   static Future receptList(
-      token, fromDate, toDate, page, pageSize, searchKey,type) async {
+      token, fromDate, toDate, page, pageSize, searchKey, type) async {
     var formData = FormData.fromMap({
       'token': token,
       'from_date': fromDate == "From Date" ? "" : fromDate,
@@ -2302,7 +2302,7 @@ class HttpService {
       'page': page,
       'page_size': pageSize,
       'search_key': searchKey,
-      "type":type
+      "type": type
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getReceiptLists",

@@ -880,28 +880,22 @@ class _ClientDetailsState extends State<ClientDetails> {
                                                                               context)
                                                                           .size
                                                                           .width *
-                                                                      0.6,
-                                                                  child:
-                                                                      SizedBox(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.41,
-                                                                    child: Text(
-                                                                      mainClientDetail!.data.invoice[index].products.length !=
-                                                                              1
-                                                                          ? "Products : ${mainClientDetail!.data.invoice[index].products[0].productName} + ${mainClientDetail!.data.invoice[index].products.length - 1} more..."
-                                                                          : "Products : ${mainClientDetail!.data.invoice[index].products[0].productName}",
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        fontSize:
-                                                                            14,
-                                                                        fontWeight:
-                                                                            FontWeight.w400,
-                                                                      ),
+                                                                      0.8,
+                                                                  child: Text(
+                                                                    mainClientDetail!.data.invoice[index].products.length !=
+                                                                            1
+                                                                        ? "Products : ${mainClientDetail!.data.invoice[index].products[0].productName} + ${mainClientDetail!.data.invoice[index].products.length - 1} more..."
+                                                                        : "Products : ${mainClientDetail!.data.invoice[index].products[0].productName}",
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w400,
                                                                     ),
                                                                   ),
                                                                 ),

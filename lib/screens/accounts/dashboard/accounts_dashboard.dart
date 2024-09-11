@@ -12,6 +12,7 @@ import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -29,7 +30,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   AccountDashboardModel? dashboard;
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
-  String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  String tDate =  DateFormat('dd-MM-yyyy')
+      .format(DateTime(DateTime.now().year, DateTime.now().month+1, 0));
   bool toggle = false;
   List list = [
     "Invoices",
@@ -37,6 +39,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     "Receipts",
     "Expense",
     "Customers",
+    "Renewals"
   ];
   List tabColors = [
     Colors.green,
@@ -44,6 +47,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     Colors.blue,
     Colors.red,
     Colors.teal,
+    Colors.purple,
   ];
   List colorList = [
     const Color(0xFFddd8f5),
@@ -280,6 +284,15 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     ReceiptList(widget
                                                                         .token
                                                                         .toString())),
+                                                          );
+                                                        } else if (list[i] ==
+                                                            "Renewals") {
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder:
+                                                                    (context) =>
+                                                                        const RenewalDashboard()),
                                                           );
                                                         } else {
                                                           Navigator.push(
@@ -717,6 +730,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                     .incomeGraph[
                                                                         i]
                                                                     .type,
+                                                                fdate: fDate,
+                                                                tdate: tDate,
                                                               )),
                                                     );
                                                   },
@@ -786,6 +801,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                 .data
                                                                 .expenseGraph[i]
                                                                 .expCatName,
+                                                            fdate: fDate,
+                                                            tdate: tDate,
                                                           ),
                                                         ));
                                                   },
@@ -873,38 +890,41 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
             ));
   }
 
-  Padding progressItem(String name, String amount, double value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 26.0, left: 20.0, right: 20.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                name,
-                style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.blue.shade900,
-                    fontWeight: FontWeight.bold),
-              ),
-              Text(
-                amount,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.blue.shade900,
-                    fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          LinearProgressIndicator(
-            borderRadius: BorderRadius.circular(8),
-            backgroundColor: Colors.grey,
-            value: value / 100,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade900),
-            minHeight: 6,
-          ),
-        ],
+  Container progressItem(String name, String amount, double value) {
+    return Container(
+      color: const Color(0xFFf0ebef),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 26.0, left: 20.0, right: 20.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.blue.shade900,
+                      fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  amount,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade900,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            LinearProgressIndicator(
+              borderRadius: BorderRadius.circular(8),
+              backgroundColor: Colors.grey,
+              value: value / 100,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade900),
+              minHeight: 6,
+            ),
+          ],
+        ),
       ),
     );
   }

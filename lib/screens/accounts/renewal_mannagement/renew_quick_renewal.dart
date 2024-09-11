@@ -696,6 +696,7 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                                 filteredTemplates[index].templateName;
                             templateId = filteredTemplates[index].id;
                             setState(() {});
+                          Navigator.pop(context);
                             filterTemplates("");
                           } else {
                             typeDuration = filteredProducts[index].noOfDays;

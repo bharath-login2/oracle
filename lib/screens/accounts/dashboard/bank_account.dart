@@ -6,6 +6,7 @@ import 'package:login2/models/clients/getInvoiceSearchData.dart';
 import 'package:login2/models/expense/bank_acc_list.dart';
 import 'package:login2/service/service.dart';
 
+// ignore: must_be_immutable
 class BankAccount extends StatefulWidget {
   String accId;
   String accName;
@@ -162,107 +163,127 @@ class _BankAccountState extends State<BankAccount> {
                         children: [
                           SizedBox(
                             height: MediaQuery.of(context).size.height,
-                            child:listResponse!.data.lists.isEmpty?noResultWidget(context,"No Transactions"): Padding(
-                              padding: EdgeInsets.only(
-                                  top:
-                                      MediaQuery.of(context).size.height * .10),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: listResponse!.data.lists.length,
-                                itemBuilder: (context, index) {
-                                  return ListTile(
-                                    shape: const Border(
-                                      bottom: BorderSide(color: Colors.grey),
-                                    ),
-                                    leading: Column(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 15,
-                                          backgroundColor: Colors.grey.shade300,
-                                          child: Text(
-                                            (index + 1).toString(),
+                            child: listResponse!.data.lists.isEmpty
+                                ? noResultWidget(context, "No Transactions")
+                                : Padding(
+                                    padding: EdgeInsets.only(
+                                        top:
+                                            MediaQuery.of(context).size.height *
+                                                .10),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount:
+                                          listResponse!.data.lists.length,
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          shape: const Border(
+                                            bottom:
+                                                BorderSide(color: Colors.grey),
+                                          ),
+                                          leading: Column(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 15,
+                                                backgroundColor:
+                                                    Colors.grey.shade300,
+                                                child: Text(
+                                                  (index + 1).toString(),
+                                                  style: TextStyle(
+                                                      color:
+                                                          Colors.blue.shade900,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                              ),
+                                              Text(
+                                                listResponse!
+                                                    .data.lists[index].type,
+                                                style: TextStyle(
+                                                    // fontSize: 12,
+                                                    color: listResponse!
+                                                                .data
+                                                                .lists[index]
+                                                                .type ==
+                                                            "Credit"
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                            ],
+                                          ),
+                                          title: Text(
+                                            listResponse!
+                                                .data.lists[index].title,
                                             style: TextStyle(
                                                 color: Colors.blue.shade900,
                                                 fontWeight: FontWeight.bold),
                                           ),
-                                        ),
-                                        Text(
-                                          listResponse!.data.lists[index].type,
-                                          style: TextStyle(
-                                              // fontSize: 12,
-                                              color: listResponse!.data
-                                                          .lists[index].type ==
-                                                      "Credit"
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                      ],
-                                    ),
-                                    title: Text(
-                                      listResponse!
-                                          .data.lists[index].accountName,
-                                      style: TextStyle(
-                                          color: Colors.blue.shade900,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Created by: ${listResponse!.data.lists[index].createdStaff}",
-                                          style: const TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                        Text(
-                                          "Remarks: ${listResponse!.data.lists[index].remarks}",
-                                          style: const TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                      ],
-                                    ),
-                                    trailing: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        Text(
-                                          listResponse!
-                                              .data.lists[index].createdDate,
-                                          style: const TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.normal),
-                                        ),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: listResponse!.data
-                                                          .lists[index].type ==
-                                                      "Credit"
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                              borderRadius:
-                                                  const BorderRadius.all(
-                                                      Radius.circular(8))),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 6.0, horizontal: 8),
-                                            child: Text(
-                                              "₹ ${listResponse!.data.lists[index].amount}",
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight:
-                                                      FontWeight.normal),
-                                            ),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Created by: ${listResponse!.data.lists[index].createdStaff}",
+                                                style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                              Text(
+                                                "Remarks: ${listResponse!.data.lists[index].remarks}",
+                                                style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ],
+                                          trailing: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              Text(
+                                                listResponse!.data.lists[index]
+                                                    .createdDate,
+                                                style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                    color: listResponse!
+                                                                .data
+                                                                .lists[index]
+                                                                .type ==
+                                                            "Credit"
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                                    borderRadius:
+                                                        const BorderRadius.all(
+                                                            Radius.circular(
+                                                                8))),
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      vertical: 6.0,
+                                                      horizontal: 8),
+                                                  child: Text(
+                                                    "₹ ${listResponse!.data.lists[index].amount}",
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.normal),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
+                                  ),
                           ),
                           Positioned(
                             top: 0,
@@ -279,33 +300,34 @@ class _BankAccountState extends State<BankAccount> {
                                       MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          .45,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            staffName,
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue.shade900),
-                                          ),
-                                          InkWell(
-                                            onTap: () {
-                                              filtrationSheet(context);
-                                            },
-                                            child: Text(
+                                    InkWell(
+                                      onTap: () {
+                                        filtrationSheet(context);
+                                      },
+                                      child: SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .45,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              staffName,
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue.shade900),
+                                            ),
+                                            Text(
                                               "$fDate to $tDate",
                                               style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.grey.shade600),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                     Column(

@@ -3985,6 +3985,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           reminderTemplate.text =
                               filteredTemplates[index].templateName;
                           templateId = filteredTemplates[index].id;
+                          Navigator.pop(context);
                           filterTemplates("");
                         },
                         title: SizedBox(
@@ -4059,7 +4060,8 @@ class _AddFollowupState extends State<AddFollowup> {
                           onTap: () {
                             staffName = filteredStaff[index].accountName;
                             staffId = filteredStaff[index].accountId;
-                            filteredStaff.addAll(commonDetails!.data.colloctedStaff);
+                            filteredStaff
+                                .addAll(commonDetails!.data.colloctedStaff);
                             setState(() {});
                             if (context.mounted) {
                               Navigator.pop(context);
@@ -4226,7 +4228,7 @@ class _AddFollowupState extends State<AddFollowup> {
     } catch (e) {
       if (mounted) {
         log(e.toString());
-            Common.toastMessaage("Failed !", Colors.red);
+        Common.toastMessaage("Failed !", Colors.red);
         Navigator.pop(context);
       }
     }

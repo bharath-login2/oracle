@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:login2/core/common.dart';
+import 'package:login2/screens/leadManagement/dashboard.dart';
 import '../models/pushNotificationModel.dart';
 import 'leadManagement/leadDetails.dart';
 import 'officialWhatsapp/chatScreen.dart';
@@ -87,9 +88,10 @@ class FirebaseServices {
     }
     if (navigation == 'whatsapp') {
       Get.to(() => ChatScreen(
-            groupId: detailId.toString(),nav: "Notification",
+            groupId: detailId.toString(),
+            nav: "Notification",
           ));
-    } else {
+    } else if (navigation == 'notification') {
       Get.to(() => LeadDetails(
             token!,
             editLead!,
@@ -98,6 +100,8 @@ class FirebaseServices {
             detailId!,
             pageName: 'notification',
           ));
+    } else {
+      Get.to(() => Dashboard(token!));
     }
   }
 

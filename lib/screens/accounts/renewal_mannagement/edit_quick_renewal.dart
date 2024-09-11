@@ -690,6 +690,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                             remindMe.text =
                                 filteredTemplates[index].templateName;
                             templateId = filteredTemplates[index].id;
+                          Navigator.pop(context);
                             setState(() {});
                             filterTemplates("");
                           } else {

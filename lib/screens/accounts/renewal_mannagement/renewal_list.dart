@@ -195,8 +195,7 @@ class _RenewalListState extends State<RenewalList> {
 
   void _onLoadMore() {
     if (items.length + 10 == page * pageSize &&
-        itemPositionsListener.itemPositions.value.last.index ==
-            items.length &&
+        itemPositionsListener.itemPositions.value.last.index == items.length &&
         page > add) {
       getList();
       add++;

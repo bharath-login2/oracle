@@ -1,7 +1,7 @@
 // ignore_for_file: unnecessary_this
 
 import 'dart:async';
-import 'dart:math';
+import 'dart:developer';
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -275,9 +275,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   routeTOHomePage() async {
-    if (navigation == null)  {
+    if (navigation == null) {
       String? token = await Common.getSharedPref("token");
       if (token != null) {
+        log(firebaseToken.toString());
         LoginCheckModel loginCheck =
             await HttpService.loginCheck(token, firebaseToken);
         if (loginCheck.data == true) {
@@ -297,9 +298,7 @@ class _SplashScreenState extends State<SplashScreen> {
               (Route<dynamic> route) => false);
         }
       }
-    }else{
-      
-    }
+    } else {}
   }
 }
 

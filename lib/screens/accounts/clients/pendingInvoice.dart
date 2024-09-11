@@ -634,31 +634,30 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                     height: 5,
                                                   ),
                                                   SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.6,
-                                                      child: Text(
-                                                        filteredInvoices[
-                                                                        index]
-                                                                    .products
-                                                                    .length !=
-                                                                1
-                                                            ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
-                                                            : "Products : ${filteredInvoices[index].products[0].productName}",
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                        ),
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.8,
+                                                    child: Text(
+                                                      filteredInvoices[index]
+                                                                  .products
+                                                                  .length !=
+                                                              1
+                                                          ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
+                                                          : "Products : ${filteredInvoices[index].products[0].productName}",
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w400,
                                                       ),
                                                     ),
-                                                    const SizedBox(
-                                                      height: 5,
-                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 5,
+                                                  ),
                                                   SizedBox(
                                                     width:
                                                         MediaQuery.of(context)
@@ -990,6 +989,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                                                   Navigator.pop(context);
                                                                                   Navigator.pop(context);
                                                                                 }
+                                                                                getData();
                                                                               } else {
                                                                                 Common.toastMessaage(deleteInvoice.message, Colors.red);
                                                                                 if (context.mounted) {

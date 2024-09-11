@@ -152,6 +152,7 @@ class _DashboardState extends State<Dashboard> {
     "Receipts",
     "Expense",
     "Customers",
+    "Renewals"
   ];
   List tabColors = [
     Colors.green,
@@ -159,6 +160,7 @@ class _DashboardState extends State<Dashboard> {
     Colors.blue,
     Colors.red,
     Colors.teal,
+    Colors.purple,
   ];
   List colorList = [
     const Color(0xFFddd8f5),
@@ -666,6 +668,13 @@ class _DashboardState extends State<Dashboard> {
                                                     builder: (context) =>
                                                         ReceiptList(widget.token
                                                             .toString())),
+                                              );
+                                            } else if (list[i] == "Renewals") {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const RenewalDashboard()),
                                               );
                                             } else {
                                               Navigator.push(
