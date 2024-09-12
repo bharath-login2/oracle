@@ -144,7 +144,8 @@ class _DashboardState extends State<Dashboard> {
   AccountDashboardModel? accountDashboard;
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
-  String tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  String tDate = DateFormat('dd-MM-yyyy')
+      .format(DateTime(DateTime.now().year, DateTime.now().month + 1, 0));
   bool toggle = false;
   List list = [
     "Invoices",
@@ -1061,6 +1062,8 @@ class _DashboardState extends State<Dashboard> {
                                                     widget.token.toString(),
                                                     type: accountDashboard!.data
                                                         .incomeGraph[i].type,
+                                                    fdate: fDate,
+                                                    tdate: tDate,
                                                   )),
                                         );
                                       },
@@ -1114,6 +1117,8 @@ class _DashboardState extends State<Dashboard> {
                                                     .expenseGraph[i].expCatid,
                                                 catName: accountDashboard!.data
                                                     .expenseGraph[i].expCatName,
+                                                fdate: fDate,
+                                                tdate: tDate,
                                               ),
                                             ));
                                       },
@@ -2592,35 +2597,6 @@ class _DashboardState extends State<Dashboard> {
                                                 ),
                                                 itemBuilder: (context) {
                                                   return [
-                                                    // Platform
-                                                    //         .isAndroid
-                                                    //     ? PopupMenuItem<
-                                                    //             int>(
-                                                    //         value:
-                                                    //             10,
-                                                    //         child:
-                                                    //             Row(
-                                                    //           children: [
-                                                    //             SizedBox(
-                                                    //               width: 20,
-                                                    //               height: 20,
-                                                    //               child: Image.asset(
-                                                    //                 "assets/icons/callLog.png",
-                                                    //               ),
-                                                    //             ),
-                                                    //             const SizedBox(
-                                                    //               width: 10,
-                                                    //             ),
-                                                    //             const Text('Phone Call Logs'),
-                                                    //           ],
-                                                    //         ))
-                                                    //     : const PopupMenuItem<
-                                                    //         int>(
-                                                    //         value:
-                                                    //             0,
-                                                    //         child:
-                                                    //             Text(''),
-                                                    //       ),
                                                     PopupMenuItem<int>(
                                                         value: 9,
                                                         child: Row(
@@ -2640,116 +2616,6 @@ class _DashboardState extends State<Dashboard> {
                                                                 'All Report'),
                                                           ],
                                                         )),
-                                                    // PopupMenuItem<
-                                                    //         int>(
-                                                    //     value: 5,
-                                                    //     child:
-                                                    //         Row(
-                                                    //       children: [
-                                                    //         SizedBox(
-                                                    //           width:
-                                                    //               20,
-                                                    //           height:
-                                                    //               20,
-                                                    //           child:
-                                                    //               Image.asset(
-                                                    //             "assets/icons/viewLeads.png",
-                                                    //           ),
-                                                    //         ),
-                                                    //         const SizedBox(
-                                                    //           width:
-                                                    //               10,
-                                                    //         ),
-                                                    //         const Text(
-                                                    //             'View Leads'),
-                                                    //       ],
-                                                    //     )),
-                                                    // PopupMenuItem<
-                                                    //         int>(
-                                                    //     value: 7,
-                                                    //     child:
-                                                    //         Row(
-                                                    //       children: [
-                                                    //         SizedBox(
-                                                    //           width:
-                                                    //               20,
-                                                    //           height:
-                                                    //               20,
-                                                    //           child:
-                                                    //               Image.asset(
-                                                    //             "assets/icons/missed_leads.png",
-                                                    //           ),
-                                                    //         ),
-                                                    //         const SizedBox(
-                                                    //           width:
-                                                    //               10,
-                                                    //         ),
-                                                    //         Row(
-                                                    //           children: [
-                                                    //             const Text('Missed Leads'),
-                                                    //             const SizedBox(
-                                                    //               width: 20,
-                                                    //             ),
-                                                    //             leadDashboard!.data.missedLeads != 0
-                                                    //                 ? Container(
-                                                    //                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
-                                                    //                     child: Center(
-                                                    //                         child: Padding(
-                                                    //                       padding: const EdgeInsets.all(4),
-                                                    //                       child: Text(
-                                                    //                         leadDashboard!.data.missedLeads.toString(),
-                                                    //                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                                    //                       ),
-                                                    //                     )),
-                                                    //                   )
-                                                    //                 : const SizedBox(),
-                                                    //           ],
-                                                    //         ),
-                                                    //       ],
-                                                    //     )),
-                                                    // PopupMenuItem<
-                                                    //         int>(
-                                                    //     value: 8,
-                                                    //     child:
-                                                    //         Row(
-                                                    //       children: [
-                                                    //         SizedBox(
-                                                    //           width:
-                                                    //               20,
-                                                    //           height:
-                                                    //               20,
-                                                    //           child:
-                                                    //               Image.asset(
-                                                    //             "assets/icons/transfer_leads.png",
-                                                    //           ),
-                                                    //         ),
-                                                    //         const SizedBox(
-                                                    //           width:
-                                                    //               10,
-                                                    //         ),
-                                                    //         Row(
-                                                    //           children: [
-                                                    //             const Text('Transfered Leads'),
-                                                    //             const SizedBox(
-                                                    //               width: 20,
-                                                    //             ),
-                                                    //             leadDashboard!.data.transferLeads != 0
-                                                    //                 ? Container(
-                                                    //                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), color: Colors.red),
-                                                    //                     child: Center(
-                                                    //                         child: Padding(
-                                                    //                       padding: const EdgeInsets.all(4),
-                                                    //                       child: Text(
-                                                    //                         leadDashboard!.data.transferLeads.toString(),
-                                                    //                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                                    //                       ),
-                                                    //                     )),
-                                                    //                   )
-                                                    //                 : const SizedBox(),
-                                                    //           ],
-                                                    //         ),
-                                                    //       ],
-                                                    //     )),
                                                     PopupMenuItem<int>(
                                                         value: 2,
                                                         child: Row(
@@ -2769,30 +2635,6 @@ class _DashboardState extends State<Dashboard> {
                                                                 'Lead Category'),
                                                           ],
                                                         )),
-                                                    // PopupMenuItem<
-                                                    //         int>(
-                                                    //     value: 3,
-                                                    //     child:
-                                                    //         Row(
-                                                    //       children: [
-                                                    //         SizedBox(
-                                                    //           width:
-                                                    //               20,
-                                                    //           height:
-                                                    //               20,
-                                                    //           child:
-                                                    //               Image.asset(
-                                                    //             "assets/icons/whatsapp.png",
-                                                    //           ),
-                                                    //         ),
-                                                    //         const SizedBox(
-                                                    //           width:
-                                                    //               10,
-                                                    //         ),
-                                                    //         const Text(
-                                                    //             'Whatsapp Settings'),
-                                                    //       ],
-                                                    //     )),
                                                     PopupMenuItem<int>(
                                                         value: 6,
                                                         child: Row(
@@ -2905,21 +2747,25 @@ class _DashboardState extends State<Dashboard> {
                                                         ? Navigator.push(
                                                             context,
                                                             MaterialPageRoute(
-                                                                builder: (context) => ViewLeads(
-                                                                    widget
-                                                                        .token,
-                                                                    updateLeadPermission1,
-                                                                    deleteLeadPermission1,
-                                                                    cloudCallPermission1,
-                                                                    pageName:
-                                                                        'Missed Leads',
-                                                                    fromDate:
-                                                                        fromdate
-                                                                            .toString(),
-                                                                    toDate: todate
-                                                                        .toString(),
-                                                                    leadType:
-                                                                        '1')),
+                                                                builder:
+                                                                    (context) =>
+                                                                        ViewLeads(
+                                                                          widget
+                                                                              .token,
+                                                                          updateLeadPermission1,
+                                                                          deleteLeadPermission1,
+                                                                          cloudCallPermission1,
+                                                                          pageName:
+                                                                              'Missed Leads',
+                                                                          fromDate:
+                                                                              fromdate.toString(),
+                                                                          toDate:
+                                                                              todate.toString(),
+                                                                          leadType:
+                                                                              '1',
+                                                                          callStatus:
+                                                                              "-1",
+                                                                        )),
                                                           ).then((r) {
                                                             getData(
                                                                 widget.token,
@@ -3690,6 +3536,7 @@ class _DashboardState extends State<Dashboard> {
                                                         toDate:
                                                             todate.toString(),
                                                         leadType: "-1",
+                                                        callStatus: "1",
                                                         status: '0')),
                                               ).then((r) {
                                                 getData(widget.token, fromdate,
@@ -3903,6 +3750,7 @@ class _DashboardState extends State<Dashboard> {
                                                           pageName:
                                                               'Transferred Leads',
                                                           leadType: "2",
+                                                          callStatus: "-2",
                                                         )),
                                               ).then((r) {
                                                 getData(widget.token, fromdate,
@@ -4113,6 +3961,7 @@ class _DashboardState extends State<Dashboard> {
                                                           pageName:
                                                               'Missed Leads',
                                                           leadType: "1",
+                                                          callStatus: "-1",
                                                         )),
                                               ).then((r) {
                                                 getData(widget.token, fromdate,
@@ -7546,6 +7395,7 @@ class _DashboardState extends State<Dashboard> {
                                                             fromdate.toString(),
                                                         toDate:
                                                             todate.toString(),
+                                                        callStatus: "1",
                                                         status: object1!
                                                             .data!
                                                             .statusLeads![i]
@@ -7685,38 +7535,41 @@ class _DashboardState extends State<Dashboard> {
     return (val == "true" || val == "1") ? true : false;
   }
 
-  Padding progressItem(String name, String amount, double value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 26.0, left: 20.0, right: 20.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                name,
-                style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.blue.shade900,
-                    fontWeight: FontWeight.bold),
-              ),
-              Text(
-                amount,
-                style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.blue.shade900,
-                    fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          LinearProgressIndicator(
-            borderRadius: BorderRadius.circular(8),
-            backgroundColor: Colors.grey,
-            value: value / 100,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade900),
-            minHeight: 6,
-          ),
-        ],
+  Container progressItem(String name, String amount, double value) {
+    return Container(
+      color: const Color(0xFFf0ebef),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 26.0, left: 20.0, right: 20.0),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.blue.shade900,
+                      fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  amount,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.blue.shade900,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            LinearProgressIndicator(
+              borderRadius: BorderRadius.circular(8),
+              backgroundColor: Colors.grey,
+              value: value / 100,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade900),
+              minHeight: 6,
+            ),
+          ],
+        ),
       ),
     );
   }

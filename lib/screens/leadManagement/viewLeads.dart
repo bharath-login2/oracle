@@ -41,6 +41,7 @@ class ViewLeads extends StatefulWidget {
   int? page;
   int? pageSize;
   String? leadType;
+  String? callStatus;
 
   ViewLeads(this.token, this.editLead, this.deleteLead, this.cloudCall,
       {super.key,
@@ -56,7 +57,8 @@ class ViewLeads extends StatefulWidget {
       this.pageSize,
       this.leadType,
       this.categoryName,
-      this.staffName});
+      this.staffName,
+      this.callStatus});
 
   @override
   State<ViewLeads> createState() => _ViewLeadsState();
@@ -246,6 +248,7 @@ class _ViewLeadsState extends State<ViewLeads> {
               "pageSize": pageSize,
               "isFirst": isFirst,
               "leadType": widget.leadType ?? "",
+              // "call_status": widget.callStatus ?? "",
               "branchId": branch ?? ""
             };
             log(body.toString());
