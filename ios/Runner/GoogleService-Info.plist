@@ -1,34 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CLIENT_ID</key>
-	<string>381971253306-1d3jvsb8lbfr0vo1oqqj6ucojdj0il1p.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.381971253306-1d3jvsb8lbfr0vo1oqqj6ucojdj0il1p</string>
-	<key>API_KEY</key>
-	<string>AIzaSyAAfOAZn970rZd_Axv5TOKkol_4ptfcyis</string>
-	<key>GCM_SENDER_ID</key>
-	<string>381971253306</string>
-	<key>PLIST_VERSION</key>
-	<string>1</string>
-	<key>BUNDLE_ID</key>
-	<string>com.login2Pro</string>
-	<key>PROJECT_ID</key>
-	<string>login2-d6436</string>
-	<key>STORAGE_BUCKET</key>
-	<string>login2-d6436.appspot.com</string>
-	<key>IS_ADS_ENABLED</key>
-	<false></false>
-	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
-	<key>IS_APPINVITE_ENABLED</key>
-	<true></true>
-	<key>IS_GCM_ENABLED</key>
-	<true></true>
-	<key>IS_SIGNIN_ENABLED</key>
-	<true></true>
-	<key>GOOGLE_APP_ID</key>
-	<string>1:381971253306:ios:1df019e1f8ecde4a244d03</string>
-</dict>
+	<dict>
+		<key>API_KEY</key>
+		<string>AIzaSyBmoOHu4SAgSUaTV_U6k3KSBHTQUf8bYIU</string>
+		<key>GCM_SENDER_ID</key>
+		<string>402092789000</string>
+		<key>PLIST_VERSION</key>
+		<string>1</string>
+		<key>BUNDLE_ID</key>
+		<string>com.login2Pro</string>
+		<key>PROJECT_ID</key>
+		<string>lead-plus-a153e</string>
+		<key>STORAGE_BUCKET</key>
+		<string>lead-plus-a153e.firebasestorage.app</string>
+		<key>IS_ADS_ENABLED</key>
+		<false></false>
+		<key>IS_ANALYTICS_ENABLED</key>
+		<false></false>
+		<key>IS_APPINVITE_ENABLED</key>
+		<true></true>
+		<key>IS_GCM_ENABLED</key>
+		<true></true>
+		<key>IS_SIGNIN_ENABLED</key>
+		<true></true>
+		<key>GOOGLE_APP_ID</key>
+		<string>1:402092789000:ios:17d37162bf078ec9a7f0bd</string>
+	</dict>
 </plist>

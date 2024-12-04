@@ -54,6 +54,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
   var outputFormat = DateFormat('dd-MM-yyyy');
   String name = '';
   String role = '';
+  String profilePic = '';
   String userId = '';
   int id = 0;
   String navigationActionId = 'id_3';
@@ -102,6 +103,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
     }
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+    profilePic = await Common.getSharedPref("profile_pic");
     userId = await Common.getSharedPref("userId");
     createLeadPermission = await Common.getSharedPref("createLeadPermission");
     viewLeadPermission = await Common.getSharedPref("viewLeadPermission");
@@ -258,32 +260,28 @@ class _StaffDashboardState extends State<StaffDashboard> {
                                         Row(
                                           children: [
                                             InkWell(
-                                              onTap: () => logout(context),
-                                              child: Container(
-                                                width: 43,
-                                                height: 43,
-                                                decoration: BoxDecoration(
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        blurRadius: 2,
-                                                        color: Colors
-                                                            .grey.shade800,
-                                                        offset: const Offset(
-                                                            0, 2.0),
-                                                      )
-                                                    ],
-                                                    shape: BoxShape.circle,
-                                                    color: const Color(
-                                                        0xFF2191ce)),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Image.asset(
-                                                    "assets/icons/user.png",
+                                                onTap: () => logout(context),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          blurRadius: 2,
+                                                          color: Colors
+                                                              .grey.shade800,
+                                                          offset: const Offset(
+                                                              0, 2.0),
+                                                        )
+                                                      ],
+                                                      shape: BoxShape.circle,
+                                                      color: const Color(
+                                                          0xFF2191ce)),
+                                                  child: CircleAvatar(
+                                                    backgroundImage:
+                                                        NetworkImage(
+                                                      profilePic,
+                                                    ),
                                                   ),
-                                                ),
-                                              ),
-                                            ),
+                                                )),
                                             const SizedBox(
                                               width: 15,
                                             ),
@@ -5886,7 +5884,6 @@ class _StaffDashboardState extends State<StaffDashboard> {
               bottomNavigationBar: configure != null
                   ? BottomNavigation(
                       widget.token!,
-                      configure!.data!.whatsappConfigured,
                       phoneCallLogPermission: phoneCallLogPermission,
                     )
                   : const SizedBox())

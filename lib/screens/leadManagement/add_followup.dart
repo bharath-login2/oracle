@@ -1,10 +1,8 @@
 // ignore_for_file: file_names
 
 import 'dart:developer';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
@@ -162,6 +160,11 @@ class _AddFollowupState extends State<AddFollowup> {
   bool isChecked = false;
   bool isMoreDetails = false;
   bool timeOut = false;
+  double totalRenAmount = 0;
+  String totalProdAmount = "";
+  List<TargetGroup> filteredTargets = [];
+  List targetGroups = [];
+  List targetGroupNames = [];
 
   void toggleTextFieldVisibility() {
     setState(() {
@@ -210,6 +213,7 @@ class _AddFollowupState extends State<AddFollowup> {
       commonDetails = await HttpService.addLeadCommonData(widget.token);
       if (commonDetails != null) {
         filteredStaff.addAll(commonDetails!.data.colloctedStaff);
+        filteredTargets.addAll(commonDetails!.data.targetGroups);
         callResultReasonList();
         if (widget.leadTypeId != '') {
           leadSubTypeList = await HttpService.leadSubType(widget.leadTypeId);
@@ -371,14 +375,14 @@ class _AddFollowupState extends State<AddFollowup> {
                                     await showDatePicker(
                                             context: context,
                                             initialDate: DateTime.now(),
-                                            firstDate: DateTime.now(),
-                                            lastDate: DateTime(2100))
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now())
                                         .then((selectedDate) {
                                       if (selectedDate != null) {
                                         showTimePicker(
-                                                context: context,
-                                                initialTime: TimeOfDay.now())
-                                            .then((selectedTime) {
+                                          context: context,
+                                          initialTime: TimeOfDay.now(),
+                                        ).then((selectedTime) {
                                           String newDate =
                                               selectedDate.toString();
                                           newDate = newDate.substring(
@@ -583,30 +587,46 @@ class _AddFollowupState extends State<AddFollowup> {
                                     controller: nextFollowupDate1,
                                     readOnly: true,
                                     onTap: () async {
-                                      await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(2100))
-                                          .then((selectedDate) {
-                                        if (selectedDate != null) {
-                                          showTimePicker(
-                                                  context: context,
-                                                  initialTime: TimeOfDay.now())
-                                              .then((selectedTime) {
-                                            String newDate =
-                                                selectedDate.toString();
-                                            newDate = newDate.substring(
-                                                0, newDate.indexOf(" "));
+                                      DateTime? selectedDate =
+                                          await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime.now(),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (selectedDate != null) {
+                                        TimeOfDay? selectedTime =
+                                            await showTimePicker(
+                                          context: context,
+                                          initialTime: TimeOfDay.now(),
+                                        );
+
+                                        if (selectedTime != null) {
+                                          final now = DateTime.now();
+                                          final selectedDateTime = DateTime(
+                                            selectedDate.year,
+                                            selectedDate.month,
+                                            selectedDate.day,
+                                            selectedTime.hour,
+                                            selectedTime.minute,
+                                          );
+
+                                          if (selectedDateTime.isAfter(now)) {
                                             String convertedNewDate =
-                                                getYmdFromDmy(newDate);
-                                            if (selectedTime != null) {
-                                              nextFollowupDate1.text =
-                                                  "$convertedNewDate ${selectedTime.format(context)}";
-                                            } else {}
-                                          });
+                                                getYmdFromDmy(selectedDate
+                                                    .toString()
+                                                    .split(' ')[0]);
+                                            nextFollowupDate1.text =
+                                                "$convertedNewDate ${selectedTime.format(context)}";
+                                          } else {
+                                            Common.toastMessaage(
+                                              "You cannot choose a past time for the follow-up date",
+                                              Colors.red,
+                                            );
+                                          }
                                         }
-                                      });
+                                      }
                                     },
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
@@ -826,72 +846,51 @@ class _AddFollowupState extends State<AddFollowup> {
                           ),
                           Padding(
                             padding: const EdgeInsets.only(left: 5),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.3,
-                                  child: const Text(
-                                    'Priority',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.6,
-                                  child: SizedBox(
-                                    height: 50,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount:
-                                          commonDetails!.data.priority.length,
-                                      itemBuilder: (context, i) {
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 30),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(
-                                                height: 24,
-                                                width: 24,
-                                                child: Radio(
-                                                    activeColor: int.parse(
-                                                                priorityId) ==
-                                                            1
-                                                        ? Colors.grey
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.9,
+                              child: SizedBox(
+                                height: 50,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount:
+                                      commonDetails!.data.priority.length,
+                                  itemBuilder: (context, i) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 30),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: Radio(
+                                                activeColor: int.parse(
+                                                            priorityId) ==
+                                                        1
+                                                    ? Colors.grey
+                                                    : int.parse(priorityId) == 2
+                                                        ? Colors.green
                                                         : int.parse(priorityId) ==
-                                                                2
-                                                            ? Colors.green
-                                                            : int.parse(priorityId) ==
-                                                                    3
-                                                                ? Colors.red
-                                                                : Colors.purple,
-                                                    value: int.parse(
-                                                        commonDetails!
-                                                            .data
-                                                            .priority[i]
-                                                            .priorityId
-                                                            .toString()),
-                                                    groupValue:
-                                                        int.parse(priorityId),
-                                                    onChanged: (int? value) {
-                                                      changeRadioValue(value);
-                                                    }),
-                                              ),
-                                              Text(commonDetails!
-                                                  .data.priority[i].priority
-                                                  .toString()),
-                                            ],
+                                                                3
+                                                            ? Colors.red
+                                                            : Colors.purple,
+                                                value: int.parse(commonDetails!
+                                                    .data.priority[i].priorityId
+                                                    .toString()),
+                                                groupValue:
+                                                    int.parse(priorityId),
+                                                onChanged: (int? value) {
+                                                  changeRadioValue(value);
+                                                }),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                          Text(commonDetails!
+                                              .data.priority[i].priority
+                                              .toString()),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                           const SizedBox(
@@ -956,7 +955,11 @@ class _AddFollowupState extends State<AddFollowup> {
                                             content: SizedBox(
                                               width: MediaQuery.of(context)
                                                       .size
-                                                      .height *
+                                                      .width *
+                                                  .8,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
                                                   .8,
                                               child: ListView.builder(
                                                 shrinkWrap: true,
@@ -1055,7 +1058,12 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       width:
                                                           MediaQuery.of(context)
                                                                   .size
-                                                                  .height *
+                                                                  .width *
+                                                              .6,
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
                                                               .8,
                                                       child: ListView.builder(
                                                         shrinkWrap: true,
@@ -1374,17 +1382,17 @@ class _AddFollowupState extends State<AddFollowup> {
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 30%
+                                                  0.16), // Using 30%
                                           2: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14),
+                                                  0.10),
                                           3: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 20%
+                                                  0.16), // Using 20%
                                           4: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
@@ -1508,17 +1516,17 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 30%
+                                                          0.16), // Using 30%
                                                   2: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14),
+                                                          0.10),
                                                   3: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 20%
+                                                          0.16), // Using 20%
                                                   4: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
@@ -1655,6 +1663,10 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                       ? '0'
                                                                       : discount
                                                                           .text);
+                                                          paidAmount.text =
+                                                              allTotal
+                                                                  .toString();
+
                                                           // products.removeWhere(
                                                           //   (item) => mapEquals(
                                                           //       item,
@@ -1702,14 +1714,21 @@ class _AddFollowupState extends State<AddFollowup> {
                                                           // );
                                                           products
                                                               .removeAt(index);
-                                                          renProducts
-                                                              .removeAt(index);
+                                                          if (renProducts
+                                                              .isNotEmpty) {
+                                                            renProducts
+                                                                .removeAt(
+                                                                    index);
+                                                          }
                                                           if (products
                                                               .isEmpty) {
                                                             discount.clear();
                                                             shippingCharge
                                                                 .clear();
                                                             allTotal = 0.00;
+                                                            paidAmount.text =
+                                                                allTotal
+                                                                    .toString();
                                                           }
 
                                                           setState(() {});
@@ -1830,6 +1849,23 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   if (value == '') {
                                                     value = '0';
                                                   }
+                                                  if (double.parse(
+                                                          discount.text == ""
+                                                              ? "0"
+                                                              : discount.text) >
+                                                      subTotal) {
+                                                    Common.toastMessaage(
+                                                        'The discount should not exceed the total amount',
+                                                        Colors.red);
+                                                  } else if (double.parse(
+                                                          discount.text == ""
+                                                              ? "0"
+                                                              : discount.text) <
+                                                      0) {
+                                                    Common.toastMessaage(
+                                                        'Please enter valid discount amount',
+                                                        Colors.red);
+                                                  }
                                                   allTotal = subTotal +
                                                       double.parse(
                                                           shippingCharge.text ==
@@ -1838,6 +1874,11 @@ class _AddFollowupState extends State<AddFollowup> {
                                                               : shippingCharge
                                                                   .text) -
                                                       double.parse(value);
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+
+                                                  paidAmount.text =
+                                                      allTotal.toString();
                                                   setState(() {});
                                                 } else {
                                                   discount.clear();
@@ -1845,6 +1886,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       'choose at least one product',
                                                       Colors.red);
                                                 }
+                                                setState(() {});
                                               },
                                               controller: discount,
                                               keyboardType:
@@ -1912,6 +1954,9 @@ class _AddFollowupState extends State<AddFollowup> {
                                                           discount.text == ''
                                                               ? '0'
                                                               : discount.text);
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+
                                                   setState(() {});
                                                 } else {
                                                   shippingCharge.clear();
@@ -1981,7 +2026,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                     .width *
                                                 0.3,
                                             child: Text(
-                                              allTotal.toStringAsFixed(2),
+                                              allTotal.toString(),
                                               style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.w500),
@@ -1994,7 +2039,6 @@ class _AddFollowupState extends State<AddFollowup> {
                                       height: 5,
                                     ),
                                     const Divider(),
-
                                     Padding(
                                       padding: const EdgeInsets.only(right: 10),
                                       child: Row(
@@ -2117,7 +2161,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                     TextStyle(color: paidColor),
                                                 onChanged: (val) {
                                                   if (double.parse(val) >
-                                                      allTotal) {
+                                                      subTotal) {
                                                     Common.toastMessaage(
                                                         'Enter valid amount',
                                                         Colors.red);
@@ -2288,7 +2332,10 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   child: GestureDetector(
                                                     onTap: () {
                                                       collectedStaffDialog(
-                                                          context);
+                                                              context)
+                                                          .then((_) {
+                                                        setState(() {});
+                                                      });
                                                     },
                                                     child: Container(
                                                       decoration: BoxDecoration(
@@ -2340,139 +2387,170 @@ class _AddFollowupState extends State<AddFollowup> {
                                               ],
                                             ),
                                           ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const Text(
+                                                  'Target Group :',
+                                                ),
+                                                const SizedBox(
+                                                  width: 15,
+                                                ),
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.55,
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      targetGroupDialog(context)
+                                                          .then((_) {
+                                                        setState(() {});
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              1,
+                                                      height: 50,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                        color: Colors
+                                                            .grey.shade300,
+                                                      ),
+                                                      child: targetGroups
+                                                              .isEmpty
+                                                          ? const Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      left: 10,
+                                                                      top: 15,
+                                                                      bottom:
+                                                                          10),
+                                                              child: Text(
+                                                                  'Target Group'))
+                                                          : Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      right:
+                                                                          40),
+                                                              child: SizedBox(
+                                                                height: 35,
+                                                                child: ListView
+                                                                    .builder(
+                                                                  scrollDirection:
+                                                                      Axis.horizontal,
+                                                                  itemCount:
+                                                                      targetGroupNames
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          i) {
+                                                                    return Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .only(
+                                                                          left:
+                                                                              5,
+                                                                          right:
+                                                                              5),
+                                                                      child:
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          setState(
+                                                                              () {});
+                                                                        },
+                                                                        child:
+                                                                            Row(
+                                                                          children: [
+                                                                            Container(
+                                                                              height: 35,
+                                                                              decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.white, borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
+                                                                              child: Center(
+                                                                                child: Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                                  children: [
+                                                                                    Padding(
+                                                                                      padding: const EdgeInsets.all(10),
+                                                                                      child: Text(
+                                                                                        targetGroupNames[i],
+                                                                                        style: const TextStyle(
+                                                                                          color: Colors.black,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            InkWell(
+                                                                              onTap: () {
+                                                                                showDialog(
+                                                                                    context: context,
+                                                                                    builder: (BuildContext context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text('Please Confirm'),
+                                                                                        content: const Text('Are you sure to Remove this Number?'),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                              onPressed: () {
+                                                                                                Navigator.of(context).pop();
+                                                                                              },
+                                                                                              child: const Text('No')),
+                                                                                          TextButton(
+                                                                                              onPressed: () async {
+                                                                                                setState(() {
+                                                                                                  targetGroupNames.remove(targetGroupNames[i]);
+                                                                                                  targetGroups.remove(targetGroups[i]);
+                                                                                                });
+                                                                                                Navigator.of(context).pop();
+                                                                                              },
+                                                                                              child: const Text('Yes')),
+                                                                                        ],
+                                                                                      );
+                                                                                    });
+                                                                              },
+                                                                              child: Container(
+                                                                                height: 35,
+                                                                                width: 30,
+                                                                                decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
+                                                                                child: const Icon(
+                                                                                  Icons.close,
+                                                                                  color: Colors.red,
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                            ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    // const SizedBox(
-                                    //   height: 10,
-                                    // ),
-                                    // paymentMethod == '2'
-                                    //     ? Container(
-                                    //         child: templateImage == null
-                                    //             ? Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Align(
-                                    //                   alignment:
-                                    //                       Alignment.topRight,
-                                    //                   child: InkWell(
-                                    //                     onTap: _selectFile,
-                                    //                     child: Container(
-                                    //                         width: MediaQuery.of(
-                                    //                                     context)
-                                    //                                 .size
-                                    //                                 .width *
-                                    //                             0.4,
-                                    //                         height: 35,
-                                    //                         decoration: BoxDecoration(
-                                    //                             color: Colors
-                                    //                                 .grey
-                                    //                                 .shade300,
-                                    //                             borderRadius:
-                                    //                                 BorderRadius
-                                    //                                     .circular(
-                                    //                                         5)),
-                                    //                         child:
-                                    //                             const Padding(
-                                    //                           padding: EdgeInsets
-                                    //                               .only(
-                                    //                                   left: 10,
-                                    //                                   right: 10,
-                                    //                                   top: 5,
-                                    //                                   bottom:
-                                    //                                       5),
-                                    //                           child: Center(
-                                    //                               child: Text(
-                                    //                                   'Choose File')),
-                                    //                         )),
-                                    //                   ),
-                                    //                 ),
-                                    //               )
-                                    //             : Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Stack(
-                                    //                   children: [
-                                    //                     Align(
-                                    //                       alignment: Alignment
-                                    //                           .topRight,
-                                    //                       child: InkWell(
-                                    //                         onTap: _selectFile,
-                                    //                         child: Container(
-                                    //                             width: MediaQuery.of(
-                                    //                                         context)
-                                    //                                     .size
-                                    //                                     .width *
-                                    //                                 0.6,
-                                    //                             height: 80,
-                                    //                             decoration: BoxDecoration(
-                                    //                                 color: Colors
-                                    //                                     .grey
-                                    //                                     .shade300,
-                                    //                                 borderRadius:
-                                    //                                     BorderRadius.circular(
-                                    //                                         5)),
-                                    //                             child: Padding(
-                                    //                               padding:
-                                    //                                   const EdgeInsets
-                                    //                                       .only(
-                                    //                                 right: 10,
-                                    //                               ),
-                                    //                               child: Row(
-                                    //                                 children: [
-                                    //                                   Container(
-                                    //                                     height:
-                                    //                                         80,
-                                    //                                     width:
-                                    //                                         90,
-                                    //                                     decoration:
-                                    //                                         BoxDecoration(
-                                    //                                       image:
-                                    //                                           DecorationImage(
-                                    //                                         fit:
-                                    //                                             BoxFit.fitWidth,
-                                    //                                         image:
-                                    //                                             FileImage(
-                                    //                                           File(templateImage!),
-                                    //                                         ),
-                                    //                                       ),
-                                    //                                     ),
-                                    //                                     // Add your image widget here
-                                    //                                   ),
-                                    //                                   const SizedBox(
-                                    //                                     width:
-                                    //                                         20,
-                                    //                                   ),
-                                    //                                   const Center(
-                                    //                                       child:
-                                    //                                           Text('Change File')),
-                                    //                                 ],
-                                    //                               ),
-                                    //                             )),
-                                    //                       ),
-                                    //                     ),
-                                    //                     Positioned(
-                                    //                       right: 0.0,
-                                    //                       top: 0.0,
-                                    //                       child: InkWell(
-                                    //                         onTap: () {
-                                    //                           templateImage =
-                                    //                               null;
-                                    //                           setState(() {});
-                                    //                         },
-                                    //                         child: const Icon(
-                                    //                           Icons
-                                    //                               .remove_circle,
-                                    //                           color: Colors.red,
-                                    //                         ),
-                                    //                       ),
-                                    //                     )
-                                    //                   ],
-                                    //                 ),
-                                    //               ))
-                                    //     : const SizedBox(),
                                   ],
                                 ),
                                 const SizedBox(
@@ -2502,80 +2580,93 @@ class _AddFollowupState extends State<AddFollowup> {
                                   commonDetails!.data.isRenewal,
                               child: Column(
                                 children: [
-                                  TextFormField(
-                                    controller: startDate,
-                                    readOnly: true,
-                                    onTap: () async {
-                                      DateTime? selectedValue =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime(2100),
-                                      );
-                                      setState(() {
-                                        startDate.text =
-                                            DateFormat('dd-MM-yyyy')
-                                                .format(selectedValue!);
-                                        final endValue = selectedValue.add(
-                                            Duration(
-                                                days: int.parse(typeDuration)));
-                                        endDate.text = DateFormat('dd-MM-yyyy')
-                                            .format(endValue);
-                                      });
-                                    },
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Select Start Date";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.all(8),
-                                        labelText: 'Start Date *',
-                                        prefixIcon: Icon(Icons.calendar_month,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: startDate,
+                                          readOnly: true,
+                                          onTap: () async {
+                                            DateTime? selectedValue =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime(2100),
+                                            );
+                                            setState(() {
+                                              startDate.text =
+                                                  DateFormat('dd-MM-yyyy')
+                                                      .format(selectedValue!);
+                                              final endValue =
+                                                  selectedValue.add(Duration(
+                                                      days: int.parse(
+                                                          typeDuration)));
+                                              endDate.text =
+                                                  DateFormat('dd-MM-yyyy')
+                                                      .format(endValue);
+                                            });
+                                          },
+                                          validator: (value) {
+                                            if (value!.isEmpty) {
+                                              return "Select Start Date";
+                                            }
+                                            return null;
+                                          },
+                                          decoration: const InputDecoration(
+                                              contentPadding: EdgeInsets.all(8),
+                                              labelText: 'Start Date *',
+                                              prefixIcon: Icon(
+                                                  Icons.calendar_month,
+                                                  color: Colors.grey),
+                                              border: OutlineInputBorder(),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey),
+                                              ),
+                                              labelStyle: TextStyle(
+                                                  color: Colors.grey)),
                                         ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                  const SizedBox(height: 14.0),
-                                  TextFormField(
-                                    onTap: () async {
-                                      DateTime? selectedEndDate =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime(2100),
-                                      );
-                                      endDate.text = DateFormat('dd-MM-yyyy')
-                                          .format(selectedEndDate!);
-                                    },
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Select End Date";
-                                      }
-                                      return null;
-                                    },
-                                    readOnly: true,
-                                    controller: endDate,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.all(8),
-                                        labelText: 'End Date *',
-                                        prefixIcon: Icon(Icons.calendar_month,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 15.0),
+                                      Expanded(
+                                        child: TextFormField(
+                                          onTap: () async {
+                                            DateTime? selectedEndDate =
+                                                await showDatePicker(
+                                              context: context,
+                                              initialDate: DateTime.now(),
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime(2100),
+                                            );
+                                            endDate.text =
+                                                DateFormat('dd-MM-yyyy')
+                                                    .format(selectedEndDate!);
+                                          },
+                                          validator: (value) {
+                                            if (value!.isEmpty) {
+                                              return "Select End Date";
+                                            }
+                                            return null;
+                                          },
+                                          readOnly: true,
+                                          controller: endDate,
+                                          decoration: const InputDecoration(
+                                              contentPadding: EdgeInsets.all(8),
+                                              labelText: 'End Date *',
+                                              prefixIcon: Icon(
+                                                  Icons.calendar_month,
+                                                  color: Colors.grey),
+                                              border: OutlineInputBorder(),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey),
+                                              ),
+                                              labelStyle: TextStyle(
+                                                  color: Colors.grey)),
                                         ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 14.0),
                                   TextFormField(
@@ -2633,17 +2724,17 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   MediaQuery.of(context)
                                                           .size
                                                           .width *
-                                                      0.14), // Using 30%
+                                                      0.16), // Using 30%
                                               2: FixedColumnWidth(
                                                   MediaQuery.of(context)
                                                           .size
                                                           .width *
-                                                      0.14),
+                                                      0.10),
                                               3: FixedColumnWidth(
                                                   MediaQuery.of(context)
                                                           .size
                                                           .width *
-                                                      0.14), // Using 20%
+                                                      0.16), // Using 20%
                                               4: FixedColumnWidth(
                                                   MediaQuery.of(context)
                                                           .size
@@ -2783,19 +2874,19 @@ class _AddFollowupState extends State<AddFollowup> {
                                                                           context)
                                                                       .size
                                                                       .width *
-                                                                  0.14), // Using 30%
+                                                                  0.16), // Using 30%
                                                           2: FixedColumnWidth(
                                                               MediaQuery.of(
                                                                           context)
                                                                       .size
                                                                       .width *
-                                                                  0.14),
+                                                                  0.10),
                                                           3: FixedColumnWidth(
                                                               MediaQuery.of(
                                                                           context)
                                                                       .size
                                                                       .width *
-                                                                  0.14), // Using 20%
+                                                                  0.16), // Using 20%
                                                           4: FixedColumnWidth(
                                                               MediaQuery.of(
                                                                           context)
@@ -2996,8 +3087,30 @@ class _AddFollowupState extends State<AddFollowup> {
                             height: 20,
                           ),
                           InkWell(
-                            onTap: () {
-                              postFollowup();
+                            onTap: () async {
+                              if (callResultId == '4' &&
+                                  commonDetails!
+                                          .data.customerAddInvoicePermission ==
+                                      true) {
+                                // totalProdAmount = amountCalculate(products);
+                                if (callResultId == '4' &&
+                                    createOrder == false) {
+                                  createOrderDialog(context);
+                                } else {
+                                  if (products.isNotEmpty) {
+                                    totalProdAmount = allTotal.toString();
+                                    totalRenAmount =
+                                        amountCalculate(renProducts);
+                                    ConfirmDialog(context);
+                                  } else {
+                                    Common.toastMessaage(
+                                        "Please add product and continue",
+                                        Colors.red);
+                                  }
+                                }
+                              } else {
+                                postFollowup();
+                              }
                             },
                             child: Container(
                               width: MediaQuery.of(context).size.width * 0.45,
@@ -3085,6 +3198,317 @@ class _AddFollowupState extends State<AddFollowup> {
                 ],
               ),
             ));
+  }
+
+  amountCalculate(products) {
+    double totalAmountConfirm = 0;
+    for (int i = 0; i < products.length; i++) {
+      totalAmountConfirm =
+          totalAmountConfirm + double.parse(products[i]['total_amount']);
+    }
+    return totalAmountConfirm;
+  }
+
+  Future<dynamic> ConfirmDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "CONFIRM",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          content: SizedBox(
+            height: MediaQuery.of(context).size.height * .42,
+            width: MediaQuery.of(context).size.width * .8,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Column(
+                    children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Products :",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height *
+                            .1 *
+                            products.length,
+                        width: MediaQuery.of(context).size.width * .8,
+                        child: ListView.builder(
+                          itemCount: products.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0, vertical: 6.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 15,
+                                        child: Text(
+                                          (index + 1).toString(),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .35,
+                                        child: Text(
+                                          products[index]['product_name'],
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                      Text(
+                                        products[index]['total_amount'],
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Total Amount : $totalProdAmount /-",
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Renewal Products :",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 15,
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height *
+                            .1 *
+                            renProducts.length,
+                        width: MediaQuery.of(context).size.width * .8,
+                        child: ListView.builder(
+                          itemCount: renProducts.length,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 15,
+                                        child: Text(
+                                          (index + 1).toString(),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .35,
+                                        child: Text(
+                                          renProducts[index]['product_name'],
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                      Text(
+                                        renProducts[index]['total_amount'],
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Total Amount : ${totalRenAmount.toString()} /-",
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade500,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                postFollowup();
+                FocusScope.of(context).unfocus();
+              },
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Confirm",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<dynamic> createOrderDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Column(
+            children: [
+              Text(
+                "CONFIRM",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                "Would you like to proceed without adding a sale?",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ],
+          ),
+          actions: [
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade500,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                postFollowup();
+              },
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "Confirm",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<Object?> addProductsDialog(BuildContext context) {
@@ -3202,19 +3626,18 @@ class _AddFollowupState extends State<AddFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
-                              productTaxAmount.text = (double.parse(value) *
-                                      double.parse(productTaxPercent.text) /
-                                      100)
+                              productTaxAmount.text = ((double.parse(value) *
+                                          double.parse(productTaxPercent.text) /
+                                          100) *
+                                      double.parse(productQty.text))
                                   .toString();
                               productTotalAmount.text = ((double.parse(value) +
                                           double.parse(productTaxAmount.text)) *
                                       double.parse(productQty.text))
                                   .toString();
-
                               productTotalAmount.text =
                                   double.parse(productTotalAmount.text)
                                       .toStringAsFixed(2);
-
                               setState(() {});
                             },
                             controller: productRate,
@@ -3225,6 +3648,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Rate',
                                 fillColor: Colors.white,
                                 filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3242,6 +3667,12 @@ class _AddFollowupState extends State<AddFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
+                              productTaxAmount
+                                  .text = ((double.parse(productRate.text) *
+                                          double.parse(productTaxPercent.text) /
+                                          100) *
+                                      double.parse(value))
+                                  .toString();
                               productTotalAmount
                                   .text = ((double.parse(productRate.text) +
                                           double.parse(productTaxAmount.text)) *
@@ -3260,6 +3691,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Qty',
                                 fillColor: Colors.white,
                                 filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3283,9 +3716,10 @@ class _AddFollowupState extends State<AddFollowup> {
                                 value = '0';
                               }
                               productTaxAmount.text =
-                                  (double.parse(productRate.text) *
-                                          double.parse(value) /
-                                          100)
+                                  ((double.parse(productRate.text) *
+                                              double.parse(value) /
+                                              100) *
+                                          double.parse(productQty.text))
                                       .toString();
                               productTotalAmount
                                   .text = ((double.parse(productRate.text) +
@@ -3305,6 +3739,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Tax Percent',
                                 fillColor: Colors.white,
                                 filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3327,6 +3763,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                 labelText: 'Tax Amount',
                                 fillColor: Colors.white,
                                 filled: true,
+                                prefixIcon:
+                                    Icon(Icons.arrow_right, color: Colors.grey),
                                 border: OutlineInputBorder(),
                                 focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
@@ -3351,6 +3789,8 @@ class _AddFollowupState extends State<AddFollowup> {
                             labelText: 'Total Amount',
                             fillColor: Colors.white,
                             filled: true,
+                            prefixIcon:
+                                Icon(Icons.arrow_right, color: Colors.grey),
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.grey),
@@ -3387,7 +3827,9 @@ class _AddFollowupState extends State<AddFollowup> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            if (productRate.text.isEmpty) {
+                            if (productName == "Choose Product") {
+                              Common.toastMessaage('Add a product', Colors.red);
+                            } else if (productRate.text.isEmpty) {
                               Common.toastMessaage(
                                   'Enter Product Rate', Colors.red);
                             } else if (productQty.text.isEmpty) {
@@ -3396,12 +3838,11 @@ class _AddFollowupState extends State<AddFollowup> {
                             } else if (productTaxPercent.text.isEmpty) {
                               Common.toastMessaage(
                                   'Enter Product Tax Percent', Colors.red);
-                            } else if (productTaxAmount.text.isEmpty) {
+                            } else if (double.parse(productTaxPercent.text) >
+                                    100 ||
+                                double.parse(productTaxPercent.text) < 0) {
                               Common.toastMessaage(
-                                  'Enter Product Tax Amount', Colors.red);
-                            } else if (productTotalAmount.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Enter Product Total Amount', Colors.red);
+                                  'Enter valid tax percentage', Colors.red);
                             } else {
                               products.add({
                                 "product_name": productName,
@@ -3423,6 +3864,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                 "total_tax_amount": productTaxAmount.text,
                                 "total_amount": productTotalAmount.text,
                               });
+
                               subTotal = subTotal +
                                   double.parse(productTotalAmount.text);
                               totalTaxAmount = totalTaxAmount +
@@ -3435,6 +3877,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                   double.parse(discount.text == ''
                                       ? '0'
                                       : discount.text);
+                              paidAmount.text = allTotal.toString();
+
                               productName = "Choose Product";
                               productId = "";
                               productDescription.clear();
@@ -3443,9 +3887,7 @@ class _AddFollowupState extends State<AddFollowup> {
                               productTaxPercent.clear();
                               productTaxAmount.clear();
                               productTotalAmount.clear();
-                              startDate.text =
-                                  DateFormat('dd-MM-yyyy').format(invoiceDate);
-                              final endValue = invoiceDate
+                              final endValue = DateTime.now()
                                   .add(Duration(days: int.parse(typeDuration)));
                               endDate.text =
                                   DateFormat('dd-MM-yyyy').format(endValue);
@@ -3491,110 +3933,139 @@ class _AddFollowupState extends State<AddFollowup> {
     return showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    autocorrect: false,
-                    keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
-                    onChanged: (value) {
-                      setState(() {
-                        filteredItems = items
-                            .where((item) => item.productName
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search),
+        return Builder(builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+                scrollable: true,
+                title: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                            onTap: () {
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: const Icon(Icons.close)),
+                      ],
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: TextField(
+                        autocorrect: false,
+                        keyboardType: TextInputType.visiblePassword,
+                        onChanged: (value) {
+                          setState(() {
+                            filteredItems = items
+                                .where((item) => item.productName
+                                    .toLowerCase()
+                                    .contains(value.toLowerCase()))
+                                .toList();
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.only(left: 8),
+                          labelStyle: TextStyle(
+                            color: Colors.grey,
+                          ),
+                          labelText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .3,
+                content: SizedBox(
+                  height: MediaQuery.of(context).size.height * .4,
                   width: MediaQuery.of(context).size.width * .8,
                   child: ListView.builder(
-                    itemCount: filteredItems.length,
-                    physics: const ScrollPhysics(),
                     shrinkWrap: true,
+                    itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
-                      return ListTile(
-                          onTap: () {
-                            if (type == "add") {
-                              if (productQty.text == "") {
-                                productQty.text = "1";
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: const Color(0xFFFCFBFA)),
+                          child: ListTile(
+                            onTap: () {
+                              if (type == "add") {
+                                if (productQty.text == "") {
+                                  productQty.text = "1";
+                                }
+                                productName = filteredItems[index].productName;
+                                productId = filteredItems[index].id;
+                                productRate.text =
+                                    filteredItems[index].sellingPrice;
+                                productTaxPercent.text =
+                                    filteredItems[index].taxPercent;
+                                productTaxAmount.text =
+                                    filteredItems[index].taxAmount;
+                                productTotalAmount.text =
+                                    ((double.parse(productRate.text) +
+                                                double.parse(
+                                                    productTaxAmount.text)) *
+                                            double.parse(productQty.text))
+                                        .toString();
+                                productTotalAmount.text =
+                                    double.parse(productTotalAmount.text)
+                                        .toStringAsFixed(2);
+                                if (paymentStatus == "paid") {
+                                  paidAmount.text = productTotalAmount.text;
+                                }
+                                typeDuration = filteredItems[index].noOfDays;
+                              } else {
+                                if (renProductQty.text == "") {
+                                  renProductQty.text = "1";
+                                }
+                                renProductName =
+                                    filteredItems[index].productName;
+                                renProductId = filteredItems[index].id;
+                                renProductRate.text =
+                                    filteredItems[index].sellingPrice;
+                                renProductTaxPercent.text =
+                                    filteredItems[index].taxPercent;
+                                renProductTaxAmount.text =
+                                    filteredItems[index].taxAmount;
+                                renProductTotalAmount.text =
+                                    ((double.parse(renProductRate.text) +
+                                                double.parse(
+                                                    renProductTaxAmount.text)) *
+                                            double.parse(renProductQty.text))
+                                        .toString();
+                                renProductTotalAmount.text =
+                                    double.parse(renProductTotalAmount.text)
+                                        .toStringAsFixed(2);
                               }
-                              productName = filteredItems[index].productName;
-                              productId = filteredItems[index].id;
-                              productRate.text =
-                                  filteredItems[index].sellingPrice;
-                              productTaxPercent.text =
-                                  filteredItems[index].taxPercent;
-                              productTaxAmount.text =
-                                  filteredItems[index].taxAmount;
-                              productTotalAmount
-                                  .text = ((double.parse(productRate.text) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(productQty.text))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              if (paymentStatus == "paid") {
-                                paidAmount.text = productTotalAmount.text;
+                              setState(() {});
+                              if (context.mounted) {
+                                Navigator.pop(context);
                               }
-                              typeDuration = filteredItems[index].noOfDays;
-                            } else {
-                              if (renProductQty.text == "") {
-                                renProductQty.text = "1";
-                              }
-                              renProductName = filteredItems[index].productName;
-                              renProductId = filteredItems[index].id;
-                              renProductRate.text =
-                                  filteredItems[index].sellingPrice;
-                              renProductTaxPercent.text =
-                                  filteredItems[index].taxPercent;
-                              renProductTaxAmount.text =
-                                  filteredItems[index].taxAmount;
-                              renProductTotalAmount.text =
-                                  ((double.parse(renProductRate.text) +
-                                              double.parse(
-                                                  renProductTaxAmount.text)) *
-                                          double.parse(renProductQty.text))
-                                      .toString();
-                              renProductTotalAmount.text =
-                                  double.parse(renProductTotalAmount.text)
-                                      .toStringAsFixed(2);
-                            }
-                            setState(() {});
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
-                          },
-                          title: Text(filteredItems[index].productName));
+                            },
+                            title: Text(filteredItems[index].productName),
+                            leading: CircleAvatar(
+                              radius: 15,
+                              backgroundColor: Colors.white,
+                              child: Text(filteredItems[index].productName[0]),
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
-                )
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Close")),
-            ],
-          );
+                ));
+          });
         });
       },
     );
@@ -3633,10 +4104,25 @@ class _AddFollowupState extends State<AddFollowup> {
                 content: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Product Details',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Product Details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              renProducts.removeAt(index);
+                              setState(() {});
+                            },
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ))
+                      ],
                     ),
                     const SizedBox(
                       height: 15,
@@ -3683,9 +4169,11 @@ class _AddFollowupState extends State<AddFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
-                              renProductTaxAmount.text = (double.parse(value) *
-                                      double.parse(renProductTaxPercent.text) /
-                                      100)
+                              renProductTaxAmount.text = ((double.parse(value) *
+                                          double.parse(
+                                              renProductTaxPercent.text) /
+                                          100) *
+                                      double.parse(renProductQty.text))
                                   .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(value) +
@@ -3724,6 +4212,13 @@ class _AddFollowupState extends State<AddFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
+                              renProductTaxAmount.text =
+                                  ((double.parse(renProductRate.text) *
+                                              double.parse(
+                                                  renProductTaxPercent.text) /
+                                              100) *
+                                          double.parse(value))
+                                      .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(renProductRate.text) +
                                               double.parse(
@@ -3765,9 +4260,10 @@ class _AddFollowupState extends State<AddFollowup> {
                                 value = '0';
                               }
                               renProductTaxAmount.text =
-                                  (double.parse(renProductRate.text) *
-                                          double.parse(value) /
-                                          100)
+                                  ((double.parse(renProductRate.text) *
+                                              double.parse(value) /
+                                              100) *
+                                          double.parse(renProductQty.text))
                                       .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(renProductRate.text) +
@@ -3947,7 +4443,6 @@ class _AddFollowupState extends State<AddFollowup> {
                       width: MediaQuery.of(context).size.width * .6,
                       height: 40,
                       child: TextFormField(
-                        autofocus: true,
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.only(left: 8),
                           labelStyle: TextStyle(
@@ -4031,7 +4526,6 @@ class _AddFollowupState extends State<AddFollowup> {
                   child: TextField(
                     autocorrect: false,
                     keyboardType: TextInputType.visiblePassword,
-                    autofocus: true,
                     onChanged: (value) {
                       setState(() {
                         filteredStaff = commonDetails!.data.colloctedStaff
@@ -4058,11 +4552,12 @@ class _AddFollowupState extends State<AddFollowup> {
                     itemBuilder: (context, index) {
                       return ListTile(
                           onTap: () {
-                            staffName = filteredStaff[index].accountName;
-                            staffId = filteredStaff[index].accountId;
-                            filteredStaff
-                                .addAll(commonDetails!.data.colloctedStaff);
-                            setState(() {});
+                            setState(() {
+                              staffName = filteredStaff[index].accountName;
+                              staffId = filteredStaff[index].accountId;
+                              filteredStaff
+                                  .addAll(commonDetails!.data.colloctedStaff);
+                            });
                             if (context.mounted) {
                               Navigator.pop(context);
                             }
@@ -4096,8 +4591,7 @@ class _AddFollowupState extends State<AddFollowup> {
           connectivityResult == ConnectivityResult.wifi) {
         if (callResultId == '') {
           Common.toastMessaage('Choose any Status', Colors.red);
-        }
-        if (callResponseId == '') {
+        } else if (callResponseId == '') {
           Common.toastMessaage('Choose call response', Colors.red);
         } else if (callResultId == '2' && nextFollowupDate1.text.isEmpty) {
           Common.toastMessaage('Choose next followup date', Colors.red);
@@ -4138,6 +4632,19 @@ class _AddFollowupState extends State<AddFollowup> {
             endDate.text == "") {
           Common.toastMessaage(
               'End date is required to add renewal', Colors.red);
+        } else if (double.parse(discount.text == "" ? "0.0" : discount.text) >
+            subTotal) {
+          Common.toastMessaage(
+              'The discount should not exceed the total amount', Colors.red);
+        } else if (double.parse(discount.text == "" ? "0.0" : discount.text) <
+            0) {
+          Common.toastMessaage(
+              'Please enter valid discount amount', Colors.red);
+        } else if (double.parse(
+                shippingCharge.text == "" ? "0.0" : shippingCharge.text) <
+            0) {
+          Common.toastMessaage(
+              'Please enter valid shipping charge', Colors.red);
         } else {
           if (mounted) {
             Common.showProgressDialog(context, "Loading..");
@@ -4177,7 +4684,8 @@ class _AddFollowupState extends State<AddFollowup> {
               paidAmount.text,
               staffId,
               isDifrent,
-              renProducts);
+              renProducts,
+              targetGroups);
           if (object1.status == true) {
             Common.toastMessaage(object1.message, Colors.green);
             if (mounted) {
@@ -4232,5 +4740,100 @@ class _AddFollowupState extends State<AddFollowup> {
         Navigator.pop(context);
       }
     }
+  }
+
+  Future<dynamic> targetGroupDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTargets = commonDetails!.data.targetGroups
+                              .where((item) => item.groupName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .32,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      // Remove NeverScrollableScrollPhysics to enable scrolling
+                      shrinkWrap: true,
+                      itemCount: filteredTargets.length,
+                      itemBuilder: (context, ind) {
+                        return CheckboxListTile(
+                          title: SizedBox(
+                            width: 200,
+                            child: Text(
+                              filteredTargets[ind].groupName.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14),
+                            ),
+                          ),
+                          value: targetGroups
+                                  .contains(filteredTargets[ind].id.toString())
+                              ? true
+                              : false,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                targetGroups
+                                    .add(filteredTargets[ind].id.toString());
+                                targetGroupNames.add(
+                                    filteredTargets[ind].groupName.toString());
+                              } else {
+                                targetGroups
+                                    .remove(filteredTargets[ind].id.toString());
+                                targetGroupNames.remove(
+                                    filteredTargets[ind].groupName.toString());
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  filteredTargets.clear();
+                  filteredTargets.addAll(commonDetails!.data.targetGroups);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Done"),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 }

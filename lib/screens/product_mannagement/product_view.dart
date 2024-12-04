@@ -34,7 +34,8 @@ class _ProductViewState extends State<ProductView> {
       });
     }
   }
-   deleteProduct() async {
+
+  deleteProduct() async {
     deleteResponse = await HttpService.deleteProduct(productsResponse!.data.id);
     if (deleteResponse != null) {
       Common.toastMessaage(deleteResponse!.message, Colors.red);
@@ -255,45 +256,39 @@ class _ProductViewState extends State<ProductView> {
                                     width: 10,
                                   ),
                                   GestureDetector(
-                                    onTap: (){
+                                    onTap: () {
                                       showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text('Delete'),
-                                                    content: const Text(
-                                                        'Are you sure?'),
-                                                    actions: [
-                                                     TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No')),
-                                                      TextButton(
-                                                          onPressed: () async {
-                                                            Navigator.pop(
-                                                                context);
-                                                            deleteProduct(
-                                                                );
-                                                            getProductsById();
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                      
-                                                    ],
-                                                  );
-                                                });
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text('Delete'),
+                                              content:
+                                                  const Text('Are you sure?'),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: const Text('No')),
+                                                TextButton(
+                                                    onPressed: () async {
+                                                      Navigator.pop(context);
+                                                      deleteProduct();
+                                                      getProductsById();
+                                                    },
+                                                    child: const Text('Yes')),
+                                              ],
+                                            );
+                                          });
                                     },
                                     child: Container(
-                                      width:
-                                          MediaQuery.of(context).size.width * .19,
-                                      height: MediaQuery.of(context).size.height *
-                                          .038,
+                                      width: MediaQuery.of(context).size.width *
+                                          .19,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              .038,
                                       decoration: BoxDecoration(
                                         color: Colors.red,
                                         border: Border.all(
@@ -321,7 +316,8 @@ class _ProductViewState extends State<ProductView> {
                                                         "MontserratMedium",
                                                     fontSize: 14,
                                                     color: Colors.white,
-                                                    fontWeight: FontWeight.bold)),
+                                                    fontWeight:
+                                                        FontWeight.bold)),
                                           ],
                                         ),
                                       ),

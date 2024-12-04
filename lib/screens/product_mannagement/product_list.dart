@@ -6,10 +6,11 @@ import 'package:login2/models/product_mannagement/delete_product.dart';
 import 'package:login2/models/product_mannagement/product_list_model.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/screens/product_mannagement/product_view.dart';
-import 'package:login2/screens/product_mannagement/subcategories.dart';
 import 'package:login2/screens/product_mannagement/update_products.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/grid_shimmer.dart';
+
+import 'categories.dart';
 
 class ProductList extends StatefulWidget {
   String catId;
@@ -89,14 +90,7 @@ class _ProductListState extends State<ProductList> {
                     children: [
                       InkWell(
                         onTap: () async {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SubCategories(
-                                  catId: widget.catId,
-                                  title: widget.subCat,
-                                ),
-                              ));
+                          Navigator.pop(context);
                         },
                         child: Container(
                           height: 25,
@@ -120,21 +114,41 @@ class _ProductListState extends State<ProductList> {
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: (() {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AddProducts(),
-                          )).then((_) {
-                        getProductLists();
-                      });
-                    }),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                  )
+                  PopupMenuButton<String>(
+                    iconColor: Colors.white,
+                    color: Colors.white,
+                    onSelected: (value) {
+                      if (value == "0") {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddProducts(),
+                            )).then((_) {
+                          getProductLists();
+                        });
+                      } else if (value == "1") {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProductCategories(),
+                            )).then((_) {
+                          getProductLists();
+                        });
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: '0',
+                          child: Text('Add Products'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: '1',
+                          child: Text('Categories'),
+                        ),
+                      ];
+                    },
+                  ),
                 ]),
           ),
         ),
@@ -166,19 +180,13 @@ class _ProductListState extends State<ProductList> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: isLoading == true
-                  ? ShimmerGridView(
+                  ? ShimmerListView(
                       type: "b",
                     )
-                  : GridView.builder(
+                  : ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: filteredProducts.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 5,
-                              childAspectRatio: .7),
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
@@ -189,7 +197,9 @@ class _ProductListState extends State<ProductList> {
                                     productId: filteredProducts[index].id,
                                     title: filteredProducts[index].productName,
                                   ),
-                                ));
+                                )).then((_) {
+                              getProductLists();
+                            });
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -210,82 +220,130 @@ class _ProductListState extends State<ProductList> {
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    SizedBox(
-                                      height: 100,
-                                      width: 200,
-                                      child: Image.network(
-                                        filteredProducts[index].productImage,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          .4,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            filteredProducts[index].productName,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                                fontFamily: "MontserratMedium",
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          height: 100,
+                                          width: 100,
+                                          child: Image.network(
+                                            filteredProducts[index]
+                                                .productImage,
+                                            fit: BoxFit.cover,
                                           ),
-                                          filteredProducts[index].productMrp ==
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              .5,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                filteredProducts[index]
+                                                    .productName,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontFamily:
+                                                        "MontserratMedium",
+                                                    fontSize: 18,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              if (filteredProducts[index]
+                                                      .categoryName !=
+                                                  "")
+                                                Text(
                                                   filteredProducts[index]
-                                                      .totalAmount
-                                              ? const SizedBox(
-                                                  height: 20,
-                                                )
-                                              : Row(
-                                                  children: [
-                                                    const Text(
-                                                      "₹ ",
-                                                      style: TextStyle(
-                                                          color: Colors.grey,
-                                                          fontFamily:
-                                                              "MontserratMedium",
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    Text(
-                                                      filteredProducts[index]
-                                                          .productMrp,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .lineThrough,
-                                                          color: Colors.grey,
-                                                          fontFamily:
-                                                              "MontserratMedium",
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                  ],
+                                                      .categoryName,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontFamily:
+                                                          "MontserratMedium",
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold),
                                                 ),
-                                          Text(
-                                            "₹ ${filteredProducts[index].totalAmount}",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                                fontFamily: "MontserratMedium",
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold),
+                                              if (filteredProducts[index]
+                                                      .categoryName !=
+                                                  "")
+                                                Text(
+                                                  filteredProducts[index]
+                                                      .subCategory,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontFamily:
+                                                          "MontserratMedium",
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                              filteredProducts[index]
+                                                          .productMrp ==
+                                                      filteredProducts[index]
+                                                          .totalAmount
+                                                  ? const SizedBox()
+                                                  : Row(
+                                                      children: [
+                                                        const Text(
+                                                          "₹ ",
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.grey,
+                                                              fontFamily:
+                                                                  "MontserratMedium",
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        Text(
+                                                          filteredProducts[
+                                                                  index]
+                                                              .productMrp,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: const TextStyle(
+                                                              decoration:
+                                                                  TextDecoration
+                                                                      .lineThrough,
+                                                              color:
+                                                                  Colors.grey,
+                                                              fontFamily:
+                                                                  "MontserratMedium",
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                      ],
+                                                    ),
+                                              Text(
+                                                "₹ ${filteredProducts[index].totalAmount}",
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontFamily:
+                                                        "MontserratMedium",
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         GestureDetector(
                                           onTap: () {
@@ -298,13 +356,15 @@ class _ProductListState extends State<ProductList> {
                                                               filteredProducts[
                                                                       index]
                                                                   .id),
-                                                ));
+                                                )).then((_) {
+                                              getProductLists();
+                                            });
                                           },
                                           child: Container(
                                             width: MediaQuery.of(context)
                                                     .size
                                                     .width *
-                                                .19,
+                                                .18,
                                             height: MediaQuery.of(context)
                                                     .size
                                                     .height *
@@ -327,9 +387,6 @@ class _ProductListState extends State<ProductList> {
                                                     Icons.edit,
                                                     color: Colors.white,
                                                     size: 15,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
                                                   ),
                                                   Text('Edit',
                                                       style: TextStyle(
@@ -387,7 +444,7 @@ class _ProductListState extends State<ProductList> {
                                             width: MediaQuery.of(context)
                                                     .size
                                                     .width *
-                                                .19,
+                                                .18,
                                             height: MediaQuery.of(context)
                                                     .size
                                                     .height *
@@ -410,9 +467,6 @@ class _ProductListState extends State<ProductList> {
                                                     Icons.delete,
                                                     color: Colors.white,
                                                     size: 15,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
                                                   ),
                                                   Text('Delete',
                                                       style: TextStyle(

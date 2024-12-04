@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/models/userManagement/staffDetailsModel.dart';
-import 'package:login2/screens/userManagement/viewUsers.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/userManagement/addUserCommonDataModel.dart';
@@ -15,10 +14,9 @@ import '../../service/service.dart';
 
 // ignore: must_be_immutable
 class EditProfilePage extends StatefulWidget {
-  String? token;
   String? staffId;
 
-  EditProfilePage({this.token, this.staffId, super.key});
+  EditProfilePage({this.staffId, super.key});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -54,6 +52,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String? branch;
   String roleId = '';
   String multiBranch = '';
+  String token = '';
 
   Future<void> retriveLostData() async {
     final LostData response = (await _picker.retrieveLostData()) as LostData;
@@ -76,6 +75,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   getData() async {
+    token = await Common.getSharedPref("token");
+
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
@@ -87,8 +88,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         result = false;
       });
     }
-    staffDetails = await HttpService.staffDetails(widget.token, widget.staffId);
-    commonDetails = await HttpService.addUserCommonData(widget.token);
+
+    staffDetails = await HttpService.staffDetails(token, widget.staffId);
+    commonDetails = await HttpService.addUserCommonData(token);
     roleId = await Common.getSharedPref("roleId");
     multiBranch = await Common.getSharedPref("multiBranch");
     if (staffDetails != null) {
@@ -215,8 +217,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           const Text(
                             'Edit Staff',
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 18),
+                            style: TextStyle(color: Colors.white, fontSize: 18),
                           ),
                         ],
                       ),
@@ -256,8 +257,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         height: 35,
                                         decoration: BoxDecoration(
                                             border: Border.all(
-                                                color:
-                                                    Colors.deepPurpleAccent,
+                                                color: Colors.deepPurpleAccent,
                                                 width: 0),
                                             color: selectedIndex == 0
                                                 ? Colors.deepPurpleAccent
@@ -271,9 +271,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
-                                                        left: 8, right: 8),
+                                                padding: const EdgeInsets.only(
+                                                    left: 8, right: 8),
                                                 child: Text(
                                                   'Basic Details',
                                                   style: TextStyle(
@@ -302,8 +301,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         height: 35,
                                         decoration: BoxDecoration(
                                             border: Border.all(
-                                                color:
-                                                    Colors.deepPurpleAccent,
+                                                color: Colors.deepPurpleAccent,
                                                 width: 0),
                                             color: selectedIndex == 1
                                                 ? Colors.deepPurpleAccent
@@ -317,9 +315,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
-                                                        left: 8, right: 8),
+                                                padding: const EdgeInsets.only(
+                                                    left: 8, right: 8),
                                                 child: Text(
                                                   'Manage Modules',
                                                   style: TextStyle(
@@ -348,8 +345,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         height: 35,
                                         decoration: BoxDecoration(
                                             border: Border.all(
-                                                color:
-                                                    Colors.deepPurpleAccent,
+                                                color: Colors.deepPurpleAccent,
                                                 width: 0),
                                             color: selectedIndex == 2
                                                 ? Colors.deepPurpleAccent
@@ -363,9 +359,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 MainAxisAlignment.center,
                                             children: [
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.only(
-                                                        left: 8, right: 8),
+                                                padding: const EdgeInsets.only(
+                                                    left: 8, right: 8),
                                                 child: Text(
                                                   'Manage Privileges',
                                                   style: TextStyle(
@@ -415,8 +410,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                         blurRadius: 10,
                                                         color: Colors.black
                                                             .withOpacity(0.1),
-                                                        offset: const Offset(
-                                                            0, 10))
+                                                        offset:
+                                                            const Offset(0, 10))
                                                   ],
                                                   shape: BoxShape.circle,
                                                   image: DecorationImage(
@@ -442,8 +437,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                       shape: BoxShape.circle,
                                                       border: Border.all(
                                                         width: 4,
-                                                        color: Theme.of(
-                                                                context)
+                                                        color: Theme.of(context)
                                                             .scaffoldBackgroundColor,
                                                       ),
                                                       color: Colors.green,
@@ -523,8 +517,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           Icons.phone_android_rounded),
                                       buildTextField(
                                           "E-mail",
-                                          staffDetails!.data!.email
-                                              .toString(),
+                                          staffDetails!.data!.email.toString(),
                                           emailId,
                                           Icons.email),
                                       Column(
@@ -535,14 +528,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         children: [
                                           Row(
                                             mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text('Accessible Users',
                                                   style: TextStyle(
                                                     fontSize: 15,
-                                                    fontWeight:
-                                                        FontWeight.w500,
+                                                    fontWeight: FontWeight.w500,
                                                   )),
                                               InkWell(
                                                 onTap: () {
@@ -567,8 +558,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                 .8,
                                                             child: ListView
                                                                 .builder(
-                                                              shrinkWrap:
-                                                                  true,
+                                                              shrinkWrap: true,
                                                               itemCount:
                                                                   commonDetails!
                                                                       .data!
@@ -580,25 +570,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                 return CheckboxListTile(
                                                                   title:
                                                                       SizedBox(
-                                                                    width:
-                                                                        200,
-                                                                    child:
-                                                                        Text(
+                                                                    width: 200,
+                                                                    child: Text(
                                                                       commonDetails!
                                                                           .data!
-                                                                          .users![ind]
+                                                                          .users![
+                                                                              ind]
                                                                           .staffName
                                                                           .toString(),
                                                                       style: const TextStyle(
-                                                                          color:
-                                                                              Colors.black,
-                                                                          fontWeight: FontWeight.w400,
-                                                                          fontSize: 14),
+                                                                          color: Colors
+                                                                              .black,
+                                                                          fontWeight: FontWeight
+                                                                              .w400,
+                                                                          fontSize:
+                                                                              14),
                                                                     ),
                                                                   ),
                                                                   value: checkedItems.contains(commonDetails!
                                                                           .data!
-                                                                          .users![ind]
+                                                                          .users![
+                                                                              ind]
                                                                           .userId
                                                                           .toString())
                                                                       ? true
@@ -620,7 +612,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                             .users![ind]
                                                                             .staffName
                                                                             .toString());
-    
+
                                                                         Navigator.pop(
                                                                             context,
                                                                             true);
@@ -638,7 +630,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                             .users![ind]
                                                                             .staffName
                                                                             .toString());
-    
+
                                                                         Navigator.pop(
                                                                             context,
                                                                             true);
@@ -668,8 +660,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           SizedBox(
                                             height: 35,
                                             child: ListView.builder(
-                                              scrollDirection:
-                                                  Axis.horizontal,
+                                              scrollDirection: Axis.horizontal,
                                               itemCount:
                                                   checkedItemsName.length,
                                               itemBuilder: (context, i) {
@@ -690,15 +681,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                   color: Colors
                                                                       .grey,
                                                                   width: 0),
-                                                              color: Colors
-                                                                  .white,
+                                                              color:
+                                                                  Colors.white,
                                                               borderRadius: const BorderRadius
                                                                   .only(
                                                                   topLeft: Radius
                                                                       .circular(
                                                                           6),
-                                                                  bottomLeft:
-                                                                      Radius.circular(
+                                                                  bottomLeft: Radius
+                                                                      .circular(
                                                                           6))),
                                                           child: Center(
                                                             child: Row(
@@ -740,7 +731,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         const Text(
                                                                             'Are you sure to Remove this Number?'),
                                                                     actions: [
-                                                                     TextButton(
+                                                                      TextButton(
                                                                           onPressed:
                                                                               () {
                                                                             Navigator.of(context).pop();
@@ -754,12 +745,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                               checkedItemsName.remove(checkedItemsName[i]);
                                                                               checkedItems.remove(checkedItems[i]);
                                                                             });
-    
+
                                                                             Navigator.of(context).pop();
                                                                           },
                                                                           child:
                                                                               const Text('Yes')),
-                                                                      
                                                                     ],
                                                                   );
                                                                 });
@@ -772,21 +762,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                     color: Colors
                                                                         .grey,
                                                                     width: 0),
-                                                                color: Colors
-                                                                    .grey
+                                                                color: Colors.grey
                                                                     .shade100,
                                                                 borderRadius: const BorderRadius
                                                                     .only(
-                                                                    topRight:
-                                                                        Radius.circular(
+                                                                    topRight: Radius
+                                                                        .circular(
                                                                             6),
                                                                     bottomRight:
                                                                         Radius.circular(
                                                                             6))),
                                                             child: const Icon(
                                                               Icons.close,
-                                                              color:
-                                                                  Colors.red,
+                                                              color: Colors.red,
                                                             ),
                                                           ),
                                                         ),
@@ -807,12 +795,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         onTap: () {
                                           showDialog(
                                               context: context,
-                                              builder:
-                                                  (BuildContext context) {
+                                              builder: (BuildContext context) {
                                                 return AlertDialog(
                                                   scrollable: true,
-                                                  title: const Text(
-                                                      'Designation'),
+                                                  title:
+                                                      const Text('Designation'),
                                                   content: SizedBox(
                                                     height:
                                                         MediaQuery.of(context)
@@ -826,11 +813,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                             .8,
                                                     child: ListView.builder(
                                                       shrinkWrap: true,
-                                                      itemCount:
-                                                          commonDetails!
-                                                              .data!
-                                                              .designations!
-                                                              .length,
+                                                      itemCount: commonDetails!
+                                                          .data!
+                                                          .designations!
+                                                          .length,
                                                       itemBuilder:
                                                           (context, ind) {
                                                         return InkWell(
@@ -844,12 +830,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                           ind]
                                                                       .designation
                                                                       .toString();
-                                                              designation = commonDetails!
-                                                                  .data!
-                                                                  .designations![
-                                                                      ind]
-                                                                  .designation
-                                                                  .toString();
+                                                              designation =
+                                                                  commonDetails!
+                                                                      .data!
+                                                                      .designations![
+                                                                          ind]
+                                                                      .designation
+                                                                      .toString();
                                                               designationId =
                                                                   commonDetails!
                                                                       .data!
@@ -901,8 +888,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               borderSide: BorderSide(
                                                   color: Colors.grey),
                                             ),
-                                            labelStyle: TextStyle(
-                                                color: Colors.grey)),
+                                            labelStyle:
+                                                TextStyle(color: Colors.grey)),
                                       ),
                                       const SizedBox(
                                         height: 35,
@@ -916,10 +903,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 'Choose Branch', Colors.red);
                                           } else if (name.text.isEmpty) {
                                             Common.toastMessaage(
-                                                'Enter Staff Name',
-                                                Colors.red);
-                                          } else if (phoneNumber
-                                              .text.isEmpty) {
+                                                'Enter Staff Name', Colors.red);
+                                          } else if (phoneNumber.text.isEmpty) {
                                             Common.toastMessaage(
                                                 'Enter Phone Number',
                                                 Colors.red);
@@ -927,7 +912,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             Common.showProgressDialog(
                                                 context, "Loading..");
                                             Map<String, dynamic> body = {
-                                              'token': widget.token,
+                                              'token': token,
                                               "designation": designationId,
                                               'phoneNumber': phoneNumber.text,
                                               'name': name.text,
@@ -946,7 +931,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 Navigator.pop(context);
                                                 Navigator.pop(context);
                                               }
-                                            }else{
+                                            } else {
                                               if (context.mounted) {
                                                 Navigator.pop(context);
                                               }
@@ -987,15 +972,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       shrinkWrap: true,
                                       physics:
                                           const NeverScrollableScrollPhysics(),
-                                      itemCount: staffDetails!
-                                          .data!.menuList!.length,
+                                      itemCount:
+                                          staffDetails!.data!.menuList!.length,
                                       itemBuilder:
                                           (BuildContext context, int index) {
                                         return Padding(
                                           padding: const EdgeInsets.only(
-                                              left: 20,
-                                              right: 20,
-                                              bottom: 10),
+                                              left: 20, right: 20, bottom: 10),
                                           child: ExpansionPanelList(
                                             animationDuration: const Duration(
                                                 milliseconds: 1000),
@@ -1003,8 +986,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             elevation: 1,
                                             children: [
                                               ExpansionPanel(
-                                                  body: MediaQuery
-                                                      .removePadding(
+                                                  body:
+                                                      MediaQuery.removePadding(
                                                     context: context,
                                                     removeTop: true,
                                                     child: ListView.builder(
@@ -1021,8 +1004,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                             Expanded(
                                                               child:
                                                                   CheckboxListTile(
-                                                                title:
-                                                                    SizedBox(
+                                                                title: SizedBox(
                                                                   width: 200,
                                                                   child: Text(
                                                                     staffDetails!
@@ -1036,8 +1018,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                     style: const TextStyle(
                                                                         color: Colors
                                                                             .black,
-                                                                        fontWeight: FontWeight
-                                                                            .w400,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w400,
                                                                         fontSize:
                                                                             14),
                                                                   ),
@@ -1061,8 +1044,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         () {
                                                                       checkedMenuItems.add(staffDetails!
                                                                           .data!
-                                                                          .menuList![index]
-                                                                          .subMenu![i]
+                                                                          .menuList![
+                                                                              index]
+                                                                          .subMenu![
+                                                                              i]
                                                                           .id);
                                                                       // print(checkedItems);
                                                                     });
@@ -1071,8 +1056,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         () {
                                                                       checkedMenuItems.remove(staffDetails!
                                                                           .data!
-                                                                          .menuList![index]
-                                                                          .subMenu![i]
+                                                                          .menuList![
+                                                                              index]
+                                                                          .subMenu![
+                                                                              i]
                                                                           .id);
                                                                       // print(checkedItems);
                                                                     });
@@ -1098,8 +1085,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                           bool isExpanded) {
                                                     return Container(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .all(10),
+                                                          const EdgeInsets.all(
+                                                              10),
                                                       child: Row(
                                                         mainAxisAlignment:
                                                             MainAxisAlignment
@@ -1146,21 +1133,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         );
                                       },
                                     ),
-                                    const SizedBox(height: 20,),
-
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
                                     InkWell(
                                       onTap: () async {
                                         Common.showProgressDialog(
                                             context, "Loading..");
                                         Map<String, dynamic> subMenuBody = {
-                                          "token": widget.token,
+                                          "token": token,
                                           'staff_id': widget.staffId,
                                           'sub_menu_id': checkedMenuItems,
-                                          'designation_id': staffDetails!
-                                              .data!.designationId,
+                                          'designation_id':
+                                              staffDetails!.data!.designationId,
                                         };
-                                        PostEditStaffSubmenuModel
-                                            postSubmenu = await HttpService
+                                        PostEditStaffSubmenuModel postSubmenu =
+                                            await HttpService
                                                 .postEditStaffSubMenu(
                                                     subMenuBody);
                                         if (postSubmenu.data == true) {
@@ -1168,23 +1156,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               postSubmenu.message,
                                               Colors.green);
                                           if (context.mounted) {
-                                                Navigator.pop(context);
-                                                Navigator.pop(context);
-                                              }
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          }
                                         } else {
                                           Common.toastMessaage(
-                                              postSubmenu.message,
-                                              Colors.red);
+                                              postSubmenu.message, Colors.red);
                                           if (context.mounted) {
                                             Navigator.pop(context, true);
                                           }
                                         }
                                       },
                                       child: Container(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.45,
                                         height: 40,
                                         decoration: BoxDecoration(
                                           color: Colors.black,
@@ -1196,12 +1182,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               style: TextStyle(
                                                   fontSize: 18,
                                                   color: Colors.white,
-                                                  fontWeight:
-                                                      FontWeight.w500)),
+                                                  fontWeight: FontWeight.w500)),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 20,)
+                                    const SizedBox(
+                                      height: 20,
+                                    )
                                   ],
                                 ),
                               ),
@@ -1221,9 +1208,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           (BuildContext context, int index) {
                                         return Padding(
                                           padding: const EdgeInsets.only(
-                                              left: 20,
-                                              right: 20,
-                                              bottom: 10),
+                                              left: 20, right: 20, bottom: 10),
                                           child: ExpansionPanelList(
                                             animationDuration: const Duration(
                                                 milliseconds: 1000),
@@ -1231,8 +1216,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             elevation: 1,
                                             children: [
                                               ExpansionPanel(
-                                                  body: MediaQuery
-                                                      .removePadding(
+                                                  body:
+                                                      MediaQuery.removePadding(
                                                     context: context,
                                                     removeTop: true,
                                                     child: ListView.builder(
@@ -1249,8 +1234,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                             Expanded(
                                                               child:
                                                                   CheckboxListTile(
-                                                                title:
-                                                                    SizedBox(
+                                                                title: SizedBox(
                                                                   width: 200,
                                                                   child: Text(
                                                                     staffDetails!
@@ -1264,8 +1248,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                     style: const TextStyle(
                                                                         color: Colors
                                                                             .black,
-                                                                        fontWeight: FontWeight
-                                                                            .w400,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w400,
                                                                         fontSize:
                                                                             14),
                                                                   ),
@@ -1289,8 +1274,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         () {
                                                                       checkedPermissionItems.add(staffDetails!
                                                                           .data!
-                                                                          .privilages![index]
-                                                                          .permission![i]
+                                                                          .privilages![
+                                                                              index]
+                                                                          .permission![
+                                                                              i]
                                                                           .permissionId);
                                                                       // print(checkedItems);
                                                                     });
@@ -1299,8 +1286,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                                         () {
                                                                       checkedPermissionItems.remove(staffDetails!
                                                                           .data!
-                                                                          .privilages![index]
-                                                                          .permission![i]
+                                                                          .privilages![
+                                                                              index]
+                                                                          .permission![
+                                                                              i]
                                                                           .permissionId);
                                                                       // print(checkedItems);
                                                                     });
@@ -1326,8 +1315,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                           bool isExpanded) {
                                                     return Container(
                                                       padding:
-                                                          const EdgeInsets
-                                                              .all(10),
+                                                          const EdgeInsets.all(
+                                                              10),
                                                       child: Row(
                                                         mainAxisAlignment:
                                                             MainAxisAlignment
@@ -1374,14 +1363,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         );
                                       },
                                     ),
-                                    const SizedBox(height: 20,),
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
                                     InkWell(
                                       onTap: () async {
                                         Common.showProgressDialog(
                                             context, "Loading..");
-                                        Map<String, dynamic> permissionBody =
-                                            {
-                                          "token": widget.token,
+                                        Map<String, dynamic> permissionBody = {
+                                          "token": token,
                                           'staff_id': widget.staffId,
                                           'permission_ids':
                                               checkedPermissionItems,
@@ -1395,9 +1385,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               postPermission.message,
                                               Colors.green);
                                           if (context.mounted) {
-                                                Navigator.pop(context);
-                                                Navigator.pop(context);
-                                              }
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          }
                                         } else {
                                           Common.toastMessaage(
                                               postPermission.message,
@@ -1408,10 +1398,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         }
                                       },
                                       child: Container(
-                                        width: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.45,
                                         height: 40,
                                         decoration: BoxDecoration(
                                           color: Colors.black,
@@ -1423,12 +1412,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               style: TextStyle(
                                                   fontSize: 18,
                                                   color: Colors.white,
-                                                  fontWeight:
-                                                      FontWeight.w500)),
+                                                  fontWeight: FontWeight.w500)),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 20,)
+                                    const SizedBox(
+                                      height: 20,
+                                    )
                                   ],
                                 ),
                               ),
@@ -1470,8 +1460,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const Text(
                     'No Network Found !',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -1602,7 +1591,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         isLoad = true;
         _imageFile = pickedFile!.path;
         var formData = FormData.fromMap({
-          'token': widget.token,
+          'token': token,
           'staff_id': widget.staffId,
           'image_status': imageSts,
           if (_imageFile == null)
@@ -1611,16 +1600,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
             "staffImage": await MultipartFile.fromFile(_imageFile!)
         });
 
-        AddUserImageModel upload =
-            await HttpService.updateUploadImages(formData);
+        AddUserImageModel upload = await HttpService.updateStaffImage(formData);
         if (upload.data == true) {
           Common.toastMessaage(upload.message, Colors.green);
           if (mounted) {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => EditProfilePage(
-                      token: widget.token,
-                      staffId: widget.staffId,
-                    )));
+            getData();
+            Navigator.pop(context);
           }
         } else {
           Common.toastMessaage(upload.message, Colors.red);
@@ -1646,7 +1631,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         _imageFile = pickedFile!.path;
         imageSts = true;
         var formData = FormData.fromMap({
-          'token': widget.token,
+          'token': token,
           'staff_id': widget.staffId,
           'image_status': imageSts,
           if (_imageFile == null)
@@ -1655,15 +1640,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
             "staffImage": await MultipartFile.fromFile(_imageFile!)
         });
 
-        AddUserImageModel upload =
-            await HttpService.updateUploadImages(formData);
+        AddUserImageModel upload = await HttpService.updateStaffImage(formData);
         Common.toastMessaage(upload.message, Colors.green);
         if (mounted) {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => EditProfilePage(
-                    token: widget.token,
-                    staffId: widget.staffId,
-                  )));
+          Navigator.pop(context);
         }
       });
       // ignore: empty_catches

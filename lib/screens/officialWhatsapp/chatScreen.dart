@@ -216,6 +216,8 @@ class _ChatScreenState extends State<ChatScreen> {
               MaterialPageRoute(
                 builder: (context) => Dashboard(token),
               ));
+        } else if (widget.nav == "Notification") {
+          Navigator.pop(context);
         } else {
           Navigator.push(
               context,
@@ -232,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: EdgeInsets.zero, // Set padding to zero
               child: officialMessageModel != null && templateModel != null
                   ? Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const SizedBox(
@@ -394,14 +396,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                         "RENEW") {
                                   return Padding(
                                     padding: EdgeInsets.only(
-                                        bottom: index == 0 ? 80.0 : 0.0,
+                                        bottom: index == 0 ? 90.0 : 0.0,
                                         top: 4.0),
                                     child: chatWidget2(index, context),
                                   );
                                 } else {
                                   return Padding(
                                     padding: EdgeInsets.only(
-                                        bottom: index == 0 ? 80.0 : 0.0,
+                                        bottom: index == 0 ? 90.0 : 0.0,
                                         top: 4.0),
                                     child: chatWidget1(index, context),
                                   );
@@ -433,7 +435,8 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         bottomSheet: officialMessageModel != null && templateModel != null
             ? Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, top: 8.0, bottom: 20.0),
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: officialMessageModel!.canSend == true
@@ -1596,7 +1599,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                                         .width *
                                                     .18,
                                                 decoration: const BoxDecoration(
-                                                    color: Colors.red,
+                                                    color: Colors.white,
                                                     borderRadius:
                                                         BorderRadius.only(
                                                       bottomLeft:
@@ -1874,48 +1877,59 @@ class _ChatScreenState extends State<ChatScreen> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    const SizedBox(
+                      height: 15,
+                    ),
                     templateLoading == true
                         ? const Center(child: LinearProgressIndicator())
-                        : DropdownButtonHideUnderline(
-                            child: DropdownButton(
-                              isExpanded: true,
-                              value: selectedTemp == '' ? null : selectedTemp,
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.grey.shade400, width: 2),
                               borderRadius: BorderRadius.circular(8),
-                              autofocus: false,
-                              items: templateModel!.data
-                                  .map<DropdownMenuItem<String>>((e) {
-                                return DropdownMenuItem<String>(
-                                  onTap: () {
-                                    selectTemplate = e.name;
-                                  },
-                                  value: e.id,
-                                  child: SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.35,
-                                    child: Text(
-                                      e.name,
-                                      overflow: TextOverflow.ellipsis,
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton(
+                                isExpanded: true,
+                                value: selectedTemp == '' ? null : selectedTemp,
+                                borderRadius: BorderRadius.circular(8),
+                                autofocus: false,
+                                items: templateModel!.data
+                                    .map<DropdownMenuItem<String>>((e) {
+                                  return DropdownMenuItem<String>(
+                                    onTap: () {
+                                      selectTemplate = e.name;
+                                    },
+                                    value: e.id,
+                                    child: SizedBox(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.35,
+                                      child: Text(
+                                        e.name,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                  );
+                                }).toList(),
+                                onChanged: (res) async {
+                                  setState(() {
+                                    templateLoading = true;
+                                  });
+                                  selectedTemp = res.toString();
+                                  await getTemplateContents(selectedTemp);
+                                  await getTemplateMedia(
+                                      templateContentModel!.data.format);
+                                  setState(() {
+                                    templateLoading = false;
+                                  });
+                                },
+                                hint: const Text(
+                                  'Select template',
+                                  textAlign: TextAlign.left,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                );
-                              }).toList(),
-                              onChanged: (res) async {
-                                setState(() {
-                                  templateLoading = true;
-                                });
-                                selectedTemp = res.toString();
-                                await getTemplateContents(selectedTemp);
-                                await getTemplateMedia(
-                                    templateContentModel!.data.format);
-                                setState(() {
-                                  templateLoading = false;
-                                });
-                              },
-                              hint: const Text(
-                                'Select template',
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
                             ),
@@ -2681,31 +2695,18 @@ class _ChatScreenState extends State<ChatScreen> {
                         backgroundColor: ColorConstant.black,
                       ),
                       onPressed: () async {
-                        if (argList == [] || _isValid) {
-                          if (mounted) {
-                            setState(() {
-                              buttonStatus = true;
-                            });
-                          }
-                          if (templateContentModel!.data.format == 'TEXT' ||
-                              templateContentModel!.data.format == '' &&
-                                  templateSelected == true) {
-                            await sendingTemplateMessage(false, 'normal');
+                        if (templateSelected) {
+                          if (_isValid == false && argList.isNotEmpty) {
+                            Common.toastMessaage(
+                                "Arguments canot be empty", Colors.red);
                           } else {
-                            await sendingTemplateMessage(
-                                true,
-                                isFilemanager == true
-                                    ? 'file_manager'
-                                    : 'normal');
-                          }
-                          if (mounted) {
-                            setState(() {
-                              buttonStatus = false;
+                            templateConfirm(context).then((_) {
+                              setState(() {});
                             });
                           }
                         } else {
                           Common.toastMessaage(
-                              "Arguments canot be empty", Colors.red);
+                              "Select a template ", Colors.red);
                         }
                       },
                       child: const Text(
@@ -2780,8 +2781,80 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Future<dynamic> templateConfirm(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Send Template !'),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () async {
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Cancel"),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                buttonStatus == false
+                    ? ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white),
+                        onPressed: () async {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            setState(() {
+                              buttonStatus = true;
+                            });
+                          }
+                          if (templateContentModel!.data.format == 'TEXT' ||
+                              templateContentModel!.data.format == '' &&
+                                  templateSelected == true) {
+                            await sendingTemplateMessage(false, 'normal');
+                          } else {
+                            await sendingTemplateMessage(
+                                true,
+                                isFilemanager == true
+                                    ? 'file_manager'
+                                    : 'normal');
+                          }
+                          if (mounted) {
+                            setState(() {
+                              buttonStatus = false;
+                            });
+                          }
+                        },
+                        child: const Text("Confirm"),
+                      )
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorConstant.black,
+                        ),
+                        onPressed: () {},
+                        child: const Text(
+                          'Sending...',
+                          style: TextStyle(color: ColorConstant.white),
+                        ),
+                      ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
   Future<dynamic> selectImage(BuildContext context) {
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(builder: (context, setState) {
@@ -3025,6 +3098,11 @@ class _ChatScreenState extends State<ChatScreen> {
       argList = List.generate(argCount, (index) => '');
     } else {
       Common.toastMessaage(sendTemplateMessageModel!.message, Colors.red);
+    }
+    if (mounted) {
+      setState(() {
+        buttonStatus = false;
+      });
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/is_customer_exist.dart';
 import 'package:login2/models/clients/receiptDeleteModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
+import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/models/expense/bank_acc_list.dart';
 import 'package:login2/models/expense/exp_category_list.dart';
 import 'package:login2/models/expense/exp_history.dart';
@@ -17,10 +18,12 @@ import 'package:login2/models/expense/expense_post.dart';
 import 'package:login2/models/expense/pending_expense.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
+import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/models/officialWhatsapp/campaign_sample_model.dart';
 import 'package:login2/models/officialWhatsapp/message_view_status.dart';
+import 'package:login2/models/officialWhatsapp/whatsapp_contact_list.dart';
 import 'package:login2/models/product_mannagement/delete_category.dart';
 import 'package:login2/models/product_mannagement/delete_product.dart';
 import 'package:login2/models/product_mannagement/delete_subcategory.dart';
@@ -36,6 +39,7 @@ import 'package:login2/models/product_mannagement/update_subcategory.dart';
 import 'package:login2/models/renewal/add_customer_model.dart';
 import 'package:login2/models/renewal/bulk_remind.dart';
 import 'package:login2/models/renewal/delete_renewal.dart';
+import 'package:login2/models/renewal/followup_dashboard_model.dart';
 import 'package:login2/models/renewal/renewal_by_id_model.dart';
 import 'package:login2/models/renewal/hidden_list.dart';
 import 'package:login2/models/renewal/hide_model.dart';
@@ -46,6 +50,7 @@ import 'package:login2/models/renewal/reminder_history_model.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
 import 'package:login2/models/renewal/renewal_details.dart';
 import 'package:login2/models/renewal/renewal_followup_details.dart';
+import 'package:login2/models/renewal/renewal_followup_list.dart';
 import 'package:login2/models/renewal/renewal_list.dart';
 import 'package:login2/models/renewal/rivert_client.dart';
 import 'package:login2/models/search/search.dart';
@@ -114,7 +119,6 @@ import '../models/callLogs/callLogUploadModel.dart';
 import '../models/callLogs/callLogUploadPermissionUpdateModel.dart';
 import '../models/callLogs/deleteCallHistoryModel.dart';
 import '../models/clients/addClientsModel.dart';
-import '../models/clients/addInvoiceCheckModel.dart';
 import '../models/clients/addInvoiceModel.dart';
 import '../models/clients/branchListModel.dart';
 import '../models/clients/customerListModel.dart';
@@ -205,14 +209,6 @@ import '../models/verifyPhoneModel.dart';
 class HttpService {
   static final Dio _dio = Dio();
 
-  // static String get baseUrl => Platform.isIOS
-  //     ? "https://account.login2.in/index.php/Mobile_app_api_ios_v1/"
-  //     : "https://account.login2.in/index.php/Mobile_app_api_v1/";
-
-  // static String get baseUrl => Platform.isIOS
-  //     ? "https://account.login2.in/index.php/Mobile_app_api_ios_v3/"
-  //     : "${await Config.getUrl()}";
-
   static Future configure(token) async {
     var params = {
       "token": token,
@@ -245,12 +241,14 @@ class HttpService {
   static Future forceUpdate() async {
     try {
       var result = await _dio.get(
-        "https://account.login2.in/serverAuth.php",
+        "https://login2.co.in/serverAuth.php",
         // options: Options(receiveTimeout: const Duration(seconds: 30)),
       );
       if (kDebugMode) {}
-      UpdateModel model = UpdateModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        UpdateModel model = UpdateModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -270,6 +268,7 @@ class HttpService {
 
   static Future login(
       String username, String pass, String firebaseToken) async {
+    log("${await Config.getUrl()}login");
     var params = {
       "phoneNumber": username,
       "password": pass,
@@ -278,7 +277,6 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}login",
           queryParameters: params);
-
       if (result.statusCode == 200) {
         LoginModel model = LoginModel.fromJson(result.data);
         return model;
@@ -485,25 +483,24 @@ class HttpService {
   }
 
   static Future addLeads(
-    token,
-    branchId,
-    clientName,
-    leadType,
-    leadSubType,
-    contactNo,
-    staffId,
-    cost,
-    priorityId,
-    address,
-    remark,
-    callResultId,
-    nextFollowupDate,
-    descriptions,
-    code,
-    checked,
-    timeBefore,
-    leadSource
-  ) async {
+      token,
+      branchId,
+      clientName,
+      leadType,
+      leadSubType,
+      contactNo,
+      staffId,
+      cost,
+      priorityId,
+      address,
+      remark,
+      callResultId,
+      nextFollowupDate,
+      descriptions,
+      code,
+      checked,
+      timeBefore,
+      leadSource) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -511,7 +508,6 @@ class HttpService {
       'call_result_id': callResultId,
       'lead_category_id': leadType,
       'lead_sub_category_id': leadSubType,
-      'lead_source_id': leadSource,
       'clientName': clientName,
       'contactNumber': contactNo,
       'address': address,
@@ -523,7 +519,7 @@ class HttpService {
       "additionalFields": jsonEncode(descriptions),
       "reminder": checked,
       "time_before": timeBefore,
-      // "lead_source":leadSource
+      "lead_source_id": leadSource
     });
 
     try {
@@ -733,7 +729,8 @@ class HttpService {
       paidAmount,
       collectedStaff,
       isDiff,
-      renProducts) async {
+      renProducts,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -770,6 +767,7 @@ class HttpService {
       "collected_staff": collectedStaff,
       "next_cost_diff": isDiff,
       "next_renewal_product": jsonEncode(renProducts),
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}add_lead_followup",
@@ -804,7 +802,8 @@ class HttpService {
       paidAmount,
       collectedStaff,
       isDiff,
-      renProducts) async {
+      renProducts,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "invoice_remarks": invoiceRemarks,
@@ -828,6 +827,7 @@ class HttpService {
       "collected_staff": collectedStaff,
       "next_cost_diff": isDiff,
       "next_renewal_product": jsonEncode(renProducts),
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post(
@@ -898,22 +898,21 @@ class HttpService {
   }
 
   static Future editLeads(
-    token,
-    callMasterId,
-    branchId,
-    clientName,
-    leadType,
-    leadSubTypeId,
-    contactNo,
-    staffId,
-    cost,
-    priorityId,
-    address,
-    remark,
-    descriptions,
-    code,
-    // leadSource
-  ) async {
+      token,
+      callMasterId,
+      branchId,
+      clientName,
+      leadType,
+      leadSubTypeId,
+      contactNo,
+      staffId,
+      cost,
+      priorityId,
+      address,
+      remark,
+      descriptions,
+      code,
+      leadSource) async {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
@@ -929,7 +928,7 @@ class HttpService {
       'call_master_id': callMasterId,
       'country_code': code,
       "additionalFields": jsonEncode(descriptions),
-      // "lead_source":leadSource
+      "lead_source_id": leadSource
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}edit_lead_data",
@@ -1037,12 +1036,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}lead_bulk_delete",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       BulkDeleteLeadModel model = BulkDeleteLeadModel.fromJson(result.data);
 
       return model;
@@ -1056,12 +1050,7 @@ class HttpService {
       var result = await _dio.post(
           "${await Config.getUrl()}bulk_transfer_leads",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       BulkTransferLeadModel model = BulkTransferLeadModel.fromJson(result.data);
 
       return model;
@@ -1074,12 +1063,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}lead_bulk_message",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       AddBulkContactGroupModel model =
           AddBulkContactGroupModel.fromJson(result.data);
 
@@ -1099,7 +1083,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_cloud_call",
           data: formData);
-      // print(result);
+      // t(result);
       CloudCallModel model = CloudCallModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -1108,7 +1092,7 @@ class HttpService {
   }
 
   static Future callHistory(token, userId, fromDate, toDate) async {
-    //print(userId);
+    //t(userId);
     var formData = FormData.fromMap({
       "token": token,
       "staff_id": userId,
@@ -1119,7 +1103,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}call_history",
           data: formData);
-      //print(result);
+      //t(result);
       CallHistoryModel model = CallHistoryModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -1135,8 +1119,8 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}search_lead_clients",
           queryParameters: params);
-      //  print(params);
-      //print(result);
+      //  t(params);
+      //t(result);
 
       SearchModel model = SearchModel.fromJson(result.data);
 
@@ -1152,13 +1136,13 @@ class HttpService {
     var params = {
       "token": token,
     };
-    //print(params);
+    //t(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}get_package_menus",
           queryParameters: params);
 
       MenuModel model = MenuModel.fromJson(result.data);
-      // print(result);
+      // t(result);
 
       return model;
     } catch (e) {
@@ -1175,7 +1159,7 @@ class HttpService {
     try {
       var result = await _dio
           .post("${await Config.getUrl()}designation_details", data: formData);
-      //print(result);
+      //t(result);
       EditDesignationDetailsModel model =
           EditDesignationDetailsModel.fromJson(result.data);
       return model;
@@ -1185,16 +1169,11 @@ class HttpService {
   }
 
   static Future postSubMenu(body) async {
-    //print(body);
+    //t(body);
     try {
       var result = await _dio.post("${await Config.getUrl()}post_designation",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       PostSubmenuModel model = PostSubmenuModel.fromJson(result.data);
 
       return model;
@@ -1328,7 +1307,7 @@ class HttpService {
     }
   }
 
-  static Future updateUploadImages(formData) async {
+  static Future updateStaffImage(formData) async {
     try {
       var result = await _dio.post("${await Config.getUrl()}update_staff_image",
           data: formData);
@@ -1340,9 +1319,9 @@ class HttpService {
     }
   }
 
-  static Future deleteStaff(token, staffId) async {
+  static Future deleteStaff(staffId) async {
     var formData = FormData.fromMap({
-      "token": token,
+      "token": await Common.getSharedPref("token"),
       "staffUserId": staffId,
     });
 
@@ -1380,9 +1359,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}staff_details",
           queryParameters: params);
-      if (kDebugMode) {
-        print(result);
-      }
+
       StaffDetailsModel model = StaffDetailsModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -1464,8 +1441,10 @@ class HttpService {
       log("${await Config.getUrl()}get_active_package");
       var result = await _dio.post("${await Config.getUrl()}get_active_package",
           data: formData);
-      DashboardModel model = DashboardModel.fromJson(result.data);
-      return model;
+      if (result.statusCode == 200) {
+        DashboardModel model = DashboardModel.fromJson(result.data);
+        return model;
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -2027,12 +2006,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_phone_call_log",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       if (result.statusCode == 200) {
         CallLogUploadModel model = CallLogUploadModel.fromJson(result.data);
         return model;
@@ -2066,12 +2040,7 @@ class HttpService {
       var result = await _dio.post(
           "${await Config.getUrl()}delete_phone_call_log",
           data: jsonEncode(body));
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       DeleteCallHistoryModel model =
           DeleteCallHistoryModel.fromJson(result.data);
 
@@ -2181,12 +2150,7 @@ class HttpService {
     try {
       var result =
           await _dio.post("${await Config.getUrl()}postInvoice", data: body);
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       if (result.statusCode == 200) {
         AddInvoiceModel model = AddInvoiceModel.fromJson(result.data);
         return model;
@@ -2200,12 +2164,7 @@ class HttpService {
     try {
       var result =
           await _dio.post("${await Config.getUrl()}updateInvoice", data: body);
-      if (kDebugMode) {
-        print(body);
-      }
-      if (kDebugMode) {
-        print(result);
-      }
+
       EditInvoiceModel model = EditInvoiceModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -2410,7 +2369,8 @@ class HttpService {
       paidAmount,
       collectedBy,
       paymentMethod,
-      templateImage) async {
+      templateImage,
+      targetGroup) async {
     var formData = FormData.fromMap({
       'token': token,
       'invoice_id': invoiceId,
@@ -2422,7 +2382,8 @@ class HttpService {
       'payment_method': paymentMethod,
       'upload_file': templateImage != null
           ? await MultipartFile.fromFile(templateImage.toString())
-          : ''
+          : '',
+      "target_group": jsonEncode(targetGroup),
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postReceipt",
@@ -2453,7 +2414,7 @@ class HttpService {
   }
 
   static Future editReceipt(token, receiptId, receiptDate, paidAmount,
-      collectedBy, paymentMethod, templateImage) async {
+      collectedBy, paymentMethod, templateImage, targetGroup) async {
     var formData = FormData.fromMap({
       'token': token,
       'receipt_id': receiptId,
@@ -2464,7 +2425,8 @@ class HttpService {
       'payment_method': paymentMethod,
       'upload_file': templateImage != null
           ? await MultipartFile.fromFile(templateImage.toString())
-          : ''
+          : '',
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}updateReceipt",
@@ -2749,7 +2711,7 @@ class HttpService {
 
       return campaignsListModel;
     } catch (e) {
-      // print("Exception: $e");
+      // t("Exception: $e");
     }
   }
 
@@ -2775,7 +2737,7 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
     } catch (e) {
-      // print("Exception: $e");
+      // t("Exception: $e");
     } finally {}
   }
 
@@ -2948,7 +2910,7 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
     } catch (e) {
-      // print("Exception: $e");
+      // t("Exception: $e");
     } finally {}
   }
 
@@ -2971,7 +2933,7 @@ class HttpService {
       } else if (response.statusCode == 500) {
       } else {}
     } catch (e) {
-      // print("Exception: $e");
+      // t("Exception: $e");
     } finally {}
   }
 
@@ -2994,9 +2956,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}call_log_checking",
           queryParameters: body);
-      if (kDebugMode) {
-        print(result);
-      }
+
       CallLogUploadPermissionModel model =
           CallLogUploadPermissionModel.fromJson(result.data);
       return model;
@@ -3010,9 +2970,7 @@ class HttpService {
       var result = await _dio.get(
           "${await Config.getUrl()}update_user_call_permission",
           queryParameters: body);
-      if (kDebugMode) {
-        print(result);
-      }
+
       CallLogUploadPermissionUpdateModel model =
           CallLogUploadPermissionUpdateModel.fromJson(result.data);
       return model;
@@ -3276,15 +3234,16 @@ class HttpService {
   ///// Staff Dashboard //////
 
   static Future<UserDashboardModel?> getStaffDashboard(
-      String userId, String type) async {
+      String userId, String fDate, String tDate) async {
     var params = {
       "token": await Common.getSharedPref('token'),
-      "type": type,
+      "from_date": fDate,
+      "to_date": tDate,
       "user_id": userId
     };
     try {
       final response = await _dio.get(
-          "${await Config.getUrl()}/view_staff_dashboard",
+          "${await Config.getUrl()}view_staff_dashboard",
           queryParameters: params);
 
       if (response.statusCode == 200) {
@@ -3295,6 +3254,7 @@ class HttpService {
         return null;
       }
     } catch (e) {
+      log(e.toString());
       return null;
     }
   }
@@ -3309,7 +3269,7 @@ class HttpService {
     };
     try {
       final response = await _dio.get(
-          "${await Config.getUrl()}/view_staff_call_details",
+          "${await Config.getUrl()}view_staff_call_details",
           queryParameters: params);
 
       if (response.statusCode == 200) {
@@ -3320,6 +3280,7 @@ class HttpService {
         return null;
       }
     } catch (e) {
+      log(e.toString());
       return null;
     }
   }
@@ -3523,7 +3484,9 @@ class HttpService {
       paidAmount,
       payStatus,
       payMethod,
-      collectedStaff) async {
+      collectedStaff,
+      createInvoice,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "product_details": jsonEncode(renewalProducts),
@@ -3547,6 +3510,8 @@ class HttpService {
       "payment_status": payStatus,
       "payment_method": payMethod,
       "collected_staff": collectedStaff,
+      "create_invoice": createInvoice,
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post(
@@ -3594,7 +3559,9 @@ class HttpService {
       paidAmount,
       payStatus,
       payMethod,
-      collectedStaff) async {
+      collectedStaff,
+      createInvoice,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "branch_id": branchId ?? "",
@@ -3629,6 +3596,8 @@ class HttpService {
       "payment_status": payStatus,
       "payment_method": payMethod,
       "collected_staff": collectedStaff,
+      "create_invoice": createInvoice,
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postCustomRenewal",
@@ -3669,27 +3638,22 @@ class HttpService {
   }
 
   static Future updateCustomRenewal(
-      rowId,
-      customerId,
-      branchId,
-      startDate,
-      endDate,
-      renewalType,
-      renewalProduct,
-      templateId,
-      remarks,
-      invoiceId,
-      paymentStatus,
-      paymentMethod,
-      cartId,
-      subTotal,
-      estimatedTax,
-      discountAmount,
-      shippingAmount,
-      totalAmount,
-      paidAmount,
-      invoiceDate,
-      collectedStaff) async {
+    rowId,
+    customerId,
+    branchId,
+    startDate,
+    endDate,
+    renewalType,
+    renewalProduct,
+    templateId,
+    remarks,
+    cartId,
+    subTotal,
+    estimatedTax,
+    discountAmount,
+    shippingAmount,
+    totalAmount,
+  ) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_type": renewalType,
@@ -3703,18 +3667,12 @@ class HttpService {
       "end_date": endDate,
       "remarks": remarks,
       "branch_id": branchId ?? "",
-      "invoice_id": invoiceId,
-      "invoice_date": invoiceDate,
       "sub_total": subTotal,
       "estimated_tax": estimatedTax,
       "discount_amount": discountAmount,
       "shipping_amount": shippingAmount,
       "total_amount_paid": totalAmount,
       "cost": totalAmount,
-      "amount_paid_customer": paymentStatus == "unpaid" ? "0" : paidAmount,
-      "payment_status": paymentStatus ?? "",
-      "payment_method": paymentMethod ?? "",
-      "collected_staff": collectedStaff ?? "",
     });
     try {
       var result = await _dio
@@ -3879,28 +3837,28 @@ class HttpService {
   }
 
   static Future postRenewCustom(
-    rowId,
-    customerId,
-    branchId,
-    startDate,
-    endDate,
-    renewalType,
-    renewalProduct,
-    templateId,
-    remarks,
-    invoiceId,
-    paymentStatus,
-    paymentMethod,
-    cartId,
-    subTotal,
-    estimatedTax,
-    discountAmount,
-    shippingAmount,
-    totalAmount,
-    paidAmount,
-    invoiceDate,
-    collectedStaff,
-  ) async {
+      rowId,
+      customerId,
+      branchId,
+      startDate,
+      endDate,
+      renewalType,
+      renewalProduct,
+      templateId,
+      remarks,
+      invoiceId,
+      paymentStatus,
+      paymentMethod,
+      cartId,
+      subTotal,
+      estimatedTax,
+      discountAmount,
+      shippingAmount,
+      totalAmount,
+      paidAmount,
+      invoiceDate,
+      collectedStaff,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "renewal_type": renewalType,
@@ -3924,6 +3882,7 @@ class HttpService {
       "payment_status": paymentStatus ?? "",
       "payment_method": paymentMethod ?? "",
       "collected_staff": collectedStaff ?? "",
+      "target_group": jsonEncode(targetGroup)
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postRenewDetails",
@@ -3979,6 +3938,25 @@ class HttpService {
       if (result.statusCode == 200) {
         ReminderHistoryModel response =
             ReminderHistoryModel.fromJson(result.data);
+        return response;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getRenewalFollowUpDashboard(String id) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "renewal_id": id,
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getRenewalFollowUpDashboard",
+          data: formData);
+      if (result.statusCode == 200) {
+        FollowupDashboardModel response =
+            FollowupDashboardModel.fromJson(result.data);
         return response;
       }
     } catch (e) {
@@ -4080,7 +4058,6 @@ class HttpService {
       timeBefore,
       callResponseId,
       reasonId,
-      createSales,
       invoiceDate,
       productList,
       reminderTemplate,
@@ -4094,7 +4071,8 @@ class HttpService {
       shippingAmount,
       paymentMethod,
       paidAmount,
-      collectedStaff) async {
+      collectedStaff,
+      targetGroup) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -4109,7 +4087,6 @@ class HttpService {
       "reminder": checked,
       "time_before": timeBefore,
       "reason_id": reasonId,
-      "create_sales": createSales,
       "invoice_date": invoiceDate,
       "product_list": leadStatusId == '2' ? "" : jsonEncode(productList),
       "follow_up_products": leadStatusId == '2' ? jsonEncode(productList) : "",
@@ -4125,6 +4102,7 @@ class HttpService {
       "payment_method": paymentMethod,
       "amount_paid_customer": paidAmount,
       "collected_staff": collectedStaff,
+      "target_group": jsonEncode(targetGroup)
     });
 
     try {
@@ -4174,7 +4152,7 @@ class HttpService {
   static Future getProductLists(String subId) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-      "sub_category_id": subId
+      // "sub_category_id": subId
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getProductLists",
@@ -4607,7 +4585,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4639,7 +4617,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4659,7 +4637,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4672,7 +4650,8 @@ class HttpService {
       "token": await Common.getSharedPref('token'),
     };
     try {
-      var result = await _dio.get("${await Config.getUrl()}getPendingExpense",
+      var result = await _dio.get(
+          "${await Config.getUrl()}list_expense_category",
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
@@ -4723,6 +4702,23 @@ class HttpService {
     }
   }
 
+  static Future getAccountHead() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+    });
+    try {
+      var result = await _dio
+          .post("${await Config.getUrl()}getAccountHeadLists", data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        AccountHeadModel model = AccountHeadModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future addExpenseCategory(
     String cat,
   ) async {
@@ -4736,7 +4732,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4756,7 +4752,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4775,7 +4771,7 @@ class HttpService {
           queryParameters: params);
       if (kDebugMode) {}
       if (result.statusCode == 200) {
-        ExpensePostModel model = ExpensePostModel.fromJson(result.data);
+        CommonResponse model = CommonResponse.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -4830,6 +4826,115 @@ class HttpService {
           data: formData);
       if (result.statusCode == 200) {
         SearchDataModel model = SearchDataModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getRenewalFollowUp(
+      fdate, tdate, page, pageSize, products, clientId, status) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "from_date": fdate == "Tap to select" ? "" : fdate,
+      "to_date": tdate == "Tap to select" ? "" : tdate,
+      "page": page,
+      "page_size": pageSize,
+      "product_id": jsonEncode(products),
+      "client_id": clientId,
+      "renewal_status": status
+    });
+    try {
+      log(products.toString());
+      var result = await _dio.post("${await Config.getUrl()}getRenewalFollowUp",
+          data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        RenewalFollowupListModel model =
+            RenewalFollowupListModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future postBranch(
+    String branch,
+  ) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "branch_name": branch,
+    };
+    try {
+      var result = await _dio.get("${await Config.getUrl()}postBranch",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        CommonResponse model = CommonResponse.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future updateBranch(String branch, String branchId) async {
+    var params = {
+      "token": await Common.getSharedPref('token'),
+      "branch_name": branch,
+      "branch_id": branchId
+    };
+    try {
+      var result = await _dio.get(
+          "${await Config.getUrl()}expense_category_edit",
+          queryParameters: params);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        CommonResponse model = CommonResponse.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getWhatsappGroupid(
+      String name, String countryCode, String phoneNumber) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "client_name": name,
+      "country_code": countryCode,
+      "phone_number": phoneNumber
+    });
+    try {
+      var result =
+          await _dio.post("${await Config.getUrl()}getChatId", data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        GetWhatsappChat model = GetWhatsappChat.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getWhatsappContacts(
+      int page, int pageSize, String searchKey) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "page": page,
+      "page_size": pageSize,
+      "search_key": searchKey
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getContacts",
+          data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        WhatsappContacts model = WhatsappContacts.fromJson(result.data);
         return model;
       }
     } catch (e) {

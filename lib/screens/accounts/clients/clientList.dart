@@ -270,7 +270,8 @@ class _ClientListState extends State<ClientList> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.only(
+                              top: 4.0, left: 8.0, right: 8.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -424,7 +425,7 @@ class _ClientListState extends State<ClientList> {
                                                                         BorderRadius
                                                                             .circular(
                                                                                 2),
-                                                                    color: items![index].totalDue ==
+                                                                    color: items[index].totalDue ==
                                                                             'Paid'
                                                                         ? const Color(
                                                                             0xffe6fbec)
@@ -448,7 +449,7 @@ class _ClientListState extends State<ClientList> {
                                                                             .toString(),
                                                                         style:
                                                                             TextStyle(
-                                                                          color: items![index].totalDue == 'Paid'
+                                                                          color: items[index].totalDue == 'Paid'
                                                                               ? Colors.green
                                                                               : Colors.red,
                                                                           fontSize:
@@ -634,7 +635,7 @@ class _ClientListState extends State<ClientList> {
                                                                               .width *
                                                                           0.38,
                                                                       child: Text(
-                                                                          'Created by:${items![index].createdBy}',
+                                                                          'Created by:${items[index].createdBy}',
                                                                           maxLines:
                                                                               1,
                                                                           overflow: TextOverflow
@@ -696,7 +697,7 @@ class _ClientListState extends State<ClientList> {
                                                                       builder: (context) => AddInvoice(
                                                                           widget
                                                                               .token,
-                                                                          items![index]
+                                                                          items[index]
                                                                               .id
                                                                               .toString())),
                                                                 ).then((_) {
@@ -739,7 +740,7 @@ class _ClientListState extends State<ClientList> {
                                                                       builder: (context) => EditClients(
                                                                           widget
                                                                               .token,
-                                                                          items![index]
+                                                                          items[index]
                                                                               .id
                                                                               .toString())),
                                                                 ).then((_) {
@@ -798,17 +799,19 @@ class _ClientListState extends State<ClientList> {
                                                                           TextButton(
                                                                               onPressed: () async {
                                                                                 Common.showProgressDialog(context, "Loading..");
-                                                                                DeleteMainClientModel deleteClients = await HttpService.deleteMainClients(widget.token, items![index].id.toString());
+                                                                                DeleteMainClientModel deleteClients = await HttpService.deleteMainClients(widget.token, items[index].id.toString());
                                                                                 if (deleteClients.data == true) {
                                                                                   Common.toastMessaage(deleteClients.message, Colors.green);
+                                                                                  getData();
                                                                                   if (context.mounted) {
                                                                                     Navigator.pop(context);
                                                                                     Navigator.pop(context);
                                                                                   }
                                                                                 } else {
-                                                                                  Common.toastMessaage(deleteClients.message, Colors.red);
                                                                                   if (context.mounted) {
                                                                                     Navigator.of(context).pop();
+                                                                                    Navigator.of(context).pop();
+                                                                                    deleteFailedPopup(context, index, deleteClients.message.toString());
                                                                                   }
                                                                                 }
                                                                               },
@@ -938,5 +941,45 @@ class _ClientListState extends State<ClientList> {
                 ],
               ),
             ));
+  }
+
+  Future<dynamic> deleteFailedPopup(
+      BuildContext context, int index, String message) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: Padding(
+              padding: const EdgeInsets.only(top: 8.0, right: 6.0, left: 6.0),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.priority_high,
+                    size: 60,
+                    color: Colors.red.shade400,
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    message,
+                    style: const TextStyle(fontSize: 15, color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(color: Colors.red),
+                  )),
+            ],
+          );
+        });
   }
 }

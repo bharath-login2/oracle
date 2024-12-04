@@ -2,7 +2,6 @@
 //
 //     final hiddenListModel = hiddenListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 HiddenListModel hiddenListModelFromJson(String str) => HiddenListModel.fromJson(json.decode(str));

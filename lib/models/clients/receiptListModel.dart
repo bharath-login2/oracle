@@ -2,7 +2,6 @@
 //
 //     final receiptListModel = receiptListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ReceiptListModel receiptListModelFromJson(String str) => ReceiptListModel.fromJson(json.decode(str));

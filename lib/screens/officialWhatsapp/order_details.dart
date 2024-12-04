@@ -88,7 +88,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                       height: 10,
                     ),
                     const Text(
-                      "Login2",
+                      "Lead Plus",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                     ),
@@ -239,9 +239,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                     Container(
                       height: 40,
                       width: double.maxFinite,
-                      decoration: const BoxDecoration(
-                                
-                      ),
+                      decoration: const BoxDecoration(),
                       child: RawMaterialButton(
                         onPressed: () {},
                         child: const Center(

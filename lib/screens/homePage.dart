@@ -6,31 +6,25 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/clients/clientList.dart';
-import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
-import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
-import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
-import '../../screens/authentication/login.dart';
 import 'bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/settings/whatsappSettings.dart';
 import '../../screens/userManagement/viewUsers.dart';
-import '../../screens/whatsAppGroup/groupList.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:step_progress_indicator/step_progress_indicator.dart';
 import 'package:text_scroll/text_scroll.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'accounts/clients/invoiceList.dart';
 import 'complaints/complaint_list_screen.dart';
 import 'leadManagement/allReport.dart';
 import 'officialWhatsapp/chat_home_screen.dart';
@@ -162,29 +156,26 @@ class _HomePageState extends State<HomePage> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              InkWell(
-                                onTap: () => logout(context),
-                                child: Container(
-                                  width: 43,
-                                  height: 43,
-                                  decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          blurRadius: 2,
-                                          color: Colors.grey.shade800,
-                                          offset: const Offset(0, 2.0),
-                                        )
-                                      ],
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFF2191ce)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Image.asset(
-                                      "assets/icons/user.png",
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              if (userDashboard != null)
+                                InkWell(
+                                    onTap: () => logout(context),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              blurRadius: 2,
+                                              color: Colors.grey.shade800,
+                                              offset: const Offset(0, 2.0),
+                                            )
+                                          ],
+                                          shape: BoxShape.circle,
+                                          color: const Color(0xFF2191ce)),
+                                      child: CircleAvatar(
+                                        backgroundImage: NetworkImage(
+                                          userDashboard!.data!.profilePic!,
+                                        ),
+                                      ),
+                                    )),
                               const SizedBox(
                                 width: 15,
                               ),
@@ -522,7 +513,8 @@ class _HomePageState extends State<HomePage> {
                                   shrinkWrap: true,
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
+                                          crossAxisCount: 3,
+                                          crossAxisSpacing: 4,
                                           childAspectRatio: 1.3),
                                   padding: EdgeInsets.zero,
                                   itemCount:
@@ -747,17 +739,16 @@ class _HomePageState extends State<HomePage> {
                                             } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'invoices') {
-                                                   Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  AccountsDashboard(
-                                                                token: widget
-                                                                    .token
-                                                                    .toString(),
-                                                              ),
-                                                            ));
-                                              } else if (userDashboard!.data!
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        AccountsDashboard(
+                                                      token: widget.token
+                                                          .toString(),
+                                                    ),
+                                                  ));
+                                            } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'reports') {
                                               showDialog(
@@ -971,8 +962,14 @@ class _HomePageState extends State<HomePage> {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const ProductCategories()));
+                                                    builder: (context) =>
+                                                        ProductList(
+                                                      catId: "widget.catId",
+                                                      subCatId: "11",
+                                                      title: "",
+                                                      subCat: " widget.title",
+                                                    ),
+                                                  ));
                                             } else if (userDashboard!.data!
                                                     .modules![i].menuName ==
                                                 'whatsapp') {
@@ -1030,8 +1027,7 @@ class _HomePageState extends State<HomePage> {
                       width: 25), //icon inside button
                 ),
                 bottomNavigationBar: configure != null
-                    ? BottomNavigation(
-                        widget.token!, configure!.data!.whatsappConfigured,
+                    ? BottomNavigation(widget.token!,
                         phoneCallLogPermission: phoneCallLogPermission)
                     : const SizedBox())
             : Scaffold(

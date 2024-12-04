@@ -171,7 +171,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
               padding: EdgeInsets.zero, // Set padding to zero
               child: officialMessageModel != null && templateModel != null
                   ? Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const SizedBox(
@@ -333,14 +333,14 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                                         "RENEW") {
                                   return Padding(
                                     padding: EdgeInsets.only(
-                                        bottom: index == 0 ? 80.0 : 0.0,
+                                        bottom: index == 0 ? 90.0 : 0.0,
                                         top: 4.0),
                                     child: chatWidget2(index, context),
                                   );
                                 } else {
                                   return Padding(
                                     padding: EdgeInsets.only(
-                                        bottom: index == 0 ? 80.0 : 0.0,
+                                        bottom: index == 0 ? 90.0 : 0.0,
                                         top: 4.0),
                                     child: chatWidget1(index, context),
                                   );
@@ -372,7 +372,8 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
         ),
         bottomSheet: officialMessageModel != null && templateModel != null
             ? Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.only(
+                    left: 8.0, right: 8.0, top: 8.0, bottom: 20.0),
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: GestureDetector(
@@ -2202,7 +2203,10 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                         backgroundColor: ColorConstant.black,
                       ),
                       onPressed: () async {
-                        if (argList == [] || _isValid) {
+                        if (_isValid == false && argList.isNotEmpty) {
+                          Common.toastMessaage(
+                              "Arguments canot be empty", Colors.red);
+                        } else {
                           if (mounted) {
                             setState(() {
                               buttonStatus = true;
@@ -2224,9 +2228,6 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
                               buttonStatus = false;
                             });
                           }
-                        } else {
-                          Common.toastMessaage(
-                              "Argumrnts canot be empty", Colors.red);
                         }
                       },
                       child: const Text(
@@ -2481,7 +2482,7 @@ class _CampaignsChatScreenState extends State<CampaignsChatScreen> {
       baseColor: Colors.grey.shade300,
       highlightColor: Colors.grey.shade100,
       child: Padding(
-        padding: EdgeInsets.only(bottom: i == 0 ? 80.0 : 0),
+        padding: EdgeInsets.only(bottom: i == 0 ? 90.0 : 0),
         child: Column(
           children: [
             Row(

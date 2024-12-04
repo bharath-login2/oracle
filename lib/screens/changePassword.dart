@@ -1,12 +1,8 @@
 import 'package:login2/screens/authentication/login.dart';
-import 'package:login2/screens/leadManagement/dashboard.dart';
-
 import '../../core/common.dart';
 import '../../models/userChangePassword.dart';
-import '../../screens/homePage.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
-
 import '../models/removeUserModel.dart';
 import '../widgets/inputTextFeildWidget.dart';
 
@@ -109,8 +105,7 @@ class _UserChangePasswordState extends State<UserChangePassword> {
                                           await HttpService.removeUser(
                                               widget.token);
                                       if (object.data == true) {
-                                        Common.saveSharedPref(
-                                            "Logout", "success");
+                                        Common.clearSharedPref();
                                         Navigator.of(context)
                                             .pushAndRemoveUntil(
                                                 MaterialPageRoute(

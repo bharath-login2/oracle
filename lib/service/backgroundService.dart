@@ -180,7 +180,7 @@ void showWindow() async {
         if (await FlutterOverlayWindow.isActive()) return;
         await FlutterOverlayWindow.showOverlay(
           enableDrag: true,
-          overlayTitle: "Login2 pro",
+          overlayTitle: "Lead Plus",
           overlayContent: 'Overlay Enabled',
           flag: OverlayFlag.defaultFlag,
           visibility: NotificationVisibility.visibilityPublic,
@@ -238,6 +238,7 @@ void showWindow() async {
                     await HttpService.callLogUpload(body);
                 if (object1.data == true) {
                   log('success');
+                  PhoneStateStatus.NOTHING;
                 } else {
                   log('failure');
                 }
@@ -263,7 +264,7 @@ void showWindow() async {
                   if (object1.data == true) {
                     log('success');
                   } else {
-                    log('failure');
+                    log('failed');
                   }
                 }
               }

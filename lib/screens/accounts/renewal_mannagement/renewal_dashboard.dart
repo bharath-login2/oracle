@@ -1,9 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:login2/core/common.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
-import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/hidden_clients.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/payment_reports.dart';
@@ -12,7 +11,6 @@ import 'package:login2/widgets/renewal_grid_widget.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/grid_shimmer.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class RenewalDashboard extends StatefulWidget {
   const RenewalDashboard({super.key});
@@ -22,21 +20,16 @@ class RenewalDashboard extends StatefulWidget {
 }
 
 class _RenewalDashboardState extends State<RenewalDashboard> {
-  RenewalDashboardModel? dashboard;
+  RenewalDashboardModel? renewalDashboard;
   bool isLoading = true;
   String token = "";
-  List items = [];
-  int page = 1;
-  int pageSize = 20;
-  final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+
   getDashboard() async {
     setState(() {
       isLoading = true;
     });
-    dashboard = await HttpService.renewalDashboard();
-    if (dashboard != null && dashboard!.status == true) {
+    renewalDashboard = await HttpService.renewalDashboard();
+    if (renewalDashboard != null && renewalDashboard!.status == true) {
       setState(() {
         isLoading = false;
       });
@@ -50,140 +43,200 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
   @override
   void initState() {
     getDashboard();
-    itemPositionsListener.itemPositions.addListener(_onLoadMore);
     super.initState();
-  }
-
-  void _onLoadMore() {
-    if (items.length + 20 == page * pageSize &&
-        itemPositionsListener.itemPositions.value.last.index ==
-            items.length - 1) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: true,
-      onPopInvoked: (didPop) async {
-        token = await Common.getSharedPref('token');
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Dashboard(token),
-            ));
-      },
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade200,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              // color: Color(0xFF2a86c9),
-              // image: DecorationImage(
-              //   fit: BoxFit.cover,
-              //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () async {
-                            token = await Common.getSharedPref('token');
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Dashboard(token),
-                                ));
-                          },
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                shape: BoxShape.circle),
-                            child: const Icon(
-                              Icons.arrow_back_ios_outlined,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            // color: Color(0xFF2a86c9),
+            // image: DecorationImage(
+            //   fit: BoxFit.cover,
+            //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          height: 25,
                           width: 25,
-                        ),
-                        const Text(
-                          "Renewal Management",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    PopupMenuButton<String>(
-                      iconColor: Colors.white,
-                      color: Colors.white,
-                      onSelected: (value) {
-                        if (value == "1") {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const HiddenCilientsScreen(),
-                              ));
-                        } else {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PaymentReport(),
-                              ));
-                        }
-                      },
-                      itemBuilder: (BuildContext context) {
-                        return [
-                          const PopupMenuItem<String>(
-                            value: '1',
-                            child: Text('Hidden Clients'),
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white),
+                              shape: BoxShape.circle),
+                          child: const Icon(
+                            Icons.arrow_back_ios_outlined,
+                            color: Colors.white,
+                            size: 16,
                           ),
-                          const PopupMenuItem<String>(
-                            value: '2',
-                            child: Text('Payment Report'),
-                          ),
-                        ];
-                      },
-                    ),
-                  ]),
-            ),
+                        ),
+                      ),
+                      const SizedBox(
+                        width: 25,
+                      ),
+                      const Text(
+                        "Renewal Management",
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  PopupMenuButton<String>(
+                    iconColor: Colors.white,
+                    color: Colors.white,
+                    onSelected: (value) {
+                      if (value == "1") {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const HiddenCilientsScreen(),
+                            )).then((_) {
+                          getDashboard();
+                        });
+                      } else {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PaymentReport(),
+                            )).then((_) {
+                          getDashboard();
+                        });
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: '1',
+                          child: Text('Hidden Clients'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: '2',
+                          child: Text('Payment Report'),
+                        ),
+                      ];
+                    },
+                  ),
+                ]),
           ),
         ),
-        body: SafeArea(
-            child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: isLoading == true
-                ? ShimmerGridView(
-                    type: "s",
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GridView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10.0,
-                          mainAxisSpacing: 10.0,
-                          childAspectRatio: 1.2,
+      ),
+      body: SafeArea(
+          child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: isLoading == true
+              ? ShimmerGridView(
+                  type: "s",
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RenewalFollowupList(
+                                clientId: "",
+                                clientName: "",
+                              ),
+                            )).then((_) {
+                          getDashboard();
+                        });
+                      },
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * .95,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 2,
+                                color: Colors.grey.shade600,
+                                offset: const Offset(0, 2.0),
+                              )
+                            ]),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text("Upcoming Renewals :",
+                                      style: TextStyle(
+                                          color: Colors.blue.shade900,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                    renewalDashboard!.data.upcomingRenewals,
+                                    style: TextStyle(
+                                        color: Colors.blue.shade900,
+                                        fontSize: 25,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CustomRenewal(),
+                                      )).then((_) {
+                                    getDashboard();
+                                  });
+                                },
+                                label: const Text(
+                                  "Add Renewal",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                    elevation: 1, backgroundColor: Colors.blue),
+                              )
+                            ],
+                          ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * .2,
+                      width: MediaQuery.of(context).size.width,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        // gridDelegate:
+                        //     const SliverGridDelegateWithFixedCrossAxisCount(
+                        //   crossAxisCount: 2,
+                        //   crossAxisSpacing: 10.0,
+                        //   mainAxisSpacing: 10.0,
+                        //   childAspectRatio: 1.2,
+                        // ),
                         shrinkWrap: true,
                         children: [
                           GestureDetector(
@@ -195,23 +248,25 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Current Month",
                                       searchKey: "current_month",
                                       searchMonth: "",
-                                      renewed: int.parse(dashboard!
+                                      renewed: int.parse(renewalDashboard!
                                           .data.currentMonthData.paidCount),
                                     ),
-                                  ));
+                                  )).then((_) {
+                                getDashboard();
+                              });
                             },
                             child: RenewalGridItem(
                               title: "Current Month",
-                              paidAmount: dashboard!
+                              paidAmount: renewalDashboard!
                                   .data.currentMonthData.paidAmount
                                   .toString(),
-                              paidCount: dashboard!
+                              paidCount: renewalDashboard!
                                   .data.currentMonthData.paidCount
                                   .toString(),
-                              totalAmount: dashboard!
+                              totalAmount: renewalDashboard!
                                   .data.currentMonthData.totalAmount
                                   .toString(),
-                              totalCount: dashboard!
+                              totalCount: renewalDashboard!
                                   .data.currentMonthData.totalCount
                                   .toString(),
                               color: const Color(0xFF2a86c9),
@@ -226,22 +281,25 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Next Month",
                                       searchKey: "next_month",
                                       searchMonth: "",
-                                      renewed: int.parse(dashboard!
+                                      renewed: int.parse(renewalDashboard!
                                           .data.nextMonthData.paidCount),
                                     ),
-                                  ));
+                                  )).then((_) {
+                                getDashboard();
+                              });
                             },
                             child: RenewalGridItem(
                               title: "Next Month",
-                              paidAmount: dashboard!
+                              paidAmount: renewalDashboard!
                                   .data.nextMonthData.paidAmount
                                   .toString(),
-                              paidCount: dashboard!.data.nextMonthData.paidCount
+                              paidCount: renewalDashboard!
+                                  .data.nextMonthData.paidCount
                                   .toString(),
-                              totalAmount: dashboard!
+                              totalAmount: renewalDashboard!
                                   .data.nextMonthData.totalAmount
                                   .toString(),
-                              totalCount: dashboard!
+                              totalCount: renewalDashboard!
                                   .data.nextMonthData.totalCount
                                   .toString(),
                               color: const Color(0xFF2a86c9),
@@ -256,21 +314,27 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Current Year",
                                       searchKey: "current_year",
                                       searchMonth: "",
-                                      renewed: int.parse(
-                                          dashboard!.data.allData.paidCount),
+                                      renewed: int.parse(renewalDashboard!
+                                          .data.allData.paidCount),
                                     ),
-                                  ));
+                                  )).then((_) {
+                                getDashboard();
+                              });
                             },
                             child: RenewalGridItem(
                               title: "Current Year",
-                              paidAmount:
-                                  dashboard!.data.allData.paidAmount.toString(),
-                              paidCount:
-                                  dashboard!.data.allData.paidCount.toString(),
-                              totalAmount: dashboard!.data.allData.totalAmount
+                              paidAmount: renewalDashboard!
+                                  .data.allData.paidAmount
                                   .toString(),
-                              totalCount:
-                                  dashboard!.data.allData.totalCount.toString(),
+                              paidCount: renewalDashboard!
+                                  .data.allData.paidCount
+                                  .toString(),
+                              totalAmount: renewalDashboard!
+                                  .data.allData.totalAmount
+                                  .toString(),
+                              totalCount: renewalDashboard!
+                                  .data.allData.totalCount
+                                  .toString(),
                               color: const Color(0xFF2a86c9),
                             ),
                           ),
@@ -283,32 +347,38 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                       title: "Expired",
                                       searchMonth: "",
                                       searchKey: "expired",
-                                      renewed: int.parse(dashboard!
+                                      renewed: int.parse(renewalDashboard!
                                           .data.expiredData.paidCount),
                                     ),
-                                  ));
+                                  )).then((_) {
+                                getDashboard();
+                              });
                             },
                             child: RenewalGridItem(
                                 title: "Expired",
-                                paidAmount: dashboard!
+                                paidAmount: renewalDashboard!
                                     .data.expiredData.paidAmount
                                     .toString(),
-                                paidCount: dashboard!.data.expiredData.paidCount
+                                paidCount: renewalDashboard!
+                                    .data.expiredData.paidCount
                                     .toString(),
-                                totalAmount: dashboard!
+                                totalAmount: renewalDashboard!
                                     .data.expiredData.totalAmount
                                     .toString(),
-                                totalCount: dashboard!
+                                totalCount: renewalDashboard!
                                     .data.expiredData.totalCount
                                     .toString(),
                                 color: Colors.red.shade200),
                           ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Container(
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
                         decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -351,7 +421,8 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: dashboard!.data.monthReport.length,
+                                  itemCount:
+                                      renewalDashboard!.data.monthReport.length,
                                   itemBuilder: (context, index) {
                                     return GestureDetector(
                                       onTap: () {
@@ -359,17 +430,19 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => RenewalList(
-                                                title: dashboard!.data
+                                                title: renewalDashboard!.data
                                                     .monthReport[index].label,
                                                 searchKey: "",
-                                                searchMonth: dashboard!
+                                                searchMonth: renewalDashboard!
                                                     .data
                                                     .monthReport[index]
                                                     .searchMonth
                                                     .toString(),
                                                 renewed: 0,
                                               ),
-                                            ));
+                                            )).then((_) {
+                                          getDashboard();
+                                        });
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.only(
@@ -384,10 +457,10 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                Text(dashboard!.data
+                                                Text(renewalDashboard!.data
                                                     .monthReport[index].label),
                                                 Text(
-                                                  " ${dashboard!.data.monthReport[index].amount.toString()}",
+                                                  " ${renewalDashboard!.data.monthReport[index].amount.toString()}",
                                                   style: const TextStyle(
                                                       fontSize: 12),
                                                 ),
@@ -397,7 +470,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                               backgroundColor: Colors.grey,
-                                              value: dashboard!
+                                              value: renewalDashboard!
                                                       .data
                                                       .monthReport[index]
                                                       .percentage /
@@ -418,355 +491,30 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                           ],
                         ),
                       ),
-                      const SizedBox(
-                        height: 15,
-                      ),
-                      // const Text("Expired and Expiring in 30 Days")
-                      // Padding(
-                      //   padding: const EdgeInsets.symmetric(horizontal: 8),
-                      //   child: ScrollablePositionedList.builder(
-                      //     shrinkWrap: true,
-                      //     itemScrollController: itemScrollController,
-                      //     itemPositionsListener: itemPositionsListener,
-                      //     itemCount: items.length +
-                      //         (items.length + 20 == page * pageSize ? 1 : 0),
-                      //     initialScrollIndex: 0,
-                      //     itemBuilder: (context, index) {
-                      //       if (index == items.length) {
-                      //         return buildLoaderListItem();
-                      //       } else {
-                      //         return Padding(
-                      //           padding: const EdgeInsets.only(
-                      //               bottom: 8.0, top: 8.0),
-                      //           child: Container(
-                      //             width: MediaQuery.of(context).size.width * .9,
-                      //             decoration: BoxDecoration(
-                      //                 color: Colors.white,
-                      //                 borderRadius: BorderRadius.circular(8)),
-                      //             child: Padding(
-                      //               padding: const EdgeInsets.all(16.0),
-                      //               child: Column(
-                      //                 children: [
-                      //                   Row(
-                      //                     crossAxisAlignment:
-                      //                         CrossAxisAlignment.start,
-                      //                     mainAxisAlignment:
-                      //                         MainAxisAlignment.spaceBetween,
-                      //                     children: [
-                      //                       SizedBox(
-                      //                         width: MediaQuery.of(context)
-                      //                                 .size
-                      //                                 .width *
-                      //                             .6,
-                      //                         child: Column(
-                      //                           crossAxisAlignment:
-                      //                               CrossAxisAlignment.start,
-                      //                           children: [
-                      //                             Row(
-                      //                               children: [
-                      //                                 const Icon(
-                      //                                   Icons.person,
-                      //                                   size: 18,
-                      //                                 ),
-                      //                                 Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   " ${items[index].clientName}",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ],
-                      //                             ),
-                      //                             Row(
-                      //                               children: [
-                      //                                 const Icon(
-                      //                                   Icons.phone,
-                      //                                   size: 18,
-                      //                                 ),
-                      //                                 Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   " ${items[index].contactNo}",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ],
-                      //                             ),
-                      //                             Row(
-                      //                               children: [
-                      //                                 const Icon(
-                      //                                   Icons.calendar_month,
-                      //                                   size: 18,
-                      //                                 ),
-                      //                                 Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   "${items[index].startDate} To ${items[index].endDate}",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ],
-                      //                             ),
-                      //                             Row(
-                      //                               children: [
-                      //                                 const Icon(
-                      //                                   Icons.settings,
-                      //                                   size: 18,
-                      //                                 ),
-                      //                                 Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   " ${items[index].typeName}",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ],
-                      //                             ),
-                      //                             Row(
-                      //                               children: [
-                      //                                 const Icon(
-                      //                                   Icons.currency_rupee,
-                      //                                   size: 18,
-                      //                                 ),
-                      //                                 Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   " ${items[index].cost}/-",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ],
-                      //                             ),
-                      //                           ],
-                      //                         ),
-                      //                       ),
-                      //                       Column(
-                      //                         crossAxisAlignment:
-                      //                             CrossAxisAlignment.end,
-                      //                         children: [
-                      //                           Container(
-                      //                             color:
-                      //                                 items[index].isExpired ==
-                      //                                         true
-                      //                                     ? Colors.red
-                      //                                     : Color(0xFF2a86c9),
-                      //                             child: Padding(
-                      //                               padding: const EdgeInsets
-                      //                                   .symmetric(
-                      //                                   vertical: 4.0,
-                      //                                   horizontal: 8.0),
-                      //                               child: Text(
-                      //                                 items[index].isExpired ==
-                      //                                         true
-                      //                                     ? "Expired"
-                      //                                     : "Not Expired",
-                      //                                 style: const TextStyle(
-                      //                                     color: Colors.white),
-                      //                               ),
-                      //                             ),
-                      //                           ),
-                      //                           const SizedBox(
-                      //                             height: 10,
-                      //                           ),
-                      //                           Visibility(
-                      //                             visible:
-                      //                                 items[index].isExpired ==
-                      //                                     false,
-                      //                             child: Container(
-                      //                               color: Colors.yellow,
-                      //                               child: Padding(
-                      //                                 padding: const EdgeInsets
-                      //                                     .symmetric(
-                      //                                     vertical: 4.0,
-                      //                                     horizontal: 8.0),
-                      //                                 child: Text(
-                      //                                   overflow: TextOverflow
-                      //                                       .ellipsis,
-                      //                                   "${items[index].remainingDays} days",
-                      //                                   style: const TextStyle(
-                      //                                       fontSize: 14),
-                      //                                 ),
-                      //                               ),
-                      //                             ),
-                      //                           )
-                      //                         ],
-                      //                       )
-                      //                     ],
-                      //                   ),
-                      //                   Row(
-                      //                     mainAxisAlignment:
-                      //                         MainAxisAlignment.end,
-                      //                     children: [
-                      //                       InkWell(
-                      //                         onTap: () {
-                      //                           startDate.clear();
-                      //                           endDate.clear();
-                      //                           projectCost.clear();
-                      //                           remarks.clear();
-                      //                           renewalBottomSheet(
-                      //                               items[index].id,
-                      //                               "Renew Details",
-                      //                               items[index].noOfDays,
-                      //                               items[index].cost);
-                      //                         },
-                      //                         child: Container(
-                      //                           decoration: BoxDecoration(
-                      //                               borderRadius:
-                      //                                   BorderRadius.circular(
-                      //                                       2),
-                      //                               color: Colors.green),
-                      //                           child: const Padding(
-                      //                             padding: EdgeInsets.all(8.0),
-                      //                             child: Icon(Icons.restart_alt,
-                      //                                 color: Colors.white),
-                      //                           ),
-                      //                         ),
-                      //                       ),
-                      //                       const SizedBox(
-                      //                         width: 10,
-                      //                       ),
-                      //                       InkWell(
-                      //                         onTap: () {
-                      //                           Navigator.push(
-                      //                               context,
-                      //                               MaterialPageRoute(
-                      //                                   builder: (context) =>
-                      //                                       EditRenewalScreen(
-                      //                                         callback: (() {
-                      //                                           getList();
-                      //                                         }),
-                      //                                         id: items[index]
-                      //                                             .id,
-                      //                                         custId:
-                      //                                             items[index]
-                      //                                                 .clientId,
-                      //                                         custName: items[
-                      //                                                 index]
-                      //                                             .clientName,
-                      //                                         typeId:
-                      //                                             items[index]
-                      //                                                 .typeId,
-                      //                                         typeName:
-                      //                                             items[index]
-                      //                                                 .typeName,
-                      //                                         startDate: items[
-                      //                                                 index]
-                      //                                             .startDate,
-                      //                                         endDate:
-                      //                                             items[index]
-                      //                                                 .endDate,
-                      //                                         projectCost:
-                      //                                             items[index]
-                      //                                                 .cost,
-                      //                                         remindMe: items[
-                      //                                                 index]
-                      //                                             .remindBefore,
-                      //                                         remark:
-                      //                                             items[index]
-                      //                                                 .remarks,
-                      //                                         // branch: items[index]
-                      //                                         // .,
-                      //                                       )));
-                      //                         },
-                      //                         child: Container(
-                      //                           decoration: BoxDecoration(
-                      //                               borderRadius:
-                      //                                   BorderRadius.circular(
-                      //                                       2),
-                      //                               color: Colors.blueAccent),
-                      //                           child: const Padding(
-                      //                             padding: EdgeInsets.all(8.0),
-                      //                             child: Icon(Icons.edit,
-                      //                                 color: Colors.white),
-                      //                           ),
-                      //                         ),
-                      //                       ),
-                      //                       const SizedBox(
-                      //                         width: 10,
-                      //                       ),
-                      //                       InkWell(
-                      //                         onTap: () {
-                      //                           showDialog(
-                      //                               context: context,
-                      //                               builder:
-                      //                                   (BuildContext context) {
-                      //                                 return AlertDialog(
-                      //                                   scrollable: true,
-                      //                                   title: const Text(
-                      //                                       'Please Confirm'),
-                      //                                   content: const Text(
-                      //                                       'Are you sure to Hide?'),
-                      //                                   actions: [
-                      //                                     TextButton(
-                      //                                         onPressed:
-                      //                                             () async {
-                      //                                           Navigator.pop(
-                      //                                               context);
-                      //                                           await hide(
-                      //                                               items[index]
-                      //                                                   .id);
-                      //                                           page = 1;
-                      //                                           items.clear();
-                      //                                           getList();
-                      //                                         },
-                      //                                         child: const Text(
-                      //                                             'Yes')),
-                      //                                     TextButton(
-                      //                                         onPressed: () {
-                      //                                           Navigator.of(
-                      //                                                   context)
-                      //                                               .pop();
-                      //                                         },
-                      //                                         child: const Text(
-                      //                                             'No'))
-                      //                                   ],
-                      //                                 );
-                      //                               });
-                      //                         },
-                      //                         child: Container(
-                      //                           decoration: BoxDecoration(
-                      //                               borderRadius:
-                      //                                   BorderRadius.circular(
-                      //                                       2),
-                      //                               color: Colors.grey),
-                      //                           child: const Padding(
-                      //                             padding: EdgeInsets.all(8.0),
-                      //                             child: Icon(
-                      //                                 Icons.visibility_off,
-                      //                                 color: Colors.white),
-                      //                           ),
-                      //                         ),
-                      //                       ),
-                      //                     ],
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //             ),
-                      //           ),
-                      //         );
-                      //       }
-                      //     },
-                      //   ),
-                      // )
-                    ],
-                  ),
-          ),
-        )),
-        floatingActionButton: FloatingActionButton.extended(
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>  CustomRenewal(),
-                  ));
-              // renewalAddDialog(context);
-            },
-            label: const Row(
-              children: [Icon(Icons.add), Text(" Renewal")],
-            )),
-      ),
+                    ),
+                    const SizedBox(
+                      height: 15,
+                    ),
+                  ],
+                ),
+        ),
+      )),
+      floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: Colors.blue.shade700,
+          foregroundColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CustomRenewal(),
+                )).then((_) {
+              getDashboard();
+            });
+            // renewalAddDialog(context);
+          },
+          label: const Row(
+            children: [Icon(Icons.add), Text(" Renewal")],
+          )),
     );
   }
 
@@ -794,7 +542,9 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const QuickRenewal(),
-                              ));
+                              )).then((_) {
+                            getDashboard();
+                          });
                         },
                         child: Container(
                             height: 50,
@@ -809,7 +559,9 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => CustomRenewal(),
-                              ));
+                              )).then((_) {
+                            getDashboard();
+                          });
                         },
                         child: Container(
                             height: 50,

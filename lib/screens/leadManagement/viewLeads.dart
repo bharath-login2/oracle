@@ -1,8 +1,5 @@
 import 'dart:developer';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -42,23 +39,32 @@ class ViewLeads extends StatefulWidget {
   int? pageSize;
   String? leadType;
   String? callStatus;
+  String? callResId;
+  String? callResName;
 
-  ViewLeads(this.token, this.editLead, this.deleteLead, this.cloudCall,
-      {super.key,
-      this.fromDate,
-      this.toDate,
-      this.status,
-      this.category,
-      this.staff,
-      this.pageName,
-      this.isCalled,
-      this.scrollToIndex,
-      this.page,
-      this.pageSize,
-      this.leadType,
-      this.categoryName,
-      this.staffName,
-      this.callStatus});
+  ViewLeads(
+    this.token,
+    this.editLead,
+    this.deleteLead,
+    this.cloudCall, {
+    super.key,
+    this.fromDate,
+    this.toDate,
+    this.status,
+    this.category,
+    this.staff,
+    this.pageName,
+    this.isCalled,
+    this.scrollToIndex,
+    this.page,
+    this.pageSize,
+    this.leadType,
+    this.categoryName,
+    this.staffName,
+    this.callStatus,
+    this.callResId,
+    this.callResName,
+  });
 
   @override
   State<ViewLeads> createState() => _ViewLeadsState();
@@ -75,7 +81,6 @@ class _ViewLeadsState extends State<ViewLeads> {
   dynamic status;
   dynamic staff;
   dynamic priority;
-  dynamic transferStaff;
   bool? isCalled = true;
   List selectedIUsers = [];
   List selectedUserNumbers = [];
@@ -122,6 +127,7 @@ class _ViewLeadsState extends State<ViewLeads> {
   String? branch;
   String roleId = '';
   String multiBranch = '';
+  String transferPermission = '';
   String phoneCallLogPermission = '';
   bool timeOut = false;
   List checkedResponseItems = [];
@@ -132,6 +138,11 @@ class _ViewLeadsState extends State<ViewLeads> {
   List checkedPriorityItemsName = [];
   List checkedAssignedStaffItems = [];
   List checkedAssignedStaffItemsName = [];
+  List<TransferStaff> filteredStaff = [];
+  String staffId = "";
+  String staffName = "Staff";
+  String name = '';
+  String userId = '';
 
   @override
   void initState() {
@@ -145,6 +156,10 @@ class _ViewLeadsState extends State<ViewLeads> {
     if (widget.category != null) {
       checkedCategoryItems.add(widget.category);
       checkedCategoryItemsName.add(widget.categoryName);
+    }
+    if (widget.callResId != null) {
+      checkedResponseItems.add(widget.callResId);
+      checkedresponseItemsName.add(widget.callResName);
     }
     if (widget.page != null) {
       page = widget.page! - 1;
@@ -169,7 +184,12 @@ class _ViewLeadsState extends State<ViewLeads> {
       fromdate = DateTime.parse(widget.fromDate.toString());
       todate = DateTime.now();
     }
+
     getData('desc', true, status);
+    initListner();
+  }
+
+  initListner() {
     itemPositionsListener.itemPositions.addListener(() {
       if (itemPositionsListener.itemPositions.value.last.index ==
           items.length - 1) {
@@ -182,6 +202,10 @@ class _ViewLeadsState extends State<ViewLeads> {
 
   void getData(sort, isFirst, status1) async {
     //print('scrollIndex1:${widget.scrollToIndex}');
+    transferPermission = await Common.getSharedPref("transferLeads");
+    userId = await Common.getSharedPref("userId");
+    name = await Common.getSharedPref("name");
+
     setState(() {
       timeOut = false;
     });
@@ -264,6 +288,7 @@ class _ViewLeadsState extends State<ViewLeads> {
         }
         commonDetails = await HttpService.addLeadCommonData(widget.token);
         if (commonDetails != null) {
+          filteredStaff.addAll(commonDetails!.data.transferStaffs);
           setState(() {});
         }
         configure = await HttpService.configure(widget.token);
@@ -377,163 +402,12 @@ class _ViewLeadsState extends State<ViewLeads> {
                                     children: [
                                       InkWell(
                                           onTap: () {
-                                            showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return StatefulBuilder(
-                                                      builder:
-                                                          (context, setState) {
-                                                    return AlertDialog(
-                                                      title: const Text(
-                                                          'Transfer'),
-                                                      content:
-                                                          FormField<String>(
-                                                        builder:
-                                                            (FormFieldState<
-                                                                    String>
-                                                                state) {
-                                                          return Container(
-                                                            height: 50,
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.43,
-                                                            decoration: BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade900,
-                                                                    width: 0),
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius:
-                                                                    const BorderRadius
-                                                                        .all(
-                                                                        Radius.circular(
-                                                                            5))),
-                                                            child:
-                                                                DropdownButtonHideUnderline(
-                                                              child:
-                                                                  DropdownButton<
-                                                                      String>(
-                                                                isExpanded:
-                                                                    true,
-                                                                hint:
-                                                                    const Padding(
-                                                                  padding: EdgeInsets
-                                                                      .only(
-                                                                          left:
-                                                                              20),
-                                                                  child: Text(
-                                                                      'Staff'),
-                                                                ),
-                                                                value:
-                                                                    transferStaff,
-                                                                items: commonDetails!
-                                                                    .data
-                                                                    .transferStaffs
-                                                                    .map(
-                                                                        (data) {
-                                                                  return DropdownMenuItem(
-                                                                    value: data
-                                                                        .tranStaffId
-                                                                        .toString(),
-                                                                    child:
-                                                                        Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          left:
-                                                                              20),
-                                                                      child: Text(data
-                                                                          .tranStaffName
-                                                                          .toString()),
-                                                                    ),
-                                                                  );
-                                                                }).toList(),
-                                                                onChanged:
-                                                                    (newValue1) {
-                                                                  setState(() {
-                                                                    transferStaff =
-                                                                        newValue1;
-                                                                  });
-                                                                },
-                                                              ),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                'No')),
-                                                        TextButton(
-                                                            onPressed:
-                                                                () async {
-                                                              Common.showProgressDialog(
-                                                                  context,
-                                                                  "Loading..");
-                                                              Map<String,
-                                                                      dynamic>
-                                                                  body = {
-                                                                "token": widget
-                                                                    .token,
-                                                                'leadMasterIds':
-                                                                    selectedIUsers,
-                                                                'staffId':
-                                                                    transferStaff
-                                                              };
-                                                              BulkTransferLeadModel
-                                                                  bulkTransfer =
-                                                                  await HttpService
-                                                                      .bulkTransferLead(
-                                                                          body);
-                                                              if (bulkTransfer
-                                                                      .data ==
-                                                                  true) {
-                                                                Common.toastMessaage(
-                                                                    bulkTransfer
-                                                                        .message,
-                                                                    Colors
-                                                                        .green);
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                  page = 1;
-                                                                  items.clear();
-                                                                  getData(
-                                                                      'desc',
-                                                                      false,
-                                                                      status);
-                                                                }
-                                                              } else {
-                                                                Common.toastMessaage(
-                                                                    bulkTransfer
-                                                                        .message,
-                                                                    Colors.red);
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop();
-                                                                }
-                                                              }
-                                                            },
-                                                            child: const Text(
-                                                                'Yes')),
-                                                      ],
-                                                    );
-                                                  });
-                                                });
+                                            if (transferPermission == "true") {
+                                              transferLeads(context);
+                                            } else {
+                                              _dialogue(context,
+                                                  "transfer permission");
+                                            }
                                           },
                                           child: const Icon(
                                             Icons.compare_arrows_rounded,
@@ -572,7 +446,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                 "token": widget
                                                                     .token,
                                                                 'leadMasterIds':
-                                                                    selectedIUsers, 
+                                                                    selectedIUsers,
                                                               };
                                                               BulkDeleteLeadModel
                                                                   deleteBulk =
@@ -789,47 +663,60 @@ class _ViewLeadsState extends State<ViewLeads> {
                                       confirmDismiss: (direction) async {
                                         if (direction ==
                                             DismissDirection.endToStart) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddFollowup(
-                                                      widget.token,
-                                                      widget.editLead,
-                                                      widget.deleteLead,
-                                                      widget.cloudCall,
-                                                      items[index].callMasterId,
-                                                      pageName: widget.pageName,
-                                                      status: widget.status,
-                                                      staff: widget.staff,
-                                                      isCalled: widget.isCalled,
-                                                      fromDate: widget.fromDate,
-                                                      toDate: widget.toDate,
-                                                      category: widget.category,
-                                                      leadType: items[index]
-                                                          .leadCategory,
-                                                      leadTypeId: items[index]
-                                                          .leadCategoryId,
-                                                      leadSubType: items[index]
-                                                          .leadSubCategory,
-                                                      leadSubTypeId: items[
-                                                              index]
-                                                          .leadSubCategoryId,
-                                                      priorityId:
-                                                          items[index].priority,
-                                                      priority: items[index]
-                                                          .priorityName,
-                                                      cost: items[index].cost,
-                                                      address:
-                                                          items[index].address,
-                                                      leadType1:
-                                                          widget.leadType,
-                                                    )),
-                                          ).then((value) {
-                                            items.clear();
-                                            page = 1;
-                                            getData('desc', true, status);
-                                          });
+                                          if (items[index].callResult !=
+                                              "Confirmed") {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AddFollowup(
+                                                        widget.token,
+                                                        widget.editLead,
+                                                        widget.deleteLead,
+                                                        widget.cloudCall,
+                                                        items[index]
+                                                            .callMasterId,
+                                                        pageName:
+                                                            widget.pageName,
+                                                        status: widget.status,
+                                                        staff: widget.staff,
+                                                        isCalled:
+                                                            widget.isCalled,
+                                                        fromDate:
+                                                            widget.fromDate,
+                                                        toDate: widget.toDate,
+                                                        category:
+                                                            widget.category,
+                                                        leadType: items[index]
+                                                            .leadCategory,
+                                                        leadTypeId: items[index]
+                                                            .leadCategoryId,
+                                                        leadSubType: items[
+                                                                index]
+                                                            .leadSubCategory,
+                                                        leadSubTypeId: items[
+                                                                index]
+                                                            .leadSubCategoryId,
+                                                        priorityId: items[index]
+                                                            .priority,
+                                                        priority: items[index]
+                                                            .priorityName,
+                                                        cost: items[index].cost,
+                                                        address: items[index]
+                                                            .address,
+                                                        leadType1:
+                                                            widget.leadType,
+                                                      )),
+                                            ).then((value) {
+                                              items.clear();
+                                              page = 1;
+                                              getData('desc', true, status);
+                                            });
+                                          } else {
+                                            Common.toastMessaage(
+                                                "You can't follow up on confirmed leads",
+                                                Colors.red);
+                                          }
                                         } else {
                                           if (viewLeads!.data.callPermission ==
                                               false) {
@@ -902,28 +789,6 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                               page = 1;
                                                               getData('desc',
                                                                   true, status);
-                                                              // itemPositionsListener
-                                                              //     .itemPositions
-                                                              //     .addListener(
-                                                              //         () {
-                                                              //   if (itemPositionsListener
-                                                              //           .itemPositions
-                                                              //           .value
-                                                              //           .last
-                                                              //           .index ==
-                                                              //       items.length -
-                                                              //           1) {
-                                                              //     if (items
-                                                              //             .length <
-                                                              //         viewLeads!
-                                                              //             .data!
-                                                              //             .totalLeads!) {
-                                                              //       getData(
-                                                              //           'desc',
-                                                              //           true);
-                                                              //     }
-                                                              //   }
-                                                              // });
                                                             });
                                                           },
                                                           child: const Text(
@@ -938,7 +803,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                               // String url =
                                               //     'tel:+${items[index].contactNumber1}';
                                               // await launchUrl(Uri.parse(url));
-                                              Common.directCall(
+                                              Common.dialPad(
                                                   items[index].contactNumber1);
                                             }
                                           }
@@ -1120,8 +985,9 @@ class _ViewLeadsState extends State<ViewLeads> {
               bottomNavigationBar: configure != null
                   ? BottomNavigation(
                       widget.token!,
-                      configure!.data!.whatsappConfigured,
                       phoneCallLogPermission: phoneCallLogPermission,
+                      name: name,
+                      userId: userId,
                     )
                   : const SizedBox())
           : Scaffold(
@@ -1188,6 +1054,101 @@ class _ViewLeadsState extends State<ViewLeads> {
     );
   }
 
+  Future<dynamic> transferLeads(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Text('Transfer'),
+              content: FormField<String>(
+                builder: (FormFieldState<String> state) {
+                  return Container(
+                    height: 50,
+                    width: MediaQuery.of(context).size.width * 0.43,
+                    decoration: BoxDecoration(
+                        border:
+                            Border.all(color: Colors.grey.shade900, width: 0),
+                        color: Colors.white,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5))),
+                    child: GestureDetector(
+                      onTap: () {
+                        collectedStaffDialog(context);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                            child: Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.38,
+                                  child: Text(
+                                    staffName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  )),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey.shade600,
+                              )
+                            ],
+                          ),
+                        )),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('No')),
+                TextButton(
+                    onPressed: () async {
+                      Common.showProgressDialog(context, "Loading..");
+                      Map<String, dynamic> body = {
+                        "token": widget.token,
+                        'leadMasterIds': selectedIUsers,
+                        'staffId': staffId
+                      };
+                      BulkTransferLeadModel bulkTransfer =
+                          await HttpService.bulkTransferLead(body);
+                      if (bulkTransfer.data == true) {
+                        Common.toastMessaage(
+                            bulkTransfer.message, Colors.green);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                          page = 1;
+                          items.clear();
+                          getData('desc', false, status);
+                        }
+                      } else {
+                        Common.toastMessaage(bulkTransfer.message, Colors.red);
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      }
+                    },
+                    child: const Text('Yes')),
+              ],
+            );
+          });
+        });
+  }
+
   Padding leadListWidget(BuildContext context, int index) {
     return Padding(
       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -1248,6 +1209,15 @@ class _ViewLeadsState extends State<ViewLeads> {
                                     shape: BoxShape.circle,
                                   ),
                                 ),
+                              if (items[index].priority == '4')
+                                Container(
+                                  width: 10.0,
+                                  height: 10.0,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               const SizedBox(
                                 width: 5,
                               ),
@@ -1258,6 +1228,11 @@ class _ViewLeadsState extends State<ViewLeads> {
                                   // items.length.toString(),
                                   style: TextStyle(
                                       fontSize: 16,
+                                      decoration: items[index].priority == "4"
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      decorationThickness: 1.5,
+                                      decorationColor: Colors.red,
                                       color: items[index].isCustomer
                                           ? Colors.green
                                           : Colors.black,
@@ -1694,8 +1669,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                   //     'tel:+${items[index].contactNumber1}';
                                   // await launchUrl(
                                   //     Uri.parse(url));
-                                  Common.directCall(
-                                      '+${items[index].contactNumber1}');
+                                  Common.dialPad(items[index].contactNumber1);
                                 }
                               }
                             },
@@ -1744,6 +1718,80 @@ class _ViewLeadsState extends State<ViewLeads> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<dynamic> collectedStaffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredStaff = commonDetails!.data.transferStaffs
+                            .where((item) => item.tranStaffName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredStaff.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            staffName = filteredStaff[index].tranStaffName;
+                            staffId = filteredStaff[index].tranStaffId;
+                            filteredStaff.clear();
+                            filteredStaff
+                                .addAll(commonDetails!.data.transferStaffs);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: Text(filteredStaff[index].tranStaffName));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    filteredStaff.clear();
+                    filteredStaff.addAll(commonDetails!.data.transferStaffs);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
     );
   }
 
@@ -1919,7 +1967,9 @@ class _ViewLeadsState extends State<ViewLeads> {
                         ),
                         multiBranch == 'true' && roleId == '2'
                             ? Padding(
-                                padding: const EdgeInsets.only(bottom: 13),
+                                padding: const EdgeInsets.only(
+                                  top: 13,
+                                ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1934,7 +1984,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                     ),
                                     SizedBox(
                                       width: MediaQuery.of(context).size.width *
-                                          0.9,
+                                          0.95,
                                       child: FormField<String>(
                                         builder:
                                             (FormFieldState<String> state) {
@@ -1946,7 +1996,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                             decoration: BoxDecoration(
                                                 border: Border.all(
                                                     color: Colors.grey.shade900,
-                                                    width: 0),
+                                                    width: 1),
                                                 color: Colors.white,
                                                 borderRadius:
                                                     const BorderRadius.all(
@@ -1976,10 +2026,16 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                     ),
                                                   );
                                                 }).toList(),
-                                                onChanged: (newValue1) {
+                                                onChanged: (newValue1) async {
                                                   setState(() {
                                                     branch = newValue1;
                                                   });
+                                                  commonDetails =
+                                                      await HttpService
+                                                          .addLeadCommonData(
+                                                              widget.token,
+                                                              branchId: branch);
+                                                  setState(() {});
                                                 },
                                               ),
                                             ),
@@ -2639,7 +2695,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         .contains(commonDetails!
                                                             .data
                                                             .staff[ind]
-                                                            .staffId
+                                                            .userId
                                                             .toString())
                                                     ? true
                                                     : false,
@@ -2650,7 +2706,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                           .add(commonDetails!
                                                               .data
                                                               .staff[ind]
-                                                              .staffId
+                                                              .userId
                                                               .toString());
                                                       checkedAssignedStaffItemsName
                                                           .add(commonDetails!
@@ -2668,7 +2724,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                           .remove(commonDetails!
                                                               .data
                                                               .staff[ind]
-                                                              .staffId
+                                                              .userId
                                                               .toString());
                                                       checkedAssignedStaffItemsName
                                                           .remove(commonDetails!
@@ -3236,7 +3292,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    Common.directCall('+${items[index].contactNumber1}');
+                    Common.dialPad(items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,
@@ -3480,6 +3536,25 @@ class _ViewLeadsState extends State<ViewLeads> {
             ],
           ),
         ));
+  }
+
+  void _dialogue(BuildContext context, title) {
+    showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return AlertDialog(
+            title: const Text('Alert !!!'),
+            content: const Text(
+                'You have no permission to access the feature please contact the support team'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Close')),
+            ],
+          );
+        });
   }
 }
 

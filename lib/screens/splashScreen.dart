@@ -5,9 +5,9 @@ import 'dart:developer';
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
-import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:login2/screens/push_notification_channel.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/common.dart';
@@ -111,7 +111,24 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   handleAsync() async {
-    firebaseToken = await FirebaseMessaging.instance.getToken();
+    try {
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: true,
+        provisional: true,
+        sound: true,
+      );
+      firebaseToken = await FirebaseMessaging.instance.getToken();
+      if (kDebugMode) {
+        print("Firebase token : $firebaseToken");
+      }
+    } catch (error, stackTrace) {
+      firebaseToken = '';
+      log("Error while get FCM", error: error, stackTrace: stackTrace);
+    }
   }
 
   getData() async {
@@ -207,6 +224,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           decoration: TextDecoration.none,
                         ),
                       ),
+                      const SizedBox(height: 10),
                     ],
                   ),
                 ),

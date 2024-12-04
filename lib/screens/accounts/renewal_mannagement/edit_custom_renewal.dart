@@ -30,6 +30,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   List filteredProducts = [];
   List filteredNames = [];
   List productName = [];
+  TextEditingController search = TextEditingController();
+  List<Staff> filteredStaff = [];
   RenewalByIdModel? renewalDetails;
   TextEditingController subTotal = TextEditingController();
   TextEditingController totalTax = TextEditingController();
@@ -50,6 +52,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   TextEditingController invoiceDate = TextEditingController();
   TextEditingController invoiceNumber = TextEditingController();
   TextEditingController startDate = TextEditingController();
+  TextEditingController collectedStaff = TextEditingController();
 
   DateTime? selectedValue;
   BranchListModel? branchList;
@@ -67,7 +70,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   List products = [];
   dynamic payStat;
   dynamic payMethod;
-  dynamic collected;
+  dynamic collectedId;
   double shippingAmt = 0;
   double discountAmt = 0;
   double productTax = 0;
@@ -110,6 +113,8 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
       remindMe.text = renewalDetails!.data.templateName;
       templateId = renewalDetails!.data.templateId;
       remark.text = renewalDetails!.data.remarks;
+      filteredStaff.clear();
+      filteredStaff.addAll(renewalDetails!.data.staff);
       if (payStat == "unpaid") {
         totalPaidAmount.text = renewalDetails!.data.totalAmount;
       } else {
@@ -142,28 +147,21 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
   updateRenewal() async {
     try {
       updateResponse = await HttpService.updateCustomRenewal(
-        renewalDetails!.data.renewalId,
-        customerId,
-        branch,
-        startDate.text,
-        endDate.text,
-        widget.renewalType,
-        products,
-        templateId,
-        remark.text,
-        renewalDetails!.data.invoicelId,
-        payStat,
-        payMethod,
-        renewalDetails!.data.cartId,
-        subTotal.text,
-        totalTax.text,
-        discount.text,
-        shippingCharge.text,
-        totalAmount.text,
-        totalPaidAmount.text,
-        invoiceDate.text,
-        collected,
-      );
+          renewalDetails!.data.renewalId,
+          customerId,
+          branch,
+          startDate.text,
+          endDate.text,
+          widget.renewalType,
+          products,
+          templateId,
+          remark.text,
+          renewalDetails!.data.cartId,
+          subTotal.text,
+          totalTax.text,
+          discount.text,
+          shippingCharge.text,
+          totalAmount.text);
 
       if (updateResponse != null && updateResponse!.status == true) {
         Common.toastMessaage(updateResponse!.message, Colors.green);
@@ -366,7 +364,7 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                           );
                         }).toList(),
                         decoration: InputDecoration(
-                          contentPadding: EdgeInsets.all(8),
+                          contentPadding: const EdgeInsets.all(8),
                           border: OutlineInputBorder(
                             // Custom border
                             borderRadius: BorderRadius.circular(5),
@@ -380,747 +378,584 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                       )
                     : const SizedBox(),
                 const SizedBox(height: 14.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Products",
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        products.clear();
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddProducts(),
-                            )).then((_) {
-                          getRenewalDetails(); 
-                        });
-                      },
-                      child: Container(
-                        height: 30,
-                        width: 30,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                        ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Products",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18),
                       ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 5.0),
-                TextFormField(
-                  controller: productNameController,
-                  readOnly: true,
-                  onTap: (() {
-                    dropDialog(context, "Products");
-                  }),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.all(8),
-                    labelText: 'Product *',
-                    prefixIcon: Icon(Icons.person, color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                    ),
-                    labelStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 14.0),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        controller: prodRate,
-                        onChanged: (val) {
-                          calculateTotal();
+                      GestureDetector(
+                        onTap: () {
+                          addProductsDialog(context);
                         },
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Rate *',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              int currentValue =
-                                  int.parse(productQuantity.text);
-                              setState(() {
-                                currentValue--;
-                                productQuantity.text =
-                                    (currentValue > 0 ? currentValue : 0)
-                                        .toString(); // decrementing value
-                              });
-                              calculateTotal();
-                            },
-                            child: Container(
-                              height: 45,
-                              width: 30,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: const BorderRadius.only(
-                                      bottomLeft: Radius.circular(8),
-                                      topLeft: Radius.circular(8))),
-                              child: const Center(
-                                  child: Icon(
-                                Icons.arrow_left,
-                                size: 30,
-                              )),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: TextFormField(
-                              onChanged: (val) {
-                                calculateTotal();
-                              },
-                              textAlign: TextAlign.center,
-                              decoration: InputDecoration(
-                                labelText: "Quantity",
-                                focusedBorder: const OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: const TextStyle(color: Colors.grey),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 8),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                              ),
-                              controller: productQuantity,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                decimal: false,
-                                signed: true,
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              int currentValue =
-                                  int.parse(productQuantity.text);
-                              setState(() {
-                                currentValue++;
-                                productQuantity.text = (currentValue)
-                                    .toString(); // incrementing value
-                              });
-                              calculateTotal();
-                            },
-                            child: Container(
-                              height: 45,
-                              width: 30,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: const BorderRadius.only(
-                                      bottomRight: Radius.circular(8),
-                                      topRight: Radius.circular(8))),
-                              child: const Center(
-                                  child: Icon(
-                                Icons.arrow_right,
-                                size: 30,
-                              )),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14.0),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        onChanged: (val) {
-                          calculateTotal();
-                        },
-                        keyboardType: TextInputType.number,
-                        controller: prodTax,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Tax(in %)',
-                            prefixIcon: Icon(Icons.percent, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        readOnly: true,
-                        controller: prodAmount,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Amount',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14.0),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        maxLines: 2,
-                        controller: prodDetails,
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Details',
-                            prefixIcon:
-                                Icon(Icons.receipt_long, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        addProduct();
-                      },
-                      child: Container(
-                        height: 50,
-                        width: 100,
-                        decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(8)),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add,
-                              color: Colors.white,
-                            ),
-                            Text(
-                              " Add",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 14.0),
-                ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 8.0),
                         child: Container(
+                          height: 30,
                           decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.grey.shade300),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 8.0),
+                            gradient: const LinearGradient(
+                                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(" ${index + 1}"),
-                                SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * .65,
-                                  child: Text(
-                                      "Product: ${products[index]["product_name"]}\nQty: ${products[index]["quantity"]} Amount: ${products[index]["total_amount"]}"),
+                                Icon(
+                                  Icons.add,
+                                  color: Colors.white,
                                 ),
-                                InkWell(
-                                    onTap: () async {
-                                      products.removeAt(index);
-                                      productName.removeAt(index);
-                                      totalProductCost = 0;
-                                      totalProductTax = 0;
-                                      for (int i = 0;
-                                          i < products.length;
-                                          i++) {
-                                        totalProductCost += double.parse(
-                                            (await products[i])[
-                                                "total_amount"]);
-                                        totalProductTax += double.parse(
-                                            (await products[i])[
-                                                "total_tax_amount"]);
-                                      }
-                                      subTotal.text =
-                                          totalProductCost.toString();
-                                      totalTax.text =
-                                          totalProductTax.toString();
-                                      shippingAmt = double.parse(
-                                          shippingCharge.text == ""
-                                              ? "0"
-                                              : shippingCharge.text);
-                                      totalAmount.text = (totalProductCost -
-                                              discountAmt +
-                                              shippingAmt)
-                                          .toString();
-                                      totalPaidAmount.text = totalAmount.text;
-                                      setState(() {});
-                                    },
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ))
+                                Text(
+                                  "Add",
+                                  style: TextStyle(color: Colors.white),
+                                )
                               ],
                             ),
                           ),
                         ),
-                      );
-                    }),
-                const SizedBox(height: 15.0),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 26.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * .4,
-                            child: const Text(
-                              "Sub Total",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              readOnly: true,
-                              controller: subTotal,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Sub Total',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * .4,
-                            child: const Text(
-                              "Total Tax",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              readOnly: true,
-                              controller: totalTax,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Total Tax',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * .4,
-                            child: const Text(
-                              "Discount",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              onChanged: (val) {
-                                discountAmt = double.parse(
-                                    discount.text == "" ? "0" : discount.text);
-                                totalAmount.text = (totalProductCost -
-                                        discountAmt +
-                                        shippingAmt)
-                                    .toString();
-                                totalPaidAmount.text = totalAmount.text;
-                              },
-                              keyboardType: TextInputType.number,
-                              controller: discount,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Discount',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * .4,
-                            child: const Text(
-                              "Shipping Charge",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              onChanged: (val) {
-                                shippingAmt = double.parse(
-                                    shippingCharge.text == ""
-                                        ? "0"
-                                        : shippingCharge.text);
-                                totalAmount.text = (totalProductCost -
-                                        discountAmt +
-                                        shippingAmt)
-                                    .toString();
-                                totalPaidAmount.text = totalAmount.text;
-                              },
-                              keyboardType: TextInputType.number,
-                              controller: shippingCharge,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Shipping Charge',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * .3,
-                            child: const Text(
-                              "Total Amount",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              readOnly: true,
-                              controller: totalAmount,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Total Amount',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      )
                     ],
                   ),
                 ),
-                const SizedBox(height: 15.0),
                 Visibility(
-                  visible: renewalDetails!.data.invoicelId == "",
+                  visible: true,
                   child: Column(
                     children: [
-                      DropdownButtonFormField(
-                        validator: (val) {
-                          if (val == "" || val == null) {
-                            return "Add payment status";
-                          }
-                          return null;
-                        },
-                        value: payStat,
-                        onChanged: (value) async {
-                          payStat = value.toString();
-                          setState(() {});
-                        },
-                        items:
-                            renewalDetails!.data.paymentStatusList.map((data) {
-                          return DropdownMenuItem<String>(
-                            value: data.paymentStatus.toString(),
-                            child: Text(
-                              data.displaySts.toString(),
-                            ),
-                          );
-                        }).toList(),
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.all(8),
-                          border: OutlineInputBorder(),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          labelText: 'Payment Status',
-                          prefixIcon: Icon(
-                              Icons.arrow_drop_down_circle_outlined,
-                              color: Colors.grey),
-                          labelStyle: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                      const SizedBox(height: 14.0),
-                      Visibility(
-                        visible: payStat == "partial" || payStat == "paid",
-                        child: Column(
+                      Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: Table(
+                          columnWidths: {
+                            0: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.2), // Using 10%
+                            1: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.16), // Using 30%
+                            2: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.10),
+                            3: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.16), // Using 20%
+                            4: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.22),
+                            5: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.10),
+                          },
                           children: [
-                            TextFormField(
-                              validator: (value) {
-                                if (payStat == "partial") {
-                                  double val = double.parse(value!);
-                                  if (value == "" || val == 0) {
-                                    return "Enter Amount";
-                                  } else if (val >= totalProductCost) {
-                                    return "Paid amount cannot be greater than or equal to total cost";
-                                  }
-                                }
-                                return null;
-                              },
-                              readOnly: payStat != "partial" ? true : false,
-                              keyboardType: TextInputType.number,
-                              controller: totalPaidAmount,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(8),
-                                  labelText: 'Total Amount Paid',
-                                  prefixIcon: Icon(Icons.currency_rupee,
-                                      color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                            const SizedBox(height: 14.0),
-                            DropdownButtonFormField(
-                              validator: (value) {
-                                if (payStat == "partial" || payStat == "paid") {
-                                  if (value == "" || value == null) {
-                                    return "Select a payment method";
-                                  }
-                                }
-                                return null;
-                              },
-                              value: payMethod,
-                              onChanged: (value) async {
-                                setState(() {
-                                  payMethod = value.toString();
-                                });
-                              },
-                              items: renewalDetails!.data.paymentMethods
-                                  .map((data) {
-                                return DropdownMenuItem<String>(
-                                  value: data.id.toString(),
-                                  child: Text(
-                                    data.name.toString(),
-                                  ),
-                                );
-                              }).toList(),
-                              decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.all(8),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelText: 'Payment Methods',
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                labelStyle: TextStyle(color: Colors.grey),
+                            TableRow(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(1),
+                                color: const Color(0xFFece9fd),
                               ),
-                            ),
-                            const SizedBox(height: 14.0),
-                            DropdownButtonFormField(
-                              validator: (value) {
-                                if (payStat == "partial" || payStat == "paid") {
-                                  if (value == "" || value == null) {
-                                    return "Select a staff";
-                                  }
-                                }
-                                return null;
-                              },
-                              value: collected,
-                              onChanged: (value) async {
-                                setState(() {
-                                  collected = value.toString();
-                                });
-                              },
-                              items: renewalDetails!.data.staff.map((data) {
-                                return DropdownMenuItem<String>(
-                                  value: data.userId.toString(),
-                                  child: Text(
-                                    data.staffName.toString(),
-                                  ),
-                                );
-                              }).toList(),
-                              decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.all(8),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
+                              children: const [
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text('Product',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center),
                                 ),
-                                labelText: 'Collected By',
-                                prefixIcon: Icon(
-                                    Icons.arrow_drop_down_circle_outlined,
-                                    color: Colors.grey),
-                                labelStyle: TextStyle(color: Colors.grey),
-                              ),
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text('Rate',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text('Qty',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(
+                                    8.0,
+                                  ),
+                                  child: Text('Tax',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Amount',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(
+                                    8.0,
+                                  ),
+                                  child: Text(' ',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 14.0),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                TextFormField(
-                  controller: startDate,
-                  readOnly: true,
-                  onTap: () async {
-                    selectedValue = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    setState(() {
-                      startDate.text =
-                          DateFormat('dd-MM-yyyy').format(selectedValue!);
-                      final endValue = selectedValue!
-                          .add(Duration(days: int.parse(typeDuration)));
-                      endDate.text = DateFormat('dd-MM-yyyy').format(endValue);
-                    });
-                  },
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Select Start Date";
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      labelText: 'Start Date *',
-                      prefixIcon:
-                          Icon(Icons.calendar_month, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey)),
+                SingleChildScrollView(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      Color color = index % 2 == 0
+                          ? const Color(0xFFF3F3F3)
+                          : const Color(0xFFece9fd);
+                      return Padding(
+                        padding: const EdgeInsets.all(1.0),
+                        child: Table(
+                          columnWidths: {
+                            0: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.2), // Using 10%
+                            1: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.16), // Using 30%
+                            2: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.10),
+                            3: FixedColumnWidth(
+                                MediaQuery.of(context).size.width *
+                                    0.16), // Using 20%
+                            4: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.22),
+                            5: FixedColumnWidth(
+                                MediaQuery.of(context).size.width * 0.10),
+                          },
+                          children: [
+                            // Each TableRow represents a row in the Table
+                            TableRow(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(1),
+                                color: color,
+                              ),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    products[index]['product_name'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    products[index]['product_rate'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    products[index]['quantity'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    products[index]['total_tax_amount'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    products[index]['total_amount'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () async {
+                                    products.removeAt(index);
+                                    productName.removeAt(index);
+                                    totalProductCost = 0;
+                                    totalProductTax = 0;
+                                    for (int i = 0; i < products.length; i++) {
+                                      totalProductCost += double.parse(
+                                          (await products[i])["total_amount"]);
+                                      totalProductTax += double.parse(
+                                          (await products[i])[
+                                              "total_tax_amount"]);
+                                    }
+                                    subTotal.text = totalProductCost.toString();
+                                    totalTax.text = totalProductTax.toString();
+                                    shippingAmt = double.parse(
+                                        shippingCharge.text == ""
+                                            ? "0"
+                                            : shippingCharge.text);
+                                    totalAmount.text = (totalProductCost -
+                                            discountAmt +
+                                            shippingAmt)
+                                        .toString();
+                                    totalPaidAmount.text = totalAmount.text;
+                                    setState(() {});
+                                  },
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                const SizedBox(height: 14.0),
-                TextFormField(
-                  onTap: () async {
-                    DateTime? selectedEndDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    endDate.text =
-                        DateFormat('dd-MM-yyyy').format(selectedEndDate!);
-                  },
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Select End Date";
-                    }
-                    return null;
-                  },
-                  readOnly: true,
-                  controller: endDate,
-                  decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      labelText: 'End Date *',
-                      prefixIcon:
-                          Icon(Icons.calendar_month, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+                const SizedBox(height: 15.0),
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(
+                          child: Text(
+                            "Sub Total :",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          height: 35,
+                          child: TextFormField(
+                            readOnly: true,
+                            controller: subTotal,
+                            decoration: InputDecoration(
+                                border: const OutlineInputBorder(
+                                  // width: 0.0 produces a thin "hairline" border
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                //labelText: 'Invoice Number',
+                                fillColor: Colors.grey[300],
+                                filled: true,
+                                // border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(
+                          child: Text(
+                            "Total Tax  :",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          height: 35,
+                          child: TextFormField(
+                            readOnly: true,
+                            controller: totalTax,
+                            decoration: InputDecoration(
+                                border: const OutlineInputBorder(
+                                  // width: 0.0 produces a thin "hairline" border
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                //labelText: 'Invoice Number',
+                                fillColor: Colors.grey[300],
+                                filled: true,
+                                // border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(
+                          child: Text(
+                            "Discount :",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          height: 35,
+                          child: TextFormField(
+                            onChanged: (val) {
+                              discountAmt = double.parse(
+                                  discount.text == "" ? "0.0" : discount.text);
+                              totalAmount.text =
+                                  (totalProductCost - discountAmt + shippingAmt)
+                                      .toString();
+
+                              totalPaidAmount.text = totalAmount.text;
+                            },
+                            keyboardType: TextInputType.number,
+                            controller: discount,
+                            decoration: InputDecoration(
+                                border: const OutlineInputBorder(
+                                  // width: 0.0 produces a thin "hairline" border
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                //labelText: 'Invoice Number',
+                                fillColor: Colors.grey[300],
+                                filled: true,
+                                // border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const SizedBox(
+                          child: Text(
+                            "Shipping Charge :",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          height: 35,
+                          child: TextFormField(
+                            onChanged: (val) {
+                              shippingAmt = double.parse(
+                                  shippingCharge.text == ""
+                                      ? "0"
+                                      : shippingCharge.text);
+                              totalAmount.text =
+                                  (totalProductCost - discountAmt + shippingAmt)
+                                      .toString();
+                              totalPaidAmount.text = totalAmount.text;
+                            },
+                            keyboardType: TextInputType.number,
+                            controller: shippingCharge,
+                            decoration: InputDecoration(
+                                border: const OutlineInputBorder(
+                                  // width: 0.0 produces a thin "hairline" border
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(5)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                    left: 10, top: 2, bottom: 2),
+                                //labelText: 'Invoice Number',
+                                fillColor: Colors.grey[300],
+                                filled: true,
+                                // border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                labelStyle:
+                                    const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    const Divider(),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Total :',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.3,
+                            child: Text(
+                              totalAmount.text,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w500),
+                            ),
+                          )
+                        ],
                       ),
-                      labelStyle: TextStyle(color: Colors.grey)),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    const Divider(),
+                  ],
+                ),
+                const SizedBox(height: 15.0),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: startDate,
+                        readOnly: true,
+                        onTap: () async {
+                          selectedValue = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          setState(() {
+                            startDate.text =
+                                DateFormat('dd-MM-yyyy').format(selectedValue!);
+                            final endValue = selectedValue!
+                                .add(Duration(days: int.parse(typeDuration)));
+                            endDate.text =
+                                DateFormat('dd-MM-yyyy').format(endValue);
+                          });
+                        },
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return "Select Start Date";
+                          }
+                          return null;
+                        },
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
+                            labelText: 'Start Date *',
+                            prefixIcon:
+                                Icon(Icons.calendar_month, color: Colors.grey),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 15,
+                    ),
+                    Expanded(
+                      child: TextFormField(
+                        onTap: () async {
+                          DateTime? selectedEndDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          endDate.text =
+                              DateFormat('dd-MM-yyyy').format(selectedEndDate!);
+                        },
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return "Select End Date";
+                          }
+                          return null;
+                        },
+                        readOnly: true,
+                        controller: endDate,
+                        decoration: const InputDecoration(
+                            contentPadding: EdgeInsets.all(8),
+                            labelText: 'End Date *',
+                            prefixIcon:
+                                Icon(Icons.calendar_month, color: Colors.grey),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14.0),
                 TextFormField(
@@ -1246,30 +1081,30 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
           return StatefulBuilder(builder: (context, setState) {
             return AlertDialog(
                 scrollable: true,
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                title: Column(
                   children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * .6,
-                      height: 40,
-                      child: TextFormField(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                            onTap: () {
+                              search.clear();
+                              filteredStaff.clear();
+                              filteredStaff.addAll(renewalDetails!.data.staff);
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            child: const Icon(Icons.close)),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: TextField(
+                        controller: search,
+                        autocorrect: false,
+                        keyboardType: TextInputType.visiblePassword,
                         autofocus: true,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.only(left: 8),
-                          labelStyle: TextStyle(
-                            color: Colors.grey,
-                          ),
-                          labelText: 'Search...',
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
-                        ),
                         onChanged: ((value) {
                           if (title == "Customers") {
                             setState(() {
@@ -1285,8 +1120,24 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                             });
                           }
                         }),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.only(left: 8),
+                          labelStyle: TextStyle(
+                            color: Colors.grey,
+                          ),
+                          labelText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                          ),
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
                 content: SizedBox(
@@ -1300,45 +1151,63 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                             ? filteredTemplates.length
                             : filteredProducts.length,
                     itemBuilder: (context, index) {
-                      return ListTile(
-                        onTap: () async {
-                          if (title == "Customers") {
-                            customerName.text = filteredNames[index].name;
-                            customerId = filteredNames[index].id;
-                          } else if (title == "Template") {
-                            remindMe.text =
-                                filteredTemplates[index].templateName;
-                            templateId = filteredTemplates[index].id;
-                          } else {
-                            productId = filteredProducts[index].id;
-                            productNameController.text =
-                                filteredProducts[index].productName;
-                            prodRate.text =
-                                filteredProducts[index].sellingPrice;
-                            prodTax.text = filteredProducts[index].taxPercent;
-                            typeDuration = filteredProducts[index].noOfDays;
-                            calculateTotal();
-                          }
-                          Navigator.pop(context);
-                          setState(() {});
-                          filterCustomers;
-                          filterProducts;
-                          filterTemplates;
-                        },
-                        title: SizedBox(
-                          width: 200,
-                          child: Text(
-                            title == "Customers"
-                                ? filteredNames[index].name.toString()
-                                : title == "Template"
-                                    ? filteredTemplates[index].templateName
-                                    : filteredProducts[index]
-                                        .productName
-                                        .toString(),
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 14),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              color: const Color(0xFFFCFBFA)),
+                          child: ListTile(
+                            onTap: () async {
+                              if (title == "Customers") {
+                                customerName.text = filteredNames[index].name;
+                                customerId = filteredNames[index].id;
+                              } else if (title == "Template") {
+                                remindMe.text =
+                                    filteredTemplates[index].templateName;
+                                templateId = filteredTemplates[index].id;
+                              } else {
+                                productId = filteredProducts[index].id;
+                                productNameController.text =
+                                    filteredProducts[index].productName;
+                                prodRate.text =
+                                    filteredProducts[index].sellingPrice;
+                                prodTax.text =
+                                    filteredProducts[index].taxPercent;
+                                typeDuration = filteredProducts[index].noOfDays;
+                                calculateTotal();
+                              }
+                              Navigator.pop(context);
+                              setState(() {});
+                              filterCustomers;
+                              filterProducts;
+                              filterTemplates;
+                            },
+                            title: SizedBox(
+                              width: 200,
+                              child: Text(
+                                title == "Customers"
+                                    ? filteredNames[index].name.toString()
+                                    : title == "Template"
+                                        ? filteredTemplates[index].templateName
+                                        : filteredProducts[index]
+                                            .productName
+                                            .toString(),
+                                style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14),
+                              ),
+                            ),
+                            leading: CircleAvatar(
+                              radius: 15,
+                              backgroundColor: Colors.white,
+                              child: Text(title == "Customers"
+                                  ? filteredNames[index].name[0]
+                                  : title == "Template"
+                                      ? filteredTemplates[index].templateName[0]
+                                      : filteredProducts[index].productName[0]),
+                            ),
                           ),
                         ),
                       );
@@ -1364,7 +1233,12 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
     if (productName.contains(productNameController.text)) {
       Common.toastMessaage('Already Added', Colors.red);
     } else {
-      if (productNameController.text != "") {
+      if (productNameController.text == "") {
+        Common.toastMessaage('Add a product', Colors.red);
+      } else if (double.parse(prodTax.text) > 100 ||
+          double.parse(prodTax.text) < 0) {
+        Common.toastMessaage('Enter valid tax percentage', Colors.red);
+      } else {
         products.add({
           "product_id": productId,
           "product_name": productNameController.text,
@@ -1391,15 +1265,16 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
         }
         subTotal.text = totalProductCost.toString();
         totalTax.text = totalProductTax.toString();
-        discountAmt = double.parse(discount.text == "" ? "0" : discount.text);
+        discountAmt = double.parse(discount.text == "" ? "0.0" : discount.text);
         shippingAmt =
             double.parse(shippingCharge.text == "" ? "0" : shippingCharge.text);
         totalAmount.text =
             (totalProductCost - discountAmt + shippingAmt).toString();
         totalPaidAmount.text = totalAmount.text;
         setState(() {});
-      } else {
-        Common.toastMessaage('Add a product', Colors.red);
+        if (mounted) {
+          Navigator.pop(context);
+        }
       }
     }
   }
@@ -1434,5 +1309,420 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
     String formated = "";
     formated = DateFormat('dd-MM-yyyy').format(date);
     return formated;
+  }
+
+  Future<Object?> addProductsDialog(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: SizedBox(
+                  width: MediaQuery.of(context).size.width * .8,
+                  height: MediaQuery.of(context).size.height * .4,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Products",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              products.clear();
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AddProducts(),
+                                  )).then((_) {
+                                getRenewalDetails();
+                              });
+                            },
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [
+                                  Color(0xFF2a86c9),
+                                  Color(0xFF406dbe)
+                                ]),
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 15.0),
+                      TextFormField(
+                        controller: productNameController,
+                        readOnly: true,
+                        onTap: (() {
+                          dropDialog(context, "Products");
+                        }),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'Product *',
+                          prefixIcon: Icon(Icons.person, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              keyboardType: TextInputType.number,
+                              controller: prodRate,
+                              onChanged: (val) {
+                                calculateTotal();
+                              },
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Rate *',
+                                  prefixIcon: Icon(Icons.currency_rupee,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    int currentValue =
+                                        int.parse(productQuantity.text);
+                                    setState(() {
+                                      currentValue--;
+                                      productQuantity.text =
+                                          (currentValue > 0 ? currentValue : 0)
+                                              .toString(); // decrementing value
+                                    });
+                                    calculateTotal();
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 30,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(8),
+                                            topLeft: Radius.circular(8))),
+                                    child: const Center(
+                                        child: Icon(
+                                      Icons.arrow_left,
+                                      size: 30,
+                                    )),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: TextFormField(
+                                    onChanged: (val) {
+                                      calculateTotal();
+                                    },
+                                    textAlign: TextAlign.center,
+                                    decoration: InputDecoration(
+                                      labelText: "Quantity",
+                                      focusedBorder: const OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 8.0, vertical: 8),
+                                      border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5.0),
+                                      ),
+                                    ),
+                                    controller: productQuantity,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: false,
+                                      signed: true,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    int currentValue =
+                                        int.parse(productQuantity.text);
+                                    setState(() {
+                                      currentValue++;
+                                      productQuantity.text = (currentValue)
+                                          .toString(); // incrementing value
+                                    });
+                                    calculateTotal();
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 30,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: const BorderRadius.only(
+                                            bottomRight: Radius.circular(8),
+                                            topRight: Radius.circular(8))),
+                                    child: const Center(
+                                        child: Icon(
+                                      Icons.arrow_right,
+                                      size: 30,
+                                    )),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              onChanged: (val) {
+                                calculateTotal();
+                              },
+                              keyboardType: TextInputType.number,
+                              controller: prodTax,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Tax(in %)',
+                                  prefixIcon:
+                                      Icon(Icons.percent, color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              readOnly: true,
+                              controller: prodAmount,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Amount',
+                                  prefixIcon: Icon(Icons.currency_rupee,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              maxLines: 2,
+                              controller: prodDetails,
+                              decoration: const InputDecoration(
+                                  contentPadding: EdgeInsets.all(8),
+                                  labelText: 'Details',
+                                  prefixIcon: Icon(Icons.receipt_long,
+                                      color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              addProduct();
+                            },
+                            child: Container(
+                              height: 50,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  Text(
+                                    " Add",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<dynamic> collectedStaffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            content: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                          onTap: () {
+                            search.clear();
+                            filteredStaff.clear();
+                            filteredStaff.addAll(renewalDetails!.data.staff);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: const Icon(Icons.close)),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextField(
+                      controller: search,
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredStaff = renewalDetails!.data.staff
+                              .where((item) => item.staffName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 8),
+                        labelStyle: TextStyle(
+                          color: Colors.grey,
+                        ),
+                        labelText: 'Search...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .3,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      itemCount: filteredStaff.length,
+                      shrinkWrap: true,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: const Color(0xFFFCFBFA)),
+                            child: ListTile(
+                              onTap: () {
+                                collectedStaff.text =
+                                    filteredStaff[index].staffName;
+                                collectedId = filteredStaff[index].userId;
+                                search.clear();
+                                filteredStaff
+                                    .addAll(renewalDetails!.data.staff);
+                                setState(() {});
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                              title: Text(
+                                filteredStaff[index].staffName,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              // trailing: Text(filteredStaff[index].userId),
+                              leading: CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Colors.white,
+                                child: Text(filteredStaff[index].staffName[0]),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
   }
 }

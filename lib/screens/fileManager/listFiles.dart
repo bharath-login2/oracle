@@ -10,7 +10,6 @@ import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart';
 
-
 import '../../core/common.dart';
 import '../../models/fileManager/deleteFileModel.dart';
 import '../../models/fileManager/fileMagerMOdel.dart';
@@ -38,6 +37,7 @@ class _ListFilesState extends State<ListFiles> {
     super.initState();
     listFolderList(widget.token, widget.folderName);
   }
+
   @override
   void dispose() {
     super.dispose();
@@ -78,7 +78,6 @@ class _ListFilesState extends State<ListFiles> {
       setState(() {});
     }
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -391,7 +390,7 @@ class _ListFilesState extends State<ListFiles> {
       ),
       body: listFolder != null
           ? SingleChildScrollView(
-            child: Column(
+              child: Column(
                 children: [
                   const SizedBox(
                     height: 15,
@@ -403,7 +402,8 @@ class _ListFilesState extends State<ListFiles> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4, // Number of columns in the grid
+                              crossAxisCount:
+                                  4, // Number of columns in the grid
                               crossAxisSpacing: 2, // Spacing between columns
                               mainAxisSpacing: 2, // Spacing between rows
                               childAspectRatio: 1),
@@ -440,7 +440,8 @@ class _ListFilesState extends State<ListFiles> {
                                                 child: Container(
                                                   width: double.maxFinite,
                                                   clipBehavior: Clip.antiAlias,
-                                                  decoration: const BoxDecoration(
+                                                  decoration:
+                                                      const BoxDecoration(
                                                     color: Colors.white,
                                                     borderRadius:
                                                         BorderRadius.only(
@@ -454,8 +455,8 @@ class _ListFilesState extends State<ListFiles> {
                                                     child: Column(
                                                       children: [
                                                         Align(
-                                                          alignment:
-                                                              Alignment.topRight,
+                                                          alignment: Alignment
+                                                              .topRight,
                                                           child: IconButton(
                                                             onPressed: () {
                                                               audioCreateController
@@ -470,8 +471,8 @@ class _ListFilesState extends State<ListFiles> {
                                                             },
                                                             icon: const Icon(Icons
                                                                 .close_rounded),
-                                                            color:
-                                                                Colors.redAccent,
+                                                            color: Colors
+                                                                .redAccent,
                                                           ),
                                                         ),
                                                         const Text(
@@ -484,9 +485,10 @@ class _ListFilesState extends State<ListFiles> {
                                                         ),
                                                         const SizedBox(
                                                             height: 20),
-                                                         Padding(
+                                                        Padding(
                                                           padding:
-                                                              const EdgeInsets.only(
+                                                              const EdgeInsets
+                                                                  .only(
                                                                   left: 20),
                                                           child: Column(
                                                             mainAxisAlignment:
@@ -499,78 +501,107 @@ class _ListFilesState extends State<ListFiles> {
                                                               Row(
                                                                 children: [
                                                                   const SizedBox(
-                                                                      width: 100,
+                                                                      width:
+                                                                          100,
                                                                       child: Text(
                                                                           'File Name :')),
                                                                   const SizedBox(
                                                                     width: 10,
                                                                   ),
                                                                   SizedBox(
-                                                                      width: 170,
-                                                                      child: Text(
-                                                                          listFolder!
-                                                                              .data![index].name
-                                                                              .toString(),overflow: TextOverflow.ellipsis,),),
+                                                                    width: 170,
+                                                                    child: Text(
+                                                                      listFolder!
+                                                                          .data![
+                                                                              index]
+                                                                          .name
+                                                                          .toString(),
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                  ),
                                                                 ],
                                                               ),
                                                               const SizedBox(
                                                                 height: 10,
                                                               ),
-                                                               Row(
+                                                              Row(
                                                                 children: [
                                                                   const SizedBox(
-                                                                      width: 100,
+                                                                      width:
+                                                                          100,
                                                                       child: Text(
                                                                           'File Size :')),
                                                                   const SizedBox(
                                                                     width: 10,
                                                                   ),
                                                                   SizedBox(
-                                                                      width: 170,
-                                                                      child: Text(
-                                                                          listFolder!
-                                                                              .data![index].fileSize
-                                                                              .toString(),overflow: TextOverflow.ellipsis,)),
+                                                                      width:
+                                                                          170,
+                                                                      child:
+                                                                          Text(
+                                                                        listFolder!
+                                                                            .data![index]
+                                                                            .fileSize
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      )),
                                                                 ],
                                                               ),
                                                               const SizedBox(
                                                                 height: 10,
                                                               ),
-                                                               Row(
+                                                              Row(
                                                                 children: [
                                                                   const SizedBox(
-                                                                      width: 100,
+                                                                      width:
+                                                                          100,
                                                                       child: Text(
                                                                           'Created Date :')),
                                                                   const SizedBox(
                                                                     width: 10,
                                                                   ),
                                                                   SizedBox(
-                                                                      width: 170,
-                                                                      child: Text(
-                                                                          listFolder!
-                                                                              .data![index].createdAt
-                                                                              .toString(),overflow: TextOverflow.ellipsis,)),
+                                                                      width:
+                                                                          170,
+                                                                      child:
+                                                                          Text(
+                                                                        listFolder!
+                                                                            .data![index]
+                                                                            .createdAt
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      )),
                                                                 ],
                                                               ),
                                                               const SizedBox(
                                                                 height: 10,
                                                               ),
-                                                               Row(
+                                                              Row(
                                                                 children: [
                                                                   const SizedBox(
-                                                                      width: 100,
+                                                                      width:
+                                                                          100,
                                                                       child: Text(
                                                                           'Created By :')),
                                                                   const SizedBox(
                                                                     width: 10,
                                                                   ),
                                                                   SizedBox(
-                                                                      width: 170,
-                                                                      child: Text(
-                                                                          listFolder!
-                                                                              .data![index].createdBy
-                                                                              .toString(),overflow: TextOverflow.ellipsis,)),
+                                                                      width:
+                                                                          170,
+                                                                      child:
+                                                                          Text(
+                                                                        listFolder!
+                                                                            .data![index]
+                                                                            .createdBy
+                                                                            .toString(),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      )),
                                                                 ],
                                                               ),
                                                             ],
@@ -580,8 +611,9 @@ class _ListFilesState extends State<ListFiles> {
                                                             height: 20),
                                                         Text(
                                                           '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().toString().padLeft(2, '0')}',
-                                                          style: const TextStyle(
-                                                              fontSize: 30),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 30),
                                                         ),
                                                         Row(
                                                           mainAxisAlignment:
@@ -632,18 +664,21 @@ class _ListFilesState extends State<ListFiles> {
                                                                       .stop();
                                                                   audioCreateController
                                                                       .resetTimer();
-                                                                  isPlay = false;
+                                                                  isPlay =
+                                                                      false;
                                                                 },
                                                                 shape:
                                                                     const CircleBorder(),
                                                                 backgroundColor:
-                                                                    Colors.white,
+                                                                    Colors
+                                                                        .white,
                                                                 foregroundColor:
                                                                     Colors.teal,
-                                                                child: const Icon(
+                                                                child:
+                                                                    const Icon(
                                                                   Icons.stop,
-                                                                  color:
-                                                                      Colors.red,
+                                                                  color: Colors
+                                                                      .red,
                                                                   size: 30,
                                                                 )),
                                                           ],
@@ -683,15 +718,15 @@ class _ListFilesState extends State<ListFiles> {
                                             extension: listFolder!
                                                 .data![index].extension
                                                 .toString(),
-                                                fileSize:listFolder!
-                                                    .data![index].fileSize
-                                                    .toString(),
-                                                createdDate:listFolder!
-                                                    .data![index].createdAt
-                                                    .toString(),
-                                                createdBy:listFolder!
-                                                    .data![index].createdBy
-                                                    .toString(),
+                                            fileSize: listFolder!
+                                                .data![index].fileSize
+                                                .toString(),
+                                            createdDate: listFolder!
+                                                .data![index].createdAt
+                                                .toString(),
+                                            createdBy: listFolder!
+                                                .data![index].createdBy
+                                                .toString(),
                                           ),
                                         ),
                                       )
@@ -708,58 +743,46 @@ class _ListFilesState extends State<ListFiles> {
                                   width: 50.0,
                                   decoration: BoxDecoration(
                                     image: DecorationImage(
-                                      image: listFolder!.data![index].extension ==
-                                                  'M4A' ||
-                                              listFolder!
-                                                      .data![index].extension ==
-                                                  'm4a'||listFolder!
-                                          .data![index].extension ==
-                                          'wav' || listFolder!
-                                          .data![index].extension ==
-                                          'WAV'
+                                      image: listFolder!.data![index].extension == 'M4A' ||
+                                              listFolder!.data![index].extension ==
+                                                  'm4a' ||
+                                              listFolder!.data![index].extension ==
+                                                  'wav' ||
+                                              listFolder!.data![index].extension ==
+                                                  'WAV'
                                           ? const AssetImage(
                                               'assets/icons/audio.png')
-                                          : listFolder!.data![index].extension ==
-                                                      'doc' ||
-                                                  listFolder!.data![index]
-                                                          .extension ==
+                                          : listFolder!.data![index].extension == 'doc' ||
+                                                  listFolder!.data![index].extension ==
                                                       'docx'
                                               ? const AssetImage(
                                                   'assets/icons/doc.png')
-                                              : listFolder!.data![index]
-                                                              .extension ==
-                                                          'pdf' ||
-                                                      listFolder!.data![index]
-                                                              .extension ==
+                                              : listFolder!.data![index].extension == 'pdf' ||
+                                                      listFolder!.data![index].extension ==
                                                           'PDF'
                                                   ? const AssetImage(
-                                                      'assets/icons/pdf.png'):
-                                      listFolder!.data![index].extension ==
-                                          'pptx' || listFolder!.data![index]
-                                          .extension ==
-                                          'pptm'||
-                                          listFolder!.data![index]
-                                              .extension ==
-                                              'ppt'?const AssetImage(
-                                          'assets/icons/ppt.png'):
-                                      listFolder!.data![index].extension ==
-                                          'csv' || listFolder!.data![index]
-                                          .extension ==
-                                          'xls'||
-                                          listFolder!.data![index]
-                                              .extension ==
-                                              'xlsx'?const AssetImage(
-                                          'assets/icons/xls.png'):
-                                      listFolder!.data![index].extension ==
-                                          'mp4' || listFolder!.data![index]
-                                          .extension ==
-                                          'mkv'||
-                                          listFolder!.data![index]
-                                              .extension ==
-                                              'webm'?const AssetImage(
-                                          'assets/icons/mp4.png')
-                                                  : const AssetImage(
-                                                      'assets/icons/picture.png'),
+                                                      'assets/icons/pdf.png')
+                                                  : listFolder!.data![index].extension == 'pptx' ||
+                                                          listFolder!
+                                                                  .data![index]
+                                                                  .extension ==
+                                                              'pptm' ||
+                                                          listFolder!
+                                                                  .data![index]
+                                                                  .extension ==
+                                                              'ppt'
+                                                      ? const AssetImage(
+                                                          'assets/icons/ppt.png')
+                                                      : listFolder!.data![index].extension == 'csv' ||
+                                                              listFolder!
+                                                                      .data![index]
+                                                                      .extension ==
+                                                                  'xls' ||
+                                                              listFolder!.data![index].extension == 'xlsx'
+                                                          ? const AssetImage('assets/icons/xls.png')
+                                                          : listFolder!.data![index].extension == 'mp4' || listFolder!.data![index].extension == 'mkv' || listFolder!.data![index].extension == 'webm'
+                                                              ? const AssetImage('assets/icons/mp4.png')
+                                                              : const AssetImage('assets/icons/picture.png'),
                                       fit: BoxFit.fill,
                                     ),
                                   ),
@@ -785,11 +808,10 @@ class _ListFilesState extends State<ListFiles> {
                   ),
                 ],
               ),
-          )
-          :  Center(
-        child: Lottie.asset('assets/main/loading.json',
-            fit: BoxFit.fill),
-      ),
+            )
+          : Center(
+              child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 20),
@@ -1079,31 +1101,37 @@ class _ListFilesState extends State<ListFiles> {
                                                         .audioPath.isNotEmpty
                                                 ? TextButton(
                                                     onPressed: () async {
-
                                                       bool containsString = json
                                                           .encode(
-                                                          listFolder!.data)
+                                                              listFolder!.data)
                                                           .contains(
-                                                          audioCreateController
-                                                              .audioPath.value.split('/').last);
+                                                              audioCreateController
+                                                                  .audioPath
+                                                                  .value
+                                                                  .split('/')
+                                                                  .last);
                                                       bool containsString1;
                                                       if (fileName
                                                           .text.isNotEmpty) {
                                                         containsString1 = json
                                                             .encode(listFolder!
-                                                            .data)
-                                                            .contains(
-                                                            fileName.text+extension(audioCreateController
-                                                                .audioPath.value));
+                                                                .data)
+                                                            .contains(fileName
+                                                                    .text +
+                                                                extension(
+                                                                    audioCreateController
+                                                                        .audioPath
+                                                                        .value));
                                                       } else {
                                                         containsString1 = false;
                                                       }
                                                       //print(Uri.parse(audioCreateController.audioPath.value.toString()));
-                                                      File file = File.fromUri(Uri.parse(audioCreateController.audioPath.value.toString()));
-
-
-
-
+                                                      File file = File.fromUri(
+                                                          Uri.parse(
+                                                              audioCreateController
+                                                                  .audioPath
+                                                                  .value
+                                                                  .toString()));
 
                                                       // File(
                                                       //     audioCreateController.audioPath.value.toString());
@@ -1117,21 +1145,20 @@ class _ListFilesState extends State<ListFiles> {
 
                                                       //print('file Size :$fileSizeInMB');
                                                       if (fileName
-                                                          .text.isEmpty &&
+                                                              .text.isEmpty &&
                                                           containsString ==
                                                               true) {
                                                         Common.toastMessaage(
                                                             'File Name already exist',
                                                             Colors.red);
                                                       } else if (fileName.text
-                                                          .isNotEmpty &&
+                                                              .isNotEmpty &&
                                                           containsString1 ==
                                                               true) {
                                                         Common.toastMessaage(
                                                             'File Name already exist',
                                                             Colors.red);
-                                                      }
-                                                      else if (fileSizeInMB >
+                                                      } else if (fileSizeInMB >
                                                           double.parse(
                                                               fileManagerPermissionMain!
                                                                   .data!
@@ -1150,22 +1177,22 @@ class _ListFilesState extends State<ListFiles> {
                                                             'Insufficient Storage',
                                                             Colors.red);
                                                       } else {
-
-
                                                         if (mounted) {
                                                           Common
                                                               .showProgressDialog(
                                                                   context,
                                                                   "Uploading..");
                                                         }
-                                                        UploadAudioRecord uploadAudio =
+                                                        UploadAudioRecord
+                                                            uploadAudio =
                                                             await HttpService.fileUpload(
                                                                 widget.token,
                                                                 widget
                                                                     .folderName,
                                                                 audioCreateController
                                                                     .audioPath
-                                                                    .value.toString(),
+                                                                    .value
+                                                                    .toString(),
                                                                 fileName.text);
                                                         if (uploadAudio.data ==
                                                             true) {
@@ -1429,9 +1456,12 @@ class _ListFilesState extends State<ListFiles> {
                                                         containsString1 = json
                                                             .encode(listFolder!
                                                                 .data)
-                                                            .contains(
-                                                                fileName.text+extension(imageUploadController
-                                                                    .file.value));
+                                                            .contains(fileName
+                                                                    .text +
+                                                                extension(
+                                                                    imageUploadController
+                                                                        .file
+                                                                        .value));
                                                       } else {
                                                         containsString1 = false;
                                                       }
@@ -1676,21 +1706,26 @@ class _ListFilesState extends State<ListFiles> {
                                                     ),
                                                     isFile == true
                                                         ? Column(
-                                                          children: [
-                                                            DottedBorder(
+                                                            children: [
+                                                              DottedBorder(
                                                                 borderType:
                                                                     BorderType
                                                                         .RRect,
-                                                                radius: const Radius
-                                                                    .circular(5),
+                                                                radius:
+                                                                    const Radius
+                                                                        .circular(
+                                                                        5),
                                                                 dashPattern: const [
                                                                   8,
                                                                   4
                                                                 ],
                                                                 strokeCap:
-                                                                    StrokeCap.round,
-                                                                color: Colors.black,
-                                                                child: Container(
+                                                                    StrokeCap
+                                                                        .round,
+                                                                color: Colors
+                                                                    .black,
+                                                                child:
+                                                                    Container(
                                                                   width: 100,
                                                                   height: 100,
                                                                   decoration: BoxDecoration(
@@ -1700,9 +1735,8 @@ class _ListFilesState extends State<ListFiles> {
                                                                           .withOpacity(
                                                                               .3),
                                                                       borderRadius:
-                                                                          BorderRadius
-                                                                              .circular(
-                                                                                  10)),
+                                                                          BorderRadius.circular(
+                                                                              10)),
                                                                   child:
                                                                       const Column(
                                                                     mainAxisAlignment:
@@ -1714,9 +1748,11 @@ class _ListFilesState extends State<ListFiles> {
                                                                               .upload,
                                                                           color: Colors
                                                                               .black,
-                                                                          size: 50),
+                                                                          size:
+                                                                              50),
                                                                       SizedBox(
-                                                                        height: 10,
+                                                                        height:
+                                                                            10,
                                                                       ),
                                                                       Text(
                                                                           'Doc/Pdf')
@@ -1724,43 +1760,45 @@ class _ListFilesState extends State<ListFiles> {
                                                                   ),
                                                                 ),
                                                               ),
-                                                            const SizedBox(height: 10,),
-                                                            TextFormField(
-                                                              controller:
-                                                              fileName,
-                                                              decoration:
-                                                              const InputDecoration(
-                                                                  contentPadding: EdgeInsets.only(
-                                                                      left:
-                                                                      10,
-                                                                      top:
-                                                                      2,
-                                                                      bottom:
-                                                                      2),
-                                                                  labelText:
-                                                                  'File Name',
-                                                                  fillColor:
-                                                                  Colors
-                                                                      .white,
-                                                                  filled:
-                                                                  true,
-                                                                  prefixIcon: Icon(
-                                                                      Icons
-                                                                          .file_copy,
-                                                                      color: Colors
-                                                                          .grey),
-                                                                  border:
-                                                                  OutlineInputBorder(),
-                                                                  focusedBorder:
-                                                                  OutlineInputBorder(
-                                                                    borderSide:
-                                                                    BorderSide(color: Colors.grey),
-                                                                  ),
-                                                                  labelStyle:
-                                                                  TextStyle(color: Colors.grey)),
-                                                            ),
-                                                          ],
-                                                        )
+                                                              const SizedBox(
+                                                                height: 10,
+                                                              ),
+                                                              TextFormField(
+                                                                controller:
+                                                                    fileName,
+                                                                decoration:
+                                                                    const InputDecoration(
+                                                                        contentPadding: EdgeInsets.only(
+                                                                            left:
+                                                                                10,
+                                                                            top:
+                                                                                2,
+                                                                            bottom:
+                                                                                2),
+                                                                        labelText:
+                                                                            'File Name',
+                                                                        fillColor:
+                                                                            Colors
+                                                                                .white,
+                                                                        filled:
+                                                                            true,
+                                                                        prefixIcon: Icon(
+                                                                            Icons
+                                                                                .file_copy,
+                                                                            color: Colors
+                                                                                .grey),
+                                                                        border:
+                                                                            OutlineInputBorder(),
+                                                                        focusedBorder:
+                                                                            OutlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.grey),
+                                                                        ),
+                                                                        labelStyle:
+                                                                            TextStyle(color: Colors.grey)),
+                                                              ),
+                                                            ],
+                                                          )
                                                         : const Text(
                                                             'Do you want to upload document?'),
                                                   ],
@@ -1827,8 +1865,11 @@ class _ListFilesState extends State<ListFiles> {
                                                         containsString1 = json
                                                             .encode(listFolder!
                                                                 .data)
-                                                            .contains(
-                                                                fileName.text+extension(file!.path.toString()));
+                                                            .contains(fileName
+                                                                    .text +
+                                                                extension(file!
+                                                                    .path
+                                                                    .toString()));
                                                       } else {
                                                         containsString1 = false;
                                                       }

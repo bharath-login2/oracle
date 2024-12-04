@@ -100,11 +100,11 @@ class _AddUserState extends State<AddUser> {
         ? Scaffold(
             backgroundColor: Colors.grey.shade200,
             appBar: PreferredSize(
-              preferredSize: Size.fromHeight(
-                  MediaQuery.of(context).size.height * 0.08),
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
               child: Container(
-                padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top),
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                       colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
@@ -141,8 +141,7 @@ class _AddUserState extends State<AddUser> {
                           ),
                           const Text(
                             'Add User',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 18),
+                            style: TextStyle(color: Colors.white, fontSize: 18),
                           ),
                         ],
                       ),
@@ -161,10 +160,7 @@ class _AddUserState extends State<AddUser> {
                         multiBranch == 'true' && roleId == '2'
                             ? Padding(
                                 padding: const EdgeInsets.only(
-                                    left: 20,
-                                    right: 20,
-                                    top: 20,
-                                    bottom: 20),
+                                    left: 20, right: 20, top: 20, bottom: 20),
                                 child: DropdownButtonFormField(
                                   value: branch,
                                   onChanged: (value) {
@@ -172,8 +168,8 @@ class _AddUserState extends State<AddUser> {
                                       branch = value.toString();
                                     });
                                   },
-                                  items: commonDetails!.data!.branch!
-                                      .map((data) {
+                                  items:
+                                      commonDetails!.data!.branch!.map((data) {
                                     return DropdownMenuItem<String>(
                                       value: data.branchId.toString(),
                                       child: Text(
@@ -186,8 +182,7 @@ class _AddUserState extends State<AddUser> {
                                     filled: true,
                                     border: OutlineInputBorder(
                                       // Custom border
-                                      borderRadius:
-                                          BorderRadius.circular(5),
+                                      borderRadius: BorderRadius.circular(5),
                                     ),
                                     labelText: 'Select Branch',
                                     prefixIcon:
@@ -233,8 +228,7 @@ class _AddUserState extends State<AddUser> {
                           height: 15,
                         ),
                         Padding(
-                          padding:
-                              const EdgeInsets.only(left: 20, right: 20),
+                          padding: const EdgeInsets.only(left: 20, right: 20),
                           child: SizedBox(
                             height: 50,
                             child: TextFormField(
@@ -263,18 +257,15 @@ class _AddUserState extends State<AddUser> {
                                               return InkWell(
                                                 onTap: () async {
                                                   setState(() {
-                                                    designation =
-                                                        commonDetails!
-                                                            .data!
-                                                            .designations![
-                                                                ind]
-                                                            .designation
-                                                            .toString();
+                                                    designation = commonDetails!
+                                                        .data!
+                                                        .designations![ind]
+                                                        .designation
+                                                        .toString();
                                                     designationId =
                                                         commonDetails!
                                                             .data!
-                                                            .designations![
-                                                                ind]
+                                                            .designations![ind]
                                                             .id
                                                             .toString();
                                                     Navigator.pop(
@@ -288,7 +279,7 @@ class _AddUserState extends State<AddUser> {
                                                         .data!
                                                         .designations![ind]
                                                         .designation
-                                                        .toString(),
+                                                        .toString(), 
                                                     style: const TextStyle(
                                                         fontSize: 18),
                                                   ),
@@ -311,11 +302,9 @@ class _AddUserState extends State<AddUser> {
                                       color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.grey),
+                                    borderSide: BorderSide(color: Colors.grey),
                                   ),
-                                  labelStyle:
-                                      TextStyle(color: Colors.grey)),
+                                  labelStyle: TextStyle(color: Colors.grey)),
                             ),
                           ),
                         ),
@@ -335,8 +324,7 @@ class _AddUserState extends State<AddUser> {
                           height: 15,
                         ),
                         Padding(
-                          padding:
-                              const EdgeInsets.only(left: 20, right: 20),
+                          padding: const EdgeInsets.only(left: 20, right: 20),
                           child: SizedBox(
                             height: 50,
                             child: TextFormField(
@@ -346,8 +334,7 @@ class _AddUserState extends State<AddUser> {
                                     builder: (BuildContext context) {
                                       return AlertDialog(
                                         scrollable: true,
-                                        title:
-                                            const Text('Accessible Users'),
+                                        title: const Text('Accessible Users'),
                                         content: SizedBox(
                                           height: MediaQuery.of(context)
                                                   .size
@@ -366,10 +353,8 @@ class _AddUserState extends State<AddUser> {
                                                 title: SizedBox(
                                                   width: 200,
                                                   child: Text(
-                                                    commonDetails!
-                                                        .data!
-                                                        .users![ind]
-                                                        .staffName
+                                                    commonDetails!.data!
+                                                        .users![ind].staffName
                                                         .toString(),
                                                     style: const TextStyle(
                                                         color: Colors.black,
@@ -378,15 +363,12 @@ class _AddUserState extends State<AddUser> {
                                                         fontSize: 14),
                                                   ),
                                                 ),
-                                                value:
-                                                    checkedItems.contains(
-                                                            commonDetails!
-                                                                .data!
-                                                                .users![ind]
-                                                                .userId
-                                                                .toString())
-                                                        ? true
-                                                        : false,
+                                                value: checkedItems.contains(
+                                                        commonDetails!.data!
+                                                            .users![ind].userId
+                                                            .toString())
+                                                    ? true
+                                                    : false,
                                                 onChanged: (bool? value) {
                                                   if (value == true) {
                                                     setState(() {
@@ -402,7 +384,7 @@ class _AddUserState extends State<AddUser> {
                                                               .users![ind]
                                                               .staffName
                                                               .toString());
-        
+
                                                       Navigator.pop(
                                                           context, true);
                                                     });
@@ -420,7 +402,7 @@ class _AddUserState extends State<AddUser> {
                                                               .users![ind]
                                                               .staffName
                                                               .toString());
-        
+
                                                       Navigator.pop(
                                                           context, true);
                                                     });
@@ -447,11 +429,9 @@ class _AddUserState extends State<AddUser> {
                                       color: Colors.grey),
                                   border: OutlineInputBorder(),
                                   focusedBorder: OutlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.grey),
+                                    borderSide: BorderSide(color: Colors.grey),
                                   ),
-                                  labelStyle:
-                                      TextStyle(color: Colors.grey)),
+                                  labelStyle: TextStyle(color: Colors.grey)),
                             ),
                           ),
                         ),
@@ -460,8 +440,8 @@ class _AddUserState extends State<AddUser> {
                         ),
                         checkedItemsName.isNotEmpty
                             ? Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 20, right: 10),
+                                padding:
+                                    const EdgeInsets.only(left: 20, right: 10),
                                 child: SizedBox(
                                   height: 30,
                                   child: ListView.builder(
@@ -509,8 +489,7 @@ class _AddUserState extends State<AddUser> {
                             : Padding(
                                 padding: const EdgeInsets.only(right: 5),
                                 child: Container(
-                                  width: MediaQuery.of(context).size.width *
-                                      .4,
+                                  width: MediaQuery.of(context).size.width * .4,
                                   height: 30,
                                   decoration: BoxDecoration(
                                       border: Border.all(
@@ -571,8 +550,7 @@ class _AddUserState extends State<AddUser> {
                                               MainAxisAlignment.center,
                                           children: [
                                             Icon(Icons.add_a_photo,
-                                                color: Colors.black,
-                                                size: 40),
+                                                color: Colors.black, size: 40),
                                             SizedBox(
                                               width: 15,
                                             ),
@@ -581,8 +559,7 @@ class _AddUserState extends State<AddUser> {
                                               style: TextStyle(
                                                   fontSize: 18,
                                                   color: Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.bold),
+                                                  fontWeight: FontWeight.bold),
                                             ),
                                           ],
                                         ),
@@ -628,8 +605,7 @@ class _AddUserState extends State<AddUser> {
                             if (multiBranch == 'true' &&
                                 roleId == '2' &&
                                 branch == null) {
-                              Common.toastMessaage(
-                                  'Choose Branch', Colors.red);
+                              Common.toastMessaage('Choose Branch', Colors.red);
                             } else if (name.text.isEmpty) {
                               Common.toastMessaage(
                                   'Enter Staff Name', Colors.red);
@@ -643,8 +619,7 @@ class _AddUserState extends State<AddUser> {
                               Common.toastMessaage(
                                   'Choose Designation', Colors.red);
                             } else {
-                              Common.showProgressDialog(
-                                  context, "Loading..");
+                              Common.showProgressDialog(context, "Loading..");
                               Map<String, dynamic> body = {
                                 'token': widget.token,
                                 "designation": designationId,
@@ -666,19 +641,17 @@ class _AddUserState extends State<AddUser> {
                                   if (_imageFile == null)
                                     "staffImage": _imageFile
                                   else
-                                    "staffImage":
-                                        await MultipartFile.fromFile(
-                                            _imageFile!)
+                                    "staffImage": await MultipartFile.fromFile(
+                                        _imageFile!)
                                 });
-        
+
                                 AddUserImageModel upload =
-                                    await HttpService.uploadImages(
-                                        formData);
-                                Common.toastMessaage(
+                                    await HttpService.uploadImages(formData);
+                                Common.toastMessaage( 
                                     upload.message, Colors.red);
                                 if (context.mounted) {
                                   Navigator.pop(context);
-                                  Navigator.pop(context);
+                                  Navigator.pop(context); 
                                 }
                               } else {
                                 Common.toastMessaage(
@@ -705,9 +678,13 @@ class _AddUserState extends State<AddUser> {
                             ),
                           ),
                         ),
+                        const SizedBox(
+                          height: 20,
+                        ) 
                       ],
                     ),
                   )
+
                 : Center(
                     child: Lottie.asset('assets/main/loading.json',
                         fit: BoxFit.fill),

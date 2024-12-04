@@ -2,7 +2,6 @@
 //
 //     final expenseListModel = expenseListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ExpenseListModel expenseListModelFromJson(String str) => ExpenseListModel.fromJson(json.decode(str));

@@ -6,17 +6,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:login2/screens/accounts/clients/invoiceList.dart';
-import 'package:login2/screens/accounts/clients/receiptList.dart';
 import 'package:lottie/lottie.dart';
-
 import '../../../core/common.dart';
 import '../../../models/clients/receiptAddCommonDetailsModel.dart';
 import '../../../models/clients/receiptAddModel.dart';
 import '../../../service/service.dart';
-import '../../homePage.dart';
-import '../../leadManagement/dashboard.dart';
-import 'clientList.dart';
 
 class ReceiptAdd extends StatefulWidget {
   String token;
@@ -40,8 +34,13 @@ class _ReceiptAddState extends State<ReceiptAdd> {
   List<Staff> filteredItems = [];
   String collectedBy = "";
   String collectedByName = "Collected By";
+  List<TargetGroup> targets = [];
+  List<TargetGroup> filteredTargets = [];
+  List targetGroups = [];
+  List targetGroupNames = [];
   TextEditingController search = TextEditingController();
   String? templateImage;
+
   @override
   void initState() {
     super.initState();
@@ -64,8 +63,14 @@ class _ReceiptAddState extends State<ReceiptAdd> {
     receiptDetails = await HttpService.receiptCommonDetails(
         widget.token, widget.clientId, widget.invoiceId);
     if (receiptDetails != null) {
-      items = receiptDetails!.data!.staff!;
+      items = receiptDetails!.data.staff;
       filteredItems.addAll(items);
+      targets = receiptDetails!.data.targetGroups;
+      filteredTargets.addAll(targets);
+      for (int i = 0; i < receiptDetails!.data.selectedGroups.length; i++) {
+        targetGroups.add(receiptDetails!.data.selectedGroups[i].groupId);
+        targetGroupNames.add(receiptDetails!.data.selectedGroups[i].groupName);
+      }
       setState(() {});
     }
   }
@@ -172,19 +177,19 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  receiptDetails!.data!.name.toString(),
+                                  receiptDetails!.data.name.toString(),
                                   style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500),
                                 ),
                                 Text(
-                                  'Receipt No: ${receiptDetails!.data!.displayRecNumber}',
+                                  'Receipt No: ${receiptDetails!.data.displayRecNumber}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400),
                                 ),
                                 Text(
-                                  'Invoice No: ${receiptDetails!.data!.displayInvNumber}',
+                                  'Invoice No: ${receiptDetails!.data.displayInvNumber}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400),
@@ -267,6 +272,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                         Padding(
                           padding: const EdgeInsets.only(left: 10, right: 10),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -280,7 +286,6 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                   const SizedBox(
                                     height: 5,
                                   ),
-                                 
                                   SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.45,
@@ -311,7 +316,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                                           setState(() {
                                                             filteredItems = items
                                                                 .where((item) => item
-                                                                    .staffName!
+                                                                    .staffName
                                                                     .toLowerCase()
                                                                     .contains(value
                                                                         .toLowerCase()))
@@ -352,11 +357,11 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                                                 collectedByName =
                                                                     filteredItems[
                                                                             index]
-                                                                        .staffName!;
+                                                                        .staffName;
                                                                 collectedBy =
                                                                     filteredItems[
                                                                             index]
-                                                                        .userId!;
+                                                                        .userId;
                                                                 search.clear();
                                                                 filteredItems
                                                                     .addAll(
@@ -377,7 +382,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                                                   child: Text(
                                                                     filteredItems[
                                                                             index]
-                                                                        .staffName!,
+                                                                        .staffName,
                                                                     overflow:
                                                                         TextOverflow
                                                                             .ellipsis,
@@ -479,7 +484,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                               ),
                                               value: paymentMethod,
                                               items: receiptDetails!
-                                                  .data!.paymentMethods!
+                                                  .data.paymentMethods
                                                   .map((data) {
                                                 return DropdownMenuItem(
                                                   value: data.id.toString(),
@@ -510,6 +515,179 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                         ),
                         const SizedBox(
                           height: 10,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text('Target Group :',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  )),
+                              const SizedBox(
+                                width: 15,
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    targetGroupDialog(context);
+                                  },
+                                  child: Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * 1,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(),
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: Colors.white),
+                                    child: targetGroups.isEmpty
+                                        ? const Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 10, top: 15, bottom: 10),
+                                            child: Text('Target Group'))
+                                        : Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 40),
+                                            child: SizedBox(
+                                              height: 35,
+                                              child: ListView.builder(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                itemCount:
+                                                    targetGroupNames.length,
+                                                itemBuilder: (context, i) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5, right: 5),
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        setState(() {});
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            height: 35,
+                                                            decoration: BoxDecoration(
+                                                                border: Border.all(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    width: 0),
+                                                                color: Colors
+                                                                    .white,
+                                                                borderRadius: const BorderRadius
+                                                                    .only(
+                                                                    topLeft: Radius
+                                                                        .circular(
+                                                                            6),
+                                                                    bottomLeft:
+                                                                        Radius.circular(
+                                                                            6))),
+                                                            child: Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Padding(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    child: Text(
+                                                                      targetGroupNames[
+                                                                          i],
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          InkWell(
+                                                            onTap: () {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          context) {
+                                                                    return AlertDialog(
+                                                                      title: const Text(
+                                                                          'Please Confirm'),
+                                                                      content:
+                                                                          const Text(
+                                                                              'Are you sure to Remove this Number?'),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('No')),
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () async {
+                                                                              setState(() {
+                                                                                targetGroupNames.remove(targetGroupNames[i]);
+                                                                                targetGroups.remove(targetGroups[i]);
+                                                                              });
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('Yes')),
+                                                                      ],
+                                                                    );
+                                                                  });
+                                                            },
+                                                            child: Container(
+                                                              height: 35,
+                                                              width: 30,
+                                                              decoration: BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      width: 0),
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade100,
+                                                                  borderRadius: const BorderRadius
+                                                                      .only(
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              6),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              6))),
+                                                              child: const Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(
                           height: 10,
@@ -575,7 +753,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      receiptDetails!.data!.particulars
+                                      receiptDetails!.data.particulars
                                           .toString(),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -586,7 +764,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
                                     child: Text(
-                                      receiptDetails!.data!.totalAmount
+                                      receiptDetails!.data.totalAmount
                                           .toString(),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -629,7 +807,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                         double.parse(receiptDetails!
-                                                .data!.amountDue
+                                                .data.amountDue
                                                 .toString())
                                             .toStringAsFixed(2),
                                         style: const TextStyle(
@@ -826,10 +1004,10 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                               Common.toastMessaage(
                                   'Type Valid pay amount', Colors.red);
                             } else if (double.parse(payAmount.text) >
-                                double.parse(receiptDetails!.data!.amountDue
+                                double.parse(receiptDetails!.data.amountDue
                                     .toString())) {
                               Common.toastMessaage(
-                                  'Maximum Amount Received can be ${receiptDetails!.data!.amountDue}',
+                                  'Maximum Amount Received can be ${receiptDetails!.data.amountDue}',
                                   Colors.red);
                             } else {
                               if (context.mounted) {
@@ -840,13 +1018,13 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                       widget.token,
                                       widget.invoiceId,
                                       widget.clientId,
-                                      receiptDetails!.data!.receiptNumber,
+                                      receiptDetails!.data.receiptNumber,
                                       fromdate,
                                       payAmount.text,
                                       collectedBy,
                                       paymentMethod,
-                                      templateImage);
-
+                                      templateImage,
+                                      targetGroups);
                               if (object.data == true) {
                                 Common.toastMessaage(
                                     object.message, Colors.green);
@@ -952,6 +1130,100 @@ class _ReceiptAddState extends State<ReceiptAdd> {
               ),
             ));
   }
+
+  Future<dynamic> targetGroupDialog(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(builder: (context, setState) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredTargets = targets
+                            .where((item) => item.groupName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .32,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    // Remove NeverScrollableScrollPhysics to enable scrolling
+                    shrinkWrap: true,
+                    itemCount: filteredTargets.length,
+                    itemBuilder: (context, ind) {
+                      return CheckboxListTile(
+                        title: SizedBox(
+                          width: 200,
+                          child: Text(
+                            filteredTargets[ind].groupName.toString(),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14),
+                          ),
+                        ),
+                        value: targetGroups
+                                .contains(filteredTargets[ind].id.toString())
+                            ? true
+                            : false,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              targetGroups.add(filteredTargets[ind].id.toString());
+                              targetGroupNames.add(
+                                  filteredTargets[ind].groupName.toString());
+                            } else {
+                              targetGroups.remove(filteredTargets[ind].id.toString());
+                              targetGroupNames.remove(
+                                  filteredTargets[ind].groupName.toString());
+                            }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                filteredTargets.clear();
+                filteredTargets.addAll(targets);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text("Done"),
+            ),
+          ],
+        );
+      });
+    },
+  );
+}
 
   pickTemplateImage(context, source) async {
     try {

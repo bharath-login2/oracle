@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -35,17 +36,22 @@ class Common {
     }
   }
 
-  static directCall(String number) async {
-    if (number.length == 12) {
-      await FlutterPhoneDirectCaller.callNumber('+$number');
-    } else {
-      await FlutterPhoneDirectCaller.callNumber(number);
-    }
-  }
+  // static dialPad(String number) async {
+  //   if (number.length == 12) {
+  //     await FlutterPhoneDirectCaller.callNumber('+$number');
+  //   } else {
+  //     await FlutterPhoneDirectCaller.callNumber(number);
+  //   }
+  // }
 
   static dialPad(String number) async {
-    String url = 'tel:+$number';
-    await launchUrl(Uri.parse(url));
+    if (number.length == 12) {
+      String url = 'tel:+$number';
+      await launchUrl(Uri.parse(url));
+    } else {
+      String url = 'tel:$number';
+      await launchUrl(Uri.parse(url));
+    }
   }
 
   static saveSharedPref(String key, String val) async {
@@ -53,8 +59,14 @@ class Common {
     prefs.setString(key, val);
   }
 
+  static clearSharedPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.clear();
+  }
+
   static getSharedPref(String key) async {
     final prefs = await SharedPreferences.getInstance();
+    print('$key:${prefs.get(key)}');
     return prefs.get(key);
   }
 
@@ -91,7 +103,6 @@ class Common {
       }
     }
   }
-  
 }
 
 RegExp regex = RegExp(PatterStrings.email);
@@ -101,50 +112,54 @@ class PatterStrings {
       // r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+";
       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
 }
- Center noResultWidget(BuildContext context,text) {
-    return Center(
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.5,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 200,
-              height: 200,
-              child: Image.asset(
-                "assets/icons/nodatafound.png",
-              ),
-            ),
-             Text(
-              text,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            InkWell(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.4,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Center(
-                  child: Text('Go Back',
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500)),
-                ),
-              ),
-            )
-          ],
-        ),
+
+Center noResultWidget(BuildContext context, text) {
+  return Center(
+    child: SizedBox(
+      height: MediaQuery.of(context).size.height * 0.5,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: text == "Type to search..." ? 250 : 200,
+            height: text == "Type to search..." ? 250 : 200,
+            child: text == "Type to search..."
+                ? Lottie.asset("assets/icons/search_here.json")
+                : Image.asset(
+                    "assets/icons/nodatafound.png",
+                  ),
+          ),
+          // if (text != "Type to search...")
+          Text(
+            text,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          // InkWell(
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //   },
+          //   child: Container(
+          //     width: MediaQuery.of(context).size.width * 0.4,
+          //     height: 40,
+          //     decoration: BoxDecoration(
+          //       color: Colors.black,
+          //       borderRadius: BorderRadius.circular(10),
+          //     ),
+          //     child: const Center(
+          //       child: Text('Go Back',
+          //           style: TextStyle(
+          //               fontSize: 15,
+          //               color: Colors.white,
+          //               fontWeight: FontWeight.w500)),
+          //     ),
+          //   ),
+          // )
+        ],
       ),
-    );
-  }
+    ),
+  );
+}

@@ -234,12 +234,12 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                             children: [
                               getResponse!.data.complaintType.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text(
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text(
                                         "Please Add Complaint Types",
                                         style: TextStyle(color: Colors.red),
                                       ),
-                                  )
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -612,10 +612,10 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                             children: [
                               getResponse!.data.complaintReporter.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Reporters Type",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Reporters Type",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -725,10 +725,10 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                             children: [
                               getResponse!.data.complaintNature.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Complaint Nature",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Complaint Nature",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -944,10 +944,10 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                             children: [
                               getResponse!.data.complaintStatus.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Complaint Status",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Complaint Status",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -1053,7 +1053,7 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                         child: Column(
                           children: [
                             Container(
-                             width: MediaQuery.of(context).size.width *.85,
+                              width: MediaQuery.of(context).size.width * .85,
                               height: 50,
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -1094,7 +1094,9 @@ class ComplaintUpdateScreenState extends State<ComplaintUpdateScreen> {
                                     });
                                   },
                                   hint: Text(
-                                   getResponse!.data.staffLists.isNotEmpty? " Tap to Select":" Staff details is empty",
+                                    getResponse!.data.staffLists.isNotEmpty
+                                        ? " Tap to Select"
+                                        : " Staff details is empty",
                                     textAlign: TextAlign.left,
                                     style: const TextStyle(
                                       color: Colors.grey,

@@ -9,10 +9,10 @@ import 'package:login2/screens/accounts/clients/clientList.dart';
 import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/clients/receiptList.dart';
+import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
-import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/service/service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -30,8 +30,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
   AccountDashboardModel? dashboard;
   String fDate = DateFormat('dd-MM-yyyy')
       .format(DateTime(DateTime.now().year, DateTime.now().month, 1));
-  String tDate =  DateFormat('dd-MM-yyyy')
-      .format(DateTime(DateTime.now().year, DateTime.now().month+1, 0));
+  String tDate = DateFormat('dd-MM-yyyy')
+      .format(DateTime(DateTime.now().year, DateTime.now().month + 1, 0));
   bool toggle = false;
   List list = [
     "Invoices",
@@ -39,7 +39,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
     "Receipts",
     "Expense",
     "Customers",
-    "Renewals"
+    "Account Head"
   ];
   List tabColors = [
     Colors.green,
@@ -286,14 +286,22 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                                                         .toString())),
                                                           );
                                                         } else if (list[i] ==
-                                                            "Renewals") {
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        const RenewalDashboard()),
-                                                          );
+                                                            "Account Head") {
+                                                          if (dashboard!.data
+                                                                  .isViewAccHead ==
+                                                              true) {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          const AccountHead()),
+                                                            );
+                                                          } else {
+                                                            Common.toastMessaage(
+                                                                "No permission",
+                                                                Colors.red);
+                                                          }
                                                         } else {
                                                           Navigator.push(
                                                             context,
@@ -356,30 +364,39 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                   InkWell(
                                     onTap: () {
                                       if (dashboard!.data.bankAccCount == "1") {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => BankAccount(
-                                                accId: dashboard!
-                                                    .data.bankAccountId,
-                                                accName: dashboard!
-                                                    .data.bankAccountName,
-                                              ),
-                                            ));
+                                        if (dashboard!.data.isViewBankAcc) {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    BankAccount(
+                                                  accId: dashboard!
+                                                      .data.bankAccountId,
+                                                  accName: dashboard!
+                                                      .data.bankAccountName,
+                                                ),
+                                              ));
+                                        } else {
+                                          Common.toastMessaage(
+                                              "No permission", Colors.red);
+                                        }
                                       } else if (dashboard!.data.bankAccCount ==
                                           "0") {
                                         Common.toastMessaage(
                                             "Please add a 'BANK ACCOUNT'",
                                             Colors.red);
                                       } else {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PendingExpense(
-                                                status: "1",
-                                              ),
-                                            ));
+                                        if (dashboard!
+                                            .data.isViewPendingExpense) {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PendingExpense(
+                                                  status: "1",
+                                                ),
+                                              ));
+                                        }
                                       }
                                     },
                                     child: gridItem(
@@ -390,14 +407,20 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                   ),
                                   InkWell(
                                     onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PendingExpense(
-                                              status: "2",
-                                            ),
-                                          ));
+                                      if (dashboard!
+                                          .data.isViewPendingExpense) {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PendingExpense(
+                                                status: "2",
+                                              ),
+                                            ));
+                                      } else {
+                                        Common.toastMessaage(
+                                            "No permission", Colors.red);
+                                      }
                                     },
                                     child: gridItem(
                                         "PENDING EXPENSE",

@@ -61,6 +61,8 @@ class Data {
   String? downloadFile;
   String? whatsappUnofficial;
   String? whatsappOfficial;
+  String? transferLead;
+  bool? uploadCallLog;
 
   Data(
       {this.createStaff,
@@ -100,7 +102,10 @@ class Data {
         this.deleteFile,
         this.downloadFile,
         this.whatsappUnofficial,
-        this.whatsappOfficial});
+        this.whatsappOfficial,
+        this.transferLead,
+        this.uploadCallLog
+        });
 
   Data.fromJson(Map<String, dynamic> json) {
     createStaff = json['create_staff'];
@@ -141,12 +146,14 @@ class Data {
     downloadFile = json['download_file'];
     whatsappUnofficial = json['whatsapp_unofficial'];
     whatsappOfficial = json['whatsapp_official'];
+    transferLead = json['transfer_lead'];
+    uploadCallLog = json['upload_call_log'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['create_staff'] = this.createStaff;
-    data['view_staff'] = this.viewStaff;
+    data['view_staff'] = this.viewStaff; 
     data['update_staff'] = this.updateStaff;
     data['delete_staff'] = this.deleteStaff;
     data['view_staff_report'] = this.viewStaffReport;

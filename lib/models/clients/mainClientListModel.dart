@@ -2,7 +2,6 @@
 //
 //     final mainClientListModel = mainClientListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 MainClientListModel mainClientListModelFromJson(String str) => MainClientListModel.fromJson(json.decode(str));

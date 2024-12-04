@@ -7,23 +7,25 @@ import '../../widgets/size_config.dart';
 class ResetOtpPage extends StatefulWidget {
   String? rno;
   String? mobileNo;
-  ResetOtpPage(this.rno,this.mobileNo,{super.key});
+  ResetOtpPage(this.rno, this.mobileNo, {super.key});
   @override
   State<ResetOtpPage> createState() => _ResetOtpPageState();
 }
+
 class _ResetOtpPageState extends State<ResetOtpPage> {
   final TextEditingController _fieldOne = TextEditingController();
   final TextEditingController _fieldTwo = TextEditingController();
   final TextEditingController _fieldThree = TextEditingController();
   final TextEditingController _fieldFour = TextEditingController();
   String? _otp;
-  final bool _loading=false;
+  final bool _loading = false;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
@@ -31,15 +33,15 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
       body: SingleChildScrollView(
         child: Container(
           width: double.infinity,
-          decoration:  BoxDecoration(
+          decoration: BoxDecoration(
               gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    // Colors.purple,
-                    Colors.lightBlueAccent.shade100,
-                    Colors.orange,
-                  ])),
+                // Colors.purple,
+                Colors.lightBlueAccent.shade100,
+                Colors.orange,
+              ])),
           child: Column(
             children: [
               Container(
@@ -81,8 +83,9 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                           ),
                         ),
                         const Padding(
-                          padding: EdgeInsets.only(left: 20,right: 20),
-                          child: Text('Please Enter The 4 Digit Verification Code Sent to'),
+                          padding: EdgeInsets.only(left: 20, right: 20),
+                          child: Text(
+                              'Please Enter The 4 Digit Verification Code Sent to'),
                         ),
                         const SizedBox(
                           height: 30,
@@ -96,11 +99,9 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                             OtpInput(_fieldFour, false)
                           ],
                         ),
-
                         const SizedBox(
                           height: 30,
                         ),
-
                         ElevatedButton(
                           onPressed: () async {
                             setState(() {
@@ -109,22 +110,17 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                                   _fieldThree.text +
                                   _fieldFour.text;
                             });
-                            if(_otp==widget.rno) {
+                            if (_otp == widget.rno) {
                               Common.showProgressDialog(context, "Loading..");
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => ResetPassword(widget.mobileNo)),
+                                    builder: (context) =>
+                                        ResetPassword(widget.mobileNo)),
                               );
-
-
+                            } else {
+                              Common.toastMessaage('Otp Not Match', Colors.red);
                             }
-                            else{
-                              Common.toastMessaage(
-                                  'Otp Not Match', Colors.red);
-                            }
-
-
                           },
                           style: ElevatedButton.styleFrom(
                               shadowColor: Colors.black,
@@ -134,10 +130,8 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                                   borderRadius: BorderRadius.circular(15))),
                           child: Ink(
                             decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [
-                                  Colors.black,
-                                  Colors.black
-                                ]),
+                                gradient: const LinearGradient(
+                                    colors: [Colors.black, Colors.black]),
                                 borderRadius: BorderRadius.circular(15)),
                             child: Container(
                               width: 200,
@@ -145,17 +139,17 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
                               alignment: Alignment.center,
                               child: _loading == true
                                   ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-                              )
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    )
                                   : const Text(
-                                'Submit',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.white,
-                                ),
-                              ),
+                                      'Submit',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
@@ -169,6 +163,7 @@ class _ResetOtpPageState extends State<ResetOtpPage> {
     );
   }
 }
+
 class OtpInput extends StatelessWidget {
   final TextEditingController controller;
   final bool autoFocus;

@@ -41,10 +41,13 @@ class _MessageViewStatusState extends State<MessageViewStatus> {
       appBar: AppBar(
         backgroundColor: ColorConstant.barGreen,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: const Icon(Icons.arrow_back,color: Colors.white,)),
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: const Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+            )),
         title: const Text(
           "Campaign Status",
           style: TextStyle(color: Colors.white, fontSize: 18),

@@ -405,30 +405,46 @@ class _EditFollowupState extends State<EditFollowup> {
                                     controller: nextFollowupDate1,
                                     readOnly: true,
                                     onTap: () async {
-                                      await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(2100))
-                                          .then((selectedDate) {
-                                        if (selectedDate != null) {
-                                          showTimePicker(
-                                                  context: context,
-                                                  initialTime: TimeOfDay.now())
-                                              .then((selectedTime) {
-                                            String newDate =
-                                                selectedDate.toString();
-                                            newDate = newDate.substring(
-                                                0, newDate.indexOf(" "));
+                                 DateTime? selectedDate =
+                                          await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime.now(),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (selectedDate != null) {
+                                        TimeOfDay? selectedTime =
+                                            await showTimePicker(
+                                          context: context,
+                                          initialTime: TimeOfDay.now(),
+                                        );
+
+                                        if (selectedTime != null) {
+                                          final now = DateTime.now();
+                                          final selectedDateTime = DateTime(
+                                            selectedDate.year,
+                                            selectedDate.month,
+                                            selectedDate.day,
+                                            selectedTime.hour,
+                                            selectedTime.minute,
+                                          );
+
+                                          if (selectedDateTime.isAfter(now)) {
                                             String convertedNewDate =
-                                                getYmdFromDmy(newDate);
-                                            if (selectedTime != null) {
-                                              nextFollowupDate1.text =
-                                                  "$convertedNewDate ${selectedTime.format(context)}";
-                                            } else {}
-                                          });
+                                                getYmdFromDmy(selectedDate
+                                                    .toString()
+                                                    .split(' ')[0]);
+                                            nextFollowupDate1.text =
+                                                "$convertedNewDate ${selectedTime.format(context)}";
+                                          } else {
+                                            Common.toastMessaage(
+                                              "You cannot choose a past time for the follow-up date",
+                                              Colors.red,
+                                            );
+                                          }
                                         }
-                                      });
+                                      }
                                     },
                                     style: const TextStyle(
                                       color: Colors.black,

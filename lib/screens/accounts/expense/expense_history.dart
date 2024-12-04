@@ -217,9 +217,21 @@ class _ExpenseHistoryState extends State<ExpenseHistory> {
                                         ],
                                       ),
                                     ),
-                                    Text(
-                                      history!.data.history[index].createdAt,
-                                      style: const TextStyle(fontSize: 13),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          history!
+                                              .data.history[index].createdTime,
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                        Text(
+                                          history!
+                                              .data.history[index].createdAt,
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ],
                                     )
                                   ],
                                 ),

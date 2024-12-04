@@ -514,7 +514,6 @@ class _NotificationPageState extends State<NotificationPage> {
                     Navigator.pop(context);
                   },
                   child: const Text('Yes')),
-              
             ],
           );
         });

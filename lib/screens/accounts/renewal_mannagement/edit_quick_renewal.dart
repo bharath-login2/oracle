@@ -9,11 +9,9 @@ import 'package:login2/service/service.dart';
 
 class EditQuickRenewalScreen extends StatefulWidget {
   String id;
-  dynamic invoiceId;
   EditQuickRenewalScreen({
     super.key,
     required this.id,
-    required this.invoiceId,
   });
 
   @override
@@ -346,16 +344,15 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                                               content: const Text(
                                                                   'Are you sure to Remove this product?'),
                                                               actions: [
-                                                                 TextButton(
+                                                                TextButton(
                                                                     onPressed:
                                                                         () {
                                                                       Navigator.of(
                                                                               context)
                                                                           .pop();
                                                                     },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No')),
+                                                                    child: const Text(
+                                                                        'No')),
                                                                 TextButton(
                                                                     onPressed:
                                                                         () async {
@@ -388,7 +385,6 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                                                                     },
                                                                     child: const Text(
                                                                         'Yes')),
-                                                               
                                                               ],
                                                             );
                                                           });
@@ -690,7 +686,7 @@ class _EditQuickRenewalScreenState extends State<EditQuickRenewalScreen> {
                             remindMe.text =
                                 filteredTemplates[index].templateName;
                             templateId = filteredTemplates[index].id;
-                          Navigator.pop(context);
+                            Navigator.pop(context);
                             setState(() {});
                             filterTemplates("");
                           } else {

@@ -22,6 +22,9 @@ class _MyAppState extends State<MyApp> {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: NoomiKeys.navKey,
+      theme: ThemeData(
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
       home: const SplashScreen(),
     );
   }

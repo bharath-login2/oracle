@@ -37,6 +37,7 @@ class _DraweScreenState extends State<DraweScreen> {
   CommonSettingsModel? commmon;
   String name = '';
   String role = '';
+  String roleId = '';
   bool isVisible = true;
   final List<Color> _textColors = [
     Colors.red,
@@ -44,6 +45,15 @@ class _DraweScreenState extends State<DraweScreen> {
     Colors.blue,
     Colors.orange,
     Colors.purple,
+  ];
+
+  List supportNames = ["Pradeesh", "Swetha", "Abina", "Unnimaya", "Lead Plus"];
+  List supportPhone = [
+    "8086935814",
+    "9746981138",
+    "9567616533",
+    "9567256533",
+    "9061125533"
   ];
   int _currentColorIndex = 0;
   PackageInfo _packageInfo = PackageInfo(
@@ -69,6 +79,7 @@ class _DraweScreenState extends State<DraweScreen> {
   getData() async {
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+    roleId = await Common.getSharedPref("roleId");
 
     setState(() {
       result = result1;
@@ -151,25 +162,26 @@ class _DraweScreenState extends State<DraweScreen> {
                               //
                               //   },
                               // ),
-                              ListTile(
-                                leading: SizedBox(
-                                    width: 25,
-                                    child: Center(
-                                      child: Image.asset(
-                                          'assets/main/padlock.png',
-                                          height: 100,
-                                          fit: BoxFit.contain),
-                                    )),
-                                title: const Text('Change Password'),
-                                onTap: () => {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            UserChangePassword(widget.token)),
-                                  ),
-                                },
-                              ),
+                              if (roleId == "2")
+                                ListTile(
+                                  leading: SizedBox(
+                                      width: 25,
+                                      child: Center(
+                                        child: Image.asset(
+                                            'assets/main/padlock.png',
+                                            height: 100,
+                                            fit: BoxFit.contain),
+                                      )),
+                                  title: const Text('Change Password'),
+                                  onTap: () => {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              UserChangePassword(widget.token)),
+                                    ),
+                                  },
+                                ),
                               ListTile(
                                 leading: SizedBox(
                                     width: 25,
@@ -186,7 +198,7 @@ class _DraweScreenState extends State<DraweScreen> {
                                     MaterialPageRoute(
                                         builder: (context) => const WebViewPage(
                                             'Privacy T&C',
-                                            'https://myaccount.login2.in/privacy_policy.html')),
+                                            'https://login2.co.in/privacypolicy.html')),
                                   ),
                                 },
                               ),
@@ -243,45 +255,23 @@ class _DraweScreenState extends State<DraweScreen> {
                             alignment: FractionalOffset.bottomCenter,
                             child: Column(
                               children: [
-                                updatedata != null
-                                    ? Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 20, right: 20),
-                                        child:
-                                            updatedata!.data!.currentVersion ==
-                                                    _packageInfo.version
-                                                ? Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        'New Version Available',
-                                                        style: TextStyle(
-                                                          fontSize: 16,
-                                                          color: isVisible
-                                                              ? _textColors[
-                                                                  _currentColorIndex]
-                                                              : Colors
-                                                                  .transparent, // Text color when visible
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                          onTap: () {
-                                                            _launchURL(Platform
-                                                                    .isIOS
-                                                                ? 'https://apps.apple.com/us/app/login2/id6450980527'
-                                                                : 'https://play.google.com/store/apps/details?id=com.login2');
-                                                          },
-                                                          child: const Icon(
-                                                            Icons
-                                                                .download_for_offline,
-                                                            size: 30,
-                                                          )),
-                                                    ],
-                                                  )
-                                                : const SizedBox())
-                                    : const SizedBox(),
+                                Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, right: 20),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "Version : ${_packageInfo.version}",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.blue
+                                                .shade900, // Text color when visible
+                                          ),
+                                        ),
+                                      ],
+                                    )),
                                 const SizedBox(
                                   height: 10,
                                 ),
@@ -310,7 +300,70 @@ class _DraweScreenState extends State<DraweScreen> {
                                       ),
                                       InkWell(
                                         onTap: () async {
-                                          Common.dialPad(commmon!.data!.customerCareCall.toString());
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                title: Text(
+                                                  "Lead Plus Support",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          Colors.blue.shade900),
+                                                ),
+                                                content: SizedBox(
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      .45,
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      .7,
+                                                  child: ListView.builder(
+                                                      itemCount:
+                                                          supportNames.length,
+                                                      itemBuilder:
+                                                          (context, index) {
+                                                        return ListTile(
+                                                          onTap: () {
+                                                            Common.dialPad(
+                                                                supportPhone[
+                                                                    index]);
+                                                          },
+                                                          title: Text(
+                                                            supportNames[index],
+                                                            style: const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          ),
+                                                          subtitle: Text(
+                                                            supportPhone[index],
+                                                            style: const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .normal),
+                                                          ),
+                                                        );
+                                                      }),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: const Text(
+                                                        "close",
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.black),
+                                                      ))
+                                                ],
+                                              );
+                                            },
+                                          );
                                         },
                                         child: Image.asset(
                                             'assets/icons/telephone.png',
@@ -367,7 +420,7 @@ void logout(BuildContext context) {
                 child: const Text('No')),
             TextButton(
                 onPressed: () {
-                  Common.saveSharedPref("Logout", "success");
+                  Common.clearSharedPref();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const Login()),
                       (Route<dynamic> route) => false);

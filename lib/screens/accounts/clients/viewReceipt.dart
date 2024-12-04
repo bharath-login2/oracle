@@ -80,552 +80,535 @@ class _ViewReceiptState extends State<ViewReceipt> {
   Widget build(BuildContext context) {
     return result == true
         ? Scaffold(
-          backgroundColor: Colors.white,
-          appBar: PreferredSize(
-            preferredSize:
-                Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-            child: Container(
-              padding:
-                  EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(
-                    left: 10.0, top: 10.0, bottom: 10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                shape: BoxShape.circle),
-                            child: const Icon(
-                              Icons.arrow_back_ios_outlined,
-                              color: Colors.white,
-                              size: 16,
+            backgroundColor: Colors.white,
+            appBar: PreferredSize(
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+              child: Container(
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      left: 10.0, top: 10.0, bottom: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              height: 25,
+                              width: 25,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white),
+                                  shape: BoxShape.circle),
+                              child: const Icon(
+                                Icons.arrow_back_ios_outlined,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(
-                          width: 25,
-                        ),
-                        const Text(
-                          'Receipt',
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        takeScreenshot();
-                      },
-                      icon: const Icon(
-                        Icons.share,
-                        color: Colors.white,
-                        size: 30,
+                          const SizedBox(
+                            width: 25,
+                          ),
+                          const Text(
+                            'Receipt',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      IconButton(
+                        onPressed: () {
+                          takeScreenshot();
+                        },
+                        icon: const Icon(
+                          Icons.share,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          body: receiptPdf != null
-              ? SingleChildScrollView(
-                  child: Screenshot(
-                    controller: screenshotController,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        receiptPdf!.data!.companyDetails!.isNotEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 10, right: 10),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                            color: Colors.white,
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                .3,
-                                            child: Center(
-                                              child: Image.network(
+            body: receiptPdf != null
+                ? SingleChildScrollView(
+                    child: Screenshot(
+                      controller: screenshotController,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          receiptPdf!.data!.companyDetails!.isNotEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 10, right: 10),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                              color: Colors.white,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  .3,
+                                              child: Center(
+                                                child: Image.network(
+                                                  receiptPdf!
+                                                      .data!
+                                                      .companyDetails![0]
+                                                      .companyLogo
+                                                      .toString(),
+                                                  width: 150,
+                                                ),
+                                              )),
+                                          const Text(
+                                            'Address',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey),
+                                          ),
+                                          SizedBox(
+                                              width: 200,
+                                              child: Text(
                                                 receiptPdf!
                                                     .data!
                                                     .companyDetails![0]
-                                                    .companyLogo
+                                                    .companyAddress
                                                     .toString(),
-                                                width: 150,
-                                              ),
-                                            )),
-                                        const Text(
-                                          'Address',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey),
-                                        ),
-                                        SizedBox(
-                                            width: 200,
-                                            child: Text(
-                                              receiptPdf!
-                                                  .data!
-                                                  .companyDetails![0]
-                                                  .companyAddress
-                                                  .toString(),
-                                              style: const TextStyle(
-                                                  fontSize: 14),
-                                            )),
-                                        Text(
-                                          receiptPdf!
-                                              .data!
-                                              .companyDetails![0]
-                                              .companyEmail
-                                              .toString(),
-                                          style:
-                                              const TextStyle(fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        const Text(
-                                          'Registration Number',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey),
-                                        ),
-                                        Text(
-                                          receiptPdf!
-                                              .data!
-                                              .companyDetails![0]
-                                              .companyRegNo
-                                              .toString(),
-                                          style:
-                                              const TextStyle(fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        const Text(
-                                          'Contact Number',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey),
-                                        ),
-                                        Text(
-                                          receiptPdf!
-                                              .data!
-                                              .companyDetails![0]
-                                              .companyContactNo
-                                              .toString(),
-                                          style:
-                                              const TextStyle(fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        const Text(
-                                          'Pin code',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey),
-                                        ),
-                                        Text(
-                                          receiptPdf!
-                                              .data!
-                                              .companyDetails![0]
-                                              .companyPincode
-                                              .toString(),
-                                          style:
-                                              const TextStyle(fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                      ],
-                                    )
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              )),
+                                          Text(
+                                            receiptPdf!.data!.companyDetails![0]
+                                                .companyEmail
+                                                .toString(),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          ),
+                                        ],
+                                      ),
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          const Text(
+                                            'Registration Number',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey),
+                                          ),
+                                          Text(
+                                            receiptPdf!.data!.companyDetails![0]
+                                                .companyRegNo
+                                                .toString(),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                          const Text(
+                                            'Contact Number',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey),
+                                          ),
+                                          Text(
+                                            receiptPdf!.data!.companyDetails![0]
+                                                .companyContactNo
+                                                .toString(),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                          const Text(
+                                            'Pin code',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey),
+                                          ),
+                                          Text(
+                                            receiptPdf!.data!.companyDetails![0]
+                                                .companyPincode
+                                                .toString(),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                          ),
+                                          const SizedBox(
+                                            height: 5,
+                                          ),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                )
+                              : const SizedBox(),
+                          const Divider(),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Billing Address : ',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        receiptPdf!
+                                            .data!.shippingAddress!.shippingName
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                    Text(
+                                        receiptPdf!.data!.shippingAddress!
+                                            .shippingAddress
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                        )),
+                                    Text(
+                                        receiptPdf!.data!.shippingAddress!
+                                            .shippingContactNo
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                        )),
                                   ],
                                 ),
-                              )
-                            : const SizedBox(),
-                        const Divider(),
-                        Padding(
-                          padding:
-                              const EdgeInsets.only(left: 10, right: 10),
-                          child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Billing Address : ',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      receiptPdf!.data!.shippingAddress!
-                                          .shippingName
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  Text(
-                                      receiptPdf!.data!.shippingAddress!
-                                          .shippingAddress
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400,
-                                      )),
-                                  Text(
-                                      receiptPdf!.data!.shippingAddress!
-                                          .shippingContactNo
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400,
-                                      )),
-                                ],
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 10, right: 10),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Receipt Number :',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  Text(
-                                      receiptPdf!.data!.displayRecNumber
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 10, right: 10),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Invoice Number :',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  Text(
-                                      receiptPdf!.data!.displayInvNumber
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 10, right: 10),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text('Invoice Date : ',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  Text(
-                                      receiptPdf!.data!.receiptDate
-                                          .toString(),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      ))
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Visibility(
-                          visible: true,
-                          child: Column(
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 5, right: 5, top: 1, bottom: 1),
-                                child: Table(
-                                  columnWidths: {
-                                    0: FixedColumnWidth(
-                                        MediaQuery.of(context).size.width *
-                                            0.6), // Using 10%
-                                    1: FixedColumnWidth(
-                                        MediaQuery.of(context).size.width *
-                                            0.4),
-                                  },
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    TableRow(
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(1),
-                                        color: const Color(0xFFece9fd),
-                                      ),
-                                      children: const [
-                                        Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('Particulars',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight:
-                                                      FontWeight.bold),
-                                              textAlign: TextAlign.center),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Text('Amount',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight:
-                                                      FontWeight.bold),
-                                              textAlign: TextAlign.center),
-                                        ),
-                                      ],
-                                    ),
+                                    const Text('Receipt Number :',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                    Text(
+                                        receiptPdf!.data!.displayRecNumber
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Invoice Number :',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                    Text(
+                                        receiptPdf!.data!.displayInvNumber
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 10),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Invoice Date : ',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        )),
+                                    Text(
+                                        receiptPdf!.data!.receiptDate
+                                            .toString(),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ))
                                   ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 5, right: 5, top: 1, bottom: 1),
-                          child: Table(
-                            columnWidths: {
-                              0: FixedColumnWidth(
-                                  MediaQuery.of(context).size.width *
-                                      0.6), // Using 10%
-                              1: FixedColumnWidth(
-                                  MediaQuery.of(context).size.width *
-                                      0.4), // Using 30%
-                            },
-                            children: [
-                              // Each TableRow represents a row in the Table
-                              TableRow(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(1),
-                                  color: const Color(0xFFF3F3F3),
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Visibility(
+                            visible: true,
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 5, right: 5, top: 1, bottom: 1),
+                                  child: Table(
+                                    columnWidths: {
+                                      0: FixedColumnWidth(
+                                          MediaQuery.of(context).size.width *
+                                              0.6), // Using 10%
+                                      1: FixedColumnWidth(
+                                          MediaQuery.of(context).size.width *
+                                              0.4),
+                                    },
+                                    children: [
+                                      TableRow(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(1),
+                                          color: const Color(0xFFece9fd),
+                                        ),
+                                        children: const [
+                                          Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text('Particulars',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                                textAlign: TextAlign.center),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Text('Amount',
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                                textAlign: TextAlign.center),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      receiptPdf!.data!.particulars
-                                          .toString(),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                      textAlign: TextAlign.center,
-                                    ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 5, right: 5, top: 1, bottom: 1),
+                            child: Table(
+                              columnWidths: {
+                                0: FixedColumnWidth(
+                                    MediaQuery.of(context).size.width *
+                                        0.6), // Using 10%
+                                1: FixedColumnWidth(
+                                    MediaQuery.of(context).size.width *
+                                        0.4), // Using 30%
+                              },
+                              children: [
+                                // Each TableRow represents a row in the Table
+                                TableRow(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(1),
+                                    color: const Color(0xFFF3F3F3),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      receiptPdf!.data!.totalAmount
-                                          .toString(),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 12),
-                                      textAlign: TextAlign.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        receiptPdf!.data!.particulars
+                                            .toString(),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 12),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        receiptPdf!.data!.totalAmount
+                                            .toString(),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 12),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const Text('Paid Amount :'),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.3,
+                                        height: 35,
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey.shade300,
+                                            borderRadius:
+                                                BorderRadius.circular(5)),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 10,
+                                              right: 10,
+                                              top: 5,
+                                              bottom: 5),
+                                          child: Text(receiptPdf!
+                                              .data!.paidAmount
+                                              .toString()),
+                                        ))
+                                  ],
+                                ),
                               ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              receiptPdf!.data!.paymentMethod != '0'
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          const Text('payment Method :'),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.3,
+                                              height: 35,
+                                              decoration: BoxDecoration(
+                                                  color: Colors.grey.shade300,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5)),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 10,
+                                                    right: 10,
+                                                    top: 5,
+                                                    bottom: 5),
+                                                child: Text(receiptPdf!
+                                                    .data!.paymentMethod
+                                                    .toString()),
+                                              ))
+                                        ],
+                                      ),
+                                    )
+                                  : const SizedBox(),
+                              const Divider(),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width * 1,
+                                  child: Center(
+                                    child: Text(
+                                      '${receiptPdf!.data!.amountInWords}(Amount in words)',
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              const Divider(),
                             ],
                           ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text('Paid Amount :'),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                      width: MediaQuery.of(context)
-                                              .size
-                                              .width *
-                                          0.3,
-                                      height: 35,
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          borderRadius:
-                                              BorderRadius.circular(5)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 10,
-                                            right: 10,
-                                            top: 5,
-                                            bottom: 5),
-                                        child: Text(receiptPdf!
-                                            .data!.paidAmount
-                                            .toString()),
-                                      ))
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            receiptPdf!.data!.paymentMethod != '0'
-                                ? Padding(
-                                    padding:
-                                        const EdgeInsets.only(right: 10),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.end,
-                                      children: [
-                                        const Text('payment Method :'),
-                                        const SizedBox(
-                                          width: 10,
-                                        ),
-                                        Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.3,
-                                            height: 35,
-                                            decoration: BoxDecoration(
-                                                color: Colors.grey.shade300,
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        5)),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
-                                                      left: 10,
-                                                      right: 10,
-                                                      top: 5,
-                                                      bottom: 5),
-                                              child: Text(receiptPdf!
-                                                  .data!.paymentMethod
-                                                  .toString()),
-                                            ))
-                                      ],
-                                    ),
-                                  )
-                                : const SizedBox(),
-                            const Divider(),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: SizedBox(
-                                width:
-                                    MediaQuery.of(context).size.width * 1,
-                                child: Center(
-                                  child: Text(
-                                    '${receiptPdf!.data!.amountInWords}(Amount in words)',
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            const Divider(),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                      ],
+                          const SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      ),
                     ),
+                  )
+                : Center(
+                    child: Lottie.asset('assets/main/loading.json',
+                        fit: BoxFit.fill),
                   ),
-                )
-              : Center(
-                  child: Lottie.asset('assets/main/loading.json',
-                      fit: BoxFit.fill),
-                ),
-          // resizeToAvoidBottomInset: false,
-        )
+            // resizeToAvoidBottomInset: false,
+          )
         : Scaffold(
             backgroundColor: Colors.white,
             body: SizedBox(

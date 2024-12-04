@@ -13,12 +13,11 @@ import 'officialWhatsapp/chat_home_screen.dart';
 
 class BottomNavigation extends StatefulWidget {
   String token;
-  bool? whatsappConfigaure;
   String phoneCallLogPermission;
   String? name;
   String? userId;
 
-  BottomNavigation(this.token, this.whatsappConfigaure,
+  BottomNavigation(this.token,
       {required this.phoneCallLogPermission,
       this.name,
       this.userId,
@@ -30,6 +29,7 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   String whatsappPermissions = "";
+  String viewStaff = "";
   @override
   void initState() {
     getPermissions();
@@ -39,6 +39,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
   getPermissions() async {
     try {
       whatsappPermissions = await Common.getSharedPref("officialWhatsApp");
+      viewStaff = await Common.getSharedPref("viewStaffPermission");
+
       log(whatsappPermissions);
     } catch (e) {
       log(e.toString());
@@ -83,91 +85,50 @@ class _BottomNavigationState extends State<BottomNavigation> {
               ),
             ),
           ),
-          Platform.isAndroid
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: InkWell(
-                    onTap: () async {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) =>
-                      //         AddLeads(widget.token, page: 'NavigationBar'),
-                      //   ),
-                      // );
-                      if (Platform.isAndroid) {
-                        widget.phoneCallLogPermission == 'true'
-                            ? Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => CallLogs(widget.token,
-                                        widget.name, widget.userId)),
-                              )
-                            : _dialogue(context, 'Phone Call Logs');
-                      } else if (Platform.isIOS) {
-                        String accessCallRecordingPermission =
-                            await Common.getSharedPref(
-                                "accessCallRecordingPermission");
-                        String userId = await Common.getSharedPref("userId");
-                        String name = await Common.getSharedPref("name");
-                        if (context.mounted) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CallHistoryPage(
-                                    widget.token,
-                                    name,
-                                    userId,
-                                    accessCallRecordingPermission == "true"
-                                        ? true
-                                        : false)),
-                          );
-                        }
-                      }
-                    },
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.175,
-                      child: const Icon(
-                        Icons.call,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AddLeads(widget.token, page: 'NavigationBar'),
-                        ),
-                      );
-                      // widget.phoneCallLogPermission ==
-                      //     'true'
-                      //     ? Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //       builder: (context) => CallLogs(
-                      //           widget
-                      //               .token,
-                      //           widget.name,
-                      //           widget.userId)),
-                      // )
-                      //     : _dialogue(context,
-                      //     'Phone Call Logs');
-                    },
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.175,
-                      child: const Icon(
-                        Icons.call,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: InkWell(
+              onTap: () async {
+                if (Platform.isAndroid) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => CallLogs(
+                              widget.token,
+                              widget.name,
+                              widget.userId,
+                            )),
+                  );
+                } else if (Platform.isIOS) {
+                  String accessCallRecordingPermission =
+                      await Common.getSharedPref(
+                          "accessCallRecordingPermission");
+                  String userId = await Common.getSharedPref("userId");
+                  String name = await Common.getSharedPref("name");
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CallHistoryPage(
+                              widget.token,
+                              name,
+                              userId,
+                              accessCallRecordingPermission == "true"
+                                  ? true
+                                  : false)),
+                    );
+                  }
+                }
+              },
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.175,
+                child: const Icon(
+                  Icons.call,
+                  color: Colors.white,
                 ),
+              ),
+            ),
+          ),
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.2,
           ),
@@ -184,149 +145,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
                 } else {
                   _dialogue(context, 'whattsApp');
                 }
-                // showDialog(
-                //     barrierColor: Colors.grey.withOpacity(.5),
-                //     context: context,
-                //     builder: (BuildContext context) {
-                //       return WillPopScope(
-                //         onWillPop: () async {
-                //           return true;
-                //         },
-                //         child: Material(
-                //           type: MaterialType.transparency,
-                //           child: Padding(
-                //             padding: const EdgeInsets.only(bottom: 50),
-                //             child: Center(
-                //               child: Container(
-                //                 decoration: BoxDecoration(
-                //                   borderRadius: BorderRadius.circular(10),
-                //                   color: Colors.white,
-                //                 ),
-                //                 width: MediaQuery.of(context).size.width * 0.9,
-                //                 height: 250,
-                //                 child: Padding(
-                //                   padding: const EdgeInsets.only(
-                //                       left: 20, right: 20),
-                //                   child: Column(
-                //                     mainAxisAlignment: MainAxisAlignment.center,
-                //                     crossAxisAlignment:
-                //                         CrossAxisAlignment.center,
-                //                     children: [
-                //                       Image.asset(
-                //                         'assets/icons/official_whatsapp.png',
-                //                         width: 80,
-                //                       ),
-                //                       const SizedBox(
-                //                         height: 10,
-                //                       ),
-                //                       const Text(
-                //                         'Whatsapp',
-                //                         style: TextStyle(
-                //                             fontSize: 18,
-                //                             fontWeight: FontWeight.w400),
-                //                       ),
-                //                       const SizedBox(
-                //                         height: 5,
-                //                       ),
-                //                       const Text(
-                //                         'Choose WhatsApp',
-                //                         style: TextStyle(
-                //                             fontSize: 15,
-                //                             fontWeight: FontWeight.w400),
-                //                       ),
-                //                       const SizedBox(
-                //                         height: 15,
-                //                       ),
-                //                       Row(
-                //                         mainAxisAlignment:
-                //                             MainAxisAlignment.spaceBetween,
-                //                         children: [
-                //                           InkWell(
-                //                             onTap: () {
-                //                               Navigator.push(
-                //                                 context,
-                //                                 MaterialPageRoute(
-                //                                     builder: (context) =>
-                //                                         const ChatHomeScreen()),
-                //                               );
-                //                             },
-                //                             child: Container(
-                //                               width: MediaQuery.of(context)
-                //                                       .size
-                //                                       .width *
-                //                                   0.35,
-                //                               //  color: RandomColorModel().getColor(),
-                //                               decoration: BoxDecoration(
-                //                                   color: Colors.green.shade100,
-                //                                   borderRadius:
-                //                                       BorderRadius.circular(
-                //                                           10)),
-                //                               child: const Padding(
-                //                                 padding: EdgeInsets.all(5),
-                //                                 child: Text('Official',
-                //                                     style: TextStyle(
-                //                                         fontSize: 13,
-                //                                         color: Colors.black),
-                //                                     textAlign:
-                //                                         TextAlign.center),
-                //                               ),
-                //                             ),
-                //                           ),
-                //                           InkWell(
-                //                             onTap: () {
-                //                               widget.whatsappConfigaure == true
-                //                                   ? Navigator.push(
-                //                                       context,
-                //                                       MaterialPageRoute(
-                //                                         builder: (context) =>
-                //                                             GroupList(
-                //                                                 widget.token),
-                //                                       ),
-                //                                     )
-                //                                   : Navigator.push(
-                //                                       context,
-                //                                       MaterialPageRoute(
-                //                                         builder: (context) =>
-                //                                             WhatsappSettings(
-                //                                                 widget.token),
-                //                                       ),
-                //                                     );
-                //                             },
-                //                             child: Container(
-                //                               width: MediaQuery.of(context)
-                //                                       .size
-                //                                       .width *
-                //                                   0.35,
-                //                               decoration: BoxDecoration(
-                //                                   color: Colors.green.shade100,
-                //                                   borderRadius:
-                //                                       BorderRadius.circular(
-                //                                           10)),
-                //                               child: const Padding(
-                //                                 padding: EdgeInsets.all(5),
-                //                                 child: Text('Un Official',
-                //                                     style: TextStyle(
-                //                                         fontSize: 13,
-                //                                         color: Colors.black),
-                //                                     textAlign:
-                //                                         TextAlign.center),
-                //                               ),
-                //                             ),
-                //                           ),
-                //                         ],
-                //                       ),
-                //                       const SizedBox(
-                //                         height: 8,
-                //                       ),
-                //                     ],
-                //                   ),
-                //                 ),
-                //               ),
-                //             ),
-                //           ),
-                //         ),
-                //       );
-                //     });
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,
@@ -342,12 +160,16 @@ class _BottomNavigationState extends State<BottomNavigation> {
             padding: const EdgeInsets.only(top: 4),
             child: InkWell(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewUsers(widget.token),
-                  ),
-                );
+                if (viewStaff == "true") {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewUsers(widget.token),
+                    ),
+                  );
+                } else {
+                  _dialogue(context, 'viewStaffPermission');
+                }
               },
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.175,

@@ -122,7 +122,7 @@ class _RemarkScreenState extends State<RemarkScreen> {
                                 setState(() {
                                   isLoading = true;
                                 });
-                               await getDetails();
+                                await getDetails();
 
                                 WidgetsBinding.instance
                                     .addPostFrameCallback((_) {

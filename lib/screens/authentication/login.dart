@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -42,9 +42,23 @@ class _LoginState extends State<Login> {
       const MethodChannel('onreBootInitFunctionChannel');
 
   handleAsync() async {
-    firebaseToken = await FirebaseMessaging.instance.getToken();
-    if (kDebugMode) {
-      print("Firebase token : $firebaseToken");
+    try {
+      await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+      firebaseToken = await FirebaseMessaging.instance.getToken();
+      if (kDebugMode) {
+        print("Firebase token : $firebaseToken");
+      }
+    } catch (error, stackTrace) {
+      firebaseToken = '';
+      log("Error while get FCM", error: error, stackTrace: stackTrace);
     }
   }
 
@@ -101,7 +115,6 @@ class _LoginState extends State<Login> {
                 "accountId", object.data!.accountId.toString());
             UserPermissionModel object1 =
                 await HttpService.userPermissionCheck(object.data!.token);
-
             if (object1.status == true) {
               Common.saveSharedPref("isVisible", 'true');
               Common.saveSharedPref(
@@ -140,8 +153,6 @@ class _LoginState extends State<Login> {
                   object1.data!.viewStaffReport.toString());
               Common.saveSharedPref("createStaffDesignationPermission",
                   object1.data!.viewStaffReport.toString());
-              Common.saveSharedPref("createStaffDesignationPermission",
-                  object1.data!.createStaffDesignation.toString());
               Common.saveSharedPref("viewStaffDesignationPermission",
                   object1.data!.viewStaffDesignation.toString());
               Common.saveSharedPref("updateStaffDesignationPermission",
@@ -154,6 +165,10 @@ class _LoginState extends State<Login> {
                   object1.data!.whatsappOfficial.toString());
               Common.saveSharedPref("unofficialWhatsApp",
                   object1.data!.whatsappUnofficial.toString());
+              Common.saveSharedPref(
+                  "transferLeads", object1.data!.transferLead.toString());
+              Common.saveSharedPref(
+                  "uploadCallLog", object1.data!.uploadCallLog.toString());
             }
             Common.saveSharedPref("sound", 'slow_spring_board');
             Common.saveSharedPref("token", object.data!.token.toString());
@@ -165,7 +180,6 @@ class _LoginState extends State<Login> {
             Common.saveSharedPref(
                 "multiBranch", object.data!.isMultiBranch.toString());
             Common.saveSharedPref("callLogPermission", 'false');
-
             if (object.status == true) {
               if (mounted) {
                 Navigator.of(context).push(
@@ -431,6 +445,7 @@ class _LoginState extends State<Login> {
 
                                   InkWell(
                                     onTap: () async {
+                                      FocusScope.of(context).unfocus();
                                       login();
                                     },
                                     child: Container(

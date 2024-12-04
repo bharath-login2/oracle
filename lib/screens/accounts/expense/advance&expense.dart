@@ -16,7 +16,7 @@ class PendingExpense extends StatefulWidget {
 }
 
 class _PendingExpenseState extends State<PendingExpense> {
-  PendingExpenseModel? expenseList;
+  PendingExpenseModel? accountList;
 
   bool result = true;
   bool isLoading = true;
@@ -47,9 +47,9 @@ class _PendingExpenseState extends State<PendingExpense> {
   }
 
   getList() async {
-    expenseList = await HttpService.getPendingExpense(widget.status);
-    if (expenseList != null && expenseList!.status == true) {
-      filteredExpenses.addAll(expenseList!.data.lists);
+    accountList = await HttpService.getPendingExpense(widget.status);
+    if (accountList != null && accountList!.status == true) {
+      filteredExpenses.addAll(accountList!.data.lists);
       setState(() {
         isLoading = false;
       });
@@ -62,7 +62,7 @@ class _PendingExpenseState extends State<PendingExpense> {
 
   filterExpense(String value) {
     setState(() {
-      filteredExpenses = expenseList!.data.lists
+      filteredExpenses = accountList!.data.lists
           .where((item) =>
               item.accountName.toLowerCase().contains(value.toLowerCase()))
           .toList();
@@ -128,8 +128,8 @@ class _PendingExpenseState extends State<PendingExpense> {
                 ? LinearProgressIndicator(
                     color: Colors.blue.shade900,
                   )
-                : expenseList == null
-                    ? noResultWidget(context,"No Result Found")
+                : accountList == null
+                    ? noResultWidget(context, "No Result Found")
                     : SingleChildScrollView(
                         child: Column(
                           children: [
@@ -158,7 +158,7 @@ class _PendingExpenseState extends State<PendingExpense> {
                               ),
                             ),
                             filteredExpenses.isEmpty
-                                ? noResultWidget(context,"No Result Found")
+                                ? noResultWidget(context, "No Result Found")
                                 : ListView.builder(
                                     shrinkWrap: true,
                                     physics:

@@ -4,22 +4,22 @@
 
 import 'dart:convert';
 
-ExpensePostModel expensePostModelFromJson(String str) => ExpensePostModel.fromJson(json.decode(str));
+CommonResponse expensePostModelFromJson(String str) => CommonResponse.fromJson(json.decode(str));
 
-String expensePostModelToJson(ExpensePostModel data) => json.encode(data.toJson());
+String expensePostModelToJson(CommonResponse data) => json.encode(data.toJson());
 
-class ExpensePostModel {
+class CommonResponse {
     bool status;
     String message;
     bool data;
 
-    ExpensePostModel({
+    CommonResponse({
         required this.status,
         required this.message,
         required this.data,
     });
 
-    factory ExpensePostModel.fromJson(Map<String, dynamic> json) => ExpensePostModel(
+    factory CommonResponse.fromJson(Map<String, dynamic> json) => CommonResponse(
         status: json["status"],
         message: json["message"],
         data: json["data"],

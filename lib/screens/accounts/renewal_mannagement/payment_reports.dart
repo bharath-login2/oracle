@@ -88,442 +88,419 @@ class _PaymentReportState extends State<PaymentReport> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: ((didPop) async {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
-      }),
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade300,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const RenewalDashboard(),
-                                ));
-                          },
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                shape: BoxShape.circle),
-                            child: const Icon(
-                              Icons.arrow_back_ios_outlined,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade300,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          height: 25,
+                          width: 25,
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white),
+                              shape: BoxShape.circle),
+                          child: const Icon(
+                            Icons.arrow_back_ios_outlined,
+                            color: Colors.white,
+                            size: 16,
                           ),
                         ),
-                        const SizedBox(
-                          width: 25,
-                        ),
-                        const Text(
-                          "Payment Report",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    InkWell(
-                      onTap: () {
-                        filtration(context);
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            color: const Color(0xFFd5f5f4),
-                            borderRadius: BorderRadius.circular(5)),
-                        child: Center(
-                            child: Image.asset("assets/icons/filter.png",
-                                width: 20)),
                       ),
-                    )
-                  ]),
-            ),
+                      const SizedBox(
+                        width: 25,
+                      ),
+                      const Text(
+                        "Payment Report",
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  InkWell(
+                    onTap: () {
+                      filtration(context);
+                    },
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          color: const Color(0xFFd5f5f4),
+                          borderRadius: BorderRadius.circular(5)),
+                      child: Center(
+                          child: Image.asset("assets/icons/filter.png",
+                              width: 20)),
+                    ),
+                  )
+                ]),
           ),
         ),
-        body: isLoading == true
-            ? buildLoaderListItem()
-            : items.isEmpty
-                ? Center(
-                    child: SizedBox(
-                        height: 150,
-                        width: 150,
-                        child: Image.asset("assets/icons/missed_leads.png")),
-                  )
-                : Column(
-                    children: [
-                       Container(
-                        width: MediaQuery.of(context).size.width,
-                        decoration: const BoxDecoration(
-                            gradient: LinearGradient(colors: [
-                          Color(0xFF2a86c9),
-                          Color(0xFF406dbe)
-                        ])),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Total Amount : ${listResponse!.data.totalAmount}/-",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Text(
-                                "Total Paid : ${listResponse!.data.totalPaid}/-",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              Text(
-                                "Balance Amount : ${listResponse!.data.balanceAmount}/-",
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
-                              ),
-                            ],
-                          ),
+      ),
+      body: isLoading == true
+          ? buildLoaderListItem()
+          : items.isEmpty
+              ? Center(
+                  child: SizedBox(
+                      height: 150,
+                      width: 150,
+                      child: Image.asset("assets/icons/missed_leads.png")),
+                )
+              : Column(
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width,
+                      decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)])),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Total Amount : ${listResponse!.data.totalAmount}/-",
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Total Paid : ${listResponse!.data.totalPaid}/-",
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Balance Amount : ${listResponse!.data.balanceAmount}/-",
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ],
                         ),
                       ),
-                
-                      Expanded(
-                        child: ScrollablePositionedList.builder(
-                            shrinkWrap: true,
-                            itemScrollController: itemScrollController,
-                            itemPositionsListener: itemPositionsListener,
-                            itemCount: items.length +
-                                (items.length + 20 == page * pageSize ? 1 : 0),
-                            initialScrollIndex: 0,
-                            itemBuilder: (context, index) {
-                              if (index == items.length) {
-                                return buildLoaderListItem();
-                              } else {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                      bottom: 8.0, top: 8.0,left: 8.0,right: 8.0),
-                                  child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * .9,
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    .55,
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.receipt,
-                                                          size: 18,
-                                                        ),
-                                                        Text(
-                                                          " ${items[index].invoiceNumber}",
+                    ),
+                    Expanded(
+                      child: ScrollablePositionedList.builder(
+                          shrinkWrap: true,
+                          itemScrollController: itemScrollController,
+                          itemPositionsListener: itemPositionsListener,
+                          itemCount: items.length +
+                              (items.length + 20 == page * pageSize ? 1 : 0),
+                          initialScrollIndex: 0,
+                          itemBuilder: (context, index) {
+                            if (index == items.length) {
+                              return buildLoaderListItem();
+                            } else {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                    bottom: 8.0,
+                                    top: 8.0,
+                                    left: 8.0,
+                                    right: 8.0),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width * .9,
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  .55,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.receipt,
+                                                        size: 18,
+                                                      ),
+                                                      Text(
+                                                        " ${items[index].invoiceNumber}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                            fontSize: 14),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.person,
+                                                        size: 18,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .5,
+                                                        child: Text(
+                                                          " ${items[index].customerName}",
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           style:
                                                               const TextStyle(
                                                                   fontSize: 14),
                                                         ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.person,
-                                                          size: 18,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.calendar_month,
+                                                        size: 18,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .5,
+                                                        child: Text(
+                                                          " ${items[index].startDate} To ${items[index].endDate}",
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14),
                                                         ),
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              .5,
-                                                          child: Text(
-                                                            " ${items[index].customerName}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        14),
-                                                          ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.shopping_cart,
+                                                        size: 18,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .5,
+                                                        child: Text(
+                                                          " ${items[index].products}",
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 14),
                                                         ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.calendar_month,
-                                                          size: 18,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(
+                                                    height: 10,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.currency_rupee,
+                                                        size: 20,
+                                                      ),
+                                                      SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .45,
+                                                        child: Text(
+                                                          " ${items[index].totalInvoiceAmount} /-",
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 20),
                                                         ),
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              .5,
-                                                          child: Text(
-                                                            " ${items[index].startDate} To ${items[index].endDate}",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        14),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.shopping_cart,
-                                                          size: 18,
-                                                        ),
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              .5,
-                                                          child: Text(
-                                                            " ${items[index].products}",
-                                                            style:
-                                                                const TextStyle(
-                                                                    fontSize:
-                                                                        14),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.currency_rupee,
-                                                          size: 20,
-                                                        ),
-                                                        SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              .45,
-                                                          child: Text(
-                                                            " ${items[index].totalInvoiceAmount} /-",
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 20),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                children: [
-                                                  Container(
-                                                    color:
-                                                        items[index].isPaid ==
-                                                                false
-                                                            ? Colors.red
-                                                            : Colors.teal,
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Container(
+                                                  color: items[index].isPaid ==
+                                                          false
+                                                      ? Colors.red
+                                                      : Colors.teal,
+                                                  child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 4.0,
+                                                        horizontal: 8.0),
+                                                    child: Text(
+                                                      items[index].isPaid ==
+                                                              true
+                                                          ? "Paid"
+                                                          : "Un Paid",
+                                                      style: const TextStyle(
+                                                          color: Colors.white),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  height: 10,
+                                                ),
+                                                Visibility(
+                                                  visible: items[index]
+                                                              .isPaid ==
+                                                          true &&
+                                                      items[index]
+                                                              .paymentMode !=
+                                                          "",
+                                                  child: Container(
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                          colors: [
+                                                            Color(0xFF2a86c9),
+                                                            Color(0xFF406dbe)
+                                                          ]),
+                                                    ),
                                                     child: Padding(
                                                       padding: const EdgeInsets
                                                           .symmetric(
                                                           vertical: 4.0,
                                                           horizontal: 8.0),
-                                                      child: Text(
-                                                        items[index].isPaid ==
-                                                                true
-                                                            ? "Paid"
-                                                            : "Un Paid",
-                                                        style: const TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 10,
-                                                  ),
-                                                  Visibility(
-                                                    visible: items[index]
-                                                                .isPaid ==
-                                                            true &&
-                                                        items[index]
-                                                                .paymentMode !=
-                                                            "",
-                                                    child: Container(
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        gradient:
-                                                            LinearGradient(
-                                                                colors: [
-                                                              Color(0xFF2a86c9),
-                                                              Color(0xFF406dbe)
-                                                            ]),
-                                                      ),
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                vertical: 4.0,
-                                                                horizontal:
-                                                                    8.0),
-                                                        child: SizedBox(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              .28,
-                                                          child: Center(
-                                                            child: Text(
-                                                              items[index]
-                                                                  .paymentMode,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              style: const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 14),
-                                                            ),
+                                                      child: SizedBox(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            .28,
+                                                        child: Center(
+                                                          child: Text(
+                                                            items[index]
+                                                                .paymentMode,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 14),
                                                           ),
                                                         ),
                                                       ),
                                                     ),
-                                                  )
-                                                ],
-                                              )
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  String token = await Common
-                                                      .getSharedPref("token");
-                                                  Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            ReceiptAdd(
-                                                                token,
-                                                                items[index]
-                                                                    .customerId,
-                                                                items[index]
-                                                                    .invoiceId),
-                                                      ));
-                                                },
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2),
-                                                      color: Colors.teal),
-                                                  child: const Padding(
-                                                    padding:
-                                                        EdgeInsets.all(8.0),
-                                                    child: Icon(
-                                                        Icons.receipt_long,
-                                                        color: Colors.white),
                                                   ),
+                                                )
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () async {
+                                                String token =
+                                                    await Common.getSharedPref(
+                                                        "token");
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ReceiptAdd(
+                                                              token,
+                                                              items[index]
+                                                                  .customerId,
+                                                              items[index]
+                                                                  .invoiceId),
+                                                    )).then((_) {
+                                                  page = 1;
+                                                  items.clear();
+                                                  getList();
+                                                });
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            2),
+                                                    color: Colors.teal),
+                                                child: const Padding(
+                                                  padding: EdgeInsets.all(8.0),
+                                                  child: Icon(
+                                                      Icons.receipt_long,
+                                                      color: Colors.white),
                                                 ),
                                               ),
-                                            ],
-                                          )
-                                        ],
-                                      ),
+                                            ),
+                                          ],
+                                        )
+                                      ],
                                     ),
                                   ),
-                                );
-                              }
-                            }),
-                      ),
-                         ],
-                  ),
-      ),
+                                ),
+                              );
+                            }
+                          }),
+                    ),
+                  ],
+                ),
     );
   }
 

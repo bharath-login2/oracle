@@ -58,6 +58,7 @@ class Data {
   String templateName;
   bool createInvoice;
   bool createReceipt;
+  bool isInvoiceCreated;
   List<InvoiceList> invoiceLists;
   List<NextRenewalDetail> nextRenewalDetails;
   List<PaymentStatusList> paymentStatusList;
@@ -67,6 +68,7 @@ class Data {
   List<AllProduct> allProducts;
   List<dynamic> branch;
   List<Staff> staff;
+  List<TargetGroup> targetGroups;
 
   Data({
     required this.uniId,
@@ -106,9 +108,11 @@ class Data {
     required this.templateName,
     required this.createInvoice,
     required this.createReceipt,
+    required this.isInvoiceCreated,
     required this.nextStartDate,
     required this.nextEndDate,
     required this.noOfDays,
+    required this.targetGroups,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -122,8 +126,8 @@ class Data {
         startDate: DateTime.parse(json["start_date"]),
         endDate: DateTime.parse(json["end_date"]),
         templateId: json["template_id"] ?? "",
-        nextStartDate: json["next_start_date"]??"",
-        nextEndDate: json["next_end_date"]??"",
+        nextStartDate: json["next_start_date"] ?? "",
+        nextEndDate: json["next_end_date"] ?? "",
         noOfDays: json["no_of_days"] ?? "",
         branchId: json["branch_id"] ?? "",
         remarks: json["remarks"] ?? "",
@@ -143,9 +147,12 @@ class Data {
         templateName: json["template_name"] ?? "",
         createInvoice: json["create_invoice"] ?? false,
         createReceipt: json["create_receipt"] ?? false,
+        isInvoiceCreated: json["is_invoice_created"] ?? false,
         invoiceLists: List<InvoiceList>.from(
             json["invoice_lists"].map((x) => InvoiceList.fromJson(x))),
-            nextRenewalDetails: List<NextRenewalDetail>.from(json["next_renewal_details"].map((x) => NextRenewalDetail.fromJson(x))),
+        nextRenewalDetails: List<NextRenewalDetail>.from(
+            json["next_renewal_details"]
+                .map((x) => NextRenewalDetail.fromJson(x))),
         paymentStatusList: List<PaymentStatusList>.from(
             json["payment_status_list"]
                 .map((x) => PaymentStatusList.fromJson(x))),
@@ -159,6 +166,7 @@ class Data {
             json["all_products"].map((x) => AllProduct.fromJson(x))),
         branch: List<dynamic>.from(json["branch"].map((x) => x)),
         staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
+        targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
       );
 }
 
@@ -241,29 +249,30 @@ class InvoiceList {
 }
 
 class NextRenewalDetail {
-    String nextRowId;
-    String nextPrdId;
-    String nextPrdName;
-    String nextPrdDescription;
-    String nextPrdRate;
-    String nextPrdQty;
-    String nextPrdTaxPc;
-    String nextPrdTaxAmount;
-    String nextPrdAmount;
+  String nextRowId;
+  String nextPrdId;
+  String nextPrdName;
+  String nextPrdDescription;
+  String nextPrdRate;
+  String nextPrdQty;
+  String nextPrdTaxPc;
+  String nextPrdTaxAmount;
+  String nextPrdAmount;
 
-    NextRenewalDetail({
-        required this.nextRowId,
-        required this.nextPrdId,
-        required this.nextPrdName,
-        required this.nextPrdDescription,
-        required this.nextPrdRate,
-        required this.nextPrdQty,
-        required this.nextPrdTaxPc,
-        required this.nextPrdTaxAmount,
-        required this.nextPrdAmount,
-    });
+  NextRenewalDetail({
+    required this.nextRowId,
+    required this.nextPrdId,
+    required this.nextPrdName,
+    required this.nextPrdDescription,
+    required this.nextPrdRate,
+    required this.nextPrdQty,
+    required this.nextPrdTaxPc,
+    required this.nextPrdTaxAmount,
+    required this.nextPrdAmount,
+  });
 
-    factory NextRenewalDetail.fromJson(Map<String, dynamic> json) => NextRenewalDetail(
+  factory NextRenewalDetail.fromJson(Map<String, dynamic> json) =>
+      NextRenewalDetail(
         nextRowId: json["next_row_id"],
         nextPrdId: json["next_prd_id"],
         nextPrdName: json["next_prd_name"],
@@ -273,7 +282,7 @@ class NextRenewalDetail {
         nextPrdTaxPc: json["next_prd_tax_pc"],
         nextPrdTaxAmount: json["next_prd_tax_amount"],
         nextPrdAmount: json["next_prd_amount"],
-    );
+      );
 }
 
 class PaymentStatusList {
@@ -321,4 +330,23 @@ class Staff {
         userId: json["user_id"] ?? "",
         staffName: json["staff_name"] ?? "",
       );
+}
+class TargetGroup {
+    String id;
+    String groupName;
+
+    TargetGroup({
+        required this.id,
+        required this.groupName,
+    });
+
+    factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
+        id: json["id"],
+        groupName: json["group_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "group_name": groupName,
+    };
 }

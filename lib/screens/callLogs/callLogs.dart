@@ -1,15 +1,13 @@
 import 'dart:developer';
-
+import 'dart:io';
 import 'package:call_log/call_log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dialpad/flutter_dialpad.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/config.dart';
 import 'package:login2/screens/leadManagement/add_leads.dart';
-import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/common.dart';
@@ -36,13 +34,14 @@ class CallLogs extends StatefulWidget {
 }
 
 class _CallLogsState extends State<CallLogs> {
-  int selectedIndex = 0;
+  int selectedIndex = Platform.isAndroid ? 0 : 1;
   List<Map<String, dynamic>> history = [];
   List historyIndex = [];
   bool onLongPress = false;
   bool refresh = false;
   CallLogHistoryModel? logHistory;
   String? permissionAccess = '';
+  String? uploadPermission = '';
   List deleteHistoryIds = [];
   bool onLongPressHistory = false;
   String fromdate = DateFormat('dd-MM-yyyy').format(DateTime.now());
@@ -57,6 +56,7 @@ class _CallLogsState extends State<CallLogs> {
   int to = DateTime.now().millisecondsSinceEpoch;
   bool displayOverApps = false;
   CallLogUploadPermissionModel? callUploadPermission;
+  String roleId = "";
 
   @override
   void initState() {
@@ -64,13 +64,22 @@ class _CallLogsState extends State<CallLogs> {
     super.initState();
     assignStaff = widget.name.toString();
     assignStaffId = widget.userId.toString();
-    getSharedData();
-    getPermission();
+    if (Platform.isAndroid) {
+      getSharedData();
+      getPermission();
+    } else {
+      getData();
+    }
   }
 
   getSharedData() async {
     refresh = true;
     permissionAccess = await Common.getSharedPref("callLogPermission");
+    uploadPermission = await Common.getSharedPref("uploadCallLog");
+    roleId = await Common.getSharedPref("roleId");
+    if (uploadPermission != "true" && Platform.isIOS) {
+      selectedIndex = -1;
+    }
     setState(() {});
     if (permissionAccess == 'true') {
       if (await Permission.phone.request().isGranted) {
@@ -169,7 +178,7 @@ class _CallLogsState extends State<CallLogs> {
                   ),
                   Row(
                     children: [
-                      onLongPress
+                      uploadPermission == "true" && onLongPress
                           ? InkWell(
                               onTap: () async {
                                 bulkUpload();
@@ -205,64 +214,68 @@ class _CallLogsState extends State<CallLogs> {
                                       position: const RelativeRect.fromLTRB(
                                           1000.0, 0.0, 1000.0, 0.0),
                                       items: [
-                                        PopupMenuItem<String>(
-                                          value: '1',
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Row(
-                                                children: [
-                                                  Icon(Icons.call_received,
-                                                      color: Colors.red),
-                                                  SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                  Text(
-                                                    'Incoming',
-                                                  ),
-                                                ],
-                                              ),
-                                              callUploadPermission!
-                                                          .data!.incoming ==
-                                                      true
-                                                  ? const Icon(
-                                                      Icons.check_circle,
-                                                      color: Colors.green,
-                                                    )
-                                                  : const SizedBox()
-                                            ],
+                                        if (uploadPermission == "true")
+                                          PopupMenuItem<String>(
+                                            value: '1',
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Row(
+                                                  children: [
+                                                    Icon(Icons.call_received,
+                                                        color: Colors.red),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text(
+                                                      'Incoming',
+                                                    ),
+                                                  ],
+                                                ),
+                                                callUploadPermission!
+                                                            .data!.incoming ==
+                                                        true
+                                                    ? const Icon(
+                                                        Icons.check_circle,
+                                                        color: Colors.green,
+                                                      )
+                                                    : const SizedBox()
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        PopupMenuItem<String>(
-                                          value: '2',
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.call_made,
-                                                    color: Colors.green,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                  Text('Outgoing'),
-                                                ],
-                                              ),
-                                              callUploadPermission!
-                                                          .data!.outgoing ==
-                                                      true
-                                                  ? const Icon(
-                                                      Icons.check_circle,
+                                        if (uploadPermission == "true")
+                                          PopupMenuItem<String>(
+                                            value: '2',
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.call_made,
                                                       color: Colors.green,
-                                                    )
-                                                  : const SizedBox()
-                                            ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text('Outgoing'),
+                                                  ],
+                                                ),
+                                                callUploadPermission!
+                                                            .data!.outgoing ==
+                                                        true
+                                                    ? const Icon(
+                                                        Icons.check_circle,
+                                                        color: Colors.green,
+                                                      )
+                                                    : const SizedBox()
+                                              ],
+                                            ),
                                           ),
-                                        ),
                                         PopupMenuItem<String>(
                                           value: '3',
                                           child: Row(
@@ -346,7 +359,7 @@ class _CallLogsState extends State<CallLogs> {
             ),
           ),
         ),
-        body: permissionAccess == 'true'
+        body: permissionAccess == 'true' || Platform.isIOS
             ? SingleChildScrollView(
                 child: Column(
                   children: <Widget>[
@@ -360,11 +373,17 @@ class _CallLogsState extends State<CallLogs> {
                         children: [
                           InkWell(
                             onTap: () {
-                              setState(() {
-                                selectedIndex = 0;
-                                deleteHistoryIds.clear();
-                                onLongPress = false;
-                              });
+                              if (Platform.isAndroid) {
+                                setState(() {
+                                  selectedIndex = 0;
+                                  deleteHistoryIds.clear();
+                                  onLongPress = false;
+                                });
+                              } else {
+                                Common.toastMessaage(
+                                    "i phone can't access call logs",
+                                    Colors.red);
+                              }
                             },
                             child: Container(
                               width: MediaQuery.of(context).size.width * .45,
@@ -387,17 +406,21 @@ class _CallLogsState extends State<CallLogs> {
                                     Text(
                                       'Call Logs',
                                       style: TextStyle(
-                                        color: selectedIndex == 0
-                                            ? const Color(0xFF3c9f9a)
-                                            : const Color(0xFF717171),
+                                        color: Platform.isIOS
+                                            ? Colors.grey.shade300
+                                            : selectedIndex == 0
+                                                ? const Color(0xFF3c9f9a)
+                                                : const Color(0xFF717171),
                                       ),
                                     ),
                                     Text(
                                       ' (${_callLogEntries.length})',
                                       style: TextStyle(
-                                        color: selectedIndex == 0
-                                            ? const Color(0xFF3c9f9a)
-                                            : const Color(0xFF717171),
+                                        color: Platform.isIOS
+                                            ? Colors.grey.shade300
+                                            : selectedIndex == 0
+                                                ? const Color(0xFF3c9f9a)
+                                                : const Color(0xFF717171),
                                       ),
                                     ),
                                   ],
@@ -407,12 +430,18 @@ class _CallLogsState extends State<CallLogs> {
                           ),
                           InkWell(
                             onTap: () async {
-                              setState(() {
-                                selectedIndex = 1;
-                                history.clear();
-                                historyIndex.clear();
-                              });
-                              getData();
+                              if (uploadPermission == "true") {
+                                setState(() {
+                                  selectedIndex = 1;
+                                  history.clear();
+                                  historyIndex.clear();
+                                });
+                                getData();
+                              } else {
+                                Common.toastMessaage(
+                                    "Permission required to access call history",
+                                    Colors.red);
+                              }
                             },
                             child: Container(
                               width: MediaQuery.of(context).size.width * .45,
@@ -567,7 +596,7 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                        Common.directCall(
+                                                        Common.dialPad(
                                                             _callLogEntries
                                                                 .elementAt(
                                                                     indexStaff)
@@ -888,7 +917,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                   ],
                                                                                 ),
                                                                               ),
-                                                                              onLongPress != true
+                                                                              uploadPermission == "true" && onLongPress != true
                                                                                   ? InkWell(
                                                                                       onTap: () async {
                                                                                         Common.showProgressDialog(context, "Loading..");
@@ -945,7 +974,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                 width: 15,
                                                                               ),
                                                                               Text(
-                                                                                '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
+                                                                                DateFormat('dd-M-yyyy HH:mm a').format(DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)),
                                                                               ),
                                                                             ],
                                                                           ),
@@ -1195,78 +1224,7 @@ class _CallLogsState extends State<CallLogs> {
                                                     0.45,
                                                 child: TextFormField(
                                                     onTap: () {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return AlertDialog(
-                                                              scrollable: true,
-                                                              title: const Text(
-                                                                  'Staffs'),
-                                                              content: SizedBox(
-                                                                height: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .height *
-                                                                    .35,
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    .7,
-                                                                child: ListView
-                                                                    .builder(
-                                                                  shrinkWrap:
-                                                                      true,
-                                                                  itemCount:
-                                                                      commonDetails!
-                                                                          .data
-                                                                          .staff
-                                                                          .length,
-                                                                  itemBuilder:
-                                                                      (context,
-                                                                          ind) {
-                                                                    return InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          assignStaff = commonDetails!
-                                                                              .data
-                                                                              .staff[ind]
-                                                                              .staffName
-                                                                              .toString();
-                                                                          assignStaffId = commonDetails!
-                                                                              .data
-                                                                              .staff[ind]
-                                                                              .staffId
-                                                                              .toString();
-                                                                          Navigator.pop(
-                                                                              context,
-                                                                              true);
-                                                                        });
-                                                                      },
-                                                                      child:
-                                                                          SizedBox(
-                                                                        height:
-                                                                            50,
-                                                                        child:
-                                                                            Text(
-                                                                          commonDetails!
-                                                                              .data
-                                                                              .staff[ind]
-                                                                              .staffName
-                                                                              .toString(),
-                                                                          style:
-                                                                              const TextStyle(fontSize: 18),
-                                                                        ),
-                                                                      ),
-                                                                    );
-                                                                  },
-                                                                ),
-                                                              ),
-                                                            );
-                                                          });
+                                                      staffDialog(context);
                                                     },
                                                     maxLines: 1,
                                                     readOnly: true,
@@ -1423,7 +1381,7 @@ class _CallLogsState extends State<CallLogs> {
                                                       if (direction ==
                                                           DismissDirection
                                                               .startToEnd) {
-                                                        Common.directCall(
+                                                        Common.dialPad(
                                                             logHistory!
                                                                 .data![index]
                                                                 .phoneNumber
@@ -1589,7 +1547,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                 CrossAxisAlignment.start,
                                                                             children: [
                                                                               Text(
-                                                                                logHistory!.data![index].name.toString() == "" ? "Unknown" : logHistory!.data![index].name.toString(),
+                                                                                logHistory!.data![index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
                                                                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                               ),
                                                                               const SizedBox(
@@ -1872,6 +1830,45 @@ class _CallLogsState extends State<CallLogs> {
     );
   }
 
+  Future<dynamic> staffDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Staffs'),
+            content: SizedBox(
+              height: MediaQuery.of(context).size.height * .35,
+              width: MediaQuery.of(context).size.width * .7,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: commonDetails!.data.staff.length,
+                itemBuilder: (context, ind) {
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        assignStaff =
+                            commonDetails!.data.staff[ind].staffName.toString();
+                        assignStaffId =
+                            commonDetails!.data.staff[ind].userId.toString();
+                        Navigator.pop(context, true);
+                      });
+                    },
+                    child: SizedBox(
+                      height: 50,
+                      child: Text(
+                        commonDetails!.data.staff[ind].staffName.toString(),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+  }
+
   Future<dynamic> deleteDialog(BuildContext context) {
     return showDialog(
         context: context,
@@ -1940,7 +1937,7 @@ class _CallLogsState extends State<CallLogs> {
 }
 
 Future<void> _makeCall(String number) async {
-  Common.directCall('+91$number');
+  Common.dialPad('+91$number');
 }
 
 void _keyPressed(String number) {

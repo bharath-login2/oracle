@@ -1,9 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:login2/screens/accounts/clients/invoiceList.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -26,7 +24,6 @@ class ViewInvoice extends StatefulWidget {
 }
 
 class _ViewInvoiceState extends State<ViewInvoice> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   InvoiceAddCommonDetailsModel? invDetails;
   EditInvoiceDetailsModel? invoiceEditDetails;
   bool result = true;
@@ -61,7 +58,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
     await HttpService.invoiceEditDetails(widget.token, widget.invoiceId);
     if (invoiceEditDetails != null) {
 
-      items = invDetails!.data!.products!;
+      items = invDetails!.data.products;
       filteredItems.addAll(items);
 
       if (invoiceEditDetails!.data!.productDetails!.isNotEmpty) {
@@ -190,7 +187,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
         
-                  invDetails!.data!.companyDetails!.isNotEmpty
+                  invDetails!.data.companyDetails.isNotEmpty
                       ? Padding(
                         padding: const EdgeInsets.only(
                             left: 10, right: 10),
@@ -215,8 +212,8 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                     child: Center(
                                       child: Image.network(
                                         invDetails!
-                                            .data!
-                                            .companyDetails![0]
+                                            .data
+                                            .companyDetails[0]
                                             .companyLogo
                                             .toString(),
                                         width: 150,
@@ -233,15 +230,15 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                     width: 200,
                                     child: Text(
                                       invDetails!
-                                          .data!
-                                          .companyDetails![0]
+                                          .data
+                                          .companyDetails[0]
                                           .companyAddress
                                           .toString(),
                                       style: const TextStyle(
                                           fontSize: 14),
                                     )),
                                 Text(
-                                  invDetails!.data!.companyDetails![0]
+                                  invDetails!.data.companyDetails[0]
                                       .companyEmail
                                       .toString(),
                                   style:
@@ -263,7 +260,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                       color: Colors.grey),
                                 ),
                                 Text(
-                                  invDetails!.data!.companyDetails![0]
+                                  invDetails!.data.companyDetails[0]
                                       .companyRegNo
                                       .toString(),
                                   style:
@@ -280,7 +277,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                       color: Colors.grey),
                                 ),
                                 Text(
-                                  invDetails!.data!.companyDetails![0]
+                                  invDetails!.data.companyDetails[0]
                                       .companyContactNo
                                       .toString(),
                                   style:
@@ -297,7 +294,7 @@ class _ViewInvoiceState extends State<ViewInvoice> {
                                       color: Colors.grey),
                                 ),
                                 Text(
-                                  invDetails!.data!.companyDetails![0]
+                                  invDetails!.data.companyDetails[0]
                                       .companyPincode
                                       .toString(),
                                   style:

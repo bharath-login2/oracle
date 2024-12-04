@@ -69,17 +69,20 @@ class Data {
 class History {
   String logData;
   String createdAt;
+  String createdTime;
   String staffName;
 
   History({
     required this.logData,
     required this.createdAt,
+    required this.createdTime,
     required this.staffName,
   });
 
   factory History.fromJson(Map<String, dynamic> json) => History(
         logData: json["log_data"] ?? "",
         createdAt: json["created_at"] ?? "",
+        createdTime: json["created_time"] ?? "",
         staffName: json["staff_name"] ?? "",
       );
 

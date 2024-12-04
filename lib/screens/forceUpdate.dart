@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 class ForceUpdate extends StatefulWidget {
   const ForceUpdate({super.key});
   @override
@@ -15,10 +16,9 @@ class _ForceUpdateState extends State<ForceUpdate> {
       backgroundColor: Colors.grey.shade200,
       body: Stack(
         children: [
-          Image.asset("assets/icons/header.png",
-              width: size.width),
+          Image.asset("assets/icons/header.png", width: size.width),
           Padding(
-            padding: const EdgeInsets.only(left: 10,right: 10,top: 40),
+            padding: const EdgeInsets.only(left: 10, right: 10, top: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -50,9 +50,8 @@ class _ForceUpdateState extends State<ForceUpdate> {
                             Text(
                               'To ensure the smooth and optimal functioning of our application, it is necessary for all users to update to the latest version. By updating to the latest version, you will have access to enhanced features, improved performance, and important bug fixes that contribute to an overall better user experience.,',
                               style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
-
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
                               ),
                             ),
 
@@ -65,12 +64,11 @@ class _ForceUpdateState extends State<ForceUpdate> {
 
                                 // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
                                 TextButton(
-
                                   child: const Text(
                                     "UPDATE NOW",
                                   ),
                                   onPressed: () {
-                                    _launchURL(Platform.isIOS?'https://apps.apple.com/us/app/login2/id6450980527':'https://play.google.com/store/apps/details?id=com.login2Pro');
+                                    // _launchURL(Platform.isIOS?'https://apps.apple.com/us/app/login2/id6450980527':'https://play.google.com/store/apps/details?id=com.login2Pro');
                                   },
                                 ),
                               ],
@@ -88,12 +86,10 @@ class _ForceUpdateState extends State<ForceUpdate> {
           ),
         ],
       ),
-
-
     );
   }
+
   _launchURL(String url) async {
     launchUrl(Uri.parse(url));
   }
-
 }

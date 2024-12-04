@@ -14,7 +14,6 @@ import '../../../models/clients/editReceiptModel.dart';
 import '../../../models/clients/receiptFileDeleteModel.dart';
 import '../../../service/service.dart';
 
-
 class EditReceipt extends StatefulWidget {
   String token;
   String receiptId;
@@ -30,12 +29,17 @@ class _EditReceiptState extends State<EditReceipt> {
   bool result = true;
   String? paymentMethod;
   TextEditingController payAmount = TextEditingController();
-   List<Staff> items = [];
+  List<Staff> items = [];
   List<Staff> filteredItems = [];
   String collectedBy = "";
   String collectedByName = "Collected By";
   TextEditingController search = TextEditingController();
   String? templateImage;
+  List<TargetGroup> targets = [];
+  List<TargetGroup> filteredTargets = [];
+  List targetGroups = [];
+  List targetGroupNames = [];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -59,19 +63,26 @@ class _EditReceiptState extends State<EditReceipt> {
     receiptDetails =
         await HttpService.editReceiptDetails(widget.token, widget.receiptId);
     if (receiptDetails != null) {
-      filteredItems.addAll(receiptDetails!.data!.staff!);
+      targets = receiptDetails!.data.targetGroups;
+      filteredTargets.addAll(targets);
+      filteredItems.addAll(receiptDetails!.data.staff);
+      items.addAll(receiptDetails!.data.staff);
       setState(() {
-        if (receiptDetails!.data!.collectedBy != '0') {
-          collectedByName = receiptDetails!.data!.collectedStaff.toString();
-          collectedBy = receiptDetails!.data!.collectedBy.toString();
+        if (receiptDetails!.data.collectedBy != '0') {
+          collectedByName = receiptDetails!.data.collectedStaff.toString();
+          collectedBy = receiptDetails!.data.collectedBy.toString();
         }
-        if (receiptDetails!.data!.paymentMethod != '0') {
-          paymentMethod = receiptDetails!.data!.paymentMethod;
+        if (receiptDetails!.data.paymentMethod != '0') {
+          paymentMethod = receiptDetails!.data.paymentMethod;
         }
-        payAmount.text = receiptDetails!.data!.paidAmount.toString();
-        fromdate = DateTime.parse(receiptDetails!.data!.receiptDate.toString());
+        payAmount.text = receiptDetails!.data.paidAmount.toString();
+        fromdate = DateTime.parse(receiptDetails!.data.receiptDate.toString());
       });
       log(collectedByName);
+      for (int i = 0; i < receiptDetails!.data.selectedGroups.length; i++) {
+        targetGroups.add(receiptDetails!.data.selectedGroups[i].groupId);
+        targetGroupNames.add(receiptDetails!.data.selectedGroups[i].groupName);
+      }
     }
   }
 
@@ -177,19 +188,19 @@ class _EditReceiptState extends State<EditReceipt> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  receiptDetails!.data!.clientName.toString(),
+                                  receiptDetails!.data.clientName.toString(),
                                   style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500),
                                 ),
                                 Text(
-                                  'Receipt No: ${receiptDetails!.data!.displayRecNumber}',
+                                  'Receipt No: ${receiptDetails!.data.displayRecNumber}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400),
                                 ),
                                 Text(
-                                  'Invoice No: ${receiptDetails!.data!.displayInvNumber}',
+                                  'Invoice No: ${receiptDetails!.data.displayInvNumber}',
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400),
@@ -272,6 +283,7 @@ class _EditReceiptState extends State<EditReceipt> {
                         Padding(
                           padding: const EdgeInsets.only(left: 10, right: 10),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -285,130 +297,12 @@ class _EditReceiptState extends State<EditReceipt> {
                                   const SizedBox(
                                     height: 5,
                                   ),
-                                         SizedBox(
+                                  SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.45,
                                     child: GestureDetector(
                                       onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return StatefulBuilder(
-                                                builder: (context, setState) {
-                                              return AlertDialog(
-                                                content: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: TextField(
-                                                        controller: search,
-                                                        autocorrect: false,
-                                                        keyboardType:
-                                                            TextInputType
-                                                                .visiblePassword,
-                                                        autofocus: true,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            filteredItems = items
-                                                                .where((item) => item
-                                                                    .staffName!
-                                                                    .toLowerCase()
-                                                                    .contains(value
-                                                                        .toLowerCase()))
-                                                                .toList();
-                                                          });
-                                                        },
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          contentPadding:
-                                                              EdgeInsets.all(8),
-                                                          hintText: 'Search',
-                                                          prefixIcon: Icon(
-                                                              Icons.search),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              .3,
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              .8,
-                                                      child: ListView.builder(
-                                                        itemCount: filteredItems
-                                                            .length,
-                                                        physics:
-                                                            const ScrollPhysics(),
-                                                        shrinkWrap: true,
-                                                        itemBuilder:
-                                                            (context, index) {
-                                                          return ListTile(
-                                                              onTap: () {
-                                                                collectedByName =
-                                                                    filteredItems[
-                                                                            index]
-                                                                        .staffName!;
-                                                                collectedBy =
-                                                                    filteredItems[
-                                                                            index]
-                                                                        .userId!;
-                                                                search.clear();
-                                                                filteredItems
-                                                                    .addAll(
-                                                                        items);
-                                                                setState(() {});
-                                                                if (context
-                                                                    .mounted) {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                }
-                                                              },
-                                                              title: SizedBox(
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      1,
-                                                                  child: Text(
-                                                                    filteredItems[
-                                                                            index]
-                                                                        .staffName!,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                  )));
-                                                        },
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () {
-                                                        search.clear();
-                                                        filteredItems
-                                                            .addAll(items);
-                                                        if (context.mounted) {
-                                                          Navigator.pop(
-                                                              context);
-                                                        }
-                                                      },
-                                                      child:
-                                                          const Text("Close")),
-                                                ],
-                                              );
-                                            });
-                                          },
-                                        );
+                                        collectedStaffDialog(context);
                                       },
                                       child: Container(
                                         width:
@@ -438,11 +332,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                       ),
                                     ),
                                   ),
-                               
                                 ],
-                              ),
-                              const SizedBox(
-                                width: 12,
                               ),
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
@@ -484,7 +374,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                               ),
                                               value: paymentMethod,
                                               items: receiptDetails!
-                                                  .data!.paymentMethods!
+                                                  .data.paymentMethods
                                                   .map((data) {
                                                 return DropdownMenuItem(
                                                   value: data.id.toString(),
@@ -509,6 +399,182 @@ class _EditReceiptState extends State<EditReceipt> {
                                     ),
                                   ),
                                 ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text('Target Group :',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  )),
+                              const SizedBox(
+                                width: 15,
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    targetGroupDialog(context);
+                                  },
+                                  child: Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * 1,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                        border: Border.all(),
+                                        borderRadius: BorderRadius.circular(5),
+                                        color: Colors.white),
+                                    child: targetGroups.isEmpty
+                                        ? const Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 10, top: 15, bottom: 10),
+                                            child: Text('Target Group'))
+                                        : Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 40),
+                                            child: SizedBox(
+                                              height: 35,
+                                              child: ListView.builder(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                itemCount:
+                                                    targetGroupNames.length,
+                                                itemBuilder: (context, i) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 5, right: 5),
+                                                    child: InkWell(
+                                                      onTap: () {
+                                                        setState(() {});
+                                                      },
+                                                      child: Row(
+                                                        children: [
+                                                          Container(
+                                                            height: 35,
+                                                            decoration: BoxDecoration(
+                                                                border: Border.all(
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    width: 0),
+                                                                color: Colors
+                                                                    .white,
+                                                                borderRadius: const BorderRadius
+                                                                    .only(
+                                                                    topLeft: Radius
+                                                                        .circular(
+                                                                            6),
+                                                                    bottomLeft:
+                                                                        Radius.circular(
+                                                                            6))),
+                                                            child: Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Padding(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .all(
+                                                                            10),
+                                                                    child: Text(
+                                                                      targetGroupNames[
+                                                                          i],
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          InkWell(
+                                                            onTap: () {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          context) {
+                                                                    return AlertDialog(
+                                                                      title: const Text(
+                                                                          'Please Confirm'),
+                                                                      content:
+                                                                          const Text(
+                                                                              'Are you sure to Remove this Number?'),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('No')),
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () async {
+                                                                              setState(() {
+                                                                                targetGroupNames.remove(targetGroupNames[i]);
+                                                                                targetGroups.remove(targetGroups[i]);
+                                                                              });
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('Yes')),
+                                                                      ],
+                                                                    );
+                                                                  });
+                                                            },
+                                                            child: Container(
+                                                              height: 35,
+                                                              width: 30,
+                                                              decoration: BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      width: 0),
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade100,
+                                                                  borderRadius: const BorderRadius
+                                                                      .only(
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              6),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              6))),
+                                                              child: const Icon(
+                                                                Icons.close,
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -577,7 +643,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      receiptDetails!.data!.particulars
+                                      receiptDetails!.data.particulars
                                           .toString(),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -588,7 +654,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      receiptDetails!.data!.totalAmount
+                                      receiptDetails!.data.totalAmount
                                           .toString(),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -630,7 +696,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                        receiptDetails!.data!.amountDue
+                                        receiptDetails!.data.amountDue
                                             .toString(),
                                         style: const TextStyle(
                                             fontSize: 12,
@@ -701,7 +767,7 @@ class _EditReceiptState extends State<EditReceipt> {
                         const SizedBox(
                           height: 15,
                         ),
-                        receiptDetails!.data!.uploadedImg == ''
+                        receiptDetails!.data.uploadedImg == ''
                             ? Container(
                                 child: paymentMethod == '2'
                                     ? Container(
@@ -853,7 +919,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                                       fit: BoxFit.fitWidth,
                                                       image: NetworkImage(
                                                         receiptDetails!
-                                                            .data!.uploadedImg
+                                                            .data.uploadedImg
                                                             .toString(),
                                                       ),
                                                     ),
@@ -900,7 +966,7 @@ class _EditReceiptState extends State<EditReceipt> {
                                                                       widget
                                                                           .token,
                                                                       receiptDetails!
-                                                                          .data!
+                                                                          .data
                                                                           .receiptId);
                                                           if (deleteReceiptFile
                                                                   .data ==
@@ -958,10 +1024,10 @@ class _EditReceiptState extends State<EditReceipt> {
                               Common.toastMessaage(
                                   'Type Valid pay amount', Colors.red);
                             } else if (double.parse(payAmount.text) >
-                                double.parse(receiptDetails!.data!.checkAmount
+                                double.parse(receiptDetails!.data.checkAmount
                                     .toString())) {
                               Common.toastMessaage(
-                                  'Maximum Amount Received can be ${receiptDetails!.data!.checkAmount}',
+                                  'Maximum Amount Received can be ${receiptDetails!.data.checkAmount}',
                                   Colors.red);
                             } else {
                               if (context.mounted) {
@@ -975,7 +1041,8 @@ class _EditReceiptState extends State<EditReceipt> {
                                       payAmount.text,
                                       collectedBy,
                                       paymentMethod,
-                                      templateImage);
+                                      templateImage,
+                                      targetGroups);
 
                               if (object.data == true) {
                                 Common.toastMessaage(
@@ -1075,6 +1142,84 @@ class _EditReceiptState extends State<EditReceipt> {
             ));
   }
 
+  Future<dynamic> collectedStaffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: search,
+                    autocorrect: false,
+                    keyboardType: TextInputType.visiblePassword,
+                    autofocus: true,
+                    onChanged: (value) {
+                      setState(() {
+                        filteredItems = items
+                            .where((item) => item.staffName
+                                .toLowerCase()
+                                .contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      hintText: 'Search',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * .3,
+                  width: MediaQuery.of(context).size.width * .8,
+                  child: ListView.builder(
+                    itemCount: filteredItems.length,
+                    physics: const ScrollPhysics(),
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                          onTap: () {
+                            collectedByName = filteredItems[index].staffName;
+                            collectedBy = filteredItems[index].userId;
+                            filteredItems.addAll(items);
+                            setState(() {});
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                          title: SizedBox(
+                              width: MediaQuery.of(context).size.width * 1,
+                              child: Text(
+                                filteredItems[index].staffName,
+                                overflow: TextOverflow.ellipsis,
+                              )));
+                    },
+                  ),
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    search.clear();
+                    filteredItems.addAll(items);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
   pickTemplateImage(context, source) async {
     try {
       Navigator.pop(context);
@@ -1139,6 +1284,102 @@ class _EditReceiptState extends State<EditReceipt> {
           ),
         );
       }),
+    );
+  }
+
+  Future<dynamic> targetGroupDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTargets = targets
+                              .where((item) => item.groupName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .32,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      // Remove NeverScrollableScrollPhysics to enable scrolling
+                      shrinkWrap: true,
+                      itemCount: filteredTargets.length,
+                      itemBuilder: (context, ind) {
+                        return CheckboxListTile(
+                          title: SizedBox(
+                            width: 200,
+                            child: Text(
+                              filteredTargets[ind].groupName.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14),
+                            ),
+                          ),
+                          value: targetGroups
+                                  .contains(filteredTargets[ind].id.toString())
+                              ? true
+                              : false,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                targetGroups
+                                    .add(filteredTargets[ind].id.toString());
+                                targetGroupNames.add(
+                                    filteredTargets[ind].groupName.toString());
+                              } else {
+                                targetGroups
+                                    .remove(filteredTargets[ind].id.toString());
+                                targetGroupNames.remove(
+                                    filteredTargets[ind].groupName.toString());
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  filteredTargets.clear();
+                  filteredTargets.addAll(targets);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Done"),
+              ),
+            ],
+          );
+        });
+      },
     );
   }
 }

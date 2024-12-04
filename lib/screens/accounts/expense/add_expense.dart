@@ -22,7 +22,7 @@ class _AddExpenseState extends State<AddExpense> {
   List<ExpenseType> categories = [];
   List<ExpenseType> filteredCategories = [];
   ExpenseMasterData? expenseMasterData;
-  ExpensePostModel? postResponse;
+  CommonResponse? postResponse;
   String categoryId = "";
   String categoryName = "Tap to select";
   String fromAcId = "";

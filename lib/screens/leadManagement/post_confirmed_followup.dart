@@ -71,6 +71,10 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   List<Staff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
+  List<TargetGroups> targets = [];
+  List<TargetGroups> filteredTargets = [];
+  List targetGroups = [];
+  List targetGroupNames = [];
 
   @override
   void initState() {
@@ -81,12 +85,16 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
   getData() async {
     detailsResponse = await HttpService.getRenewalDetails();
     if (detailsResponse != null) {
+      targets = detailsResponse!.data.targetGroups;
+      filteredTargets.addAll(targets);
       invoiceNumber = detailsResponse!.data.invoiceNumber.toString();
       items = detailsResponse!.data.products;
       filteredTemplates = detailsResponse!.data.template;
       filteredItems.addAll(items);
       filteredStaff.clear();
       filteredStaff.addAll(detailsResponse!.data.staff);
+      targets = detailsResponse!.data.targetGroups;
+      filteredTargets.addAll(targets);
     }
     setState(() {});
   }
@@ -113,7 +121,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
         paidAmount.text,
         staffId,
         isDifrent,
-        renProducts);
+        renProducts,
+        targetGroups);
     if (object1.status == true) {
       Common.toastMessaage(object1.message, Colors.green);
       if (mounted) {
@@ -754,6 +763,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                         Common.toastMessaage(
                                                             'Enter Product Total Amount',
                                                             Colors.red);
+                                                      } else if (double.parse(
+                                                              productTaxPercent
+                                                                  .text) >
+                                                          100) {
+                                                        Common.toastMessaage(
+                                                            'Enter valid tax percentage',
+                                                            Colors.red);
                                                       } else {
                                                         products.add({
                                                           "product_name":
@@ -824,6 +840,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                                     ? '0'
                                                                     : discount
                                                                         .text);
+                                                        paidAmount.text =
+                                                            allTotal.toString();
+
                                                         productName =
                                                             "Choose Product";
                                                         productId = "";
@@ -910,16 +929,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                               child: Table(
                                 columnWidths: {
                                   0: FixedColumnWidth(
-                                      MediaQuery.of(context).size.width *
-                                          0.2), // Using 10%
+                                      MediaQuery.of(context).size.width * 0.2),
                                   1: FixedColumnWidth(
-                                      MediaQuery.of(context).size.width *
-                                          0.14), // Using 30%
+                                      MediaQuery.of(context).size.width * 0.16),
                                   2: FixedColumnWidth(
-                                      MediaQuery.of(context).size.width * 0.14),
+                                      MediaQuery.of(context).size.width * 0.10),
                                   3: FixedColumnWidth(
-                                      MediaQuery.of(context).size.width *
-                                          0.14), // Using 20%
+                                      MediaQuery.of(context).size.width * 0.16),
                                   4: FixedColumnWidth(
                                       MediaQuery.of(context).size.width * 0.20),
                                   5: FixedColumnWidth(
@@ -1018,22 +1034,22 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.2), // Using 10%
+                                                  0.2),
                                           1: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 30%
+                                                  0.16),
                                           2: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14),
+                                                  0.10),
                                           3: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 20%
+                                                  0.16),
                                           4: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
@@ -1149,6 +1165,9 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                           discount.text == ''
                                                               ? '0'
                                                               : discount.text);
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+
                                                   // products.removeWhere(
                                                   //   (item) => mapEquals(
                                                   //       item,
@@ -1180,11 +1199,15 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                   //       })),
                                                   // );
                                                   products.removeAt(index);
-                                                  renProducts.removeAt(index);
+                                                  if (renProducts.isNotEmpty) {
+                                                    renProducts.removeAt(index);
+                                                  }
                                                   if (products.isEmpty) {
                                                     discount.clear();
                                                     shippingCharge.clear();
                                                     allTotal = 0.00;
+                                                    paidAmount.text =
+                                                        allTotal.toString();
                                                   }
 
                                                   setState(() {});
@@ -1288,6 +1311,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                     ? '0'
                                                     : shippingCharge.text) -
                                             double.parse(value);
+                                        paidAmount.text = allTotal.toString();
                                         setState(() {});
                                       } else {
                                         discount.clear();
@@ -1347,6 +1371,8 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                             double.parse(discount.text == ''
                                                 ? '0'
                                                 : discount.text);
+                                        paidAmount.text = allTotal.toString();
+
                                         setState(() {});
                                       } else {
                                         shippingCharge.clear();
@@ -1507,7 +1533,7 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                       readOnly: paymentStatus == "paid",
                                       style: TextStyle(color: paidColor),
                                       onChanged: (val) {
-                                        if (double.parse(val) > allTotal) {
+                                        if (double.parse(val) > subTotal) {
                                           Common.toastMessaage(
                                               'Enter valid amount', Colors.red);
                                           paidColor = Colors.red;
@@ -1683,6 +1709,177 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'Target Group :',
+                                        ),
+                                        const SizedBox(
+                                          width: 15,
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.55,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              targetGroupDialog(context);
+                                            },
+                                            child: Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  1,
+                                              height: 50,
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                                color: Colors.grey.shade300,
+                                              ),
+                                              child: targetGroups.isEmpty
+                                                  ? const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          left: 10,
+                                                          top: 15,
+                                                          bottom: 10),
+                                                      child:
+                                                          Text('Target Group'))
+                                                  : Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              right: 40),
+                                                      child: SizedBox(
+                                                        height: 35,
+                                                        child: ListView.builder(
+                                                          scrollDirection:
+                                                              Axis.horizontal,
+                                                          itemCount:
+                                                              targetGroupNames
+                                                                  .length,
+                                                          itemBuilder:
+                                                              (context, i) {
+                                                            return Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      left: 5,
+                                                                      right: 5),
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                  setState(
+                                                                      () {});
+                                                                },
+                                                                child: Row(
+                                                                  children: [
+                                                                    Container(
+                                                                      height:
+                                                                          35,
+                                                                      decoration: BoxDecoration(
+                                                                          border: Border.all(
+                                                                              color: Colors
+                                                                                  .grey,
+                                                                              width:
+                                                                                  0),
+                                                                          color: Colors
+                                                                              .white,
+                                                                          borderRadius: const BorderRadius
+                                                                              .only(
+                                                                              topLeft: Radius.circular(6),
+                                                                              bottomLeft: Radius.circular(6))),
+                                                                      child:
+                                                                          Center(
+                                                                        child:
+                                                                            Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.center,
+                                                                          children: [
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.all(10),
+                                                                              child: Text(
+                                                                                targetGroupNames[i],
+                                                                                style: const TextStyle(
+                                                                                  color: Colors.black,
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        showDialog(
+                                                                            context:
+                                                                                context,
+                                                                            builder:
+                                                                                (BuildContext context) {
+                                                                              return AlertDialog(
+                                                                                title: const Text('Please Confirm'),
+                                                                                content: const Text('Are you sure to Remove this Number?'),
+                                                                                actions: [
+                                                                                  TextButton(
+                                                                                      onPressed: () {
+                                                                                        Navigator.of(context).pop();
+                                                                                      },
+                                                                                      child: const Text('No')),
+                                                                                  TextButton(
+                                                                                      onPressed: () async {
+                                                                                        setState(() {
+                                                                                          targetGroupNames.remove(targetGroupNames[i]);
+                                                                                          targetGroups.remove(targetGroups[i]);
+                                                                                        });
+                                                                                        Navigator.of(context).pop();
+                                                                                      },
+                                                                                      child: const Text('Yes')),
+                                                                                ],
+                                                                              );
+                                                                            });
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            35,
+                                                                        width:
+                                                                            30,
+                                                                        decoration: BoxDecoration(
+                                                                            border:
+                                                                                Border.all(color: Colors.grey, width: 0),
+                                                                            color: Colors.grey.shade100,
+                                                                            borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
+                                                                        child:
+                                                                            const Icon(
+                                                                          Icons
+                                                                              .close,
+                                                                          color:
+                                                                              Colors.red,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1730,82 +1927,95 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                       visible: createRenewal,
                       child: Column(
                         children: [
-                          TextFormField(
-                            controller: startDate,
-                            readOnly: true,
-                            onTap: () async {
-                              DateTime? selectedValue = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              setState(() {
-                                startDate.text = DateFormat('dd-MM-yyyy')
-                                    .format(selectedValue!);
-                                final endValue = selectedValue.add(
-                                    Duration(days: int.parse(typeDuration)));
-                                endDate.text =
-                                    DateFormat('dd-MM-yyyy').format(endValue);
-                              });
-                            },
-                            validator: (value) {
-                              if (value!.isEmpty) {
-                                return "Select Start Date";
-                              }
-                              return null;
-                            },
-                            decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(8),
-                                labelText: 'Start Date *',
-                                prefixIcon: const Icon(Icons.calendar_month,
-                                    color: Colors.black54),
-                                fillColor: Colors.grey[300],
-                                filled: true,
-                                //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                border: const OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: startDate,
+                                  readOnly: true,
+                                  onTap: () async {
+                                    DateTime? selectedValue =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    setState(() {
+                                      startDate.text = DateFormat('dd-MM-yyyy')
+                                          .format(selectedValue!);
+                                      final endValue = selectedValue.add(
+                                          Duration(
+                                              days: int.parse(typeDuration)));
+                                      endDate.text = DateFormat('dd-MM-yyyy')
+                                          .format(endValue);
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "Select Start Date";
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      labelText: 'Start Date *',
+                                      prefixIcon: const Icon(
+                                          Icons.calendar_month,
+                                          color: Colors.black54),
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
                                 ),
-                                labelStyle:
-                                    const TextStyle(color: Colors.black)),
-                          ),
-                          const SizedBox(height: 14.0),
-                          TextFormField(
-                            onTap: () async {
-                              DateTime? selectedEndDate = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              endDate.text = DateFormat('dd-MM-yyyy')
-                                  .format(selectedEndDate!);
-                            },
-                            validator: (value) {
-                              if (value!.isEmpty) {
-                                return "Select End Date";
-                              }
-                              return null;
-                            },
-                            readOnly: true,
-                            controller: endDate,
-                            decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.all(8),
-                                labelText: 'End Date *',
-                                prefixIcon: const Icon(Icons.calendar_month,
-                                    color: Colors.black54),
-                                fillColor: Colors.grey[300],
-                                filled: true,
-                                //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                border: const OutlineInputBorder(
-                                  borderSide: BorderSide.none,
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5)),
+                              ),
+                              const SizedBox(width: 15.0),
+                              Expanded(
+                                child: TextFormField(
+                                  onTap: () async {
+                                    DateTime? selectedEndDate =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    endDate.text = DateFormat('dd-MM-yyyy')
+                                        .format(selectedEndDate!);
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return "Select End Date";
+                                    }
+                                    return null;
+                                  },
+                                  readOnly: true,
+                                  controller: endDate,
+                                  decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      labelText: 'End Date *',
+                                      prefixIcon: const Icon(
+                                          Icons.calendar_month,
+                                          color: Colors.black54),
+                                      fillColor: Colors.grey[300],
+                                      filled: true,
+                                      //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                      border: const OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(5)),
+                                      ),
+                                      labelStyle:
+                                          const TextStyle(color: Colors.black)),
                                 ),
-                                labelStyle:
-                                    const TextStyle(color: Colors.black)),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 14.0),
                           TextFormField(
@@ -1879,13 +2089,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                               0.2), // Using 10%
                                       1: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.14), // Using 30%
+                                              0.16), // Using 30%
                                       2: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.14),
+                                              0.10),
                                       3: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
-                                              0.14), // Using 20%
+                                              0.16), // Using 20%
                                       4: FixedColumnWidth(
                                           MediaQuery.of(context).size.width *
                                               0.20),
@@ -1997,17 +2207,17 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 30%
+                                                          0.16), // Using 30%
                                                   2: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14),
+                                                          0.10),
                                                   3: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 20%
+                                                          0.16), // Using 20%
                                                   4: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
@@ -2214,6 +2424,25 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                               endDate.text == "") {
                             Common.toastMessaage(
                                 'End date is required to add renewal',
+                                Colors.red);
+                          } else if (double.parse(
+                                  discount.text == "" ? "0.0" : discount.text) >
+                              subTotal) {
+                            Common.toastMessaage(
+                                'The discount should not exceed the total amount',
+                                Colors.red);
+                          } else if (double.parse(
+                                  discount.text == "" ? "0.0" : discount.text) <
+                              0) {
+                            Common.toastMessaage(
+                                'Please enter valid discount amount',
+                                Colors.red);
+                          } else if (double.parse(shippingCharge.text == ""
+                                  ? "0.0"
+                                  : shippingCharge.text) <
+                              0) {
+                            Common.toastMessaage(
+                                'Please enter valid shipping charge',
                                 Colors.red);
                           } else {
                             if (context.mounted) {
@@ -2539,10 +2768,25 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                 content: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Product Details',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Product Details',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              renProducts.removeAt(index);
+                              setState(() {});
+                            },
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ))
+                      ],
                     ),
                     const SizedBox(
                       height: 15,
@@ -2589,9 +2833,11 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
-                              renProductTaxAmount.text = (double.parse(value) *
-                                      double.parse(renProductTaxPercent.text) /
-                                      100)
+                              renProductTaxAmount.text = ((double.parse(value) *
+                                          double.parse(
+                                              renProductTaxPercent.text) /
+                                          100) *
+                                      double.parse(renProductQty.text))
                                   .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(value) +
@@ -2630,6 +2876,13 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                               if (value == '') {
                                 value = '0';
                               }
+                              renProductTaxAmount.text =
+                                  ((double.parse(renProductRate.text) *
+                                              double.parse(
+                                                  renProductTaxPercent.text) /
+                                              100) *
+                                          double.parse(value))
+                                      .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(renProductRate.text) +
                                               double.parse(
@@ -2671,9 +2924,10 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
                                 value = '0';
                               }
                               renProductTaxAmount.text =
-                                  (double.parse(renProductRate.text) *
-                                          double.parse(value) /
-                                          100)
+                                  ((double.parse(renProductRate.text) *
+                                              double.parse(value) /
+                                              100) *
+                                          double.parse(renProductQty.text))
                                       .toString();
                               renProductTotalAmount.text =
                                   ((double.parse(renProductRate.text) +
@@ -2845,5 +3099,101 @@ class _PostConfirmedFollowupState extends State<PostConfirmedFollowup> {
         .where((map) =>
             map.templateName.toLowerCase().contains(query.toLowerCase()))
         .toList();
+  }
+
+  Future<dynamic> targetGroupDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTargets = targets
+                              .where((item) => item.groupName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .32,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      // Remove NeverScrollableScrollPhysics to enable scrolling
+                      shrinkWrap: true,
+                      itemCount: filteredTargets.length,
+                      itemBuilder: (context, ind) {
+                        return CheckboxListTile(
+                          title: SizedBox(
+                            width: 200,
+                            child: Text(
+                              filteredTargets[ind].groupName.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14),
+                            ),
+                          ),
+                          value: targetGroups
+                                  .contains(filteredTargets[ind].id.toString())
+                              ? true
+                              : false,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                targetGroups
+                                    .add(filteredTargets[ind].id.toString());
+                                targetGroupNames.add(
+                                    filteredTargets[ind].groupName.toString());
+                              } else {
+                                targetGroups
+                                    .remove(filteredTargets[ind].id.toString());
+                                targetGroupNames.remove(
+                                    filteredTargets[ind].groupName.toString());
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  filteredTargets.clear();
+                  filteredTargets.addAll(targets);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Done"),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 }

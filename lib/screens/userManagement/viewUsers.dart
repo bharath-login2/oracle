@@ -1,27 +1,20 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:login2/screens/accounts/clients/clientList.dart';
-import 'package:login2/screens/accounts/clients/invoiceList.dart';
-import 'package:login2/screens/userManagement/editStaffPage.dart';
-import 'package:login2/screens/userManagement/staffDashboard.dart';
+
+import 'package:login2/screens/staff_reports/staff_dashboard.dart';
+import 'package:login2/screens/userManagement/branches.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
-import '../../models/userManagement/deleteStaffModel.dart';
 import '../../models/userManagement/viewStaffModel.dart';
-import '../../screens/authentication/login.dart';
 import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
-import '../../screens/homePage.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/userManagement/addDesignationPage.dart';
 import '../../screens/userManagement/addUserManagement.dart';
-import '../../screens/userManagement/changePassword.dart';
 import '../../screens/userManagement/designationList.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../accounts/clients/receiptList.dart';
 
 // ignore: must_be_immutable
 class ViewUsers extends StatefulWidget {
@@ -39,6 +32,7 @@ class _ViewUsersState extends State<ViewUsers> {
   bool? result1 = true;
   String name = '';
   String role = '';
+  String roleId = '';
   String? createStaffPermission;
   String? viewStaffPermission;
   String? updateStaffPermission;
@@ -50,18 +44,21 @@ class _ViewUsersState extends State<ViewUsers> {
   String? deleteStaffDesignationPermission;
   String? updateStaffPasswordPermission;
   String phoneCallLogPermission = '';
-
+  String multiBranch = '';
+  String userId = '';
+  List<StaffList> filteredStaffs = [];
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
   }
 
   getData() async {
-    //
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
+    roleId = await Common.getSharedPref("roleId");
+    userId = await Common.getSharedPref("userId");
+    multiBranch = await Common.getSharedPref("multiBranch");
     createStaffPermission = await Common.getSharedPref("createStaffPermission");
     viewStaffPermission = await Common.getSharedPref("viewStaffPermission");
     updateStaffPermission = await Common.getSharedPref("updateStaffPermission");
@@ -95,6 +92,8 @@ class _ViewUsersState extends State<ViewUsers> {
 
     viewStaff = await HttpService.viewStaffs(widget.token);
     if (viewStaff != null) {
+      filteredStaffs.clear();
+      filteredStaffs.addAll(viewStaff!.data!.staffList!);
       setState(() {});
       configure = await HttpService.configure(widget.token);
       if (configure != null) {
@@ -108,431 +107,384 @@ class _ViewUsersState extends State<ViewUsers> {
     Size size = MediaQuery.of(context).size;
     return RefreshIndicator(
       onRefresh: () async {
-        //getData();
+        getData();
         return;
       },
       child: result == true
           ? Scaffold(
               key: _scaffoldKey,
               backgroundColor: Colors.grey.shade200,
+              appBar: PreferredSize(
+                preferredSize:
+                    Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
+                child: Container(
+                  padding:
+                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 15.0, top: 10.0, bottom: 10.0, right: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            InkWell(
+                              onTap: () => logout(context),
+                              child: Container(
+                                width: 43,
+                                height: 43,
+                                decoration: BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 2,
+                                        color: Colors.grey.shade800,
+                                        offset: const Offset(0, 2.0),
+                                      )
+                                    ],
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFF2191ce)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Image.asset(
+                                    "assets/icons/user.png",
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 15,
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
+                                ),
+                                const SizedBox(
+                                  height: 2,
+                                ),
+                                Text(
+                                  role,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: InkWell(
+                            onTap: () {
+                              _scaffoldKey.currentState!.openEndDrawer();
+                            },
+                            child:
+                                Image.asset("assets/icons/menu.png", width: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               body: viewStaff != null && configure != null
                   ? SingleChildScrollView(
                       child: Column(
                         children: [
-                          Stack(
-                            children: [
-                              Image.asset("assets/icons/header.png",
-                                  width: size.width),
-                              Column(
-                                children: [
-                                  const SizedBox(
-                                    height: 45,
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            InkWell(
-                                              onTap: () => logout(context),
-                                              child: Container(
-                                                width: 43,
-                                                height: 43,
-                                                decoration: BoxDecoration(
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        blurRadius: 2,
-                                                        color: Colors
-                                                            .grey.shade800,
-                                                        offset: const Offset(
-                                                            0, 2.0),
-                                                      )
-                                                    ],
-                                                    shape: BoxShape.circle,
-                                                    color: const Color(
-                                                        0xFF2191ce)),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Image.asset(
-                                                    "assets/icons/user.png",
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 15,
-                                            ),
-                                            Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  name,
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.white),
-                                                ),
-                                                const SizedBox(
-                                                  height: 2,
-                                                ),
-                                                Text(
-                                                  role,
-                                                  style: const TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: Colors.white),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 20),
-                                          child: InkWell(
-                                            onTap: () {
-                                              _scaffoldKey.currentState!
-                                                  .openEndDrawer();
-                                            },
-                                            child: Image.asset(
-                                                "assets/icons/menu.png",
-                                                width: 20),
-                                          ),
-                                        ),
-                                      ],
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 20.0, horizontal: 10.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width * .8,
+                                  child: TextField(
+                                    autocorrect: false,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        filteredStaffs = viewStaff!
+                                            .data!.staffList!
+                                            .where((item) => item.name!
+                                                .toLowerCase()
+                                                .contains(value.toLowerCase()))
+                                            .toList();
+                                      });
+                                    },
+                                    decoration: InputDecoration(
+                                      contentPadding: const EdgeInsets.all(8),
+                                      hintStyle:
+                                          const TextStyle(color: Colors.grey),
+                                      hintText: 'search',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide
+                                            .none, // Set the border color to none
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.search,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(
-                                    height: 25,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 30),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Image.asset(
-                                                "assets/icons/graph.png",
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 15,
-                                            ),
-                                            const Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      EdgeInsets.only(top: 3),
-                                                  child: Text(
-                                                    'USER MANAGEMENT',
-                                                    style: TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.white),
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  height: 5,
-                                                ),
-                                                Text(
-                                                  'Calling features that give you \n wings that fast..',
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: Colors.white),
-                                                ),
+                                ),
+                                configure!.data!.isExpired == false
+                                    ? PopupMenuButton(
+                                        // add icon, by default "3 dot" icon
+                                        child: Container(
+                                          width: 35,
+                                          height: 35,
+                                          decoration: BoxDecoration(
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  blurRadius: 3,
+                                                  color: Colors.grey.shade800,
+                                                )
                                               ],
+                                              shape: BoxShape.circle,
+                                              color: Colors.white),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Image.asset(
+                                              "assets/icons/settings.png",
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                      configure!.data!.isExpired == false
-                                          ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 15),
-                                              child: PopupMenuButton(
-                                                  // add icon, by default "3 dot" icon
-                                                  child: Container(
-                                                    width: 35,
-                                                    height: 35,
-                                                    decoration: BoxDecoration(
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            blurRadius: 3,
-                                                            color: Colors
-                                                                .grey.shade800,
-                                                          )
-                                                        ],
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.white),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Image.asset(
-                                                        "assets/icons/settings.png",
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  itemBuilder: (context) {
-                                                    return [
-                                                      const PopupMenuItem<int>(
-                                                          value: 1,
-                                                          child: Text(
-                                                              'Add Designation')),
-                                                      const PopupMenuItem<int>(
-                                                          value: 2,
-                                                          child: Text(
-                                                              'List Designation')),
-                                                      const PopupMenuItem<int>(
-                                                          value: 4,
-                                                          child:
-                                                              Text('Add User')),
-                                                    ];
-                                                  },
-                                                  onSelected: (value) {
-                                                    if (value == 1) {
-                                                      createStaffDesignationPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      AddDesignationPage(
-                                                                          widget
-                                                                              .token!)),
-                                                            )
-                                                          : _permissionDialogue(
-                                                              context,
-                                                              'Create Designation');
-                                                    }
-                                                    if (value == 2) {
-                                                      viewStaffDesignationPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      DesignationList(
-                                                                          widget
-                                                                              .token!)),
-                                                            )
-                                                          : _permissionDialogue(
-                                                              context,
-                                                              'Designation List');
-                                                    }
-
-                                                    if (value == 4) {
-                                                      createStaffPermission ==
-                                                              'true'
-                                                          ? Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                  builder: (context) =>
-                                                                      AddUser(widget
-                                                                          .token!)),
-                                                            ).then((r) {
-                                                              getData();
-                                                            })
-                                                          : _permissionDialogue(
-                                                              context,
-                                                              'Add User');
-                                                    }
-                                                    if (value == 5) {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                ClientList(widget
-                                                                    .token!)),
-                                                      );
-                                                    }
-                                                    if (value == 6) {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                InvoiceList(widget
-                                                                    .token!)),
-                                                      );
-                                                    }
-                                                    if (value == 7) {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                ReceiptList(widget
-                                                                    .token!)),
-                                                      );
-                                                    }
-                                                  }),
-                                            )
-                                          : const SizedBox()
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    height: 80,
-                                  ),
-                                ],
-                              ),
-                            ],
+                                        itemBuilder: (context) {
+                                          return [
+                                            const PopupMenuItem<int>(
+                                                value: 1,
+                                                child: Text('Add Designation')),
+                                            const PopupMenuItem<int>(
+                                                value: 2,
+                                                child:
+                                                    Text('List Designation')),
+                                            const PopupMenuItem<int>(
+                                                value: 3,
+                                                child: Text('Add User')),
+                                            if (multiBranch == 'true' &&
+                                                roleId == "2")
+                                              const PopupMenuItem<int>(
+                                                  value: 4,
+                                                  child: Text('Branches'))
+                                          ];
+                                        },
+                                        onSelected: (value) {
+                                          if (value == 1) {
+                                            createStaffDesignationPermission ==
+                                                    'true'
+                                                ? Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddDesignationPage(
+                                                                widget.token!)),
+                                                  )
+                                                : _permissionDialogue(context,
+                                                    'Create Designation');
+                                          } else if (value == 2) {
+                                            viewStaffDesignationPermission ==
+                                                    'true'
+                                                ? Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            DesignationList(
+                                                                widget.token!)),
+                                                  )
+                                                : _permissionDialogue(context,
+                                                    'Designation List');
+                                          } else if (value == 3) {
+                                            createStaffPermission == 'true'
+                                                ? Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddUser(
+                                                                widget.token!)),
+                                                  ).then((r) {
+                                                    getData();
+                                                  })
+                                                : _permissionDialogue(
+                                                    context, 'Add User');
+                                          } else if (value == 4) {
+                                            Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const Branches()))
+                                                .then((r) {
+                                              getData();
+                                            });
+                                          }
+                                        })
+                                    : const SizedBox()
+                              ],
+                            ),
                           ),
                           configure!.data!.isExpired == false
                               ? MediaQuery.removePadding(
                                   context: context,
                                   removeTop: true,
                                   child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 30),
-                                    child: ListView.builder(
-                                      itemCount:
-                                          viewStaff!.data!.staffList!.length,
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemBuilder: (context, i) {
-                                        return Dismissible(
-                                          key: const Key('0'),
-                                          background: Container(
-                                            color: Colors.green,
-                                            child: const Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: <Widget>[
-                                                  SizedBox(
-                                                    width: 20,
-                                                  ),
-                                                  Icon(
-                                                    Icons.call,
-                                                    color: Colors.white,
-                                                  ),
-                                                  Text(
-                                                    " Call",
-                                                    style: TextStyle(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 30, left: 16.0, right: 16.0),
+                                    child: filteredStaffs.isNotEmpty
+                                        ? GridView.builder(
+                                            gridDelegate:
+                                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 2,
+                                                    crossAxisSpacing: 12,
+                                                    mainAxisSpacing: 12,
+                                                    childAspectRatio: 1.15),
+                                            itemCount: filteredStaffs.length,
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            itemBuilder: (context, i) {
+                                              return InkWell(
+                                                  onTap: () {
+                                                    viewStaffReportPermission ==
+                                                            'true'
+                                                        ? Navigator.of(context).push(MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                StaffReportDashboard(
+                                                                    id: filteredStaffs[
+                                                                            i]
+                                                                        .staffId
+                                                                        .toString())))
+                                                        : _permissionDialogue(
+                                                            context,
+                                                            'Staff Report');
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
                                                       color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w700,
+                                                      boxShadow: const [
+                                                        BoxShadow(
+                                                          color: Colors.grey,
+                                                          offset:
+                                                              Offset(2.0, 2.0),
+                                                        )
+                                                      ],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
                                                     ),
-                                                    textAlign: TextAlign.left,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          secondaryBackground: Container(
-                                            color: Colors.red,
-                                            child: const Align(
-                                              alignment: Alignment.centerRight,
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: <Widget>[
-                                                  Icon(
-                                                    Icons.delete,
-                                                    color: Colors.white,
-                                                  ),
-                                                  Text(
-                                                    " Delete",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                    textAlign: TextAlign.right,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 20,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          confirmDismiss: (direction) async {
-                                            if (direction ==
-                                                DismissDirection.endToStart) {
-                                              deleteDialog(context, i);
-                                            } else {
-                                              String url =
-                                                  'tel:${viewStaff!.data!.staffList![i].phoneNo}';
-                                              await launch(url);
-                                            }
-                                            return null;
-                                          },
-                                          child: InkWell(
-                                              onTap: () {},
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    bottom: 10),
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 10,
-                                                          right: 10,
-                                                          top: 10),
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      1,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    boxShadow: const [
-                                                      BoxShadow(
-                                                        color: Colors.grey,
-                                                        offset:
-                                                            Offset(2.0, 2.0),
-                                                      )
-                                                    ],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 5, bottom: 10),
                                                     child: Column(
                                                       children: [
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
+                                                        Column(
                                                           children: [
-                                                            Row(
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(
+                                                                      10.0),
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  Container(
+                                                                    constraints:
+                                                                        const BoxConstraints(
+                                                                      maxHeight:
+                                                                          60,
+                                                                    ),
+                                                                    child:
+                                                                        Container(
+                                                                      constraints:
+                                                                          const BoxConstraints(
+                                                                        minHeight:
+                                                                            20,
+                                                                        minWidth:
+                                                                            20,
+                                                                        maxHeight:
+                                                                            50,
+                                                                        maxWidth:
+                                                                            50,
+                                                                      ),
+                                                                      decoration:
+                                                                          BoxDecoration(
+                                                                        border: Border.all(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            width: 0),
+                                                                        boxShadow: const [
+                                                                          BoxShadow(
+                                                                              color: Colors.grey,
+                                                                              blurRadius: 5,
+                                                                              offset: Offset(1, 1)),
+                                                                        ],
+                                                                        color: Colors
+                                                                            .white,
+                                                                        shape: BoxShape
+                                                                            .circle,
+                                                                        image: DecorationImage(
+                                                                            fit:
+                                                                                BoxFit.cover,
+                                                                            image: NetworkImage(filteredStaffs[i].imageUrl.toString())),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  Container(
+                                                                    decoration: BoxDecoration(
+                                                                        color: Colors
+                                                                            .grey
+                                                                            .shade200,
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(5)),
+                                                                    child:
+                                                                        Padding(
+                                                                      padding: const EdgeInsets.only(
+                                                                          left:
+                                                                              5,
+                                                                          right:
+                                                                              5,
+                                                                          top:
+                                                                              2,
+                                                                          bottom:
+                                                                              2),
+                                                                      child: SizedBox(
+                                                                          width: 76,
+                                                                          child: Center(
+                                                                            child:
+                                                                                Text(
+                                                                              filteredStaffs[i].designation.toString(),
+                                                                              style: const TextStyle(
+                                                                                fontSize: 13,
+                                                                                color: Colors.black,
+                                                                                fontWeight: FontWeight.w500,
+                                                                              ),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                          )),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 10,
+                                                            ),
+                                                            Column(
                                                               mainAxisAlignment:
                                                                   MainAxisAlignment
                                                                       .start,
@@ -540,367 +492,220 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                   CrossAxisAlignment
                                                                       .start,
                                                               children: [
-                                                                Container(
-                                                                  constraints:
-                                                                      const BoxConstraints(
-                                                                    maxHeight:
-                                                                        60,
-                                                                  ),
-                                                                  child:
-                                                                      Container(
-                                                                    constraints:
-                                                                        const BoxConstraints(
-                                                                      minHeight:
-                                                                          20,
-                                                                      minWidth:
-                                                                          20,
-                                                                      maxHeight:
-                                                                          50,
-                                                                      maxWidth:
-                                                                          50,
-                                                                    ),
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      border: Border.all(
-                                                                          color: Colors
-                                                                              .white,
-                                                                          width:
-                                                                              0),
-                                                                      boxShadow: const [
-                                                                        BoxShadow(
-                                                                            color: Colors
-                                                                                .grey,
-                                                                            blurRadius:
-                                                                                5,
-                                                                            offset:
-                                                                                Offset(1, 1)),
-                                                                      ],
-                                                                      color: Colors
-                                                                          .white,
-                                                                      shape: BoxShape
-                                                                          .circle,
-                                                                      image: DecorationImage(
-                                                                          fit: BoxFit
-                                                                              .cover,
-                                                                          image: NetworkImage(viewStaff!
-                                                                              .data!
-                                                                              .staffList![i]
-                                                                              .imageUrl
-                                                                              .toString())),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                Column(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .start,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets
+                                                                Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
                                                                           .only(
                                                                           left:
                                                                               10),
-                                                                      child:
-                                                                          Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.start,
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          SizedBox(
-                                                                            width:
-                                                                                150,
-                                                                            child:
-                                                                                Text(
-                                                                              viewStaff!.data!.staffList![i].name.toString(),
-                                                                              style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                              maxLines: 1,
-                                                                              overflow: TextOverflow.ellipsis,
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                150,
-                                                                            child:
-                                                                                Text(
-                                                                              viewStaff!.data!.staffList![i].phoneNo.toString(),
-                                                                              style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                          viewStaff!.data!.staffList![i].branchName != ''
-                                                                              ? Padding(
-                                                                                  padding: const EdgeInsets.only(bottom: 5),
-                                                                                  child: SizedBox(
-                                                                                    width: 150,
-                                                                                    child: Text(
-                                                                                      'Branch:${viewStaff!.data!.staffList![i].branchName}',
-                                                                                      style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                      maxLines: 1,
-                                                                                      overflow: TextOverflow.ellipsis,
-                                                                                    ),
-                                                                                  ),
-                                                                                )
-                                                                              : const SizedBox(),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                150,
-                                                                            child:
-                                                                                Text(
-                                                                              viewStaff!.data!.staffList![i].email.toString(),
-                                                                              style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                              maxLines: 1,
-                                                                              overflow: TextOverflow.ellipsis,
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            height:
-                                                                                5,
-                                                                          ),
-                                                                        ],
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .start,
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .start,
+                                                                    children: [
+                                                                      SizedBox(
+                                                                        width:
+                                                                            150,
+                                                                        child:
+                                                                            Text(
+                                                                          filteredStaffs[i]
+                                                                              .name
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 15,
+                                                                              color: Colors.black,
+                                                                              fontWeight: FontWeight.w500),
+                                                                          maxLines:
+                                                                              1,
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
                                                                       ),
-                                                                    ),
-                                                                  ],
+                                                                      const SizedBox(
+                                                                        height:
+                                                                            5,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            150,
+                                                                        child:
+                                                                            Text(
+                                                                          filteredStaffs[i]
+                                                                              .phoneNo
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 13,
+                                                                              color: Colors.black54,
+                                                                              fontWeight: FontWeight.w500),
+                                                                        ),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        height:
+                                                                            5,
+                                                                      ),
+                                                                      filteredStaffs[i].branchName !=
+                                                                              ''
+                                                                          ? Padding(
+                                                                              padding: const EdgeInsets.only(bottom: 5),
+                                                                              child: SizedBox(
+                                                                                width: 150,
+                                                                                child: Text(
+                                                                                  'Branch:${filteredStaffs[i].branchName}',
+                                                                                  style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ),
+                                                                            )
+                                                                          : const SizedBox(),
+                                                                    ],
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ),
-                                                            Container(
-                                                              decoration: BoxDecoration(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade200,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              5)),
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        left: 5,
-                                                                        right:
-                                                                            5,
-                                                                        top: 2,
-                                                                        bottom:
-                                                                            2),
-                                                                child: SizedBox(
-                                                                    width: 76,
-                                                                    child:
-                                                                        Center(
-                                                                      child:
-                                                                          Text(
-                                                                        viewStaff!
-                                                                            .data!
-                                                                            .staffList![i]
-                                                                            .designation
-                                                                            .toString(),
-                                                                        style:
-                                                                            const TextStyle(
-                                                                          fontSize:
-                                                                              13,
-                                                                          color:
-                                                                              Colors.black,
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                        ),
-                                                                        maxLines:
-                                                                            1,
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis,
-                                                                      ),
-                                                                    )),
-                                                              ),
-                                                            ),
                                                           ],
                                                         ),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          children: [
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      right:
-                                                                          10),
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  viewStaffReportPermission ==
-                                                                          'true'
-                                                                      ? Navigator.of(context).push(MaterialPageRoute(
-                                                                          builder: (context) => StaffDashboard(
-                                                                              widget
-                                                                                  .token,
-                                                                              viewStaff!.data!.staffList![i].staffId
-                                                                                  .toString(),
-                                                                              viewStaff!.data!.staffList![i].name
-                                                                                  .toString())))
-                                                                      : _permissionDialogue(
-                                                                          context,
-                                                                          'Staff Report');
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                        height:
-                                                                            30,
-                                                                        width:
-                                                                            30,
-                                                                        decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .grey.shade300,
-                                                                            borderRadius: BorderRadius.circular(
-                                                                                5)),
-                                                                        child:
-                                                                            const Icon(
-                                                                          Icons
-                                                                              .remove_red_eye,
-                                                                          color:
-                                                                              Colors.black,
-                                                                          size:
-                                                                              18,
-                                                                        )),
-                                                              ),
-                                                            ),
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      right:
-                                                                          10),
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  updateStaffPermission ==
-                                                                              'false' ||
-                                                                          viewStaff!.data!.staffList![i].editPermission ==
-                                                                              false
-                                                                      ? _permissionDialogue(
-                                                                          context,
-                                                                          'Edit User')
-                                                                      : Navigator.of(context).push(MaterialPageRoute(
-                                                                          builder: (context) => EditProfilePage(
-                                                                                token: widget.token,
-                                                                                staffId: viewStaff!.data!.staffList![i].staffId,
-                                                                              )));
-                                                                },
-                                                                child:
-                                                                    Container(
-                                                                        height:
-                                                                            30,
-                                                                        width:
-                                                                            30,
-                                                                        decoration: BoxDecoration(
-                                                                            color: Colors
-                                                                                .green.shade100,
-                                                                            borderRadius: BorderRadius.circular(
-                                                                                5)),
-                                                                        child:
-                                                                            const Icon(
-                                                                          Icons
-                                                                              .edit,
-                                                                          color:
-                                                                              Colors.green,
-                                                                          size:
-                                                                              18,
-                                                                        )),
-                                                              ),
-                                                            ),
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      right:
-                                                                          10),
-                                                              child: InkWell(
-                                                                onTap: () {
-                                                                  deleteStaffPermission ==
-                                                                              'true' &&
-                                                                          viewStaff!.data!.staffList![i].deletePermission ==
-                                                                              true
-                                                                      ? deleteDialog(
-                                                                          context,
-                                                                          i)
-                                                                      : _permissionDialogue(
-                                                                          context,
-                                                                          'Delete User');
-                                                                },
-                                                                child: Container(
-                                                                    height: 30,
-                                                                    width: 30,
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .pink
-                                                                            .shade100,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(
-                                                                                5)),
-                                                                    child: const Icon(
-                                                                        Icons
-                                                                            .delete,
-                                                                        color: Colors
-                                                                            .red,
-                                                                        size:
-                                                                            18)),
-                                                              ),
-                                                            ),
-                                                            InkWell(
-                                                              onTap: () {
-                                                                updateStaffPasswordPermission ==
-                                                                            'true' &&
-                                                                        viewStaff!.data!.staffList![i].changePasswordPermission ==
-                                                                            true
-                                                                    ? Navigator
-                                                                        .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                            builder: (context) =>
-                                                                                ChangePassword(widget.token!, viewStaff!.data!.staffList![i].staffId.toString())),
-                                                                      )
-                                                                    : _permissionDialogue(
-                                                                        context,
-                                                                        'Change Password');
-                                                              },
-                                                              child: Container(
-                                                                  height: 30,
-                                                                  width: 30,
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .lightBlueAccent
-                                                                          .shade100,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              5)),
-                                                                  child: const Icon(
-                                                                      Icons
-                                                                          .vpn_key_outlined,
-                                                                      color: Colors
-                                                                          .blueAccent,
-                                                                      size:
-                                                                          18)),
-                                                            ),
-                                                          ],
-                                                        ),
+                                                        // Row(
+                                                        //   mainAxisAlignment:
+                                                        //       MainAxisAlignment.end,
+                                                        //   children: [
+                                                        //     Padding(
+                                                        //       padding:
+                                                        //           const EdgeInsets
+                                                        //               .only(
+                                                        //               right: 10),
+                                                        //       child: InkWell(
+                                                        //         onTap: () {
+                                                        //           updateStaffPermission ==
+                                                        //                       'false' ||
+                                                        //                   viewStaff!
+                                                        //                           .data!
+                                                        //                           .staffList![
+                                                        //                               i]
+                                                        //                           .editPermission ==
+                                                        //                       false
+                                                        //               ? _permissionDialogue(
+                                                        //                   context,
+                                                        //                   'Edit User')
+                                                        //               : Navigator.of(
+                                                        //                       context)
+                                                        //                   .push(MaterialPageRoute(
+                                                        //                       builder: (context) => EditProfilePage(
+                                                        //                             token: widget.token,
+                                                        //                             staffId: viewStaff!.data!.staffList![i].staffId,
+                                                        //                           )));
+                                                        //         },
+                                                        //         child: Container(
+                                                        //             height: 30,
+                                                        //             width: 30,
+                                                        //             decoration: BoxDecoration(
+                                                        //                 color: Colors
+                                                        //                     .green
+                                                        //                     .shade100,
+                                                        //                 borderRadius:
+                                                        //                     BorderRadius.circular(
+                                                        //                         5)),
+                                                        //             child:
+                                                        //                 const Icon(
+                                                        //               Icons.edit,
+                                                        //               color: Colors
+                                                        //                   .green,
+                                                        //               size: 18,
+                                                        //             )),
+                                                        //       ),
+                                                        //     ),
+                                                        //     Padding(
+                                                        //       padding:
+                                                        //           const EdgeInsets
+                                                        //               .only(
+                                                        //               right: 10),
+                                                        //       child: InkWell(
+                                                        //         onTap: () {
+                                                        //           deleteStaffPermission ==
+                                                        //                       'true' &&
+                                                        //                   viewStaff!
+                                                        //                           .data!
+                                                        //                           .staffList![
+                                                        //                               i]
+                                                        //                           .deletePermission ==
+                                                        //                       true
+                                                        //               ? deleteDialog(
+                                                        //                   context,
+                                                        //                   i)
+                                                        //               : _permissionDialogue(
+                                                        //                   context,
+                                                        //                   'Delete User');
+                                                        //         },
+                                                        //         child: Container(
+                                                        //             height: 30,
+                                                        //             width: 30,
+                                                        //             decoration: BoxDecoration(
+                                                        //                 color: Colors
+                                                        //                     .pink
+                                                        //                     .shade100,
+                                                        //                 borderRadius:
+                                                        //                     BorderRadius.circular(
+                                                        //                         5)),
+                                                        //             child: const Icon(
+                                                        //                 Icons
+                                                        //                     .delete,
+                                                        //                 color: Colors
+                                                        //                     .red,
+                                                        //                 size: 18)),
+                                                        //       ),
+                                                        //     ),
+                                                        //     InkWell(
+                                                        //       onTap: () {
+                                                        //         updateStaffPasswordPermission ==
+                                                        //                     'true' &&
+                                                        //                 viewStaff!
+                                                        //                         .data!
+                                                        //                         .staffList![
+                                                        //                             i]
+                                                        //                         .changePasswordPermission ==
+                                                        //                     true
+                                                        //             ? Navigator
+                                                        //                 .push(
+                                                        //                 context,
+                                                        //                 MaterialPageRoute(
+                                                        //                     builder: (context) => ChangePassword(
+                                                        //                         widget.token!,
+                                                        //                         viewStaff!.data!.staffList![i].staffId.toString())),
+                                                        //               )
+                                                        //             : _permissionDialogue(
+                                                        //                 context,
+                                                        //                 'Change Password');
+                                                        //       },
+                                                        //       child: Container(
+                                                        //           height: 30,
+                                                        //           width: 30,
+                                                        //           decoration: BoxDecoration(
+                                                        //               color: Colors
+                                                        //                   .lightBlueAccent
+                                                        //                   .shade100,
+                                                        //               borderRadius:
+                                                        //                   BorderRadius
+                                                        //                       .circular(
+                                                        //                           5)),
+                                                        //           child: const Icon(
+                                                        //               Icons
+                                                        //                   .vpn_key_outlined,
+                                                        //               color: Colors
+                                                        //                   .blueAccent,
+                                                        //               size: 18)),
+                                                        //     ),
+                                                        //   ],
+                                                        // ),
                                                       ],
                                                     ),
-                                                  ),
-                                                ),
-                                              )),
-                                        );
-                                      },
-                                    ),
+                                                  ));
+                                            },
+                                          )
+                                        : noResultWidget(
+                                            context, "No search reults..!"),
                                   ),
                                 )
                               : Padding(
@@ -1012,8 +817,11 @@ class _ViewUsersState extends State<ViewUsers> {
               ),
               bottomNavigationBar: configure != null
                   ? BottomNavigation(
-                      widget.token!, configure!.data!.whatsappConfigured,
-                      phoneCallLogPermission: phoneCallLogPermission)
+                      widget.token!,
+                      phoneCallLogPermission: phoneCallLogPermission,
+                      name: name,
+                      userId: userId,
+                    )
                   : const SizedBox())
           : Scaffold(
               backgroundColor: Colors.white,
@@ -1072,44 +880,6 @@ class _ViewUsersState extends State<ViewUsers> {
                 ),
               )),
     );
-  }
-
-  Future<dynamic> deleteDialog(BuildContext context, int i) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Delete?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No')),
-              TextButton(
-                  onPressed: () async {
-                    DeleteStaffModel delete = await HttpService.deleteStaff(
-                        widget.token, viewStaff!.data!.staffList![i].staffId);
-                    if (delete.data == true) {
-                      Common.toastMessaage(delete.message, Colors.green);
-                      if (mounted) {
-                        getData();
-                        Navigator.pop(context);
-                      }
-                    } else {
-                      Common.toastMessaage(delete.message, Colors.red);
-                      if (mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    }
-                  },
-                  child: const Text('Yes')),
-              
-            ],
-          );
-        });
   }
 
   void _permissionDialogue(BuildContext context, title) {

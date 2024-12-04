@@ -3,21 +3,24 @@ import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
-import 'package:login2/main.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
+import 'package:login2/models/renewal/renewal_dashboard_model.dart';
+import 'package:login2/screens/accounts/dashboard/account_head.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
 import 'package:login2/screens/accounts/expense/advance&expense.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
-import 'package:login2/screens/leadManagement/leadDetails.dart';
-import 'package:login2/screens/leadManagement/transferLeadReport.dart';
-import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/search/search.dart';
-import 'package:login2/screens/staff_reports/staff_list.dart';
+import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
@@ -27,6 +30,7 @@ import '../../models/lead_management/leadDashboardModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
 import '../../models/loginCheckModel.dart';
 import '../../screens/authentication/login.dart';
+import '../../widgets/renewal_grid_widget.dart';
 import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import 'add_leads.dart';
@@ -82,6 +86,9 @@ class _DashboardState extends State<Dashboard> {
   CommonConfigureModel? configure;
   LeadCategoryStaffWiseModel? staffWise;
   DashboardModel? userDashboard;
+  RenewalDashboardModel? renewalDashboard;
+  bool isExpired = false;
+
   var fromdate = DateTime.now();
   var todate = DateTime.now();
   var fromdate1 =
@@ -117,7 +124,6 @@ class _DashboardState extends State<Dashboard> {
   bool isVisible = true;
   bool loadmore = false;
   bool moreloading = false;
-  bool accDashboardPermission = false;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final StreamController<String?> selectNotificationStream =
@@ -153,7 +159,7 @@ class _DashboardState extends State<Dashboard> {
     "Receipts",
     "Expense",
     "Customers",
-    "Renewals"
+    "Account Head"
   ];
   List tabColors = [
     Colors.green,
@@ -175,6 +181,71 @@ class _DashboardState extends State<Dashboard> {
   ];
 
   final List<Color> _colors = [
+    Colors.redAccent,
+    Colors.teal,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.indigo,
+    Colors.brown,
+    Colors.teal,
+    Colors.black,
+    Colors.green,
+    Colors.blueGrey,
+    Colors.lightGreen,
+    Colors.grey,
+    Colors.cyan,
+    Colors.teal,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.black,
+    Colors.green,
+    Colors.blueGrey,
+    Colors.brown,
+    Colors.lightGreen,
+    Colors.orange,
+    Colors.grey,
+    Colors.cyan,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.indigo,
+    Colors.teal,
+    Colors.brown,
+    Colors.black,
+    Colors.green,
+    Colors.teal,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.indigo,
+    Colors.brown,
+    Colors.teal,
+    Colors.black,
+    Colors.green,
+    Colors.blueGrey,
+    Colors.lightGreen,
+    Colors.grey,
+    Colors.cyan,
+    Colors.teal,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.black,
+    Colors.green,
+    Colors.blueGrey,
+    Colors.brown,
+    Colors.lightGreen,
+    Colors.orange,
+    Colors.grey,
+    Colors.cyan,
+    Colors.blueAccent,
+    Colors.purple,
+    Colors.indigo,
+    Colors.teal,
+    Colors.brown,
+    Colors.black,
+    Colors.green,
     Colors.redAccent,
     Colors.teal,
     Colors.blueAccent,
@@ -323,6 +394,7 @@ class _DashboardState extends State<Dashboard> {
       firebaseToken = await FirebaseMessaging.instance.getToken();
       LoginCheckModel loginCheck =
           await HttpService.loginCheck(token, firebaseToken);
+      log(firebaseToken.toString());
       if (loginCheck.data == false) {
         Common.toastMessaage('Token Expired', Colors.red);
         if (mounted) {
@@ -333,17 +405,20 @@ class _DashboardState extends State<Dashboard> {
       } else {
         configure = await HttpService.configure(token);
         if (configure != null) {
+          isExpired = configure!.data!.isExpired!;
           setState(() {});
         }
         leadDashboard = await HttpService.leadDashboard(
             token, fromdate, todate, fromdate1, todate1);
         userDashboard = await HttpService.mainDashboard(widget.token);
-        getAccountDash();
-        accDashboardPermission = userDashboard!.data!.modules!
-            .any((module) => module.menuName == "invoices");
+        Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
         setState(() {
           notificationCount = leadDashboard!.data.unreadNotification;
         });
+        Common.saveSharedPref(
+            "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
+        getAccountDash();
+        getRenewalDashboard();
       }
       setState(() {
         timeOut = false;
@@ -359,6 +434,15 @@ class _DashboardState extends State<Dashboard> {
   getAccountDash() async {
     accountDashboard = await HttpService.accountsDashboard(fDate, tDate);
     if (accountDashboard != null && accountDashboard!.status == true) {
+      setState(() {});
+    } else {
+      setState(() {});
+    }
+  }
+
+  getRenewalDashboard() async {
+    renewalDashboard = await HttpService.renewalDashboard();
+    if (renewalDashboard != null && renewalDashboard!.status == true) {
       setState(() {
         isLoading = false;
       });
@@ -431,7 +515,6 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
     return WillPopScope(
       onWillPop: () async {
         bool? result = await _exitApp(context);
@@ -448,22 +531,24 @@ class _DashboardState extends State<Dashboard> {
         },
         child: result == true && timeOut == false
             ? DefaultTabController(
-                length: 2,
+                initialIndex: 1,
+                length: 3,
                 child: Scaffold(
                     key: _scaffoldKey,
                     backgroundColor: Colors.white,
-                    body: accDashboardPermission == true
+                    body: userDashboard != null
                         ? TabBarView(children: [
-                            configure != null && leadDashboard != null
-                                ? leadDashboardView(context)
-                                : dashboardShimmer(),
-                            isLoading == true
-                                ? accDashShimmer()
-                                : accountDashboardView(context),
+                            if (userDashboard!.data.viewRenewalDashboard)
+                              isLoading == true
+                                  ? accDashShimmer()
+                                  : renewalDashboardView(context),
+                            leadDashboardView(context),
+                            if (userDashboard!.data.viewAccDashboard)
+                              isLoading == true
+                                  ? accDashShimmer()
+                                  : accountDashboardView(context),
                           ])
-                        : configure != null && leadDashboard != null
-                            ? leadDashboardView(context)
-                            : dashboardShimmer(),
+                        : leadDashboardView(context),
                     endDrawer: DraweScreen(widget.token!),
                     floatingActionButtonLocation:
                         FloatingActionButtonLocation.centerDocked,
@@ -480,8 +565,7 @@ class _DashboardState extends State<Dashboard> {
                           width: 25), //icon inside button
                     ),
                     bottomNavigationBar: configure != null
-                        ? BottomNavigation(
-                            widget.token!, configure!.data!.whatsappConfigured,
+                        ? BottomNavigation(widget.token!,
                             phoneCallLogPermission: phoneCallLogPermission,
                             name: name,
                             userId: userId)
@@ -548,6 +632,355 @@ class _DashboardState extends State<Dashboard> {
                 )),
       ),
     );
+  }
+
+  SafeArea renewalDashboardView(BuildContext context) {
+    return SafeArea(
+        child: RefreshIndicator(
+      onRefresh: () async {
+        getRenewalDashboard();
+      },
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RenewalFollowupList(
+                          clientId: "",
+                          clientName: "",
+                        ),
+                      )).then((_) {
+                    getData(widget.token, fromdate, todate);
+                    if (loadmore == true) {
+                      getStaffwise();
+                    }
+                  });
+                },
+                child: Container(
+                  width: MediaQuery.of(context).size.width * .95,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 2,
+                          color: Colors.grey.shade600,
+                          offset: const Offset(0, 2.0),
+                        )
+                      ]),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text("Upcoming Renewals :",
+                                style: TextStyle(
+                                    color: Colors.blue.shade900,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold)),
+                            Text(
+                              renewalDashboard!.data.upcomingRenewals,
+                              style: TextStyle(
+                                  color: Colors.blue.shade900,
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CustomRenewal(),
+                                )).then((_) {
+                              getData(widget.token, fromdate, todate);
+                              if (loadmore == true) {
+                                getStaffwise();
+                              }
+                            });
+                          },
+                          label: const Text(
+                            "Add Renewal",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                              elevation: 1, backgroundColor: Colors.blue),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * .2,
+                width: MediaQuery.of(context).size.width,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  // gridDelegate:
+                  //     const SliverGridDelegateWithFixedCrossAxisCount(
+                  //   crossAxisCount: 2,
+                  //   crossAxisSpacing: 10.0,
+                  //   mainAxisSpacing: 10.0,
+                  //   childAspectRatio: 1.2,
+                  // ),
+                  shrinkWrap: true,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RenewalList(
+                                title: "Current Month",
+                                searchKey: "current_month",
+                                searchMonth: "",
+                                renewed: int.parse(renewalDashboard!
+                                    .data.currentMonthData.paidCount),
+                              ),
+                            ));
+                      },
+                      child: RenewalGridItem(
+                        title: "Current Month",
+                        paidAmount: renewalDashboard!
+                            .data.currentMonthData.paidAmount
+                            .toString(),
+                        paidCount: renewalDashboard!
+                            .data.currentMonthData.paidCount
+                            .toString(),
+                        totalAmount: renewalDashboard!
+                            .data.currentMonthData.totalAmount
+                            .toString(),
+                        totalCount: renewalDashboard!
+                            .data.currentMonthData.totalCount
+                            .toString(),
+                        color: const Color(0xFF2a86c9),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RenewalList(
+                                title: "Next Month",
+                                searchKey: "next_month",
+                                searchMonth: "",
+                                renewed: int.parse(renewalDashboard!
+                                    .data.nextMonthData.paidCount),
+                              ),
+                            ));
+                      },
+                      child: RenewalGridItem(
+                        title: "Next Month",
+                        paidAmount: renewalDashboard!
+                            .data.nextMonthData.paidAmount
+                            .toString(),
+                        paidCount: renewalDashboard!
+                            .data.nextMonthData.paidCount
+                            .toString(),
+                        totalAmount: renewalDashboard!
+                            .data.nextMonthData.totalAmount
+                            .toString(),
+                        totalCount: renewalDashboard!
+                            .data.nextMonthData.totalCount
+                            .toString(),
+                        color: const Color(0xFF2a86c9),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RenewalList(
+                                title: "Current Year",
+                                searchKey: "current_year",
+                                searchMonth: "",
+                                renewed: int.parse(
+                                    renewalDashboard!.data.allData.paidCount),
+                              ),
+                            ));
+                      },
+                      child: RenewalGridItem(
+                        title: "Current Year",
+                        paidAmount: renewalDashboard!.data.allData.paidAmount
+                            .toString(),
+                        paidCount:
+                            renewalDashboard!.data.allData.paidCount.toString(),
+                        totalAmount: renewalDashboard!.data.allData.totalAmount
+                            .toString(),
+                        totalCount: renewalDashboard!.data.allData.totalCount
+                            .toString(),
+                        color: const Color(0xFF2a86c9),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RenewalList(
+                                title: "Expired",
+                                searchMonth: "",
+                                searchKey: "expired",
+                                renewed: int.parse(renewalDashboard!
+                                    .data.expiredData.paidCount),
+                              ),
+                            ));
+                      },
+                      child: RenewalGridItem(
+                          title: "Expired",
+                          paidAmount: renewalDashboard!
+                              .data.expiredData.paidAmount
+                              .toString(),
+                          paidCount: renewalDashboard!
+                              .data.expiredData.paidCount
+                              .toString(),
+                          totalAmount: renewalDashboard!
+                              .data.expiredData.totalAmount
+                              .toString(),
+                          totalCount: renewalDashboard!
+                              .data.expiredData.totalCount
+                              .toString(),
+                          color: Colors.red.shade200),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 2,
+                          color: Colors.grey.shade600,
+                          offset: const Offset(0, 2.0),
+                        )
+                      ]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [
+                              Colors.blue.shade600,
+                              Colors.blue.shade500,
+                            ]),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            )),
+                        child: const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              "Renewal Reports",
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0, top: 16.0),
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width * .9,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount:
+                                renewalDashboard!.data.monthReport.length,
+                            itemBuilder: (context, index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => RenewalList(
+                                          title: renewalDashboard!
+                                              .data.monthReport[index].label,
+                                          searchKey: "",
+                                          searchMonth: renewalDashboard!.data
+                                              .monthReport[index].searchMonth
+                                              .toString(),
+                                          renewed: 0,
+                                        ),
+                                      ));
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: 10.0,
+                                      bottom: 10.0,
+                                      left: 20.0,
+                                      right: 20.0),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(renewalDashboard!
+                                              .data.monthReport[index].label),
+                                          Text(
+                                            " ${renewalDashboard!.data.monthReport[index].amount.toString()}",
+                                            style:
+                                                const TextStyle(fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      LinearProgressIndicator(
+                                        borderRadius: BorderRadius.circular(8),
+                                        backgroundColor: Colors.grey,
+                                        value: renewalDashboard!.data
+                                                .monthReport[index].percentage /
+                                            100,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.blue.shade400),
+                                        minHeight: 6,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
   }
 
   SafeArea accountDashboardView(BuildContext context) {
@@ -670,13 +1103,21 @@ class _DashboardState extends State<Dashboard> {
                                                         ReceiptList(widget.token
                                                             .toString())),
                                               );
-                                            } else if (list[i] == "Renewals") {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const RenewalDashboard()),
-                                              );
+                                            } else if (list[i] ==
+                                                "Account Head") {
+                                              if (accountDashboard!
+                                                  .data.isViewAccHead) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const AccountHead()),
+                                                );
+                                              } else {
+                                                Common.toastMessaage(
+                                                    "No permission",
+                                                    Colors.red);
+                                              }
                                             } else {
                                               Navigator.push(
                                                 context,
@@ -731,27 +1172,39 @@ class _DashboardState extends State<Dashboard> {
                       InkWell(
                         onTap: () {
                           if (accountDashboard!.data.bankAccCount == "1") {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BankAccount(
-                                    accId: accountDashboard!.data.bankAccountId,
-                                    accName:
-                                        accountDashboard!.data.bankAccountName,
-                                  ),
-                                ));
+                            if (accountDashboard!.data.isViewBankAcc) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BankAccount(
+                                      accId:
+                                          accountDashboard!.data.bankAccountId,
+                                      accName: accountDashboard!
+                                          .data.bankAccountName,
+                                    ),
+                                  ));
+                            } else {
+                              Common.toastMessaage("No permission", Colors.red);
+                            }
                           } else if (accountDashboard!.data.bankAccCount ==
                               "0") {
                             Common.toastMessaage(
                                 "Please add a 'BANK ACCOUNT'", Colors.red);
                           } else {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PendingExpense(
-                                    status: "1",
-                                  ),
-                                ));
+                            if (accountDashboard!.data.isViewBankAcc) {
+                              if (accountDashboard!.data.isViewPendingExpense) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PendingExpense(
+                                        status: "1",
+                                      ),
+                                    ));
+                              } else {
+                                Common.toastMessaage(
+                                    "No permission", Colors.red);
+                              }
+                            } else {}
                           }
                         },
                         child: gridItem(
@@ -762,13 +1215,17 @@ class _DashboardState extends State<Dashboard> {
                       ),
                       InkWell(
                         onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PendingExpense(
-                                  status: "2",
-                                ),
-                              ));
+                          if (accountDashboard!.data.isViewPendingExpense) {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PendingExpense(
+                                    status: "2",
+                                  ),
+                                ));
+                          } else {
+                            Common.toastMessaage("No permission", Colors.red);
+                          }
                         },
                         child: gridItem(
                             "PENDING EXPENSE",
@@ -1145,225 +1602,6 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Shimmer dashboardShimmer() {
-    return Shimmer.fromColors(
-        enabled: true,
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Container(
-                width: double.infinity,
-                height: 200.0,
-                margin: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                  color: Colors.white,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Container(
-                      width: double.infinity,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: 100.0,
-                            height: 10.0,
-                            color: Colors.white,
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Container(
-                      width: double.infinity,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 200,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: 100.0,
-                            height: 10.0,
-                            color: Colors.white,
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 200,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 8.0),
-                    Container(
-                      width: double.infinity,
-                      height: 12.0,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 96.0,
-                      height: 72.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.0),
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 10.0,
-                            color: Colors.white,
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                          ),
-                          Container(
-                            width: 100.0,
-                            height: 10.0,
-                            color: Colors.white,
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ));
-  }
-
   SafeArea leadDashboardView(BuildContext context) {
     return SafeArea(
       top: false,
@@ -1418,788 +1656,446 @@ class _DashboardState extends State<Dashboard> {
               const SizedBox(
                 height: 5,
               ),
-              Visibility(
-                  visible: isVisible,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: userDashboard != null
-                      ? AnimatedOpacity(
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.fastOutSlowIn,
-                          opacity: isVisible ? 1 : 0,
-                          child: SizedBox(
-                            height: 100,
-                            child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                shrinkWrap: true,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 1),
-                                itemCount: userDashboard!.data!.modules!.length,
-                                itemBuilder: (BuildContext context, int i) {
-                                  return GestureDetector(
-                                    onTap: () async {
-                                      log(userDashboard!
-                                          .data!.modules![i].menuName
-                                          .toString());
-                                      if (configure!.data!.isExpired == true) {
-                                        _upgrade(context);
+              isExpired == false
+                  ? Visibility(
+                      visible: isVisible,
+                      maintainAnimation: true,
+                      maintainState: true,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.fastOutSlowIn,
+                        opacity: isVisible ? 1 : 0,
+                        child: SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              itemCount: userDashboard != null
+                                  ? userDashboard!.data.modules.length
+                                  : 5,
+                              itemBuilder: (BuildContext context, int i) {
+                                return GestureDetector(
+                                  onTap: () async {
+                                    log(userDashboard!.data.modules[i].menuName
+                                        .toString());
+                                    if (isExpired == true) {
+                                      _upgrade(context);
+                                    } else {
+                                      if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'call_management') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  Dashboard(widget.token)),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'Staff_management') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ViewUsers(widget.token)),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'whatsapp') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const ChatHomeScreen()),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'Settings') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  WhatsappSettings(
+                                                      widget.token)),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'file_manager') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  FileMangerList(widget.token)),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'customers') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ClientList(widget.token!)),
+                                        );
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'invoices') {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AccountsDashboard(
+                                                token: widget.token.toString(),
+                                              ),
+                                            )).then((_) {
+                                          getData(
+                                              widget.token, fromdate, todate);
+                                          if (loadmore == true) {
+                                            getStaffwise();
+                                          }
+                                        });
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'reports') {
+                                        viewReportsDialog(context);
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'renewal') {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const RenewalDashboard()));
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'complaints') {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const ComplaintListScreen()));
+                                      } else if (userDashboard!
+                                              .data.modules[i].menuName ==
+                                          'products') {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ProductList(
+                                                catId: "widget.catId",
+                                                subCatId: "11",
+                                                title: "",
+                                                subCat: " widget.title",
+                                              ),
+                                            ));
                                       } else {
-                                        if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'call_management') {
-                                          Navigator.push(
+                                        _dialogue(context,
+                                            'Access ${userDashboard!.data.modules[i].categoryName}');
+                                      }
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 15),
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        maxHeight: 81,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              constraints: const BoxConstraints(
+                                                minHeight: 60,
+                                                minWidth: 60,
+                                                maxHeight: 70,
+                                                maxWidth: 70,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 0),
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                      color: Colors.grey,
+                                                      blurRadius: 5,
+                                                      offset: Offset(1, 1)),
+                                                ],
+                                                color: Colors.white,
+                                                shape: BoxShape.rectangle,
+
+                                                // image: AssetImage(
+                                                //     'assets/images/img.jpeg')),
+                                              ),
+                                              child: userDashboard != null
+                                                  ? CachedNetworkImage(
+                                                      fit: BoxFit.fill,
+                                                      imageUrl: userDashboard!
+                                                          .data.modules[i].image
+                                                          .toString(),
+                                                      placeholder:
+                                                          (context, url) =>
+                                                              const Padding(
+                                                        padding: EdgeInsets.all(
+                                                            25.0),
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                      errorWidget: (context,
+                                                              url, error) =>
+                                                          const Icon(
+                                                              Icons.error),
+                                                    )
+                                                  : const SizedBox()),
+                                          const SizedBox(
+                                            height: 4,
+                                          ),
+                                          const Expanded(
+                                            child: Text(
+                                              '',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                        ),
+                      ))
+                  : const SizedBox(),
+              if (isExpired != false)
+                Padding(
+                  padding: const EdgeInsets.only(top: 100.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(0.1),
+                          child: Card(
+                            // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            // Set the clip behavior of the card
+                            clipBehavior: Clip.antiAliasWithSaveLayer,
+                            // Define the child widgets of the card
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
+                                Image.asset(
+                                  'assets/main/packageimage.png',
+                                  height: 160,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                                // Add a container with padding that contains the card's title, text, and buttons
+                                Container(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: <Widget>[
+                                      const Text(
+                                        'Package Expired..',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      // Add a row with two buttons spaced apart and aligned to the right side of the card
+                                      Row(
+                                        children: <Widget>[
+                                          // Add a spacer to push the buttons to the right side of the card
+                                          const Spacer(),
+                                          // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
+
+                                          // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
+                                          TextButton(
+                                            child: const Text(
+                                              "UPGRADE",
+                                            ),
+                                            onPressed: () {
+                                              _upgrade(context);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Add a small space between the card and the next widget
+                                Container(height: 5),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Column(
+                  children: [
+                    Padding(
+                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    createLeadPermission == 'true'
+                                        ? Navigator.push(
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    Dashboard(widget.token)),
-                                          );
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'Staff_management') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ViewUsers(widget.token)),
-                                          );
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'whatsapp') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const ChatHomeScreen()),
-                                          );
-                                          // showDialog(
-                                          //     barrierColor: Colors
-                                          //         .grey
-                                          //         .withOpacity(
-                                          //             .5),
-                                          //     context: context,
-                                          //     builder:
-                                          //         (BuildContext
-                                          //             context) {
-                                          //       return WillPopScope(
-                                          //         onWillPop:
-                                          //             () async {
-                                          //           return true;
-                                          //         },
-                                          //         child: Material(
-                                          //           type: MaterialType
-                                          //               .transparency,
-                                          //           child:
-                                          //               Padding(
-                                          //             padding: const EdgeInsets
-                                          //                 .only(
-                                          //                 bottom:
-                                          //                     50),
-                                          //             child:
-                                          //                 Center(
-                                          //               child:
-                                          //                   Container(
-                                          //                 decoration:
-                                          //                     BoxDecoration(
-                                          //                   borderRadius:
-                                          //                       BorderRadius.circular(10),
-                                          //                   color:
-                                          //                       Colors.white,
-                                          //                 ),
-                                          //                 width: MediaQuery.of(context).size.width *
-                                          //                     0.9,
-                                          //                 height:
-                                          //                     250,
-                                          //                 child:
-                                          //                     Padding(
-                                          //                   padding: const EdgeInsets
-                                          //                       .only(
-                                          //                       left: 20,
-                                          //                       right: 20),
-                                          //                   child:
-                                          //                       Column(
-                                          //                     mainAxisAlignment:
-                                          //                         MainAxisAlignment.center,
-                                          //                     crossAxisAlignment:
-                                          //                         CrossAxisAlignment.center,
-                                          //                     children: [
-                                          //                       Image.asset(
-                                          //                         'assets/icons/official_whatsapp.png',
-                                          //                         width: 80,
-                                          //                       ),
-                                          //                       const SizedBox(
-                                          //                         height: 10,
-                                          //                       ),
-                                          //                       const Text(
-                                          //                         'Whatsapp',
-                                          //                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                                          //                       ),
-                                          //                       const SizedBox(
-                                          //                         height: 5,
-                                          //                       ),
-                                          //                       const Text(
-                                          //                         'Choose WhatsApp',
-                                          //                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                          //                       ),
-                                          //                       const SizedBox(
-                                          //                         height: 15,
-                                          //                       ),
-                                          //                       Row(
-                                          //                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          //                         children: [
-                                          //                           officialWhatsapp == 'true'
-                                          //                               ? InkWell(
-                                          //                                   onTap: () {
-                                          //                                     Navigator.push(
-                                          //                                       context,
-                                          //                                       MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
-                                          //                                     );
-                                          //                                   },
-                                          //                                   child: Container(
-                                          //                                     width: MediaQuery.of(context).size.width * 0.35,
-                                          //                                     //  color: RandomColorModel().getColor(),
-                                          //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                          //                                     child: const Padding(
-                                          //                                       padding: EdgeInsets.all(5),
-                                          //                                       child: Text('Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                          //                                     ),
-                                          //                                   ),
-                                          //                                 )
-                                          //                               : const SizedBox(),
-                                          //                           unOfficialWhatsapp == 'true'
-                                          //                               ? InkWell(
-                                          //                                   onTap: () {
-                                          //                                     Navigator.push(
-                                          //                                       context,
-                                          //                                       MaterialPageRoute(builder: (context) => GroupList(widget.token)),
-                                          //                                     );
-                                          //                                   },
-                                          //                                   child: Container(
-                                          //                                     width: MediaQuery.of(context).size.width * 0.35,
-                                          //                                     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                          //                                     child: const Padding(
-                                          //                                       padding: EdgeInsets.all(5),
-                                          //                                       child: Text('Un Official', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                          //                                     ),
-                                          //                                   ),
-                                          //                                 )
-                                          //                               : const SizedBox()
-                                          //                         ],
-                                          //                       ),
-                                          //                       const SizedBox(
-                                          //                         height: 8,
-                                          //                       ),
-                                          //                     ],
-                                          //                   ),
-                                          //                 ),
-                                          //               ),
-                                          //             ),
-                                          //           ),
-                                          //         ),
-                                          //       );
-                                          //     });
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'Settings') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    WhatsappSettings(
-                                                        widget.token)),
-                                          );
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'file_manager') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    FileMangerList(
-                                                        widget.token)),
-                                          );
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'customers') {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ClientList(widget.token!)),
-                                          );
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'invoices') {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AccountsDashboard(
-                                                  token:
-                                                      widget.token.toString(),
-                                                ),
-                                              )).then((_) {
+                                                    AddLeads(widget.token)),
+                                          ).then((r) {
                                             getData(
                                                 widget.token, fromdate, todate);
                                             if (loadmore == true) {
                                               getStaffwise();
                                             }
-                                          });
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'reports') {
-                                          showDialog(
-                                              barrierColor:
-                                                  Colors.white.withOpacity(.4),
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return WillPopScope(
-                                                  onWillPop: () async {
-                                                    return true;
-                                                  },
-                                                  child: Material(
-                                                    type: MaterialType
-                                                        .transparency,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              bottom: 50),
-                                                      child: Center(
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10),
-                                                            color: Colors.white,
-                                                          ),
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.9,
-                                                          height: 300,
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 20,
-                                                                    right: 20),
-                                                            child: Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .center,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .center,
-                                                              children: [
-                                                                Image.asset(
-                                                                  'assets/icons/check.png',
-                                                                  width: 80,
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 10,
-                                                                ),
-                                                                const Text(
-                                                                  'Reports',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          18,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w400),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 5,
-                                                                ),
-                                                                const Text(
-                                                                  'Choose Report',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          15,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w400),
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 15,
-                                                                ),
-                                                                Column(
-                                                                  children: [
-                                                                    Row(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .spaceBetween,
-                                                                      children: [
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => AllReport(
-                                                                                        widget.token!,
-                                                                                        true,
-                                                                                        true,
-                                                                                        true,
-                                                                                        pageName: 'AllLeads',
-                                                                                      )),
-                                                                            );
-                                                                            // Navigator.of(
-                                                                            //     context)
-                                                                            //     .push(
-                                                                            //   MaterialPageRoute(
-                                                                            //       builder: (context) =>
-                                                                            //           Dashboard(widget.token)),
-                                                                            // );
-                                                                          },
-                                                                          child:
-                                                                              Container(
-                                                                            width:
-                                                                                MediaQuery.of(context).size.width * 0.38,
-                                                                            //  color: RandomColorModel().getColor(),
-                                                                            decoration:
-                                                                                BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                            child:
-                                                                                const Padding(
-                                                                              padding: EdgeInsets.all(5),
-                                                                              child: Column(
-                                                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                children: [
-                                                                                  Icon(
-                                                                                    Icons.dashboard,
-                                                                                    size: 15,
-                                                                                  ),
-                                                                                  SizedBox(
-                                                                                    height: 5,
-                                                                                  ),
-                                                                                  Text('Lead Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                        InkWell(
-                                                                          onTap:
-                                                                              () {
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => TransferLeadReport(
-                                                                                        widget.token!,
-                                                                                        true,
-                                                                                        true,
-                                                                                        true,
-                                                                                        pageName: 'transferLeads',
-                                                                                      )),
-                                                                            );
-                                                                          },
-                                                                          child:
-                                                                              Container(
-                                                                            width:
-                                                                                MediaQuery.of(context).size.width * 0.38,
-                                                                            decoration:
-                                                                                BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                            child:
-                                                                                const Padding(
-                                                                              padding: EdgeInsets.all(5),
-                                                                              child: Column(
-                                                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                children: [
-                                                                                  Icon(
-                                                                                    Icons.list_alt,
-                                                                                    size: 15,
-                                                                                  ),
-                                                                                  SizedBox(
-                                                                                    height: 5,
-                                                                                  ),
-                                                                                  Text('Transfer Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          15,
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                        Navigator.push(
-                                                                            context,
-                                                                            MaterialPageRoute(
-                                                                              builder: (context) => StaffListScreen(
-                                                                                token: '',
-                                                                              ),
-                                                                            ));
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            0.38,
-                                                                        //  color: RandomColorModel().getColor(),
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                Colors.green.shade100,
-                                                                            borderRadius: BorderRadius.circular(10)),
-                                                                        child:
-                                                                            const Padding(
-                                                                          padding:
-                                                                              EdgeInsets.all(5),
-                                                                          child:
-                                                                              Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.spaceEvenly,
-                                                                            children: [
-                                                                              Icon(
-                                                                                Icons.person,
-                                                                                size: 15,
-                                                                              ),
-                                                                              SizedBox(
-                                                                                height: 5,
-                                                                              ),
-                                                                              Text('Staff Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 8,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              });
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'renewal') {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const RenewalDashboard()));
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'complaints') {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const ComplaintListScreen()));
-                                        } else if (userDashboard!
-                                                .data!.modules![i].menuName ==
-                                            'products') {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const ProductCategories()));
-                                        } else {
-                                          _dialogue(context,
-                                              'Access ${userDashboard!.data!.modules![i].categoryName}');
-                                        }
-                                      }
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 15),
-                                      child: Container(
-                                        constraints: const BoxConstraints(
-                                          maxHeight: 81,
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Container(
-                                                constraints:
-                                                    const BoxConstraints(
-                                                  minHeight: 60,
-                                                  minWidth: 60,
-                                                  maxHeight: 70,
-                                                  maxWidth: 70,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                      color: Colors.white,
-                                                      width: 0),
-                                                  boxShadow: const [
-                                                    BoxShadow(
-                                                        color: Colors.grey,
-                                                        blurRadius: 5,
-                                                        offset: Offset(1, 1)),
-                                                  ],
-                                                  color: Colors.white,
-                                                  shape: BoxShape.rectangle,
-
-                                                  // image: AssetImage(
-                                                  //     'assets/images/img.jpeg')),
-                                                ),
-                                                child: CachedNetworkImage(
-                                                  fit: BoxFit.fill,
-                                                  imageUrl: userDashboard!
-                                                      .data!.modules![i].image
-                                                      .toString(),
-                                                  placeholder: (context, url) =>
-                                                      const Padding(
-                                                    padding:
-                                                        EdgeInsets.all(25.0),
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                  errorWidget: (context, url,
-                                                          error) =>
-                                                      const Icon(Icons.error),
-                                                )),
-                                            const SizedBox(
-                                              height: 4,
-                                            ),
-                                            const Expanded(
-                                              child: Text(
-                                                '',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                          ),
-                        )
-                      : const SizedBox()),
-              configure!.data!.isExpired == false
-                  ? Column(
-                      children: [
-                        Padding(
-                            padding: const EdgeInsets.only(left: 20, right: 20),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        createLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AddLeads(widget.token)),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'Add Leads');
-                                      },
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .3,
-                                        height: 30,
-                                        decoration: const BoxDecoration(
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.grey,
-                                                offset: Offset(0, 2.0),
-                                              )
-                                            ],
-                                            color: Color(0xFFf7f7f7),
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(6))),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              width: 32,
-                                              height: 32,
-                                              decoration: const BoxDecoration(
-                                                  color: Color(0xFFe7e7e7),
-                                                  borderRadius:
-                                                      BorderRadius.all(
-                                                          Radius.circular(6))),
-                                              child: const Icon(
-                                                Icons.add,
-                                                color: Color(0xFF7a7a7a),
-                                                size: 20,
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 5,
-                                            ),
-                                            const Text(
-                                              'Add Leads',
-                                              style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 12),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Row(
+                                          })
+                                        : _dialogue(context, 'Add Leads');
+                                  },
+                                  child: Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * .3,
+                                    height: 30,
+                                    decoration: const BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey,
+                                            offset: Offset(0, 2.0),
+                                          )
+                                        ],
+                                        color: Color(0xFFf7f7f7),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(6))),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
-                                        accessCallHistoryPermission == 'true'
-                                            ? Row(
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () {
-                                                      // Navigator.push(
-                                                      //   context,
-                                                      //   MaterialPageRoute(builder: (context) => SearchPage(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, '')),
-                                                      // ).then((r) {
-                                                      //   getData(widget.token, fromdate, todate);
-                                                      //   if (loadmore == true) {
-                                                      //     getStaffwise();
-                                                      //   }
-                                                      // });
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder:
-                                                                (context) =>
-                                                                    Search(
-                                                                      token: widget
-                                                                          .token!,
-                                                                      editLead:
-                                                                          updateLeadPermission1,
-                                                                      deleteLead:
-                                                                          deleteLeadPermission1,
-                                                                      cloudCall:
-                                                                          cloudCallPermission1,
-                                                                    )),
-                                                      ).then((r) {
-                                                        getData(widget.token,
-                                                            fromdate, todate);
-                                                        if (loadmore == true) {
-                                                          getStaffwise();
-                                                        }
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                        width: 50,
-                                                        height: 32,
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 15,
-                                                                vertical: 5),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: Colors
-                                                                        .white,
-                                                                    width: 0),
-                                                                boxShadow: const [
-                                                                  BoxShadow(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      blurRadius:
-                                                                          5,
-                                                                      offset:
-                                                                          Offset(
-                                                                              1,
-                                                                              1)),
-                                                                ],
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius:
-                                                                    const BorderRadius
-                                                                        .all(
-                                                                        Radius.circular(
-                                                                            5))),
-                                                        child: const Icon(
-                                                            Icons.search)),
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                CallHistoryPage(
-                                                                    widget
-                                                                        .token!,
-                                                                    name,
-                                                                    userId,
-                                                                    accessCallRecordingPermission1)),
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                        width: 50,
-                                                        height: 32,
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 15,
-                                                                vertical: 5),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                                border: Border.all(
-                                                                    color: Colors
-                                                                        .white,
-                                                                    width: 0),
-                                                                boxShadow: const [
-                                                                  BoxShadow(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      blurRadius:
-                                                                          5,
-                                                                      offset:
-                                                                          Offset(
-                                                                              1,
-                                                                              1)),
-                                                                ],
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius:
-                                                                    const BorderRadius
-                                                                        .all(
-                                                                        Radius.circular(
-                                                                            5))),
-                                                        child: const Icon(
-                                                          Icons
-                                                              .phone_in_talk_rounded,
-                                                          size: 20,
-                                                        )),
-                                                  ),
-                                                ],
-                                              )
-                                            : InkWell(
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: const BoxDecoration(
+                                              color: Color(0xFFe7e7e7),
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(6))),
+                                          child: const Icon(
+                                            Icons.add,
+                                            color: Color(0xFF7a7a7a),
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          width: 5,
+                                        ),
+                                        const Text(
+                                          'Add Leads',
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Row(
+                                  children: [
+                                    accessCallHistoryPermission == 'true'
+                                        ? Row(
+                                            children: [
+                                              InkWell(
                                                 onTap: () {
+                                                  // Navigator.push(
+                                                  //   context,
+                                                  //   MaterialPageRoute(builder: (context) => SearchPage(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, '')),
+                                                  // ).then((r) {
+                                                  //   getData(widget.token, fromdate, todate);
+                                                  //   if (loadmore == true) {
+                                                  //     getStaffwise();
+                                                  //   }
+                                                  // });
+                                                  // Navigator.push(
+                                                  //   context,
+                                                  //   PageRouteBuilder(
+                                                  //     pageBuilder: (context,
+                                                  //             animation,
+                                                  //             secondaryAnimation) =>
+                                                  //         Search(
+                                                  //       token: widget.token!,
+                                                  //       editLead:
+                                                  //           updateLeadPermission1,
+                                                  //       deleteLead:
+                                                  //           deleteLeadPermission1,
+                                                  //       cloudCall:
+                                                  //           cloudCallPermission1,
+                                                  //     ),
+                                                  //     transitionsBuilder:
+                                                  //         (context,
+                                                  //             animation,
+                                                  //             secondaryAnimation,
+                                                  //             child) {
+                                                  //       const begin = Offset(0.0, 1.0); // Slide from the right
+                                                  //       const end = Offset.zero;
+                                                  //       const curve =
+                                                  //           Curves.easeInOut;
+
+                                                  //       var tween = Tween(
+                                                  //               begin: begin,
+                                                  //               end: end)
+                                                  //           .chain(CurveTween(
+                                                  //               curve: curve));
+                                                  //       var offsetAnimation =
+                                                  //           animation
+                                                  //               .drive(tween);
+
+                                                  //       return SlideTransition(
+                                                  //         position:
+                                                  //             offsetAnimation,
+                                                  //         child: child,
+                                                  //       );
+                                                  //     },
+                                                  //   ),
+                                                  // ).then((r) {
+                                                  //   getData(widget.token,
+                                                  //       fromdate, todate);
+                                                  //   if (loadmore == true) {
+                                                  //     getStaffwise();
+                                                  //   }
+                                                  // });
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
-                                                        builder: (context) => SearchPage(
-                                                            widget.token,
-                                                            updateLeadPermission1,
-                                                            deleteLeadPermission1,
-                                                            cloudCallPermission1,
-                                                            '')),
+                                                        builder: (context) =>
+                                                            Search(
+                                                              token:
+                                                                  widget.token!,
+                                                              editLead:
+                                                                  updateLeadPermission1,
+                                                              deleteLead:
+                                                                  deleteLeadPermission1,
+                                                              cloudCall:
+                                                                  cloudCallPermission1,
+                                                            )),
                                                   ).then((r) {
                                                     getData(widget.token,
                                                         fromdate, todate);
@@ -2209,7 +2105,7 @@ class _DashboardState extends State<Dashboard> {
                                                   });
                                                 },
                                                 child: Container(
-                                                    width: 110,
+                                                    width: 50,
                                                     height: 32,
                                                     padding: const EdgeInsets
                                                         .symmetric(
@@ -2233,4114 +2129,2597 @@ class _DashboardState extends State<Dashboard> {
                                                                 .all(
                                                                 Radius.circular(
                                                                     5))),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        const Icon(
-                                                            Icons.search),
-                                                        Expanded(
-                                                          child: Container(
-                                                            margin:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10),
-                                                            child: const Text(
-                                                                'Search'),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    )),
+                                                    child: const Icon(
+                                                        Icons.search)),
                                               ),
-                                        const SizedBox(width: 10),
-                                        InkWell(
-                                          onTap: () {
-                                            showGeneralDialog(
-                                              barrierLabel: "showGeneralDialog",
-                                              barrierDismissible: true,
-                                              barrierColor:
-                                                  Colors.black.withOpacity(0.6),
-                                              transitionDuration:
-                                                  const Duration(
-                                                      milliseconds: 400),
-                                              context: context,
-                                              pageBuilder: (context, _, __) {
-                                                return Align(
-                                                  alignment:
-                                                      Alignment.bottomCenter,
-                                                  child: IntrinsicHeight(
-                                                    child: Container(
-                                                      width: double.maxFinite,
-                                                      clipBehavior:
-                                                          Clip.antiAlias,
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              16),
-                                                      decoration:
-                                                          const BoxDecoration(
+                                              const SizedBox(width: 10),
+                                              InkWell(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            CallHistoryPage(
+                                                                widget.token!,
+                                                                name,
+                                                                userId,
+                                                                accessCallRecordingPermission1)),
+                                                  );
+                                                },
+                                                child: Container(
+                                                    width: 50,
+                                                    height: 32,
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 15,
+                                                        vertical: 5),
+                                                    decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors.white,
+                                                            width: 0),
+                                                        boxShadow: const [
+                                                          BoxShadow(
+                                                              color:
+                                                                  Colors.grey,
+                                                              blurRadius: 5,
+                                                              offset:
+                                                                  Offset(1, 1)),
+                                                        ],
                                                         color: Colors.white,
                                                         borderRadius:
-                                                            BorderRadius.only(
-                                                          topLeft:
-                                                              Radius.circular(
-                                                                  16),
-                                                          topRight:
-                                                              Radius.circular(
-                                                                  16),
-                                                        ),
+                                                            const BorderRadius
+                                                                .all(
+                                                                Radius.circular(
+                                                                    5))),
+                                                    child: const Icon(
+                                                      Icons
+                                                          .phone_in_talk_rounded,
+                                                      size: 20,
+                                                    )),
+                                              ),
+                                            ],
+                                          )
+                                        : InkWell(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) => SearchPage(
+                                                        widget.token,
+                                                        updateLeadPermission1,
+                                                        deleteLeadPermission1,
+                                                        cloudCallPermission1,
+                                                        '')),
+                                              ).then((r) {
+                                                getData(widget.token, fromdate,
+                                                    todate);
+                                                if (loadmore == true) {
+                                                  getStaffwise();
+                                                }
+                                              });
+                                            },
+                                            child: Container(
+                                                width: 110,
+                                                height: 32,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 15,
+                                                        vertical: 5),
+                                                decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 0),
+                                                    boxShadow: const [
+                                                      BoxShadow(
+                                                          color: Colors.grey,
+                                                          blurRadius: 5,
+                                                          offset: Offset(1, 1)),
+                                                    ],
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        const BorderRadius.all(
+                                                            Radius.circular(
+                                                                5))),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: [
+                                                    const Icon(Icons.search),
+                                                    Expanded(
+                                                      child: Container(
+                                                        margin: const EdgeInsets
+                                                            .only(left: 10),
+                                                        child: const Text(
+                                                            'Search'),
                                                       ),
-                                                      child: Material(
-                                                        child: Column(
+                                                    ),
+                                                  ],
+                                                )),
+                                          ),
+                                    const SizedBox(width: 10),
+                                    InkWell(
+                                      onTap: () {
+                                        showGeneralDialog(
+                                          barrierLabel: "showGeneralDialog",
+                                          barrierDismissible: true,
+                                          barrierColor:
+                                              Colors.black.withOpacity(0.6),
+                                          transitionDuration:
+                                              const Duration(milliseconds: 400),
+                                          context: context,
+                                          pageBuilder: (context, _, __) {
+                                            return Align(
+                                              alignment: Alignment.bottomCenter,
+                                              child: IntrinsicHeight(
+                                                child: Container(
+                                                  width: double.maxFinite,
+                                                  clipBehavior: Clip.antiAlias,
+                                                  padding:
+                                                      const EdgeInsets.all(16),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.only(
+                                                      topLeft:
+                                                          Radius.circular(16),
+                                                      topRight:
+                                                          Radius.circular(16),
+                                                    ),
+                                                  ),
+                                                  child: Material(
+                                                    child: Column(
+                                                      children: [
+                                                        const SizedBox(
+                                                            height: 20),
+                                                        const Text(
+                                                          'Filter By Date Range',
+                                                          style: TextStyle(
+                                                            fontSize: 18,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 20),
+                                                        Row(
                                                           children: [
+                                                            SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.25,
+                                                                child:
+                                                                    const Text(
+                                                                  'From Date',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        15,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                )),
                                                             const SizedBox(
-                                                                height: 20),
-                                                            const Text(
-                                                              'Filter By Date Range',
-                                                              style: TextStyle(
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500,
+                                                              width: 10,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 50,
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.6,
+                                                              child: Center(
+                                                                child:
+                                                                    DateTimePicker(
+                                                                  decoration: InputDecoration(
+                                                                      filled: true,
+                                                                      //<-- SEE HERE
+                                                                      fillColor: Colors.white,
+                                                                      prefixIcon: const Icon(
+                                                                        Icons
+                                                                            .arrow_right,
+                                                                        color: Colors
+                                                                            .grey,
+                                                                      ),
+                                                                      counterText: "",
+                                                                      hintText: 'From Date',
+                                                                      isDense: true,
+                                                                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                                                                  initialValue:
+                                                                      fromdate
+                                                                          .toString(),
+                                                                  type:
+                                                                      DateTimePickerType
+                                                                          .date,
+
+                                                                  //controller: fromDate,
+                                                                  firstDate:
+                                                                      DateTime(
+                                                                          1995),
+                                                                  lastDate: DateTime
+                                                                          .now()
+                                                                      .add(const Duration(
+                                                                          days:
+                                                                              365)),
+                                                                  // This will add one year from current date
+                                                                  validator:
+                                                                      (value) {
+                                                                    return null;
+                                                                  },
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    if (value
+                                                                        .isNotEmpty) {
+                                                                      setState(
+                                                                          () {
+                                                                        fromdate =
+                                                                            DateTime.parse(value);
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  // We can also use onSaved
+                                                                  onSaved:
+                                                                      (value) {
+                                                                    if (value!
+                                                                        .isNotEmpty) {
+                                                                      fromdate =
+                                                                          DateTime.parse(
+                                                                              value);
+                                                                    }
+                                                                  },
+                                                                ),
                                                               ),
                                                             ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        Row(
+                                                          children: [
+                                                            SizedBox(
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.25,
+                                                                child:
+                                                                    const Text(
+                                                                  'To Date',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        15,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                )),
                                                             const SizedBox(
-                                                                height: 20),
-                                                            Row(
-                                                              children: [
-                                                                SizedBox(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    child:
-                                                                        const Text(
-                                                                      'From Date',
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            15,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
+                                                              width: 10,
+                                                            ),
+                                                            SizedBox(
+                                                              height: 50,
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.6,
+                                                              child: Center(
+                                                                child:
+                                                                    DateTimePicker(
+                                                                  decoration: InputDecoration(
+                                                                      filled: true,
+                                                                      //<-- SEE HERE
+                                                                      fillColor: Colors.white,
+                                                                      prefixIcon: const Icon(
+                                                                        Icons
+                                                                            .arrow_right,
+                                                                        color: Colors
+                                                                            .grey,
                                                                       ),
-                                                                    )),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                SizedBox(
-                                                                  height: 50,
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      0.6,
-                                                                  child: Center(
-                                                                    child:
-                                                                        DateTimePicker(
-                                                                      decoration: InputDecoration(
-                                                                          filled: true,
-                                                                          //<-- SEE HERE
-                                                                          fillColor: Colors.white,
-                                                                          prefixIcon: const Icon(
-                                                                            Icons.arrow_right,
-                                                                            color:
-                                                                                Colors.grey,
-                                                                          ),
-                                                                          counterText: "",
-                                                                          hintText: 'From Date',
-                                                                          isDense: true,
-                                                                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                      initialValue:
-                                                                          fromdate
-                                                                              .toString(),
-                                                                      type: DateTimePickerType
+                                                                      counterText: "",
+                                                                      hintText: 'To date',
+                                                                      isDense: true,
+                                                                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                                                                  initialValue:
+                                                                      todate
+                                                                          .toString(),
+                                                                  type:
+                                                                      DateTimePickerType
                                                                           .date,
 
-                                                                      //controller: fromDate,
-                                                                      firstDate:
-                                                                          DateTime(
-                                                                              1995),
-                                                                      lastDate: DateTime
-                                                                              .now()
-                                                                          .add(const Duration(
-                                                                              days: 365)),
-                                                                      // This will add one year from current date
-                                                                      validator:
-                                                                          (value) {
-                                                                        return null;
-                                                                      },
-                                                                      onChanged:
-                                                                          (value) {
-                                                                        if (value
-                                                                            .isNotEmpty) {
-                                                                          setState(
-                                                                              () {
-                                                                            fromdate =
-                                                                                DateTime.parse(value);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      // We can also use onSaved
-                                                                      onSaved:
-                                                                          (value) {
-                                                                        if (value!
-                                                                            .isNotEmpty) {
-                                                                          fromdate =
-                                                                              DateTime.parse(value);
-                                                                        }
-                                                                      },
-                                                                    ),
-                                                                  ),
+                                                                  //controller: fromDate,
+                                                                  firstDate:
+                                                                      DateTime(
+                                                                          1995),
+                                                                  lastDate: DateTime
+                                                                          .now()
+                                                                      .add(const Duration(
+                                                                          days:
+                                                                              365)),
+                                                                  // This will add one year from current date
+                                                                  validator:
+                                                                      (value) {
+                                                                    return null;
+                                                                  },
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    if (value
+                                                                        .isNotEmpty) {
+                                                                      setState(
+                                                                          () {
+                                                                        todate =
+                                                                            DateTime.parse(value);
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  // We can also use onSaved
+                                                                  onSaved:
+                                                                      (value) {
+                                                                    if (value!
+                                                                        .isNotEmpty) {
+                                                                      todate = DateTime
+                                                                          .parse(
+                                                                              value);
+                                                                    }
+                                                                  },
                                                                 ),
-                                                              ],
+                                                              ),
                                                             ),
-                                                            const SizedBox(
-                                                              height: 10,
-                                                            ),
-                                                            Row(
-                                                              children: [
-                                                                SizedBox(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        0.25,
-                                                                    child:
-                                                                        const Text(
-                                                                      'To Date',
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            15,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
-                                                                      ),
-                                                                    )),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                SizedBox(
-                                                                  height: 50,
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      0.6,
-                                                                  child: Center(
-                                                                    child:
-                                                                        DateTimePicker(
-                                                                      decoration: InputDecoration(
-                                                                          filled: true,
-                                                                          //<-- SEE HERE
-                                                                          fillColor: Colors.white,
-                                                                          prefixIcon: const Icon(
-                                                                            Icons.arrow_right,
-                                                                            color:
-                                                                                Colors.grey,
-                                                                          ),
-                                                                          counterText: "",
-                                                                          hintText: 'To date',
-                                                                          isDense: true,
-                                                                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                      initialValue:
-                                                                          todate
-                                                                              .toString(),
-                                                                      type: DateTimePickerType
-                                                                          .date,
-
-                                                                      //controller: fromDate,
-                                                                      firstDate:
-                                                                          DateTime(
-                                                                              1995),
-                                                                      lastDate: DateTime
-                                                                              .now()
-                                                                          .add(const Duration(
-                                                                              days: 365)),
-                                                                      // This will add one year from current date
-                                                                      validator:
-                                                                          (value) {
-                                                                        return null;
-                                                                      },
-                                                                      onChanged:
-                                                                          (value) {
-                                                                        if (value
-                                                                            .isNotEmpty) {
-                                                                          setState(
-                                                                              () {
-                                                                            todate =
-                                                                                DateTime.parse(value);
-                                                                          });
-                                                                        }
-                                                                      },
-                                                                      // We can also use onSaved
-                                                                      onSaved:
-                                                                          (value) {
-                                                                        if (value!
-                                                                            .isNotEmpty) {
-                                                                          todate =
-                                                                              DateTime.parse(value);
-                                                                        }
-                                                                      },
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const SizedBox(
-                                                                height: 16),
-                                                            Container(
-                                                              height: 40,
-                                                              width: double
-                                                                  .maxFinite,
-                                                              decoration:
-                                                                  const BoxDecoration(
-                                                                color: Color(
-                                                                    0xFF3375e0),
-                                                                borderRadius: BorderRadius
+                                                          ],
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 16),
+                                                        Container(
+                                                          height: 40,
+                                                          width:
+                                                              double.maxFinite,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                            color: Color(
+                                                                0xFF3375e0),
+                                                            borderRadius:
+                                                                BorderRadius
                                                                     .all(Radius
                                                                         .circular(
                                                                             8)),
-                                                              ),
-                                                              child:
-                                                                  RawMaterialButton(
-                                                                onPressed: () {
-                                                                  setState(() {
-                                                                    data.remove(
-                                                                        data);
-                                                                  });
-                                                                  getStaffwise();
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  Navigator.of(
-                                                                          context,
-                                                                          rootNavigator:
-                                                                              true)
-                                                                      .pop();
-                                                                },
-                                                                child:
-                                                                    const Center(
-                                                                  child: Text(
-                                                                    'Continue',
-                                                                    style:
-                                                                        TextStyle(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w500,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                              transitionBuilder:
-                                                  (_, animation1, __, child) {
-                                                return SlideTransition(
-                                                  position: Tween(
-                                                    begin: const Offset(0, 1),
-                                                    end: const Offset(0, 0),
-                                                  ).animate(animation1),
-                                                  child: child,
-                                                );
-                                              },
-                                            );
-                                          },
-                                          child: Container(
-                                            width: 32,
-                                            height: 32,
-                                            decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(5)),
-                                            child: Center(
-                                              child: Center(
-                                                  child: Image.asset(
-                                                      "assets/icons/calendar.png",
-                                                      width: 32)),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        configure!.data!.isExpired == false &&
-                                                leadDashboard != null
-                                            ? PopupMenuButton(
-                                                child: Container(
-                                                  width: 35,
-                                                  height: 35,
-                                                  decoration: BoxDecoration(
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          blurRadius: 3,
-                                                          color: Colors
-                                                              .grey.shade800,
-                                                        )
-                                                      ],
-                                                      shape: BoxShape.circle,
-                                                      color: Colors.white),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            8.0),
-                                                    child: Image.asset(
-                                                      "assets/icons/settings.png",
-                                                    ),
-                                                  ),
-                                                ),
-                                                itemBuilder: (context) {
-                                                  return [
-                                                    PopupMenuItem<int>(
-                                                        value: 9,
-                                                        child: Row(
-                                                          children: [
-                                                            SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child:
-                                                                  Image.asset(
-                                                                "assets/icons/all_reports.png",
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            const Text(
-                                                                'All Report'),
-                                                          ],
-                                                        )),
-                                                    PopupMenuItem<int>(
-                                                        value: 2,
-                                                        child: Row(
-                                                          children: [
-                                                            SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child:
-                                                                  Image.asset(
-                                                                "assets/icons/leadCategory.png",
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            const Text(
-                                                                'Lead Category'),
-                                                          ],
-                                                        )),
-                                                    PopupMenuItem<int>(
-                                                        value: 6,
-                                                        child: Row(
-                                                          children: [
-                                                            SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child:
-                                                                  Image.asset(
-                                                                "assets/icons/callHistory.png",
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 10,
-                                                            ),
-                                                            const Text(
-                                                                'Call History'),
-                                                          ],
-                                                        )),
-                                                  ];
-                                                },
-                                                onSelected: (value) {
-                                                  if (value == 1) {}
-                                                  if (value == 2) {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              ViewLeadCategory(
-                                                                  widget.token!,
-                                                                  createLeadCategory1,
-                                                                  updateLeadCategory1,
-                                                                  deleteLeadCategory1)),
-                                                    );
-                                                  }
-                                                  if (value == 3) {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              WhatsappSettings(
-                                                                  widget
-                                                                      .token)),
-                                                    );
-                                                  }
-                                                  if (value == 4) {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              const NotificationTemplateSettings()),
-                                                    );
-                                                  }
-                                                  if (value == 5) {
-                                                    Common.saveSharedPref(
-                                                        "statusWise", 'no');
-                                                    viewLeadPermission == 'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        ViewLeads(
-                                                                          widget
-                                                                              .token,
-                                                                          updateLeadPermission1,
-                                                                          deleteLeadPermission1,
-                                                                          cloudCallPermission1,
-                                                                          pageName:
-                                                                              'View Leads',
-                                                                          fromDate:
-                                                                              fromdate.toString(),
-                                                                          toDate:
-                                                                              todate.toString(),
-                                                                        )),
-                                                          ).then((r) {
-                                                            getData(
-                                                                widget.token,
-                                                                fromdate,
-                                                                todate);
-                                                            if (loadmore ==
-                                                                true) {
+                                                          ),
+                                                          child:
+                                                              RawMaterialButton(
+                                                            onPressed: () {
+                                                              setState(() {
+                                                                data.remove(
+                                                                    data);
+                                                              });
                                                               getStaffwise();
-                                                            }
-                                                          })
-                                                        : _dialogue(context,
-                                                            'View Leads');
-                                                  }
-                                                  if (value == 6) {
-                                                    accessCallHistoryPermission ==
-                                                            'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    CallHistoryPage(
-                                                                        widget
-                                                                            .token!,
-                                                                        name,
-                                                                        userId,
-                                                                        accessCallRecordingPermission1)),
-                                                          )
-                                                        : _dialogue(context,
-                                                            'Call History');
-                                                  }
-                                                  if (value == 7) {
-                                                    Common.saveSharedPref(
-                                                        "statusWise", 'no');
-                                                    viewLeadPermission == 'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        ViewLeads(
-                                                                          widget
-                                                                              .token,
-                                                                          updateLeadPermission1,
-                                                                          deleteLeadPermission1,
-                                                                          cloudCallPermission1,
-                                                                          pageName:
-                                                                              'Missed Leads',
-                                                                          fromDate:
-                                                                              fromdate.toString(),
-                                                                          toDate:
-                                                                              todate.toString(),
-                                                                          leadType:
-                                                                              '1',
-                                                                          callStatus:
-                                                                              "-1",
-                                                                        )),
-                                                          ).then((r) {
-                                                            getData(
-                                                                widget.token,
-                                                                fromdate,
-                                                                todate);
-                                                            if (loadmore ==
-                                                                true) {
-                                                              getStaffwise();
-                                                            }
-                                                          })
-                                                        : _dialogue(context,
-                                                            'View Leads');
-                                                  }
-                                                  if (value == 8) {
-                                                    Common.saveSharedPref(
-                                                        "statusWise", 'no');
-                                                    viewLeadPermission == 'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) => ViewLeads(
-                                                                    widget
-                                                                        .token,
-                                                                    updateLeadPermission1,
-                                                                    deleteLeadPermission1,
-                                                                    cloudCallPermission1,
-                                                                    pageName:
-                                                                        'Transfer Leads',
-                                                                    fromDate:
-                                                                        fromdate
-                                                                            .toString(),
-                                                                    toDate: todate
-                                                                        .toString(),
-                                                                    leadType:
-                                                                        '2')),
-                                                          ).then((r) {
-                                                            getData(
-                                                                widget.token,
-                                                                fromdate,
-                                                                todate);
-                                                            if (loadmore ==
-                                                                true) {
-                                                              getStaffwise();
-                                                            }
-                                                          })
-                                                        : _dialogue(context,
-                                                            'View Leads');
-                                                  }
-                                                  if (value == 9) {
-                                                    Common.saveSharedPref(
-                                                        "statusWise", 'no');
-                                                    viewLeadPermission == 'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder:
-                                                                    (context) =>
-                                                                        AllReport(
-                                                                          widget
-                                                                              .token!,
-                                                                          updateLeadPermission1,
-                                                                          deleteLeadPermission1,
-                                                                          cloudCallPermission1,
-                                                                          pageName:
-                                                                              'AllLeads',
-                                                                        )),
-                                                          )
-                                                        : _dialogue(context,
-                                                            'View Leads');
-                                                  }
-                                                  if (value == 10) {
-                                                    phoneCallLogPermission ==
-                                                            'true'
-                                                        ? Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) =>
-                                                                    CallLogs(
-                                                                        widget
-                                                                            .token,
-                                                                        name,
-                                                                        userId)),
-                                                          ).then((r) {
-                                                            getData(
-                                                                widget.token,
-                                                                fromdate,
-                                                                todate);
-                                                            if (loadmore ==
-                                                                true) {
-                                                              getStaffwise();
-                                                            }
-                                                          })
-                                                        : _dialogue(context,
-                                                            'Phone Call Logs');
-                                                  }
-                                                })
-                                            : const SizedBox()
-                                      ],
-                                    )
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ViewLeads(
-                                                          widget.token,
-                                                          updateLeadPermission1,
-                                                          deleteLeadPermission1,
-                                                          cloudCallPermission1,
-                                                          pageName: 'New Leads',
-                                                          fromDate: fromdate
-                                                              .toString(),
-                                                          toDate:
-                                                              todate.toString(),
-                                                          status: '1',
-                                                        )),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFf0ebef),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "New Leads",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip =
-                                                            _toolTipKey
-                                                                .currentState;
-                                                        toolTip
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'The combined count of new leads \n and  unattended leads',
-                                                        key: _toolTipKey,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              Navigator.of(
+                                                                      context,
+                                                                      rootNavigator:
+                                                                          true)
+                                                                  .pop();
+                                                            },
+                                                            child: const Center(
                                                               child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!.data.newLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '1');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "New Leads",
-                                                                "1",
-                                                                "");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              )
-                                            ],
-                                          )),
-                                    ),
-                                    const SizedBox(
-                                      width: 15,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ViewLeads(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        pageName:
-                                                            'Followup Leads',
-                                                        fromDate: DateTime(
-                                                                DateTime.now()
-                                                                    .year,
-                                                                DateTime.now()
-                                                                        .month -
-                                                                    3,
-                                                                DateTime.now()
-                                                                    .day)
-                                                            .toString(),
-                                                        toDate:
-                                                            todate.toString(),
-                                                        status: '2')),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromARGB(
-                                                255, 204, 211, 224),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Followup Leads",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip1 =
-                                                            _toolTipKey1
-                                                                .currentState;
-                                                        toolTip1
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'The current count of leads \n assigned for today including \n missed follow up leads',
-                                                        key: _toolTipKey1,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
-                                                              child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!
-                                                      .data.followupLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '2');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "Followup Leads",
-                                                                "2",
-                                                                "");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ViewLeads(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        pageName:
-                                                            'Closed Leads',
-                                                        fromDate:
-                                                            fromdate.toString(),
-                                                        toDate:
-                                                            todate.toString(),
-                                                        status: '4')),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromARGB(
-                                                255, 206, 243, 240),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Closed Leads",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip2 =
-                                                            _toolTipKey2
-                                                                .currentState;
-                                                        toolTip2
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'Closed leads can be filtered \n using a specific date range to \n determine the count of closed \n leads within that period',
-                                                        key: _toolTipKey2,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
-                                                              child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!
-                                                      .data.closedLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '4');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "Closed Leads",
-                                                                "4",
-                                                                "");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                    const SizedBox(
-                                      width: 15,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => ViewLeads(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        pageName:
-                                                            'Total Called',
-                                                        fromDate:
-                                                            fromdate.toString(),
-                                                        toDate:
-                                                            todate.toString(),
-                                                        leadType: "-1",
-                                                        callStatus: "1",
-                                                        status: '0')),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFb4c2dd),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Total Called",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip3 =
-                                                            _toolTipKey3
-                                                                .currentState;
-                                                        toolTip3
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'Total called can be filtered \n using a specific date range to \n determine the count of total leads \n within that period',
-                                                        key: _toolTipKey3,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
-                                                              child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!
-                                                      .data.totalCalled
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '-1');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "Total Called",
-                                                                "",
-                                                                "-1");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ViewLeads(
-                                                          widget.token,
-                                                          updateLeadPermission1,
-                                                          deleteLeadPermission1,
-                                                          cloudCallPermission1,
-                                                          pageName:
-                                                              'Transferred Leads',
-                                                          leadType: "2",
-                                                          callStatus: "-2",
-                                                        )),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromARGB(
-                                                255, 189, 226, 249),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Transferred Leads",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip4 =
-                                                            _toolTipKey4
-                                                                .currentState;
-                                                        toolTip4
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'Transferred leads can be filtered \n using a specific date range to \n determine the count of Transferred \n leads within that period',
-                                                        key: _toolTipKey4,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
-                                                              child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!
-                                                      .data.transferLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '-2');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "Transferred Leads",
-                                                                "",
-                                                                "2");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                    const SizedBox(
-                                      width: 15,
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        Common.saveSharedPref(
-                                            "statusWise", 'no');
-                                        viewLeadPermission == 'true'
-                                            ? Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ViewLeads(
-                                                          widget.token,
-                                                          updateLeadPermission1,
-                                                          deleteLeadPermission1,
-                                                          cloudCallPermission1,
-                                                          pageName:
-                                                              'Missed Leads',
-                                                          leadType: "1",
-                                                          callStatus: "-1",
-                                                        )),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              })
-                                            : _dialogue(context, 'View Leads');
-                                      },
-                                      child: Container(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.42,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.15,
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromARGB(
-                                                255, 239, 210, 214),
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10,
-                                                    right: 10,
-                                                    top: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    const Text(
-                                                      "Missed Leads",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 13,
-                                                          color: Colors.black),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        dynamic toolTip5 =
-                                                            _toolTipKey5
-                                                                .currentState;
-                                                        toolTip5
-                                                            .ensureTooltipVisible();
-                                                      },
-                                                      child: Tooltip(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(10),
-                                                        message:
-                                                            'Missed Leads can be filtered \n using a specific date range to \n determine the count of missed \n leads within that period',
-                                                        key: _toolTipKey5,
-                                                        child: Container(
-                                                          width: 20,
-                                                          height: 20,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white),
-                                                          child: Center(
-                                                              child: Text(
-                                                            '?',
-                                                            style: TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Colors
-                                                                    .grey
-                                                                    .shade700),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10),
-                                                child: Text(
-                                                  leadDashboard!
-                                                      .data.missedLeads
-                                                      .toString(),
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.black,
-                                                      fontSize: 20),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 10, right: 10),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.end,
-                                                  children: [
-                                                    const Text(
-                                                      "View Leads",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.black),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        Common
-                                                            .showProgressDialog(
-                                                                context,
-                                                                "Loading..");
-                                                        Common.saveSharedPref(
-                                                            "statusWise", 'no');
-                                                        await getLeadProgressbar(
-                                                            widget.token,
-                                                            fromdate,
-                                                            todate,
-                                                            '-3');
-                                                        if (object1!.status ==
-                                                            true) {
-                                                          if (context.mounted) {
-                                                            Navigator.pop(
-                                                                context);
-                                                            leadProgressbarDialog(
-                                                                context,
-                                                                "Missed Leads",
-                                                                "",
-                                                                "1");
-                                                          }
-                                                        }
-                                                      },
-                                                      child: Container(
-                                                        width: 30,
-                                                        height: 30,
-                                                        decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                                  offset:
-                                                                      const Offset(
-                                                                          0,
-                                                                          2.0))
-                                                            ],
-                                                            color: Colors.white,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(4),
-                                                          child: Center(
-                                                              child:
-                                                                  Image.asset(
-                                                            "assets/icons/lineSegment.png",
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(
-                                                height: 10,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                              ],
-                            )),
-                        Visibility(
-                          visible: loadmore == false,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: InkWell(
-                              onTap: () async {
-                                getStaffwise();
-                              },
-                              child: Container(
-                                  height: 32,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15, vertical: 5),
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.white, width: 0),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                            color: Colors.grey,
-                                            blurRadius: 5,
-                                            offset: Offset(1, 1)),
-                                      ],
-                                      color: Colors.blue,
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.circular(5))),
-                                  child: Text(
-                                    moreloading == true
-                                        ? " Loading... "
-                                        : "Show more",
-                                    style: const TextStyle(color: Colors.white),
-                                  )),
-                            ),
-                          ),
-                        ),
-                        loadmore == false
-                            ? const SizedBox()
-                            : Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 20, right: 20),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade100,
-                                        borderRadius: BorderRadius.circular(15),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Colors.grey,
-                                            offset: Offset(0, 2.0),
-                                          )
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            const SizedBox(
-                                              height: 20,
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 20, right: 20),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Text(
-                                                        'Category Wise Report',
-                                                        style: TextStyle(
-                                                            fontSize: 15,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                      const SizedBox(
-                                                        width: 15,
-                                                      ),
-                                                      viewLeadCategoryPermission ==
-                                                              'true'
-                                                          ? InkWell(
-                                                              onTap: () {
-                                                                Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder: (context) => ViewLeadCategory(
-                                                                          widget
-                                                                              .token!,
-                                                                          createLeadCategory1,
-                                                                          updateLeadCategory1,
-                                                                          deleteLeadCategory1)),
-                                                                );
-                                                              },
-                                                              child: Icon(
-                                                                Icons.settings,
-                                                                color: Colors
-                                                                    .blue
-                                                                    .shade800,
-                                                                size: 15,
-                                                              ),
-                                                            )
-                                                          : const SizedBox()
-                                                    ],
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      showGeneralDialog(
-                                                        barrierLabel:
-                                                            "showGeneralDialog",
-                                                        barrierDismissible:
-                                                            true,
-                                                        barrierColor: Colors
-                                                            .black
-                                                            .withOpacity(0.6),
-                                                        transitionDuration:
-                                                            const Duration(
-                                                                milliseconds:
-                                                                    400),
-                                                        context: context,
-                                                        pageBuilder:
-                                                            (context, _, __) {
-                                                          return Align(
-                                                            alignment: Alignment
-                                                                .bottomCenter,
-                                                            child:
-                                                                IntrinsicHeight(
-                                                              child: Container(
-                                                                width: double
-                                                                    .maxFinite,
-                                                                clipBehavior: Clip
-                                                                    .antiAlias,
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .all(
-                                                                        16),
-                                                                decoration:
-                                                                    const BoxDecoration(
+                                                                'Continue',
+                                                                style:
+                                                                    TextStyle(
                                                                   color: Colors
                                                                       .white,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .only(
-                                                                    topLeft: Radius
-                                                                        .circular(
-                                                                            16),
-                                                                    topRight: Radius
-                                                                        .circular(
-                                                                            16),
-                                                                  ),
-                                                                ),
-                                                                child: Material(
-                                                                  child:
-                                                                      SingleChildScrollView(
-                                                                    child:
-                                                                        Column(
-                                                                      children: [
-                                                                        const SizedBox(
-                                                                            height:
-                                                                                20),
-                                                                        const Text(
-                                                                          'Filter By Date Range',
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize:
-                                                                                18,
-                                                                            fontWeight:
-                                                                                FontWeight.w500,
-                                                                          ),
-                                                                        ),
-                                                                        const SizedBox(
-                                                                            height:
-                                                                                20),
-                                                                        Row(
-                                                                          children: [
-                                                                            SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.25,
-                                                                                child: const Text(
-                                                                                  'From Date',
-                                                                                  style: TextStyle(
-                                                                                    fontSize: 15,
-                                                                                    fontWeight: FontWeight.w500,
-                                                                                  ),
-                                                                                )),
-                                                                            const SizedBox(
-                                                                              width: 10,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 50,
-                                                                              width: MediaQuery.of(context).size.width * 0.6,
-                                                                              child: Center(
-                                                                                child: DateTimePicker(
-                                                                                  decoration: InputDecoration(
-                                                                                      filled: true,
-                                                                                      //<-- SEE HERE
-                                                                                      fillColor: Colors.white,
-                                                                                      prefixIcon: const Icon(
-                                                                                        Icons.arrow_right,
-                                                                                        color: Colors.grey,
-                                                                                      ),
-                                                                                      counterText: "",
-                                                                                      hintText: 'From Date',
-                                                                                      isDense: true,
-                                                                                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                                  initialValue: fromdate1.toString(),
-                                                                                  type: DateTimePickerType.date,
-
-                                                                                  //controller: fromDate,
-                                                                                  firstDate: DateTime(1995),
-                                                                                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                                                                                  // This will add one year from current date
-                                                                                  validator: (value) {
-                                                                                    return null;
-                                                                                  },
-                                                                                  onChanged: (value) {
-                                                                                    if (value.isNotEmpty) {
-                                                                                      setState(() {
-                                                                                        fromdate1 = DateTime.parse(value).toString();
-                                                                                      });
-                                                                                    }
-                                                                                  },
-                                                                                  // We can also use onSaved
-                                                                                  onSaved: (value) {
-                                                                                    if (value!.isNotEmpty) {
-                                                                                      fromdate1 = DateTime.parse(value).toString();
-                                                                                    }
-                                                                                  },
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        const SizedBox(
-                                                                          height:
-                                                                              10,
-                                                                        ),
-                                                                        Row(
-                                                                          children: [
-                                                                            SizedBox(
-                                                                                width: MediaQuery.of(context).size.width * 0.25,
-                                                                                child: const Text(
-                                                                                  'To Date',
-                                                                                  style: TextStyle(
-                                                                                    fontSize: 15,
-                                                                                    fontWeight: FontWeight.w500,
-                                                                                  ),
-                                                                                )),
-                                                                            const SizedBox(
-                                                                              width: 10,
-                                                                            ),
-                                                                            SizedBox(
-                                                                              height: 50,
-                                                                              width: MediaQuery.of(context).size.width * 0.6,
-                                                                              child: Center(
-                                                                                child: DateTimePicker(
-                                                                                  decoration: InputDecoration(
-                                                                                      filled: true,
-                                                                                      //<-- SEE HERE
-                                                                                      fillColor: Colors.white,
-                                                                                      prefixIcon: const Icon(
-                                                                                        Icons.arrow_right,
-                                                                                        color: Colors.grey,
-                                                                                      ),
-                                                                                      counterText: "",
-                                                                                      hintText: 'To date',
-                                                                                      isDense: true,
-                                                                                      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                                  initialValue: todate1.toString(),
-                                                                                  type: DateTimePickerType.date,
-
-                                                                                  //controller: fromDate,
-                                                                                  firstDate: DateTime(1995),
-                                                                                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                                                                                  // This will add one year from current date
-                                                                                  validator: (value) {
-                                                                                    return null;
-                                                                                  },
-                                                                                  onChanged: (value) {
-                                                                                    if (value.isNotEmpty) {
-                                                                                      setState(() {
-                                                                                        todate1 = DateTime.parse(value);
-                                                                                      });
-                                                                                    }
-                                                                                  },
-                                                                                  // We can also use onSaved
-                                                                                  onSaved: (value) {
-                                                                                    if (value!.isNotEmpty) {
-                                                                                      todate1 = DateTime.parse(value);
-                                                                                    }
-                                                                                  },
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                        const SizedBox(
-                                                                            height:
-                                                                                16),
-                                                                        Container(
-                                                                          height:
-                                                                              40,
-                                                                          width:
-                                                                              double.maxFinite,
-                                                                          decoration:
-                                                                              const BoxDecoration(
-                                                                            color:
-                                                                                Color(0xFF3375e0),
-                                                                            borderRadius:
-                                                                                BorderRadius.all(Radius.circular(8)),
-                                                                          ),
-                                                                          child:
-                                                                              RawMaterialButton(
-                                                                            onPressed:
-                                                                                () {
-                                                                              setState(() {
-                                                                                data.remove(data);
-                                                                              });
-                                                                              getStaffwise();
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              Navigator.of(context, rootNavigator: true).pop();
-                                                                            },
-                                                                            child:
-                                                                                const Center(
-                                                                              child: Text(
-                                                                                'Continue',
-                                                                                style: TextStyle(
-                                                                                  color: Colors.white,
-                                                                                  fontWeight: FontWeight.w500,
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
                                                                 ),
                                                               ),
                                                             ),
-                                                          );
-                                                        },
-                                                        transitionBuilder: (_,
-                                                            animation1,
-                                                            __,
-                                                            child) {
-                                                          return SlideTransition(
-                                                            position: Tween(
-                                                              begin:
-                                                                  const Offset(
-                                                                      0, 1),
-                                                              end: const Offset(
-                                                                  0, 0),
-                                                            ).animate(
-                                                                animation1),
-                                                            child: child,
-                                                          );
-                                                        },
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      width: 30,
-                                                      height: 30,
-                                                      decoration: BoxDecoration(
-                                                          color: Colors
-                                                              .grey.shade100,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(5)),
-                                                      child: Center(
-                                                        child: Center(
-                                                            child: Image.asset(
-                                                                "assets/icons/calendar.png",
-                                                                width: 25)),
-                                                      ),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 20),
-                                              child: Text(
-                                                  'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Divider(
-                                              color: Colors.grey.shade300,
-                                              thickness: 1.0,
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            data.isNotEmpty
-                                                ? Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 10),
-                                                    child: PieChart(
-                                                      dataMap: data,
-
-                                                      animationDuration:
-                                                          const Duration(
-                                                              milliseconds:
-                                                                  800),
-                                                      chartLegendSpacing: 20,
-                                                      chartRadius:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width /
-                                                              2.5,
-                                                      colorList: _colors,
-                                                      initialAngleInDegree: 0,
-                                                      chartType: ChartType.ring,
-                                                      ringStrokeWidth: 25,
-                                                      centerText: leadDashboard!
-                                                          .data
-                                                          .currentLeadsCount
-                                                          .total,
-                                                      centerTextStyle:
-                                                          const TextStyle(
-                                                              fontSize: 20,
-                                                              color:
-                                                                  Colors.black),
-                                                      legendOptions:
-                                                          const LegendOptions(
-                                                        legendShape:
-                                                            BoxShape.rectangle,
-                                                        showLegendsInRow: false,
-                                                        legendPosition:
-                                                            LegendPosition
-                                                                .right,
-                                                        showLegends: true,
-                                                        legendTextStyle:
-                                                            TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                      chartValuesOptions:
-                                                          const ChartValuesOptions(
-                                                        showChartValueBackground:
-                                                            false,
-                                                        showChartValues: false,
-                                                        showChartValuesInPercentage:
-                                                            false,
-                                                        showChartValuesOutside:
-                                                            true,
-                                                        decimalPlaces: 1,
-                                                      ),
-                                                      // gradientList: ---To add gradient colors---
-                                                      // emptyColorGradient: ---Empty Color gradient---
-                                                    ),
-                                                  )
-                                                : Column(
-                                                    children: [
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Image.asset(
-                                                            'assets/icons/nodatafound.png',
-                                                            width: 100,
-                                                            height: 100,
                                                           ),
-                                                        ],
-                                                      ),
-                                                      const Text(
-                                                        'Result Not Found',
-                                                        style: TextStyle(
-                                                            fontSize: 15,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      const Text(
-                                                        'Whoops... this information is \n not available for a moment',
-                                                        style: TextStyle(
-                                                            fontSize: 13),
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 15,
-                                                      ),
-                                                    ],
-                                                  ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            const Divider(),
-                                            data.isNotEmpty
-                                                ? Column(
-                                                    children: [
-                                                      Table(
-                                                          columnWidths: const {
-                                                            0: FlexColumnWidth(
-                                                                10),
-                                                            1: FlexColumnWidth(
-                                                                5),
-                                                            2: FlexColumnWidth(
-                                                                5),
-                                                            3: FlexColumnWidth(
-                                                                5),
-                                                            4: FlexColumnWidth(
-                                                                5),
-                                                            5: FlexColumnWidth(
-                                                                5),
-                                                          },
-                                                          children: [
-                                                            const TableRow(
-                                                                // decoration: new BoxDecoration(
-                                                                //     color: Colors.greenAccent),
-                                                                children: [
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      "",
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              17,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      'New',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      'Pending',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      'Followup',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      'Rejected',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          color: Colors
-                                                                              .red,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(
-                                                                        top: 10,
-                                                                        bottom:
-                                                                            10),
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      'Closed',
-                                                                      style: TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                ]),
-                                                            for (int i = 0;
-                                                                i <
-                                                                    staffWise!
-                                                                        .data!
-                                                                        .categoryLeads!
-                                                                        .length;
-                                                                i++)
-                                                              TableRow(
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              0,
-                                                                          bottom:
-                                                                              10,
-                                                                          left:
-                                                                              10),
-                                                                      child:
-                                                                          Text(
-                                                                        staffWise!
-                                                                            .data!
-                                                                            .categoryLeads![i]
-                                                                            .categoryName
-                                                                            .toString(),
-                                                                        style: TextStyle(
-                                                                            fontSize:
-                                                                                10,
-                                                                            fontWeight:
-                                                                                FontWeight.bold,
-                                                                            color: _colors[i]),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Common.saveSharedPref(
-                                                                            "statusWise",
-                                                                            'yes');
-                                                                        Common.saveSharedPref(
-                                                                            "statusWisId",
-                                                                            '1');
-                                                                        Common.saveSharedPref(
-                                                                            "type",
-                                                                            'category');
-                                                                        Common.saveSharedPref(
-                                                                            "statusCatId",
-                                                                            staffWise!.data!.categoryLeads![i].categoryid.toString());
-                                                                        viewLeadPermission ==
-                                                                                'true'
-                                                                            ? Navigator
-                                                                                .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => ViewLeads(
-                                                                                          widget.token,
-                                                                                          updateLeadPermission1,
-                                                                                          deleteLeadPermission1,
-                                                                                          cloudCallPermission1,
-                                                                                          pageName: 'New Leads',
-                                                                                          fromDate: fromdate1.toString(),
-                                                                                          toDate: todate1.toString(),
-                                                                                        )),
-                                                                              ).then(
-                                                                                (r) {
-                                                                                getData(widget.token, fromdate, todate);
-                                                                                if (loadmore == true) {
-                                                                                  getStaffwise();
-                                                                                }
-                                                                              })
-                                                                            : _dialogue(context,
-                                                                                'View Leads');
-                                                                      },
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                0,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          staffWise!
-                                                                              .data!
-                                                                              .categoryLeads![i]
-                                                                              .newCount
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 10,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Common.saveSharedPref(
-                                                                            "statusWise",
-                                                                            'yes');
-                                                                        Common.saveSharedPref(
-                                                                            "statusWisId",
-                                                                            '2');
-                                                                        Common.saveSharedPref(
-                                                                            "type",
-                                                                            'category');
-                                                                        Common.saveSharedPref(
-                                                                            "statusCatId",
-                                                                            staffWise!.data!.categoryLeads![i].categoryid.toString());
-                                                                        viewLeadPermission ==
-                                                                                'true'
-                                                                            ? Navigator
-                                                                                .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => ViewLeads(
-                                                                                          widget.token,
-                                                                                          updateLeadPermission1,
-                                                                                          deleteLeadPermission1,
-                                                                                          cloudCallPermission1,
-                                                                                          pageName: 'Pending Leads',
-                                                                                          fromDate: fromdate1.toString(),
-                                                                                          toDate: todate1.toString(),
-                                                                                        )),
-                                                                              ).then(
-                                                                                (r) {
-                                                                                getData(widget.token, fromdate, todate);
-                                                                                if (loadmore == true) {
-                                                                                  getStaffwise();
-                                                                                }
-                                                                              })
-                                                                            : _dialogue(context,
-                                                                                'View Leads');
-                                                                      },
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                0,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          staffWise!
-                                                                              .data!
-                                                                              .categoryLeads![i]
-                                                                              .pendingCount
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 10,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Common.saveSharedPref(
-                                                                            "statusWise",
-                                                                            'yes');
-                                                                        Common.saveSharedPref(
-                                                                            "statusWisId",
-                                                                            '3');
-                                                                        Common.saveSharedPref(
-                                                                            "type",
-                                                                            'category');
-                                                                        Common.saveSharedPref(
-                                                                            "statusCatId",
-                                                                            staffWise!.data!.categoryLeads![i].categoryid.toString());
-                                                                        viewLeadPermission ==
-                                                                                'true'
-                                                                            ? Navigator
-                                                                                .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => ViewLeads(
-                                                                                          widget.token,
-                                                                                          updateLeadPermission1,
-                                                                                          deleteLeadPermission1,
-                                                                                          cloudCallPermission1,
-                                                                                          pageName: 'Followup Leads',
-                                                                                          fromDate: fromdate1.toString(),
-                                                                                          toDate: todate1.toString(),
-                                                                                        )),
-                                                                              ).then(
-                                                                                (r) {
-                                                                                getData(widget.token, fromdate, todate);
-                                                                                if (loadmore == true) {
-                                                                                  getStaffwise();
-                                                                                }
-                                                                              })
-                                                                            : _dialogue(context,
-                                                                                'View Leads');
-                                                                      },
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                0,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          staffWise!
-                                                                              .data!
-                                                                              .categoryLeads![i]
-                                                                              .followupCount
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 10,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Common.saveSharedPref(
-                                                                            "statusWise",
-                                                                            'yes');
-                                                                        Common.saveSharedPref(
-                                                                            "statusWisId",
-                                                                            '4');
-                                                                        Common.saveSharedPref(
-                                                                            "type",
-                                                                            'category');
-                                                                        Common.saveSharedPref(
-                                                                            "statusCatId",
-                                                                            staffWise!.data!.categoryLeads![i].categoryid.toString());
-                                                                        viewLeadPermission ==
-                                                                                'true'
-                                                                            ? Navigator
-                                                                                .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => ViewLeads(
-                                                                                          widget.token,
-                                                                                          updateLeadPermission1,
-                                                                                          updateLeadPermission1,
-                                                                                          cloudCallPermission1,
-                                                                                          pageName: 'Rejected Leads',
-                                                                                          fromDate: fromdate1.toString(),
-                                                                                          toDate: todate1.toString(),
-                                                                                        )),
-                                                                              ).then(
-                                                                                (r) {
-                                                                                getData(widget.token, fromdate, todate);
-                                                                                if (loadmore == true) {
-                                                                                  getStaffwise();
-                                                                                }
-                                                                              })
-                                                                            : _dialogue(context,
-                                                                                'View Leads');
-                                                                      },
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                0,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          staffWise!
-                                                                              .data!
-                                                                              .categoryLeads![i]
-                                                                              .rejectedCount
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 10,
-                                                                              color: Colors.red,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
-                                                                    ),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Common.saveSharedPref(
-                                                                            "statusWise",
-                                                                            'yes');
-                                                                        Common.saveSharedPref(
-                                                                            "type",
-                                                                            'category');
-                                                                        Common.saveSharedPref(
-                                                                            "statusWisId",
-                                                                            '5');
-                                                                        Common.saveSharedPref(
-                                                                            "statusCatId",
-                                                                            staffWise!.data!.categoryLeads![i].categoryid.toString());
-                                                                        viewLeadPermission ==
-                                                                                'true'
-                                                                            ? Navigator
-                                                                                .push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                    builder: (context) => ViewLeads(
-                                                                                          widget.token,
-                                                                                          updateLeadPermission1,
-                                                                                          deleteLeadPermission1,
-                                                                                          cloudCallPermission1,
-                                                                                          pageName: 'Closed Leads',
-                                                                                          fromDate: fromdate1.toString(),
-                                                                                          toDate: todate1.toString(),
-                                                                                        )),
-                                                                              ).then(
-                                                                                (r) {
-                                                                                getData(widget.token, fromdate, todate);
-                                                                                if (loadmore == true) {
-                                                                                  getStaffwise();
-                                                                                }
-                                                                              })
-                                                                            : _dialogue(context,
-                                                                                'View Leads');
-                                                                      },
-                                                                      child:
-                                                                          Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                0,
-                                                                            bottom:
-                                                                                10),
-                                                                        child: Center(
-                                                                            child: Text(
-                                                                          textAlign:
-                                                                              TextAlign.end,
-                                                                          staffWise!
-                                                                              .data!
-                                                                              .categoryLeads![i]
-                                                                              .confirmedCount
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 10,
-                                                                              fontWeight: FontWeight.bold),
-                                                                        )),
-                                                                      ),
-                                                                    ),
-                                                                  ]),
-                                                          ]),
-                                                      const Divider(
-                                                        endIndent: 8,
-                                                        indent: 8,
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                                top: 8.0,
-                                                                bottom: 12.0),
-                                                        child: Table(
-                                                          columnWidths: const {
-                                                            0: FlexColumnWidth(
-                                                                10),
-                                                            1: FlexColumnWidth(
-                                                                5),
-                                                            2: FlexColumnWidth(
-                                                                5),
-                                                            3: FlexColumnWidth(
-                                                                5),
-                                                            4: FlexColumnWidth(
-                                                                5),
-                                                            5: FlexColumnWidth(
-                                                                5),
-                                                          },
-                                                          children: [
-                                                            TableRow(
-                                                                // decoration: new BoxDecoration(
-                                                                //     color: Colors.greenAccent),
-                                                                children: [
-                                                                  const Center(
-                                                                      child:
-                                                                          Text(
-                                                                    "Total Leads",
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            11,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                  )),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Common.saveSharedPref(
-                                                                          "statusWise",
-                                                                          'yes');
-                                                                      Common.saveSharedPref(
-                                                                          "statusWisId",
-                                                                          '1');
-                                                                      Common.saveSharedPref(
-                                                                          "type",
-                                                                          'category');
-                                                                      Common.saveSharedPref(
-                                                                          "statusCatId",
-                                                                          "-1");
-                                                                      viewLeadPermission ==
-                                                                              'true'
-                                                                          ? Navigator
-                                                                              .push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => ViewLeads(
-                                                                                        widget.token,
-                                                                                        updateLeadPermission1,
-                                                                                        deleteLeadPermission1,
-                                                                                        cloudCallPermission1,
-                                                                                        pageName: 'New Leads',
-                                                                                        // fromDate: fromdate1.toString(),
-                                                                                        // toDate: todate1.toString(),
-                                                                                      )),
-                                                                            ).then(
-                                                                              (r) {
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              if (loadmore == true) {
-                                                                                getStaffwise();
-                                                                              }
-                                                                            })
-                                                                          : _dialogue(
-                                                                              context,
-                                                                              'View Leads');
-                                                                    },
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      catNew
-                                                                          .toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Common.saveSharedPref(
-                                                                          "statusWise",
-                                                                          'yes');
-                                                                      Common.saveSharedPref(
-                                                                          "statusWisId",
-                                                                          '2');
-                                                                      Common.saveSharedPref(
-                                                                          "type",
-                                                                          'category');
-                                                                      Common.saveSharedPref(
-                                                                          "statusCatId",
-                                                                          "-1");
-                                                                      viewLeadPermission ==
-                                                                              'true'
-                                                                          ? Navigator
-                                                                              .push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => ViewLeads(
-                                                                                        widget.token,
-                                                                                        updateLeadPermission1,
-                                                                                        deleteLeadPermission1,
-                                                                                        cloudCallPermission1,
-                                                                                        pageName: 'Pending Leads',
-                                                                                        fromDate: fromdate1.toString(),
-                                                                                        toDate: todate1.toString(),
-                                                                                      )),
-                                                                            ).then(
-                                                                              (r) {
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              if (loadmore == true) {
-                                                                                getStaffwise();
-                                                                              }
-                                                                            })
-                                                                          : _dialogue(
-                                                                              context,
-                                                                              'View Leads');
-                                                                    },
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      catPending
-                                                                          .toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Common.saveSharedPref(
-                                                                          "statusWise",
-                                                                          'yes');
-                                                                      Common.saveSharedPref(
-                                                                          "statusWisId",
-                                                                          '3');
-                                                                      Common.saveSharedPref(
-                                                                          "type",
-                                                                          'category');
-                                                                      Common.saveSharedPref(
-                                                                          "statusCatId",
-                                                                          "-1");
-                                                                      viewLeadPermission ==
-                                                                              'true'
-                                                                          ? Navigator
-                                                                              .push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => ViewLeads(
-                                                                                        widget.token,
-                                                                                        updateLeadPermission1,
-                                                                                        deleteLeadPermission1,
-                                                                                        cloudCallPermission1,
-                                                                                        pageName: 'Followup Leads',
-                                                                                        fromDate: fromdate1.toString(),
-                                                                                        toDate: todate1.toString(),
-                                                                                      )),
-                                                                            ).then(
-                                                                              (r) {
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              if (loadmore == true) {
-                                                                                getStaffwise();
-                                                                              }
-                                                                            })
-                                                                          : _dialogue(
-                                                                              context,
-                                                                              'View Leads');
-                                                                    },
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      catFollowup
-                                                                          .toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          color: Colors
-                                                                              .black,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Common.saveSharedPref(
-                                                                          "statusWise",
-                                                                          'yes');
-                                                                      Common.saveSharedPref(
-                                                                          "statusWisId",
-                                                                          '4');
-                                                                      Common.saveSharedPref(
-                                                                          "type",
-                                                                          'category');
-                                                                      Common.saveSharedPref(
-                                                                          "statusCatId",
-                                                                          "-1");
-                                                                      viewLeadPermission ==
-                                                                              'true'
-                                                                          ? Navigator
-                                                                              .push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => ViewLeads(
-                                                                                        widget.token,
-                                                                                        updateLeadPermission1,
-                                                                                        updateLeadPermission1,
-                                                                                        cloudCallPermission1,
-                                                                                        pageName: 'Rejected Leads',
-                                                                                        fromDate: fromdate1.toString(),
-                                                                                        toDate: todate1.toString(),
-                                                                                      )),
-                                                                            ).then(
-                                                                              (r) {
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              if (loadmore == true) {
-                                                                                getStaffwise();
-                                                                              }
-                                                                            })
-                                                                          : _dialogue(
-                                                                              context,
-                                                                              'View Leads');
-                                                                    },
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      catRejected
-                                                                          .toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          color: Colors
-                                                                              .red,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                  InkWell(
-                                                                    onTap: () {
-                                                                      Common.saveSharedPref(
-                                                                          "statusWise",
-                                                                          'yes');
-                                                                      Common.saveSharedPref(
-                                                                          "type",
-                                                                          'category');
-                                                                      Common.saveSharedPref(
-                                                                          "statusCatId",
-                                                                          "-1");
-                                                                      Common.saveSharedPref(
-                                                                          "statusWisId",
-                                                                          '5');
-                                                                      viewLeadPermission ==
-                                                                              'true'
-                                                                          ? Navigator
-                                                                              .push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                  builder: (context) => ViewLeads(
-                                                                                        widget.token,
-                                                                                        updateLeadPermission1,
-                                                                                        deleteLeadPermission1,
-                                                                                        cloudCallPermission1,
-                                                                                        pageName: 'Closed Leads',
-                                                                                        fromDate: fromdate1.toString(),
-                                                                                        toDate: todate1.toString(),
-                                                                                      )),
-                                                                            ).then(
-                                                                              (r) {
-                                                                              getData(widget.token, fromdate, todate);
-                                                                              if (loadmore == true) {
-                                                                                getStaffwise();
-                                                                              }
-                                                                            })
-                                                                          : _dialogue(
-                                                                              context,
-                                                                              'View Leads');
-                                                                    },
-                                                                    child: Center(
-                                                                        child: Text(
-                                                                      catClosed
-                                                                          .toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              10,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                    )),
-                                                                  ),
-                                                                ]),
-                                                          ],
                                                         ),
-                                                      )
-                                                    ],
-                                                  )
-                                                : const SizedBox(),
-                                          ],
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          transitionBuilder:
+                                              (_, animation1, __, child) {
+                                            return SlideTransition(
+                                              position: Tween(
+                                                begin: const Offset(0, 1),
+                                                end: const Offset(0, 0),
+                                              ).animate(animation1),
+                                              child: child,
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(5)),
+                                        child: Center(
+                                          child: Center(
+                                              child: Image.asset(
+                                                  "assets/icons/calendar.png",
+                                                  width: 32)),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(
-                                      height: 20,
-                                    ),
-                                    Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Colors.grey,
-                                              offset: Offset(0, 2.0),
-                                            )
-                                          ],
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: <Widget>[
-                                            const SizedBox(
-                                              height: 20,
+                                    const SizedBox(width: 10),
+                                    if (configure != null)
+                                      isExpired == false &&
+                                              leadDashboard != null
+                                          ? PopupMenuButton(
+                                              child: Container(
+                                                width: 35,
+                                                height: 35,
+                                                decoration: BoxDecoration(
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        blurRadius: 3,
+                                                        color: Colors
+                                                            .grey.shade800,
+                                                      )
+                                                    ],
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.white),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Image.asset(
+                                                    "assets/icons/settings.png",
+                                                  ),
+                                                ),
+                                              ),
+                                              itemBuilder: (context) {
+                                                return [
+                                                  PopupMenuItem<int>(
+                                                      value: 9,
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: Image.asset(
+                                                              "assets/icons/all_reports.png",
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          const Text(
+                                                              'All Report'),
+                                                        ],
+                                                      )),
+                                                  PopupMenuItem<int>(
+                                                      value: 2,
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: Image.asset(
+                                                              "assets/icons/leadCategory.png",
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          const Text(
+                                                              'Lead Category'),
+                                                        ],
+                                                      )),
+                                                  PopupMenuItem<int>(
+                                                      value: 6,
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: Image.asset(
+                                                              "assets/icons/callHistory.png",
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          const Text(
+                                                              'Call History'),
+                                                        ],
+                                                      )),
+                                                ];
+                                              },
+                                              onSelected: (value) {
+                                                if (value == 1) {}
+                                                if (value == 2) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ViewLeadCategory(
+                                                                widget.token!,
+                                                                createLeadCategory1,
+                                                                updateLeadCategory1,
+                                                                deleteLeadCategory1)),
+                                                  );
+                                                }
+                                                if (value == 3) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            WhatsappSettings(
+                                                                widget.token)),
+                                                  );
+                                                }
+                                                if (value == 4) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const NotificationTemplateSettings()),
+                                                  );
+                                                }
+                                                if (value == 5) {
+                                                  Common.saveSharedPref(
+                                                      "statusWise", 'no');
+                                                  viewLeadPermission == 'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      ViewLeads(
+                                                                        widget
+                                                                            .token,
+                                                                        updateLeadPermission1,
+                                                                        deleteLeadPermission1,
+                                                                        cloudCallPermission1,
+                                                                        pageName:
+                                                                            'View Leads',
+                                                                        fromDate:
+                                                                            fromdate.toString(),
+                                                                        toDate:
+                                                                            todate.toString(),
+                                                                      )),
+                                                        ).then((r) {
+                                                          getData(widget.token,
+                                                              fromdate, todate);
+                                                          if (loadmore ==
+                                                              true) {
+                                                            getStaffwise();
+                                                          }
+                                                        })
+                                                      : _dialogue(context,
+                                                          'View Leads');
+                                                }
+                                                if (value == 6) {
+                                                  accessCallHistoryPermission ==
+                                                          'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  CallHistoryPage(
+                                                                      widget
+                                                                          .token!,
+                                                                      name,
+                                                                      userId,
+                                                                      accessCallRecordingPermission1)),
+                                                        )
+                                                      : _dialogue(context,
+                                                          'Call History');
+                                                }
+                                                if (value == 7) {
+                                                  Common.saveSharedPref(
+                                                      "statusWise", 'no');
+                                                  viewLeadPermission == 'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      ViewLeads(
+                                                                        widget
+                                                                            .token,
+                                                                        updateLeadPermission1,
+                                                                        deleteLeadPermission1,
+                                                                        cloudCallPermission1,
+                                                                        pageName:
+                                                                            'Missed Leads',
+                                                                        fromDate:
+                                                                            fromdate.toString(),
+                                                                        toDate:
+                                                                            todate.toString(),
+                                                                        leadType:
+                                                                            '1',
+                                                                        callStatus:
+                                                                            "-1",
+                                                                      )),
+                                                        ).then((r) {
+                                                          getData(widget.token,
+                                                              fromdate, todate);
+                                                          if (loadmore ==
+                                                              true) {
+                                                            getStaffwise();
+                                                          }
+                                                        })
+                                                      : _dialogue(context,
+                                                          'View Leads');
+                                                }
+                                                if (value == 8) {
+                                                  Common.saveSharedPref(
+                                                      "statusWise", 'no');
+                                                  viewLeadPermission == 'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) => ViewLeads(
+                                                                  widget.token,
+                                                                  updateLeadPermission1,
+                                                                  deleteLeadPermission1,
+                                                                  cloudCallPermission1,
+                                                                  pageName:
+                                                                      'Transfer Leads',
+                                                                  fromDate: fromdate
+                                                                      .toString(),
+                                                                  toDate: todate
+                                                                      .toString(),
+                                                                  leadType:
+                                                                      '2')),
+                                                        ).then((r) {
+                                                          getData(widget.token,
+                                                              fromdate, todate);
+                                                          if (loadmore ==
+                                                              true) {
+                                                            getStaffwise();
+                                                          }
+                                                        })
+                                                      : _dialogue(context,
+                                                          'View Leads');
+                                                }
+                                                if (value == 9) {
+                                                  Common.saveSharedPref(
+                                                      "statusWise", 'no');
+                                                  viewLeadPermission == 'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      AllReport(
+                                                                        widget
+                                                                            .token!,
+                                                                        updateLeadPermission1,
+                                                                        deleteLeadPermission1,
+                                                                        cloudCallPermission1,
+                                                                        pageName:
+                                                                            'AllLeads',
+                                                                      )),
+                                                        )
+                                                      : _dialogue(context,
+                                                          'View Leads');
+                                                }
+                                                if (value == 10) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            CallLogs(
+                                                              widget.token,
+                                                              name,
+                                                              userId,
+                                                            )),
+                                                  ).then((r) {
+                                                    getData(widget.token,
+                                                        fromdate, todate);
+                                                    if (loadmore == true) {
+                                                      getStaffwise();
+                                                    }
+                                                  });
+                                                }
+                                              })
+                                          : const SizedBox()
+                                  ],
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName: 'New Leads',
+                                                      fromDate:
+                                                          fromdate.toString(),
+                                                      toDate: todate.toString(),
+                                                      status: '1',
+                                                    )),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFf0ebef),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "New Leads",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip =
+                                                        _toolTipKey
+                                                            .currentState;
+                                                    toolTip
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'The combined count of new leads \n and  unattended leads',
+                                                    key: _toolTipKey,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
                                             ),
-                                            const Padding(
-                                              padding:
-                                                  EdgeInsets.only(left: 20),
-                                              child: Row(
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!.data.newLeads
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '1');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "New Leads",
+                                                            "1",
+                                                            "");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          )
+                                        ],
+                                      )),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                    widget.token,
+                                                    updateLeadPermission1,
+                                                    deleteLeadPermission1,
+                                                    cloudCallPermission1,
+                                                    pageName: 'Followup Leads',
+                                                    fromDate: DateTime(
+                                                            DateTime.now().year,
+                                                            DateTime.now()
+                                                                    .month -
+                                                                3,
+                                                            DateTime.now().day)
+                                                        .toString(),
+                                                    toDate: todate.toString(),
+                                                    status: '2')),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                            255, 204, 211, 224),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Followup Leads",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip1 =
+                                                        _toolTipKey1
+                                                            .currentState;
+                                                    toolTip1
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'The current count of leads \n assigned for today including \n missed follow up leads',
+                                                    key: _toolTipKey1,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!
+                                                        .data.followupLeads
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '2');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "Followup Leads",
+                                                            "2",
+                                                            "");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                        ],
+                                      )),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                    widget.token,
+                                                    updateLeadPermission1,
+                                                    deleteLeadPermission1,
+                                                    cloudCallPermission1,
+                                                    pageName: 'Closed Leads',
+                                                    fromDate:
+                                                        fromdate.toString(),
+                                                    toDate: todate.toString(),
+                                                    status: '4')),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                            255, 206, 243, 240),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Closed Leads",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip2 =
+                                                        _toolTipKey2
+                                                            .currentState;
+                                                    toolTip2
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'Closed leads can be filtered \n using a specific date range to \n determine the count of closed \n leads within that period',
+                                                    key: _toolTipKey2,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!
+                                                        .data.closedLeads
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '4');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "Closed Leads",
+                                                            "4",
+                                                            "");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                        ],
+                                      )),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                    widget.token,
+                                                    updateLeadPermission1,
+                                                    deleteLeadPermission1,
+                                                    cloudCallPermission1,
+                                                    pageName: 'Total Called',
+                                                    fromDate:
+                                                        fromdate.toString(),
+                                                    toDate: todate.toString(),
+                                                    leadType: "-1",
+                                                    callStatus: "1",
+                                                    status: '0')),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFb4c2dd),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Total Called",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip3 =
+                                                        _toolTipKey3
+                                                            .currentState;
+                                                    toolTip3
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'Total called can be filtered \n using a specific date range to \n determine the count of total leads \n within that period',
+                                                    key: _toolTipKey3,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!
+                                                        .data.totalCalled
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '-1');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "Total Called",
+                                                            "",
+                                                            "-1");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                        ],
+                                      )),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName:
+                                                          'Transferred Leads',
+                                                      leadType: "2",
+                                                      callStatus: "-2",
+                                                    )),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                            255, 189, 226, 249),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Transferred Leads",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip4 =
+                                                        _toolTipKey4
+                                                            .currentState;
+                                                    toolTip4
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'Transferred leads can be filtered \n using a specific date range to \n determine the count of Transferred \n leads within that period',
+                                                    key: _toolTipKey4,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!
+                                                        .data.transferLeads
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '-2');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "Transferred Leads",
+                                                            "",
+                                                            "2");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                        ],
+                                      )),
+                                ),
+                                const SizedBox(
+                                  width: 15,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Common.saveSharedPref("statusWise", 'no');
+                                    viewLeadPermission == 'true'
+                                        ? Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => ViewLeads(
+                                                      widget.token,
+                                                      updateLeadPermission1,
+                                                      deleteLeadPermission1,
+                                                      cloudCallPermission1,
+                                                      pageName: 'Missed Leads',
+                                                      leadType: "1",
+                                                      callStatus: "-1",
+                                                    )),
+                                          ).then((r) {
+                                            getData(
+                                                widget.token, fromdate, todate);
+                                            if (loadmore == true) {
+                                              getStaffwise();
+                                            }
+                                          })
+                                        : _dialogue(context, 'View Leads');
+                                  },
+                                  child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.42,
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.15,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                            255, 239, 210, 214),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10, top: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Missed Leads",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontSize: 13,
+                                                      color: Colors.black),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    dynamic toolTip5 =
+                                                        _toolTipKey5
+                                                            .currentState;
+                                                    toolTip5
+                                                        .ensureTooltipVisible();
+                                                  },
+                                                  child: Tooltip(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    message:
+                                                        'Missed Leads can be filtered \n using a specific date range to \n determine the count of missed \n leads within that period',
+                                                    key: _toolTipKey5,
+                                                    child: Container(
+                                                      width: 20,
+                                                      height: 20,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white),
+                                                      child: Center(
+                                                          child: Text(
+                                                        '?',
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors
+                                                                .grey.shade700),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 10),
+                                            child: leadDashboard != null
+                                                ? Text(
+                                                    leadDashboard!
+                                                        .data.missedLeads
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                        fontSize: 20),
+                                                  )
+                                                : SizedBox(
+                                                    height: 15,
+                                                    width: 15,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    )),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, right: 10),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                const Text(
+                                                  "View Leads",
+                                                  style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.black),
+                                                ),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    Common.saveSharedPref(
+                                                        "statusWise", 'no');
+                                                    await getLeadProgressbar(
+                                                        widget.token,
+                                                        fromdate,
+                                                        todate,
+                                                        '-3');
+                                                    if (object1!.status ==
+                                                        true) {
+                                                      if (context.mounted) {
+                                                        Navigator.pop(context);
+                                                        leadProgressbarDialog(
+                                                            context,
+                                                            "Missed Leads",
+                                                            "",
+                                                            "1");
+                                                      }
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                              color: Colors.grey
+                                                                  .shade500,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 2.0))
+                                                        ],
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5)),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      child: Center(
+                                                          child: Image.asset(
+                                                        "assets/icons/lineSegment.png",
+                                                      )),
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                        ],
+                                      )),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                          ],
+                        )),
+                    Visibility(
+                      visible: loadmore == false,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: InkWell(
+                          onTap: () async {
+                            getStaffwise();
+                          },
+                          child: Container(
+                              height: 32,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 15, vertical: 5),
+                              decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.white, width: 0),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color: Colors.grey,
+                                        blurRadius: 5,
+                                        offset: Offset(1, 1)),
+                                  ],
+                                  color: Colors.blue,
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(5))),
+                              child: Text(
+                                moreloading == true
+                                    ? " Loading... "
+                                    : "Show more",
+                                style: const TextStyle(color: Colors.white),
+                              )),
+                        ),
+                      ),
+                    ),
+                    loadmore == false
+                        ? const SizedBox()
+                        : Padding(
+                            padding: const EdgeInsets.only(left: 20, right: 20),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.grey,
+                                        offset: Offset(0, 2.0),
+                                      )
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 20, right: 20),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Row(
                                                 children: [
-                                                  Text(
-                                                    'Staff Wise Report',
+                                                  const Text(
+                                                    'Category Wise Report',
                                                     style: TextStyle(
                                                         fontSize: 15,
                                                         fontWeight:
                                                             FontWeight.bold),
                                                   ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 20),
-                                              child: Text(
-                                                  'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
-                                            ),
-                                            Divider(
-                                              color: Colors.grey.shade300,
-                                              thickness: 1.0,
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 20),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    ' Total Leads ',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.black,
-                                                        fontSize: 16),
+                                                  const SizedBox(
+                                                    width: 15,
                                                   ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Container(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            .25,
-                                                        decoration: BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8),
+                                                  viewLeadCategoryPermission ==
+                                                          'true'
+                                                      ? InkWell(
+                                                          onTap: () {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder: (context) => ViewLeadCategory(
+                                                                      widget
+                                                                          .token!,
+                                                                      createLeadCategory1,
+                                                                      updateLeadCategory1,
+                                                                      deleteLeadCategory1)),
+                                                            );
+                                                          },
+                                                          child: Icon(
+                                                            Icons.settings,
                                                             color: Colors
-                                                                .lightBlue
-                                                                .shade100),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(8.0),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              // const Text(
-                                                              //   ' Current \nMonth',
-                                                              //   textAlign:
-                                                              //       TextAlign.center,
-                                                              //   style: TextStyle(
-                                                              //       fontWeight: FontWeight.bold,
-                                                              //       color: Colors.black,
-                                                              //       fontSize: 14),
-                                                              // ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .currentLeadsCount
-                                                                    .month,
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontSize:
-                                                                        14),
-                                                              ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .currentLeadsCount
-                                                                    .date,
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .normal,
-                                                                    color: Colors
-                                                                        .black87,
-                                                                    fontSize:
-                                                                        9),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .currentLeadsCount
-                                                                    .total
-                                                                    .toString(),
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade900,
-                                                                    fontSize:
-                                                                        16),
-                                                              ),
-                                                            ],
+                                                                .blue.shade800,
+                                                            size: 15,
                                                           ),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        width: MediaQuery.of(
-                                                                    context)
-                                                                .size
-                                                                .width *
-                                                            .25,
-                                                        decoration: BoxDecoration(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        8),
-                                                            color: Colors.orange
-                                                                .shade100),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(8.0),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .center,
-                                                            children: [
-                                                              // const Text(
-                                                              //   ' Previous \nMonth ',
-                                                              //   textAlign:
-                                                              //       TextAlign.center,
-                                                              //   style: TextStyle(
-                                                              //       fontWeight: FontWeight.bold,
-                                                              //       color: Colors.black,
-                                                              //       fontSize: 14),
-                                                              // ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .previousLeadsCount
-                                                                    .month,
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontSize:
-                                                                        14),
-                                                              ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .previousLeadsCount
-                                                                    .date,
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style: const TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .normal,
-                                                                    color: Colors
-                                                                        .black87,
-                                                                    fontSize:
-                                                                        9),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              Text(
-                                                                leadDashboard!
-                                                                    .data
-                                                                    .previousLeadsCount
-                                                                    .total
-                                                                    .toString(),
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade900,
-                                                                    fontSize:
-                                                                        16),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        height: 90,
-                                                        width: 100,
-                                                        decoration:
-                                                            const BoxDecoration(
-                                                          image:
-                                                              DecorationImage(
-                                                            image: AssetImage(
-                                                                'assets/main/lead.png'),
-                                                            fit: BoxFit.fill,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
+                                                        )
+                                                      : const SizedBox()
                                                 ],
                                               ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 10, right: 10),
-                                              child: Align(
-                                                  alignment: Alignment.center,
-                                                  child: Container(
-                                                    height: 15,
-                                                    decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10)),
-                                                    child: Row(
+                                              InkWell(
+                                                onTap: () {
+                                                  showGeneralDialog(
+                                                    barrierLabel:
+                                                        "showGeneralDialog",
+                                                    barrierDismissible: true,
+                                                    barrierColor: Colors.black
+                                                        .withOpacity(0.6),
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 400),
+                                                    context: context,
+                                                    pageBuilder:
+                                                        (context, _, __) {
+                                                      return Align(
+                                                        alignment: Alignment
+                                                            .bottomCenter,
+                                                        child: IntrinsicHeight(
+                                                          child: Container(
+                                                            width: double
+                                                                .maxFinite,
+                                                            clipBehavior:
+                                                                Clip.antiAlias,
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(16),
+                                                            decoration:
+                                                                const BoxDecoration(
+                                                              color:
+                                                                  Colors.white,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .only(
+                                                                topLeft: Radius
+                                                                    .circular(
+                                                                        16),
+                                                                topRight: Radius
+                                                                    .circular(
+                                                                        16),
+                                                              ),
+                                                            ),
+                                                            child: Material(
+                                                              child:
+                                                                  SingleChildScrollView(
+                                                                child: Column(
+                                                                  children: [
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            20),
+                                                                    const Text(
+                                                                      'Filter By Date Range',
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            18,
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            20),
+                                                                    Row(
+                                                                      children: [
+                                                                        SizedBox(
+                                                                            width: MediaQuery.of(context).size.width *
+                                                                                0.25,
+                                                                            child:
+                                                                                const Text(
+                                                                              'From Date',
+                                                                              style: TextStyle(
+                                                                                fontSize: 15,
+                                                                                fontWeight: FontWeight.w500,
+                                                                              ),
+                                                                            )),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              50,
+                                                                          width:
+                                                                              MediaQuery.of(context).size.width * 0.6,
+                                                                          child:
+                                                                              Center(
+                                                                            child:
+                                                                                DateTimePicker(
+                                                                              decoration: InputDecoration(
+                                                                                  filled: true,
+                                                                                  //<-- SEE HERE
+                                                                                  fillColor: Colors.white,
+                                                                                  prefixIcon: const Icon(
+                                                                                    Icons.arrow_right,
+                                                                                    color: Colors.grey,
+                                                                                  ),
+                                                                                  counterText: "",
+                                                                                  hintText: 'From Date',
+                                                                                  isDense: true,
+                                                                                  border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                                                                              initialValue: fromdate1.toString(),
+                                                                              type: DateTimePickerType.date,
+
+                                                                              //controller: fromDate,
+                                                                              firstDate: DateTime(1995),
+                                                                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                                                                              // This will add one year from current date
+                                                                              validator: (value) {
+                                                                                return null;
+                                                                              },
+                                                                              onChanged: (value) {
+                                                                                if (value.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    fromdate1 = DateTime.parse(value).toString();
+                                                                                  });
+                                                                                }
+                                                                              },
+                                                                              // We can also use onSaved
+                                                                              onSaved: (value) {
+                                                                                if (value!.isNotEmpty) {
+                                                                                  fromdate1 = DateTime.parse(value).toString();
+                                                                                }
+                                                                              },
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          10,
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        SizedBox(
+                                                                            width: MediaQuery.of(context).size.width *
+                                                                                0.25,
+                                                                            child:
+                                                                                const Text(
+                                                                              'To Date',
+                                                                              style: TextStyle(
+                                                                                fontSize: 15,
+                                                                                fontWeight: FontWeight.w500,
+                                                                              ),
+                                                                            )),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          height:
+                                                                              50,
+                                                                          width:
+                                                                              MediaQuery.of(context).size.width * 0.6,
+                                                                          child:
+                                                                              Center(
+                                                                            child:
+                                                                                DateTimePicker(
+                                                                              decoration: InputDecoration(
+                                                                                  filled: true,
+                                                                                  //<-- SEE HERE
+                                                                                  fillColor: Colors.white,
+                                                                                  prefixIcon: const Icon(
+                                                                                    Icons.arrow_right,
+                                                                                    color: Colors.grey,
+                                                                                  ),
+                                                                                  counterText: "",
+                                                                                  hintText: 'To date',
+                                                                                  isDense: true,
+                                                                                  border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
+                                                                              initialValue: todate1.toString(),
+                                                                              type: DateTimePickerType.date,
+
+                                                                              //controller: fromDate,
+                                                                              firstDate: DateTime(1995),
+                                                                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                                                                              // This will add one year from current date
+                                                                              validator: (value) {
+                                                                                return null;
+                                                                              },
+                                                                              onChanged: (value) {
+                                                                                if (value.isNotEmpty) {
+                                                                                  setState(() {
+                                                                                    todate1 = DateTime.parse(value);
+                                                                                  });
+                                                                                }
+                                                                              },
+                                                                              // We can also use onSaved
+                                                                              onSaved: (value) {
+                                                                                if (value!.isNotEmpty) {
+                                                                                  todate1 = DateTime.parse(value);
+                                                                                }
+                                                                              },
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            16),
+                                                                    Container(
+                                                                      height:
+                                                                          40,
+                                                                      width: double
+                                                                          .maxFinite,
+                                                                      decoration:
+                                                                          const BoxDecoration(
+                                                                        color: Color(
+                                                                            0xFF3375e0),
+                                                                        borderRadius:
+                                                                            BorderRadius.all(Radius.circular(8)),
+                                                                      ),
+                                                                      child:
+                                                                          RawMaterialButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          setState(
+                                                                              () {
+                                                                            data.remove(data);
+                                                                          });
+                                                                          getStaffwise();
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          Navigator.of(context, rootNavigator: true)
+                                                                              .pop();
+                                                                        },
+                                                                        child:
+                                                                            const Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'Continue',
+                                                                            style:
+                                                                                TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontWeight: FontWeight.w500,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    transitionBuilder: (_,
+                                                        animation1, __, child) {
+                                                      return SlideTransition(
+                                                        position: Tween(
+                                                          begin: const Offset(
+                                                              0, 1),
+                                                          end: const Offset(
+                                                              0, 0),
+                                                        ).animate(animation1),
+                                                        child: child,
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.grey.shade100,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5)),
+                                                  child: Center(
+                                                    child: Center(
+                                                        child: Image.asset(
+                                                            "assets/icons/calendar.png",
+                                                            width: 25)),
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 20),
+                                          child: Text(
+                                              'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        Divider(
+                                          color: Colors.grey.shade300,
+                                          thickness: 1.0,
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        if (leadDashboard != null)
+                                          data.isNotEmpty
+                                              ? Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: PieChart(
+                                                    dataMap: data,
+                                                    animationDuration:
+                                                        const Duration(
+                                                            milliseconds: 800),
+                                                    chartLegendSpacing: 20,
+                                                    chartRadius:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width /
+                                                            2.5,
+                                                    colorList: _colors,
+                                                    initialAngleInDegree: 0,
+                                                    chartType: ChartType.ring,
+                                                    ringStrokeWidth: 25,
+                                                    centerText: leadDashboard!
+                                                        .data
+                                                        .currentLeadsCount
+                                                        .total,
+                                                    centerTextStyle:
+                                                        const TextStyle(
+                                                            fontSize: 20,
+                                                            color:
+                                                                Colors.black),
+                                                    legendOptions:
+                                                        const LegendOptions(
+                                                      legendShape:
+                                                          BoxShape.rectangle,
+                                                      showLegendsInRow: false,
+                                                      legendPosition:
+                                                          LegendPosition.right,
+                                                      showLegends: true,
+                                                      legendTextStyle:
+                                                          TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    chartValuesOptions:
+                                                        const ChartValuesOptions(
+                                                      showChartValueBackground:
+                                                          false,
+                                                      showChartValues: false,
+                                                      showChartValuesInPercentage:
+                                                          false,
+                                                      showChartValuesOutside:
+                                                          true,
+                                                      decimalPlaces: 1,
+                                                    ),
+                                                    // gradientList: ---To add gradient colors---
+                                                    // emptyColorGradient: ---Empty Color gradient---
+                                                  ),
+                                                )
+                                              : Column(
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
                                                       crossAxisAlignment:
                                                           CrossAxisAlignment
-                                                              .stretch,
+                                                              .center,
                                                       children: [
-                                                        for (var i = 0;
-                                                            i <
-                                                                staffWise!
-                                                                    .data!
-                                                                    .staffLeads!
-                                                                    .length;
-                                                            i++)
-                                                          Expanded(
-                                                              flex: staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      i]
-                                                                  .staffPercentage!,
-                                                              child: Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  borderRadius: staffWise!
-                                                                              .data!
-                                                                              .staffLeads!
-                                                                              .length ==
-                                                                          1
-                                                                      ? const BorderRadius
-                                                                          .only(
-                                                                          topLeft: Radius.circular(
-                                                                              5),
-                                                                          bottomLeft: Radius.circular(
-                                                                              5),
-                                                                          topRight: Radius.circular(
-                                                                              5),
-                                                                          bottomRight: Radius.circular(
-                                                                              5))
-                                                                      : i == 0
-                                                                          ? const BorderRadius
-                                                                              .only(
-                                                                              topLeft: Radius.circular(5),
-                                                                              bottomLeft: Radius.circular(5),
-                                                                            )
-                                                                          : i == staffWise!.data!.staffLeads!.length - 1
-                                                                              ? const BorderRadius.only(topRight: Radius.circular(5), bottomRight: Radius.circular(5))
-                                                                              : BorderRadius.circular(0),
-                                                                  color: staffWise!
-                                                                              .data!
-                                                                              .staffLeads!
-                                                                              .length >
-                                                                          _colors
-                                                                              .length
-                                                                      ? Colors
-                                                                          .red
-                                                                      : _colors[
-                                                                          i],
-                                                                ),
-                                                                child: const Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    child: Text(
-                                                                        '',
-                                                                        style: TextStyle(
-                                                                            fontSize:
-                                                                                10,
-                                                                            color:
-                                                                                Colors.white))),
-                                                              )),
+                                                        Image.asset(
+                                                          'assets/icons/nodatafound.png',
+                                                          width: 100,
+                                                          height: 100,
+                                                        ),
                                                       ],
                                                     ),
-                                                  )),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Table(columnWidths: const {
-                                              0: FlexColumnWidth(10),
-                                              1: FlexColumnWidth(5),
-                                              2: FlexColumnWidth(5),
-                                              3: FlexColumnWidth(5),
-                                              4: FlexColumnWidth(5),
-                                              5: FlexColumnWidth(5),
-                                            }, children: [
-                                              const TableRow(
-                                                  // decoration: new BoxDecoration(
-                                                  //     color: Colors.greenAccent),
-                                                  children: [
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        "",
-                                                        style: TextStyle(
-                                                            fontSize: 17,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
+                                                    const Text(
+                                                      'Result Not Found',
+                                                      style: TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.bold),
                                                     ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        'New',
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
+                                                    const SizedBox(
+                                                      height: 10,
                                                     ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        'Pending',
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
+                                                    const Text(
+                                                      'Whoops... this information is \n not available for a moment',
+                                                      style: TextStyle(
+                                                          fontSize: 13),
                                                     ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        'Followup',
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.black,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
+                                                    const SizedBox(
+                                                      height: 15,
                                                     ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        'Rejected',
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            color: Colors.red,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                    Padding(
-                                                      padding: EdgeInsets.only(
-                                                          top: 10, bottom: 10),
-                                                      child: Center(
-                                                          child: Text(
-                                                        'Closed',
-                                                        style: TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      )),
-                                                    ),
-                                                  ]),
-                                              for (int j = 0;
-                                                  j <
-                                                      staffWise!.data!
-                                                          .staffLeads!.length;
-                                                  j++)
-                                                TableRow(
-                                                    // decoration: new BoxDecoration(
-                                                    //     color: Colors.greenAccent),
-                                                    children: [
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Navigator.of(context).push(MaterialPageRoute(
-                                                              builder: (context) => StaffDashboard(
-                                                                  widget.token,
-                                                                  staffWise!
-                                                                      .data!
-                                                                      .staffLeads![
-                                                                          j]
-                                                                      .staffId
-                                                                      .toString(),
-                                                                  staffWise!
-                                                                      .data!
-                                                                      .staffLeads![
-                                                                          j]
-                                                                      .staffName
-                                                                      .toString())));
-                                                        },
-                                                        child: Padding(
+                                                  ],
+                                                ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        const Divider(),
+                                        data.isNotEmpty
+                                            ? Column(
+                                                children: [
+                                                  Table(columnWidths: const {
+                                                    0: FlexColumnWidth(10),
+                                                    1: FlexColumnWidth(5),
+                                                    2: FlexColumnWidth(5),
+                                                    3: FlexColumnWidth(5),
+                                                    4: FlexColumnWidth(5),
+                                                    5: FlexColumnWidth(5),
+                                                  }, children: [
+                                                    const TableRow(
+                                                        // decoration: new BoxDecoration(
+                                                        //     color: Colors.greenAccent),
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              "",
+                                                              style: TextStyle(
+                                                                  fontSize: 17,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              'New',
+                                                              style: TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              'Pending',
+                                                              style: TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              'Followup',
+                                                              style: TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              'Rejected',
+                                                              style: TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .red,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                          Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    top: 10,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              'Closed',
+                                                              style: TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
+                                                        ]),
+                                                    for (int i = 0;
+                                                        i <
+                                                            staffWise!
+                                                                .data!
+                                                                .categoryLeads!
+                                                                .length;
+                                                        i++)
+                                                      TableRow(children: [
+                                                        Padding(
                                                           padding:
                                                               const EdgeInsets
                                                                   .only(
                                                                   top: 0,
                                                                   bottom: 10,
-                                                                  left: 15),
+                                                                  left: 10),
                                                           child: Text(
                                                             staffWise!
                                                                 .data!
-                                                                .staffLeads![j]
-                                                                .staffName
+                                                                .categoryLeads![
+                                                                    i]
+                                                                .categoryName
                                                                 .toString(),
                                                             style: TextStyle(
                                                                 fontSize: 10,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
-                                                                color: staffWise!
-                                                                            .data!
-                                                                            .staffLeads!
-                                                                            .length >
-                                                                        _colors
-                                                                            .length
-                                                                    ? Colors.red
-                                                                    : _colors[
-                                                                        j]),
+                                                                color:
+                                                                    _colors[i]),
                                                           ),
                                                         ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Common.saveSharedPref(
-                                                              "statusWise",
-                                                              'yes');
-                                                          Common.saveSharedPref(
-                                                              "statusWisId",
-                                                              '1');
-                                                          Common.saveSharedPref(
-                                                              "type", 'staff');
-                                                          Common.saveSharedPref(
-                                                              "statusCatId",
-                                                              staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      j]
-                                                                  .staffId
-                                                                  .toString());
-                                                          viewLeadPermission ==
-                                                                  'true'
-                                                              ? Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token,
-                                                                                updateLeadPermission1,
-                                                                                deleteLeadPermission1,
-                                                                                cloudCallPermission1,
-                                                                                pageName: 'New Leads',
-                                                                                fromDate: fromdate1.toString(),
-                                                                                toDate: todate1.toString(),
-                                                                              )),
-                                                                ).then((r) {
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  if (loadmore ==
-                                                                      true) {
-                                                                    getStaffwise();
-                                                                  }
-                                                                })
-                                                              : _dialogue(
-                                                                  context,
-                                                                  'View Leads');
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10),
-                                                          child: Center(
-                                                              child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads![j]
-                                                                .newCount
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Common.saveSharedPref(
-                                                              "statusWise",
-                                                              'yes');
-                                                          Common.saveSharedPref(
-                                                              "statusWisId",
-                                                              '2');
-                                                          Common.saveSharedPref(
-                                                              "type", 'staff');
-                                                          Common.saveSharedPref(
-                                                              "statusCatId",
-                                                              staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      j]
-                                                                  .staffId
-                                                                  .toString());
-                                                          viewLeadPermission ==
-                                                                  'true'
-                                                              ? Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token,
-                                                                                updateLeadPermission1,
-                                                                                deleteLeadPermission1,
-                                                                                cloudCallPermission1,
-                                                                                pageName: 'Pending Leads',
-                                                                                fromDate: fromdate1.toString(),
-                                                                                toDate: todate1.toString(),
-                                                                              )),
-                                                                ).then((r) {
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  if (loadmore ==
-                                                                      true) {
-                                                                    getStaffwise();
-                                                                  }
-                                                                })
-                                                              : _dialogue(
-                                                                  context,
-                                                                  'View Leads');
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10),
-                                                          child: Center(
-                                                              child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads![j]
-                                                                .pendingCount
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Common.saveSharedPref(
-                                                              "statusWise",
-                                                              'yes');
-                                                          Common.saveSharedPref(
-                                                              "statusWisId",
-                                                              '3');
-                                                          Common.saveSharedPref(
-                                                              "type", 'staff');
-                                                          Common.saveSharedPref(
-                                                              "statusCatId",
-                                                              staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      j]
-                                                                  .staffId
-                                                                  .toString());
-                                                          viewLeadPermission ==
-                                                                  'true'
-                                                              ? Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token,
-                                                                                updateLeadPermission1,
-                                                                                deleteLeadPermission1,
-                                                                                cloudCallPermission1,
-                                                                                pageName: 'Followup Leads',
-                                                                                fromDate: fromdate1.toString(),
-                                                                                toDate: todate1.toString(),
-                                                                              )),
-                                                                ).then((r) {
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  if (loadmore ==
-                                                                      true) {
-                                                                    getStaffwise();
-                                                                  }
-                                                                })
-                                                              : _dialogue(
-                                                                  context,
-                                                                  'View Leads');
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10),
-                                                          child: Center(
-                                                              child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads![j]
-                                                                .followupCount
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Common.saveSharedPref(
-                                                              "statusWise",
-                                                              'yes');
-                                                          Common.saveSharedPref(
-                                                              "statusWisId",
-                                                              '4');
-                                                          Common.saveSharedPref(
-                                                              "type", 'staff');
-                                                          Common.saveSharedPref(
-                                                              "statusCatId",
-                                                              staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      j]
-                                                                  .staffId
-                                                                  .toString());
-                                                          viewLeadPermission ==
-                                                                  'true'
-                                                              ? Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token,
-                                                                                updateLeadPermission1,
-                                                                                deleteLeadPermission1,
-                                                                                cloudCallPermission1,
-                                                                                pageName: 'Rejected Leads',
-                                                                                fromDate: fromdate1.toString(),
-                                                                                toDate: todate1.toString(),
-                                                                              )),
-                                                                ).then((r) {
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  if (loadmore ==
-                                                                      true) {
-                                                                    getStaffwise();
-                                                                  }
-                                                                })
-                                                              : _dialogue(
-                                                                  context,
-                                                                  'View Leads');
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10),
-                                                          child: Center(
-                                                              child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads![j]
-                                                                .rejectedCount
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                color:
-                                                                    Colors.red,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () {
-                                                          Common.saveSharedPref(
-                                                              "statusWise",
-                                                              'yes');
-                                                          Common.saveSharedPref(
-                                                              "statusWisId",
-                                                              '5');
-                                                          Common.saveSharedPref(
-                                                              "type", 'staff');
-                                                          Common.saveSharedPref(
-                                                              "statusCatId",
-                                                              staffWise!
-                                                                  .data!
-                                                                  .staffLeads![
-                                                                      j]
-                                                                  .staffId
-                                                                  .toString());
-                                                          viewLeadPermission ==
-                                                                  'true'
-                                                              ? Navigator.push(
-                                                                  context,
-                                                                  MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewLeads(
-                                                                                widget.token,
-                                                                                updateLeadPermission1,
-                                                                                deleteLeadPermission1,
-                                                                                cloudCallPermission1,
-                                                                                pageName: 'Closed Leads',
-                                                                                fromDate: fromdate1.toString(),
-                                                                                toDate: todate1.toString(),
-                                                                              )),
-                                                                ).then((r) {
-                                                                  getData(
-                                                                      widget
-                                                                          .token,
-                                                                      fromdate,
-                                                                      todate);
-                                                                  if (loadmore ==
-                                                                      true) {
-                                                                    getStaffwise();
-                                                                  }
-                                                                })
-                                                              : _dialogue(
-                                                                  context,
-                                                                  'View Leads');
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 0,
-                                                                  bottom: 10),
-                                                          child: Center(
-                                                              child: Text(
-                                                            staffWise!
-                                                                .data!
-                                                                .staffLeads![j]
-                                                                .confirmedCount
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
-                                                        ),
-                                                      ),
-                                                    ]),
-                                            ]),
-                                            const Divider(
-                                              endIndent: 8,
-                                              indent: 8,
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 5.0, bottom: 12.0),
-                                              child: Table(
-                                                columnWidths: const {
-                                                  0: FlexColumnWidth(10),
-                                                  1: FlexColumnWidth(5),
-                                                  2: FlexColumnWidth(5),
-                                                  3: FlexColumnWidth(5),
-                                                  4: FlexColumnWidth(5),
-                                                  5: FlexColumnWidth(5),
-                                                },
-                                                children: [
-                                                  TableRow(
-                                                      // decoration: new BoxDecoration(
-                                                      //     color: Colors.greenAccent),
-                                                      children: [
-                                                        const Center(
-                                                            child: Text(
-                                                          "Total Leads",
-                                                          style: TextStyle(
-                                                              fontSize: 11,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        )),
                                                         InkWell(
                                                           onTap: () {
                                                             Common
@@ -6353,10 +4732,15 @@ class _DashboardState extends State<Dashboard> {
                                                             Common
                                                                 .saveSharedPref(
                                                                     "type",
-                                                                    'staff');
+                                                                    'category');
                                                             Common.saveSharedPref(
                                                                 "statusCatId",
-                                                                "-1");
+                                                                staffWise!
+                                                                    .data!
+                                                                    .categoryLeads![
+                                                                        i]
+                                                                    .categoryid
+                                                                    .toString());
                                                             viewLeadPermission ==
                                                                     'true'
                                                                 ? Navigator
@@ -6388,15 +4772,29 @@ class _DashboardState extends State<Dashboard> {
                                                                     context,
                                                                     'View Leads');
                                                           },
-                                                          child: Center(
-                                                              child: Text(
-                                                            stfNew.toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 0,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              staffWise!
+                                                                  .data!
+                                                                  .categoryLeads![
+                                                                      i]
+                                                                  .newCount
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
                                                         ),
                                                         InkWell(
                                                           onTap: () {
@@ -6410,10 +4808,15 @@ class _DashboardState extends State<Dashboard> {
                                                             Common
                                                                 .saveSharedPref(
                                                                     "type",
-                                                                    'staff');
+                                                                    'category');
                                                             Common.saveSharedPref(
                                                                 "statusCatId",
-                                                                "-1");
+                                                                staffWise!
+                                                                    .data!
+                                                                    .categoryLeads![
+                                                                        i]
+                                                                    .categoryid
+                                                                    .toString());
                                                             viewLeadPermission ==
                                                                     'true'
                                                                 ? Navigator
@@ -6445,16 +4848,29 @@ class _DashboardState extends State<Dashboard> {
                                                                     context,
                                                                     'View Leads');
                                                           },
-                                                          child: Center(
-                                                              child: Text(
-                                                            stfPending
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 0,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              staffWise!
+                                                                  .data!
+                                                                  .categoryLeads![
+                                                                      i]
+                                                                  .pendingCount
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
                                                         ),
                                                         InkWell(
                                                           onTap: () {
@@ -6468,10 +4884,15 @@ class _DashboardState extends State<Dashboard> {
                                                             Common
                                                                 .saveSharedPref(
                                                                     "type",
-                                                                    'staff');
+                                                                    'category');
                                                             Common.saveSharedPref(
                                                                 "statusCatId",
-                                                                "-1");
+                                                                staffWise!
+                                                                    .data!
+                                                                    .categoryLeads![
+                                                                        i]
+                                                                    .categoryid
+                                                                    .toString());
                                                             viewLeadPermission ==
                                                                     'true'
                                                                 ? Navigator
@@ -6503,18 +4924,29 @@ class _DashboardState extends State<Dashboard> {
                                                                     context,
                                                                     'View Leads');
                                                           },
-                                                          child: Center(
-                                                              child: Text(
-                                                            stfFollowup
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 0,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              staffWise!
+                                                                  .data!
+                                                                  .categoryLeads![
+                                                                      i]
+                                                                  .followupCount
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
                                                         ),
                                                         InkWell(
                                                           onTap: () {
@@ -6528,10 +4960,15 @@ class _DashboardState extends State<Dashboard> {
                                                             Common
                                                                 .saveSharedPref(
                                                                     "type",
-                                                                    'staff');
+                                                                    'category');
                                                             Common.saveSharedPref(
                                                                 "statusCatId",
-                                                                "-1");
+                                                                staffWise!
+                                                                    .data!
+                                                                    .categoryLeads![
+                                                                        i]
+                                                                    .categoryid
+                                                                    .toString());
                                                             viewLeadPermission ==
                                                                     'true'
                                                                 ? Navigator
@@ -6563,18 +5000,31 @@ class _DashboardState extends State<Dashboard> {
                                                                     context,
                                                                     'View Leads');
                                                           },
-                                                          child: Center(
-                                                              child: Text(
-                                                            stfRejected
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                color:
-                                                                    Colors.red,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 0,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              staffWise!
+                                                                  .data!
+                                                                  .categoryLeads![
+                                                                      i]
+                                                                  .rejectedCount
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .red,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
                                                         ),
                                                         InkWell(
                                                           onTap: () {
@@ -6585,13 +5035,18 @@ class _DashboardState extends State<Dashboard> {
                                                             Common
                                                                 .saveSharedPref(
                                                                     "type",
-                                                                    'staff');
-                                                            Common.saveSharedPref(
-                                                                "statusCatId",
-                                                                "-1");
+                                                                    'category');
                                                             Common.saveSharedPref(
                                                                 "statusWisId",
                                                                 '5');
+                                                            Common.saveSharedPref(
+                                                                "statusCatId",
+                                                                staffWise!
+                                                                    .data!
+                                                                    .categoryLeads![
+                                                                        i]
+                                                                    .categoryid
+                                                                    .toString());
                                                             viewLeadPermission ==
                                                                     'true'
                                                                 ? Navigator
@@ -6623,102 +5078,1513 @@ class _DashboardState extends State<Dashboard> {
                                                                     context,
                                                                     'View Leads');
                                                           },
-                                                          child: Center(
-                                                              child: Text(
-                                                            stfClosed
-                                                                .toString(),
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          )),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 0,
+                                                                    bottom: 10),
+                                                            child: Center(
+                                                                child: Text(
+                                                              textAlign:
+                                                                  TextAlign.end,
+                                                              staffWise!
+                                                                  .data!
+                                                                  .categoryLeads![
+                                                                      i]
+                                                                  .confirmedCount
+                                                                  .toString(),
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            )),
+                                                          ),
                                                         ),
                                                       ]),
+                                                  ]),
+                                                  const Divider(
+                                                    endIndent: 8,
+                                                    indent: 8,
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 8.0,
+                                                            bottom: 12.0),
+                                                    child: Table(
+                                                      columnWidths: const {
+                                                        0: FlexColumnWidth(10),
+                                                        1: FlexColumnWidth(5),
+                                                        2: FlexColumnWidth(5),
+                                                        3: FlexColumnWidth(5),
+                                                        4: FlexColumnWidth(5),
+                                                        5: FlexColumnWidth(5),
+                                                      },
+                                                      children: [
+                                                        TableRow(
+                                                            // decoration: new BoxDecoration(
+                                                            //     color: Colors.greenAccent),
+                                                            children: [
+                                                              const Center(
+                                                                  child: Text(
+                                                                "Total Leads",
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        11,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold),
+                                                              )),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Common.saveSharedPref(
+                                                                      "statusWise",
+                                                                      'yes');
+                                                                  Common.saveSharedPref(
+                                                                      "statusWisId",
+                                                                      '1');
+                                                                  Common.saveSharedPref(
+                                                                      "type",
+                                                                      'category');
+                                                                  Common.saveSharedPref(
+                                                                      "statusCatId",
+                                                                      "-1");
+                                                                  viewLeadPermission ==
+                                                                          'true'
+                                                                      ? Navigator
+                                                                          .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ViewLeads(
+                                                                                    widget.token,
+                                                                                    updateLeadPermission1,
+                                                                                    deleteLeadPermission1,
+                                                                                    cloudCallPermission1,
+                                                                                    pageName: 'New Leads',
+                                                                                    // fromDate: fromdate1.toString(),
+                                                                                    // toDate: todate1.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
+                                                                      : _dialogue(
+                                                                          context,
+                                                                          'View Leads');
+                                                                },
+                                                                child: Center(
+                                                                    child: Text(
+                                                                  catNew
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                )),
+                                                              ),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Common.saveSharedPref(
+                                                                      "statusWise",
+                                                                      'yes');
+                                                                  Common.saveSharedPref(
+                                                                      "statusWisId",
+                                                                      '2');
+                                                                  Common.saveSharedPref(
+                                                                      "type",
+                                                                      'category');
+                                                                  Common.saveSharedPref(
+                                                                      "statusCatId",
+                                                                      "-1");
+                                                                  viewLeadPermission ==
+                                                                          'true'
+                                                                      ? Navigator
+                                                                          .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ViewLeads(
+                                                                                    widget.token,
+                                                                                    updateLeadPermission1,
+                                                                                    deleteLeadPermission1,
+                                                                                    cloudCallPermission1,
+                                                                                    pageName: 'Pending Leads',
+                                                                                    fromDate: fromdate1.toString(),
+                                                                                    toDate: todate1.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
+                                                                      : _dialogue(
+                                                                          context,
+                                                                          'View Leads');
+                                                                },
+                                                                child: Center(
+                                                                    child: Text(
+                                                                  catPending
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                )),
+                                                              ),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Common.saveSharedPref(
+                                                                      "statusWise",
+                                                                      'yes');
+                                                                  Common.saveSharedPref(
+                                                                      "statusWisId",
+                                                                      '3');
+                                                                  Common.saveSharedPref(
+                                                                      "type",
+                                                                      'category');
+                                                                  Common.saveSharedPref(
+                                                                      "statusCatId",
+                                                                      "-1");
+                                                                  viewLeadPermission ==
+                                                                          'true'
+                                                                      ? Navigator
+                                                                          .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ViewLeads(
+                                                                                    widget.token,
+                                                                                    updateLeadPermission1,
+                                                                                    deleteLeadPermission1,
+                                                                                    cloudCallPermission1,
+                                                                                    pageName: 'Followup Leads',
+                                                                                    fromDate: fromdate1.toString(),
+                                                                                    toDate: todate1.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
+                                                                      : _dialogue(
+                                                                          context,
+                                                                          'View Leads');
+                                                                },
+                                                                child: Center(
+                                                                    child: Text(
+                                                                  catFollowup
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                )),
+                                                              ),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Common.saveSharedPref(
+                                                                      "statusWise",
+                                                                      'yes');
+                                                                  Common.saveSharedPref(
+                                                                      "statusWisId",
+                                                                      '4');
+                                                                  Common.saveSharedPref(
+                                                                      "type",
+                                                                      'category');
+                                                                  Common.saveSharedPref(
+                                                                      "statusCatId",
+                                                                      "-1");
+                                                                  viewLeadPermission ==
+                                                                          'true'
+                                                                      ? Navigator
+                                                                          .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ViewLeads(
+                                                                                    widget.token,
+                                                                                    updateLeadPermission1,
+                                                                                    updateLeadPermission1,
+                                                                                    cloudCallPermission1,
+                                                                                    pageName: 'Rejected Leads',
+                                                                                    fromDate: fromdate1.toString(),
+                                                                                    toDate: todate1.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
+                                                                      : _dialogue(
+                                                                          context,
+                                                                          'View Leads');
+                                                                },
+                                                                child: Center(
+                                                                    child: Text(
+                                                                  catRejected
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      color: Colors
+                                                                          .red,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                )),
+                                                              ),
+                                                              InkWell(
+                                                                onTap: () {
+                                                                  Common.saveSharedPref(
+                                                                      "statusWise",
+                                                                      'yes');
+                                                                  Common.saveSharedPref(
+                                                                      "type",
+                                                                      'category');
+                                                                  Common.saveSharedPref(
+                                                                      "statusCatId",
+                                                                      "-1");
+                                                                  Common.saveSharedPref(
+                                                                      "statusWisId",
+                                                                      '5');
+                                                                  viewLeadPermission ==
+                                                                          'true'
+                                                                      ? Navigator
+                                                                          .push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => ViewLeads(
+                                                                                    widget.token,
+                                                                                    updateLeadPermission1,
+                                                                                    deleteLeadPermission1,
+                                                                                    cloudCallPermission1,
+                                                                                    pageName: 'Closed Leads',
+                                                                                    fromDate: fromdate1.toString(),
+                                                                                    toDate: todate1.toString(),
+                                                                                  )),
+                                                                        ).then(
+                                                                          (r) {
+                                                                          getData(
+                                                                              widget.token,
+                                                                              fromdate,
+                                                                              todate);
+                                                                          if (loadmore ==
+                                                                              true) {
+                                                                            getStaffwise();
+                                                                          }
+                                                                        })
+                                                                      : _dialogue(
+                                                                          context,
+                                                                          'View Leads');
+                                                                },
+                                                                child: Center(
+                                                                    child: Text(
+                                                                  catClosed
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          10,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                )),
+                                                              ),
+                                                            ]),
+                                                      ],
+                                                    ),
+                                                  )
                                                 ],
-                                              ),
-                                            )
-                                          ],
-                                        )),
-                                  ],
-                                ),
-                              )
-                      ],
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Colors.grey,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(0.1),
-                            child: Card(
-                              // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              // Set the clip behavior of the card
-                              clipBehavior: Clip.antiAliasWithSaveLayer,
-                              // Define the child widgets of the card
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
-                                  Image.asset(
-                                    'assets/main/packageimage.png',
-                                    height: 160,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  // Add a container with padding that contains the card's title, text, and buttons
-                                  Container(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        15, 15, 15, 0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: <Widget>[
-                                        const Text(
-                                          'Package Expired..',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                        // Add a row with two buttons spaced apart and aligned to the right side of the card
-                                        Row(
-                                          children: <Widget>[
-                                            // Add a spacer to push the buttons to the right side of the card
-                                            const Spacer(),
-                                            // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
-
-                                            // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
-                                            TextButton(
-                                              child: const Text(
-                                                "UPGRADE",
-                                              ),
-                                              onPressed: () {
-                                                _upgrade(context);
-                                              },
-                                            ),
-                                          ],
-                                        ),
+                                              )
+                                            : const SizedBox(),
                                       ],
                                     ),
                                   ),
-                                  // Add a small space between the card and the next widget
-                                  Container(height: 5),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(
+                                  height: 20,
+                                ),
+                                Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.grey,
+                                          offset: Offset(0, 2.0),
+                                        )
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 20),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                'Staff Wise Report',
+                                                style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 20),
+                                          child: Text(
+                                              'From ${DateFormat("dd-MM-yyyy").format(DateTime.parse(fromdate1))} To ${DateFormat("dd-MM-yyyy").format(todate1)}'),
+                                        ),
+                                        Divider(
+                                          color: Colors.grey.shade300,
+                                          thickness: 1.0,
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 20),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                ' Total Leads ',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black,
+                                                    fontSize: 16),
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .25,
+                                                    decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        color: Colors.lightBlue
+                                                            .shade100),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          // const Text(
+                                                          //   ' Current \nMonth',
+                                                          //   textAlign:
+                                                          //       TextAlign.center,
+                                                          //   style: TextStyle(
+                                                          //       fontWeight: FontWeight.bold,
+                                                          //       color: Colors.black,
+                                                          //       fontSize: 14),
+                                                          // ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .currentLeadsCount
+                                                                  .month,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontSize: 14),
+                                                            ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .currentLeadsCount
+                                                                  .date,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .normal,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  fontSize: 9),
+                                                            ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .currentLeadsCount
+                                                                  .total
+                                                                  .toString(),
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade900,
+                                                                  fontSize: 16),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .25,
+                                                    decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        color: Colors
+                                                            .orange.shade100),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          // const Text(
+                                                          //   ' Previous \nMonth ',
+                                                          //   textAlign:
+                                                          //       TextAlign.center,
+                                                          //   style: TextStyle(
+                                                          //       fontWeight: FontWeight.bold,
+                                                          //       color: Colors.black,
+                                                          //       fontSize: 14),
+                                                          // ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .previousLeadsCount
+                                                                  .month,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontSize: 14),
+                                                            ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .previousLeadsCount
+                                                                  .date,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .normal,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                  fontSize: 9),
+                                                            ),
+                                                          const SizedBox(
+                                                            height: 5,
+                                                          ),
+                                                          if (leadDashboard !=
+                                                              null)
+                                                            Text(
+                                                              leadDashboard!
+                                                                  .data
+                                                                  .previousLeadsCount
+                                                                  .total
+                                                                  .toString(),
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade900,
+                                                                  fontSize: 16),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    height: 90,
+                                                    width: 100,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      image: DecorationImage(
+                                                        image: AssetImage(
+                                                            'assets/main/lead.png'),
+                                                        fit: BoxFit.fill,
+                                                      ),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 10, right: 10),
+                                          child: Align(
+                                              alignment: Alignment.center,
+                                              child: Container(
+                                                height: 15,
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10)),
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .stretch,
+                                                  children: [
+                                                    for (var i = 0;
+                                                        i <
+                                                            staffWise!
+                                                                .data!
+                                                                .staffLeads!
+                                                                .length;
+                                                        i++)
+                                                      Expanded(
+                                                          flex: staffWise!
+                                                              .data!
+                                                              .staffLeads![i]
+                                                              .staffPercentage!,
+                                                          child: Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              borderRadius: staffWise!
+                                                                          .data!
+                                                                          .staffLeads!
+                                                                          .length ==
+                                                                      1
+                                                                  ? const BorderRadius
+                                                                      .only(
+                                                                      topLeft:
+                                                                          Radius.circular(
+                                                                              5),
+                                                                      bottomLeft:
+                                                                          Radius.circular(
+                                                                              5),
+                                                                      topRight:
+                                                                          Radius.circular(
+                                                                              5),
+                                                                      bottomRight:
+                                                                          Radius.circular(
+                                                                              5))
+                                                                  : i == 0
+                                                                      ? const BorderRadius
+                                                                          .only(
+                                                                          topLeft:
+                                                                              Radius.circular(5),
+                                                                          bottomLeft:
+                                                                              Radius.circular(5),
+                                                                        )
+                                                                      : i ==
+                                                                              staffWise!.data!.staffLeads!.length -
+                                                                                  1
+                                                                          ? const BorderRadius.only(
+                                                                              topRight: Radius.circular(5),
+                                                                              bottomRight: Radius.circular(5))
+                                                                          : BorderRadius.circular(0),
+                                                              color: staffWise!
+                                                                          .data!
+                                                                          .staffLeads!
+                                                                          .length >
+                                                                      _colors
+                                                                          .length
+                                                                  ? Colors.red
+                                                                  : _colors[i],
+                                                            ),
+                                                            child: const Align(
+                                                                alignment:
+                                                                    Alignment
+                                                                        .center,
+                                                                child: Text('',
+                                                                    style: TextStyle(
+                                                                        fontSize:
+                                                                            10,
+                                                                        color: Colors
+                                                                            .white))),
+                                                          )),
+                                                  ],
+                                                ),
+                                              )),
+                                        ),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        Table(columnWidths: const {
+                                          0: FlexColumnWidth(10),
+                                          1: FlexColumnWidth(5),
+                                          2: FlexColumnWidth(5),
+                                          3: FlexColumnWidth(5),
+                                          4: FlexColumnWidth(5),
+                                          5: FlexColumnWidth(5),
+                                        }, children: [
+                                          const TableRow(
+                                              // decoration: new BoxDecoration(
+                                              //     color: Colors.greenAccent),
+                                              children: [
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    "",
+                                                    style: TextStyle(
+                                                        fontSize: 17,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    'New',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    'Pending',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    'Followup',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    'Rejected',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors.red,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      top: 10, bottom: 10),
+                                                  child: Center(
+                                                      child: Text(
+                                                    'Closed',
+                                                    style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )),
+                                                ),
+                                              ]),
+                                          for (int j = 0;
+                                              j <
+                                                  staffWise!
+                                                      .data!.staffLeads!.length;
+                                              j++)
+                                            TableRow(
+                                                // decoration: new BoxDecoration(
+                                                //     color: Colors.greenAccent),
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Navigator.of(context).push(MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              StaffDashboard(
+                                                                  widget.token,
+                                                                  staffWise!
+                                                                      .data!
+                                                                      .staffLeads![
+                                                                          j]
+                                                                      .staffId
+                                                                      .toString(),
+                                                                  staffWise!
+                                                                      .data!
+                                                                      .staffLeads![
+                                                                          j]
+                                                                      .staffName
+                                                                      .toString())));
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10,
+                                                              left: 15),
+                                                      child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .staffName
+                                                            .toString(),
+                                                        style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: staffWise!
+                                                                        .data!
+                                                                        .staffLeads!
+                                                                        .length >
+                                                                    _colors
+                                                                        .length
+                                                                ? Colors.red
+                                                                : _colors[j]),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Common.saveSharedPref(
+                                                          "statusWise", 'yes');
+                                                      Common.saveSharedPref(
+                                                          "statusWisId", '1');
+                                                      Common.saveSharedPref(
+                                                          "type", 'staff');
+                                                      Common.saveSharedPref(
+                                                          "statusCatId",
+                                                          staffWise!
+                                                              .data!
+                                                              .staffLeads![j]
+                                                              .staffId
+                                                              .toString());
+                                                      viewLeadPermission ==
+                                                              'true'
+                                                          ? Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewLeads(
+                                                                            widget.token,
+                                                                            updateLeadPermission1,
+                                                                            deleteLeadPermission1,
+                                                                            cloudCallPermission1,
+                                                                            pageName:
+                                                                                'New Leads',
+                                                                            fromDate:
+                                                                                fromdate1.toString(),
+                                                                            toDate:
+                                                                                todate1.toString(),
+                                                                          )),
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
+                                                          : _dialogue(context,
+                                                              'View Leads');
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .newCount
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Common.saveSharedPref(
+                                                          "statusWise", 'yes');
+                                                      Common.saveSharedPref(
+                                                          "statusWisId", '2');
+                                                      Common.saveSharedPref(
+                                                          "type", 'staff');
+                                                      Common.saveSharedPref(
+                                                          "statusCatId",
+                                                          staffWise!
+                                                              .data!
+                                                              .staffLeads![j]
+                                                              .staffId
+                                                              .toString());
+                                                      viewLeadPermission ==
+                                                              'true'
+                                                          ? Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewLeads(
+                                                                            widget.token,
+                                                                            updateLeadPermission1,
+                                                                            deleteLeadPermission1,
+                                                                            cloudCallPermission1,
+                                                                            pageName:
+                                                                                'Pending Leads',
+                                                                            fromDate:
+                                                                                fromdate1.toString(),
+                                                                            toDate:
+                                                                                todate1.toString(),
+                                                                          )),
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
+                                                          : _dialogue(context,
+                                                              'View Leads');
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .pendingCount
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Common.saveSharedPref(
+                                                          "statusWise", 'yes');
+                                                      Common.saveSharedPref(
+                                                          "statusWisId", '3');
+                                                      Common.saveSharedPref(
+                                                          "type", 'staff');
+                                                      Common.saveSharedPref(
+                                                          "statusCatId",
+                                                          staffWise!
+                                                              .data!
+                                                              .staffLeads![j]
+                                                              .staffId
+                                                              .toString());
+                                                      viewLeadPermission ==
+                                                              'true'
+                                                          ? Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewLeads(
+                                                                            widget.token,
+                                                                            updateLeadPermission1,
+                                                                            deleteLeadPermission1,
+                                                                            cloudCallPermission1,
+                                                                            pageName:
+                                                                                'Followup Leads',
+                                                                            fromDate:
+                                                                                fromdate1.toString(),
+                                                                            toDate:
+                                                                                todate1.toString(),
+                                                                          )),
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
+                                                          : _dialogue(context,
+                                                              'View Leads');
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .followupCount
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Common.saveSharedPref(
+                                                          "statusWise", 'yes');
+                                                      Common.saveSharedPref(
+                                                          "statusWisId", '4');
+                                                      Common.saveSharedPref(
+                                                          "type", 'staff');
+                                                      Common.saveSharedPref(
+                                                          "statusCatId",
+                                                          staffWise!
+                                                              .data!
+                                                              .staffLeads![j]
+                                                              .staffId
+                                                              .toString());
+                                                      viewLeadPermission ==
+                                                              'true'
+                                                          ? Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewLeads(
+                                                                            widget.token,
+                                                                            updateLeadPermission1,
+                                                                            deleteLeadPermission1,
+                                                                            cloudCallPermission1,
+                                                                            pageName:
+                                                                                'Rejected Leads',
+                                                                            fromDate:
+                                                                                fromdate1.toString(),
+                                                                            toDate:
+                                                                                todate1.toString(),
+                                                                          )),
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
+                                                          : _dialogue(context,
+                                                              'View Leads');
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .rejectedCount
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.red,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () {
+                                                      Common.saveSharedPref(
+                                                          "statusWise", 'yes');
+                                                      Common.saveSharedPref(
+                                                          "statusWisId", '5');
+                                                      Common.saveSharedPref(
+                                                          "type", 'staff');
+                                                      Common.saveSharedPref(
+                                                          "statusCatId",
+                                                          staffWise!
+                                                              .data!
+                                                              .staffLeads![j]
+                                                              .staffId
+                                                              .toString());
+                                                      viewLeadPermission ==
+                                                              'true'
+                                                          ? Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ViewLeads(
+                                                                            widget.token,
+                                                                            updateLeadPermission1,
+                                                                            deleteLeadPermission1,
+                                                                            cloudCallPermission1,
+                                                                            pageName:
+                                                                                'Closed Leads',
+                                                                            fromDate:
+                                                                                fromdate1.toString(),
+                                                                            toDate:
+                                                                                todate1.toString(),
+                                                                          )),
+                                                            ).then((r) {
+                                                              getData(
+                                                                  widget.token,
+                                                                  fromdate,
+                                                                  todate);
+                                                              if (loadmore ==
+                                                                  true) {
+                                                                getStaffwise();
+                                                              }
+                                                            })
+                                                          : _dialogue(context,
+                                                              'View Leads');
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 0,
+                                                              bottom: 10),
+                                                      child: Center(
+                                                          child: Text(
+                                                        staffWise!
+                                                            .data!
+                                                            .staffLeads![j]
+                                                            .confirmedCount
+                                                            .toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ),
+                                                ]),
+                                        ]),
+                                        const Divider(
+                                          endIndent: 8,
+                                          indent: 8,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 5.0, bottom: 12.0),
+                                          child: Table(
+                                            columnWidths: const {
+                                              0: FlexColumnWidth(10),
+                                              1: FlexColumnWidth(5),
+                                              2: FlexColumnWidth(5),
+                                              3: FlexColumnWidth(5),
+                                              4: FlexColumnWidth(5),
+                                              5: FlexColumnWidth(5),
+                                            },
+                                            children: [
+                                              TableRow(
+                                                  // decoration: new BoxDecoration(
+                                                  //     color: Colors.greenAccent),
+                                                  children: [
+                                                    const Center(
+                                                        child: Text(
+                                                      "Total Leads",
+                                                      style: TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    )),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        Common.saveSharedPref(
+                                                            "statusWise",
+                                                            'yes');
+                                                        Common.saveSharedPref(
+                                                            "statusWisId", '1');
+                                                        Common.saveSharedPref(
+                                                            "type", 'staff');
+                                                        Common.saveSharedPref(
+                                                            "statusCatId",
+                                                            "-1");
+                                                        viewLeadPermission ==
+                                                                'true'
+                                                            ? Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ViewLeads(
+                                                                              widget.token,
+                                                                              updateLeadPermission1,
+                                                                              deleteLeadPermission1,
+                                                                              cloudCallPermission1,
+                                                                              pageName: 'New Leads',
+                                                                              fromDate: fromdate1.toString(),
+                                                                              toDate: todate1.toString(),
+                                                                            )),
+                                                              ).then((r) {
+                                                                getData(
+                                                                    widget
+                                                                        .token,
+                                                                    fromdate,
+                                                                    todate);
+                                                                if (loadmore ==
+                                                                    true) {
+                                                                  getStaffwise();
+                                                                }
+                                                              })
+                                                            : _dialogue(context,
+                                                                'View Leads');
+                                                      },
+                                                      child: Center(
+                                                          child: Text(
+                                                        stfNew.toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        Common.saveSharedPref(
+                                                            "statusWise",
+                                                            'yes');
+                                                        Common.saveSharedPref(
+                                                            "statusWisId", '2');
+                                                        Common.saveSharedPref(
+                                                            "type", 'staff');
+                                                        Common.saveSharedPref(
+                                                            "statusCatId",
+                                                            "-1");
+                                                        viewLeadPermission ==
+                                                                'true'
+                                                            ? Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ViewLeads(
+                                                                              widget.token,
+                                                                              updateLeadPermission1,
+                                                                              deleteLeadPermission1,
+                                                                              cloudCallPermission1,
+                                                                              pageName: 'Pending Leads',
+                                                                              fromDate: fromdate1.toString(),
+                                                                              toDate: todate1.toString(),
+                                                                            )),
+                                                              ).then((r) {
+                                                                getData(
+                                                                    widget
+                                                                        .token,
+                                                                    fromdate,
+                                                                    todate);
+                                                                if (loadmore ==
+                                                                    true) {
+                                                                  getStaffwise();
+                                                                }
+                                                              })
+                                                            : _dialogue(context,
+                                                                'View Leads');
+                                                      },
+                                                      child: Center(
+                                                          child: Text(
+                                                        stfPending.toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        Common.saveSharedPref(
+                                                            "statusWise",
+                                                            'yes');
+                                                        Common.saveSharedPref(
+                                                            "statusWisId", '3');
+                                                        Common.saveSharedPref(
+                                                            "type", 'staff');
+                                                        Common.saveSharedPref(
+                                                            "statusCatId",
+                                                            "-1");
+                                                        viewLeadPermission ==
+                                                                'true'
+                                                            ? Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ViewLeads(
+                                                                              widget.token,
+                                                                              updateLeadPermission1,
+                                                                              deleteLeadPermission1,
+                                                                              cloudCallPermission1,
+                                                                              pageName: 'Followup Leads',
+                                                                              fromDate: fromdate1.toString(),
+                                                                              toDate: todate1.toString(),
+                                                                            )),
+                                                              ).then((r) {
+                                                                getData(
+                                                                    widget
+                                                                        .token,
+                                                                    fromdate,
+                                                                    todate);
+                                                                if (loadmore ==
+                                                                    true) {
+                                                                  getStaffwise();
+                                                                }
+                                                              })
+                                                            : _dialogue(context,
+                                                                'View Leads');
+                                                      },
+                                                      child: Center(
+                                                          child: Text(
+                                                        stfFollowup.toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        Common.saveSharedPref(
+                                                            "statusWise",
+                                                            'yes');
+                                                        Common.saveSharedPref(
+                                                            "statusWisId", '4');
+                                                        Common.saveSharedPref(
+                                                            "type", 'staff');
+                                                        Common.saveSharedPref(
+                                                            "statusCatId",
+                                                            "-1");
+                                                        viewLeadPermission ==
+                                                                'true'
+                                                            ? Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ViewLeads(
+                                                                              widget.token,
+                                                                              updateLeadPermission1,
+                                                                              updateLeadPermission1,
+                                                                              cloudCallPermission1,
+                                                                              pageName: 'Rejected Leads',
+                                                                              fromDate: fromdate1.toString(),
+                                                                              toDate: todate1.toString(),
+                                                                            )),
+                                                              ).then((r) {
+                                                                getData(
+                                                                    widget
+                                                                        .token,
+                                                                    fromdate,
+                                                                    todate);
+                                                                if (loadmore ==
+                                                                    true) {
+                                                                  getStaffwise();
+                                                                }
+                                                              })
+                                                            : _dialogue(context,
+                                                                'View Leads');
+                                                      },
+                                                      child: Center(
+                                                          child: Text(
+                                                        stfRejected.toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.red,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        Common.saveSharedPref(
+                                                            "statusWise",
+                                                            'yes');
+                                                        Common.saveSharedPref(
+                                                            "type", 'staff');
+                                                        Common.saveSharedPref(
+                                                            "statusCatId",
+                                                            "-1");
+                                                        Common.saveSharedPref(
+                                                            "statusWisId", '5');
+                                                        viewLeadPermission ==
+                                                                'true'
+                                                            ? Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            ViewLeads(
+                                                                              widget.token,
+                                                                              updateLeadPermission1,
+                                                                              deleteLeadPermission1,
+                                                                              cloudCallPermission1,
+                                                                              pageName: 'Closed Leads',
+                                                                              fromDate: fromdate1.toString(),
+                                                                              toDate: todate1.toString(),
+                                                                            )),
+                                                              ).then((r) {
+                                                                getData(
+                                                                    widget
+                                                                        .token,
+                                                                    fromdate,
+                                                                    todate);
+                                                                if (loadmore ==
+                                                                    true) {
+                                                                  getStaffwise();
+                                                                }
+                                                              })
+                                                            : _dialogue(context,
+                                                                'View Leads');
+                                                      },
+                                                      child: Center(
+                                                          child: Text(
+                                                        stfClosed.toString(),
+                                                        style: const TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      )),
+                                                    ),
+                                                  ]),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    )),
+                              ],
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
+                          )
+                  ],
+                ),
               const SizedBox(
                 height: 20,
               ),
@@ -6727,6 +6593,213 @@ class _DashboardState extends State<Dashboard> {
         ),
       ),
     );
+  }
+
+  Future<dynamic> viewReportsDialog(BuildContext context) {
+    return showDialog(
+        barrierColor: Colors.white.withOpacity(.4),
+        context: context,
+        builder: (BuildContext context) {
+          return WillPopScope(
+            onWillPop: () async {
+              return true;
+            },
+            child: Material(
+              type: MaterialType.transparency,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 50),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                    ),
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: 300,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 20, right: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/icons/check.png',
+                            width: 80,
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          const Text(
+                            'Reports',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w400),
+                          ),
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          const Text(
+                            'Choose Report',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w400),
+                          ),
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => AllReport(
+                                                  widget.token!,
+                                                  true,
+                                                  true,
+                                                  true,
+                                                  pageName: 'AllLeads',
+                                                )),
+                                      );
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.38,
+                                      //  color: RandomColorModel().getColor(),
+                                      decoration: BoxDecoration(
+                                          color: Colors.green.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(5),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Icon(
+                                              Icons.dashboard,
+                                              size: 15,
+                                            ),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text('Lead Report',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black),
+                                                textAlign: TextAlign.center),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                TransferLeadReport(
+                                                  widget.token!,
+                                                  true,
+                                                  true,
+                                                  true,
+                                                  pageName: 'transferLeads',
+                                                )),
+                                      );
+                                    },
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.38,
+                                      decoration: BoxDecoration(
+                                          color: Colors.green.shade100,
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(5),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Icon(
+                                              Icons.list_alt,
+                                              size: 15,
+                                            ),
+                                            SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text('Transfer Report',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black),
+                                                textAlign: TextAlign.center),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            StaffReportDashboard(
+                                              id: userId,
+                                            )),
+                                  );
+                                },
+                                child: Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.38,
+                                  decoration: BoxDecoration(
+                                      color: Colors.green.shade100,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          size: 15,
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Text('Staff Dashboard',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black),
+                                            textAlign: TextAlign.center),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
   }
 
   Container appBarWidget(BuildContext context, String type) {
@@ -6742,25 +6815,30 @@ class _DashboardState extends State<Dashboard> {
             Row(
               children: [
                 InkWell(
-                  onTap: () => logout(context),
-                  child: Container(
-                    width: 43,
-                    height: 43,
-                    decoration: BoxDecoration(boxShadow: [
-                      BoxShadow(
-                        blurRadius: 2,
-                        color: Colors.grey.shade800,
-                        offset: const Offset(0, 2.0),
-                      )
-                    ], shape: BoxShape.circle, color: const Color(0xFF2191ce)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Image.asset(
-                        "assets/icons/user.png",
-                      ),
-                    ),
-                  ),
-                ),
+                    onTap: () => logout(context),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 2,
+                              color: Colors.grey.shade800,
+                              offset: const Offset(0, 2.0),
+                            )
+                          ],
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF2191ce)),
+                      child: userDashboard != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                userDashboard!.data.profilePic,
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              enabled: true,
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: const CircleAvatar()),
+                    )),
                 const SizedBox(
                   width: 15,
                 ),
@@ -7396,11 +7474,7 @@ class _DashboardState extends State<Dashboard> {
                                                         toDate:
                                                             todate.toString(),
                                                         callStatus: "1",
-                                                        status: object1!
-                                                            .data!
-                                                            .statusLeads![i]
-                                                            .statusId
-                                                            .toString())),
+                                                        status: "0")),
                                               ).then((r) {
                                                 getData(widget.token, fromdate,
                                                     todate);

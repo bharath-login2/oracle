@@ -7,7 +7,6 @@ import '../../models/lead_management/editLeadModel.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/leadDetailsModelAdd.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
-import '../../screens/leadManagement/leadDetails.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 
@@ -59,8 +58,8 @@ class _EditLeadState extends State<EditLead> {
   String assignStaffId = '';
   // String callResult = '';
   // String callResultId = '';
-  // String leadSource = '';
-  // String leadSourceId = '';
+  String leadSource = '';
+  String leadSourceId = '';
   String priority = 'Normal';
   String priorityId = '2';
   TextEditingController clientName = TextEditingController();
@@ -75,7 +74,7 @@ class _EditLeadState extends State<EditLead> {
   TextEditingController assignUserval = TextEditingController();
   TextEditingController priorityVal = TextEditingController();
   // TextEditingController callResultVal = TextEditingController();
-  // TextEditingController leadSourceVal = TextEditingController();
+  TextEditingController leadSourceVal = TextEditingController();
   var code = '91';
 
   final List<TextEditingController> _controllers = [];
@@ -131,11 +130,15 @@ class _EditLeadState extends State<EditLead> {
         clientName.text = leadDetails!.data!.clientName.toString();
         contactNo.text = leadDetails!.data!.contactNumber1.toString();
         cost.text = leadDetails!.data!.cost.toString();
-        contactNo.text = Common.trimPlus91(leadDetails!.data!.contactNumber1.toString());
+        contactNo.text =
+            Common.trimPlus91(leadDetails!.data!.contactNumber1.toString());
         address.text = leadDetails!.data!.address.toString();
         remark.text = leadDetails!.data!.remarks.toString();
         leadSubType = leadDetails!.data!.leadSubCategory.toString();
         leadSubTypeId = leadDetails!.data!.leadSubCategory.toString();
+        leadSourceVal.text = leadDetails!.data!.leadSource.toString();
+        leadSource = leadDetails!.data!.leadSource.toString();
+        leadSourceId = leadDetails!.data!.leadSourceId.toString();
         leadTypeVal.text = leadType;
         leadSubTypeVal.text = leadSubType;
         assignUserval.text = leadDetails!.data!.staffName.toString();
@@ -145,9 +148,8 @@ class _EditLeadState extends State<EditLead> {
             i < leadDetailsAdditional!.data.additionalFields.length;
             i++) {
           _controllers.add(TextEditingController());
-          _controllers[i].text = leadDetailsAdditional!
-              .data.additionalFields[i].value
-              .toString();
+          _controllers[i].text =
+              leadDetailsAdditional!.data.additionalFields[i].value.toString();
         }
       });
     }
@@ -567,6 +569,83 @@ class _EditLeadState extends State<EditLead> {
                         : const SizedBox(),
                     Padding(
                       padding: const EdgeInsets.only(left: 20, right: 20),
+                      child: TextFormField(
+                        controller: leadSourceVal,
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  scrollable: true,
+                                  title: const Text('Lead Source'),
+                                  content: SizedBox(
+                                    width:
+                                        MediaQuery.of(context).size.width * .8,
+                                    height: MediaQuery.of(context).size.height *
+                                        .46,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount:
+                                          commonDetails!.data.leadSource.length,
+                                      itemBuilder: (context, ind) {
+                                        return InkWell(
+                                          onTap: () async {
+                                            setState(() {
+                                              leadSource = commonDetails!.data
+                                                  .leadSource[ind].leadSource
+                                                  .toString();
+                                              leadSourceId = commonDetails!.data
+                                                  .leadSource[ind].leadSourceId
+                                                  .toString();
+                                              leadSourceVal.text =
+                                                  commonDetails!
+                                                      .data
+                                                      .leadSource[ind]
+                                                      .leadSource
+                                                      .toString();
+                                              Navigator.pop(context, true);
+                                            });
+                                          },
+                                          child: SizedBox(
+                                            height: 50,
+                                            child: Text(
+                                              commonDetails!.data
+                                                  .leadSource[ind].leadSource
+                                                  .toString(),
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                              });
+                        },
+                        maxLines: 1,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                            contentPadding:
+                                EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                            labelText: 'Lead Source',
+                            fillColor: Colors.white,
+                            filled: true,
+                            prefixIcon: Icon(
+                                Icons.arrow_drop_down_circle_outlined,
+                                color: Colors.grey),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20, right: 20),
                       child: SizedBox(
                         height: 50,
                         child: TextFormField(
@@ -660,7 +739,7 @@ class _EditLeadState extends State<EditLead> {
                                                     .data.staff[ind].staffName
                                                     .toString();
                                                 assignStaffId = commonDetails!
-                                                    .data.staff[ind].staffId
+                                                    .data.staff[ind].userId
                                                     .toString();
                                                 Navigator.pop(context, true);
                                               });
@@ -916,81 +995,7 @@ class _EditLeadState extends State<EditLead> {
                     // const SizedBox(
                     //   height: 20,
                     // ),
-                    // Padding(
-                    //   padding: const EdgeInsets.only(left: 20, right: 20),
-                    //   child: TextFormField(
-                    //     controller: leadSourceVal,
-                    //     onTap: () {
-                    //       showDialog(
-                    //           context: context,
-                    //           builder: (BuildContext context) {
-                    //             return AlertDialog(
-                    //               scrollable: true,
-                    //               title: const Text('Lead Source'),
-                    //               content: SizedBox(
-                    //                 width:
-                    //                     MediaQuery.of(context).size.width * .7,
-                    //                 child: ListView.builder(
-                    //                   shrinkWrap: true,
-                    //                   itemCount:
-                    //                       commonDetails!.data.leadSource.length,
-                    //                   itemBuilder: (context, ind) {
-                    //                     return InkWell(
-                    //                       onTap: () {
-                    //                         setState(() {
-                    //                           leadSource = commonDetails!.data
-                    //                               .leadSource[ind].leadSource
-                    //                               .toString();
-                    //                           leadSourceId = commonDetails!.data
-                    //                               .leadSource[ind].leadSourceId
-                    //                               .toString();
-                    //                           Navigator.pop(context, true);
-                    //                           leadSourceVal.text =
-                    //                               commonDetails!
-                    //                                   .data
-                    //                                   .leadSource[ind]
-                    //                                   .leadSource
-                    //                                   .toString();
-                    //                         });
-                    //                       },
-                    //                       child: SizedBox(
-                    //                         height: 50,
-                    //                         child: Text(
-                    //                           commonDetails!.data
-                    //                               .leadSource[ind].leadSource
-                    //                               .toString(),
-                    //                           style:
-                    //                               const TextStyle(fontSize: 18),
-                    //                         ),
-                    //                       ),
-                    //                     );
-                    //                   },
-                    //                 ),
-                    //               ),
-                    //             );
-                    //           });
-                    //     },
-                    //     maxLines: 1,
-                    //     readOnly: true,
-                    //     decoration: const InputDecoration(
-                    //         contentPadding:
-                    //             EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                    //         labelText: 'Lead Source',
-                    //         fillColor: Colors.white,
-                    //         filled: true,
-                    //         prefixIcon: Icon(
-                    //             Icons.arrow_drop_down_circle_outlined,
-                    //             color: Colors.grey),
-                    //         border: OutlineInputBorder(),
-                    //         focusedBorder: OutlineInputBorder(
-                    //           borderSide: BorderSide(color: Colors.grey),
-                    //         ),
-                    //         labelStyle: TextStyle(color: Colors.grey)),
-                    //   ),
-                    // ),
-                    // const SizedBox(
-                    //   height: 20,
-                    // ),
+
                     ListView.builder(
                       itemCount:
                           leadDetailsAdditional!.data.additionalFields.length,
@@ -1046,22 +1051,22 @@ class _EditLeadState extends State<EditLead> {
                               }
                               EditLeadModel object =
                                   await HttpService.editLeads(
-                                      widget.token,
-                                      widget.callMasterId,
-                                      branch,
-                                      clientName.text,
-                                      leadTypeId,
-                                      leadSubTypeId,
-                                      contactNo.text,
-                                      assignStaffId,
-                                      cost.text,
-                                      priorityId,
-                                      address.text,
-                                      remark.text,
-                                      descriptions,
-                                      code,
-                                      // leadSourceId
-                                      );
+                                widget.token,
+                                widget.callMasterId,
+                                branch,
+                                clientName.text,
+                                leadTypeId,
+                                leadSubTypeId,
+                                contactNo.text,
+                                assignStaffId,
+                                cost.text,
+                                priorityId,
+                                address.text,
+                                remark.text,
+                                descriptions,
+                                code,
+                                leadSourceId
+                              );
                               if (object.status == true) {
                                 Common.toastMessaage(
                                     object.message, Colors.green);
@@ -1136,10 +1141,9 @@ class _EditLeadState extends State<EditLead> {
               onSaved: (val) {
                 descriptions.add("");
                 descriptions[index] = {
-                  "id":
-                      leadDetailsAdditional!.data.additionalFields[index].id,
-                  "name": leadDetailsAdditional!
-                      .data.additionalFields[index].name,
+                  "id": leadDetailsAdditional!.data.additionalFields[index].id,
+                  "name":
+                      leadDetailsAdditional!.data.additionalFields[index].name,
                   "value": val
                 };
               },
@@ -1151,8 +1155,8 @@ class _EditLeadState extends State<EditLead> {
               decoration: InputDecoration(
                   contentPadding:
                       const EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                  labelText: leadDetailsAdditional!
-                      .data.additionalFields[index].name,
+                  labelText:
+                      leadDetailsAdditional!.data.additionalFields[index].name,
                   fillColor: Colors.white,
                   filled: true,
                   prefixIcon: const Icon(Icons.arrow_drop_down_circle,

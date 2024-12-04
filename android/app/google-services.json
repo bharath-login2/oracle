@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "483110935745",
-    "project_id": "login2-pro",
-    "storage_bucket": "login2-pro.appspot.com"
+    "project_number": "402092789000",
+    "project_id": "lead-plus-a153e",
+    "storage_bucket": "lead-plus-a153e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:483110935745:android:a7208f0ee57894b8358840",
+        "mobilesdk_app_id": "1:402092789000:android:84edc919f6f45c08a7f0bd",
         "android_client_info": {
           "package_name": "com.login2Pro"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBATUtql4ZBTi4FfwDCD1iLAXER8ev0EsE"
+          "current_key": "AIzaSyDaciOS2WufB7ke62ygktAG1ARnyqPCdBU"
         }
       ],
       "services": {

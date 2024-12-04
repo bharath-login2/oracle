@@ -473,7 +473,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                                                             content: const Text(
                                                                 'Are you sure to Delete?'),
                                                             actions: [
-                                                             TextButton(
+                                                              TextButton(
                                                                   onPressed:
                                                                       () {
                                                                     Navigator.of(
@@ -498,7 +498,6 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                                                                   child:
                                                                       const Text(
                                                                           'Yes')),
-                                                              
                                                             ],
                                                           );
                                                         });

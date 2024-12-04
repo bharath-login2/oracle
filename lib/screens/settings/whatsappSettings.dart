@@ -1324,7 +1324,7 @@ class _WhatsappSettingsState extends State<WhatsappSettings> {
                     width: 25), //icon inside button
               ),
             ),
-            bottomNavigationBar: BottomNavigation(widget.token!, false,phoneCallLogPermission: phoneCallLogPermission,))
+            bottomNavigationBar: BottomNavigation(widget.token!,phoneCallLogPermission: phoneCallLogPermission,))
         : Scaffold(
             backgroundColor: Colors.white,
             body: SizedBox(

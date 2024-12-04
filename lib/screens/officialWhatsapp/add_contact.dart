@@ -177,11 +177,7 @@ addContactPopUp(context, nameController, numberController) {
                   if (addContactModel != null &&
                       addContactModel.status == true) {
                     if (context.mounted) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ChatHomeScreen(),
-                          ));
+                      Navigator.pop(context);
                     }
                     Fluttertoast.showToast(
                       msg: addContactModel.message,

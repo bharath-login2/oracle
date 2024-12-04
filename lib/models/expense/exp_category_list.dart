@@ -2,7 +2,6 @@
 //
 //     final expenseCategoryList = expenseCategoryListFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ExpenseCategoryList expenseCategoryListFromJson(String str) => ExpenseCategoryList.fromJson(json.decode(str));

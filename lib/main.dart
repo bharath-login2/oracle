@@ -1,11 +1,11 @@
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:call_log/call_log.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:login2/firebase_options.dart';
 import 'package:login2/screens/myApp.dart';
 import 'package:login2/screens/overlay/overlay.dart';
 import 'package:login2/service/backgroundService.dart';
@@ -44,15 +44,15 @@ void callbackDispatcher() {
 }
 
 PhoneState status1 = PhoneState.nothing();
-String number ="";
+String number = "";
 
 void setStream() {
   PhoneState.stream.listen((event) {
     status1 = event;
-    if(status1.number != null){
+    if (status1.number != null) {
       number = status1.number.toString();
     }
-    });
+  });
 }
 
 @pragma("vm:entry-point")
@@ -76,7 +76,7 @@ Future<void> main() async {
     FlutterBackgroundService().invoke('setAsBackground');
   }
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
   if (Platform.isAndroid) {
     _channel.setMethodCallHandler((call) async {

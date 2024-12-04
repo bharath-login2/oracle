@@ -8,7 +8,6 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
-import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/service/service.dart';
 
 class AddProducts extends StatefulWidget {
@@ -255,12 +254,12 @@ class _AddProductsState extends State<AddProducts> {
                     onTap: (() {
                       dropDialog(context, "category");
                     }),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Add Category";
-                      }
-                      return null;
-                    },
+                    // validator: (value) {
+                    //   if (value!.isEmpty) {
+                    //     return "Please Add Category";
+                    //   }
+                    //   return null;
+                    // },
                     decoration: const InputDecoration(
                         labelText: 'Category *',
                         prefixIcon: Icon(Icons.category, color: Colors.grey),
@@ -278,16 +277,17 @@ class _AddProductsState extends State<AddProducts> {
                         controller: subCategory,
                         readOnly: true,
                         onTap: (() {
+                          // subCategory.clear();
                           dropDialog(context, "sub category");
                         }),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return "Please Add Sub Category";
-                          }
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   if (value!.isEmpty) {
+                        //     return "Please Add Sub Category";
+                        //   }
+                        //   return null;
+                        // },
                         decoration: const InputDecoration(
-                            labelText: 'Sub Category *',
+                            labelText: 'Sub Category',
                             prefixIcon:
                                 Icon(Icons.category, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -386,11 +386,13 @@ class _AddProductsState extends State<AddProducts> {
                   ),
                   TextFormField(
                     keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter Selling Price";
+                    onChanged: (value) {
+                      if (double.parse(value) <
+                          double.parse(totalAmount.text)) {
+                        Common.toastMessaage(
+                            "MRP should not be lower than the selling price",
+                            Colors.red);
                       }
-                      return null;
                     },
                     controller: mrp,
                     decoration: const InputDecoration(
@@ -408,15 +410,9 @@ class _AddProductsState extends State<AddProducts> {
                     height: 14,
                   ),
                   TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter Content Id";
-                      }
-                      return null;
-                    },
                     controller: contentId,
                     decoration: const InputDecoration(
-                      labelText: 'Content Id *',
+                      labelText: 'Content Id',
                       prefixIcon: Icon(Icons.badge, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(
@@ -438,7 +434,7 @@ class _AddProductsState extends State<AddProducts> {
                     },
                     controller: noOfDays,
                     decoration: const InputDecoration(
-                      labelText: 'Number of Days(Expiry) *',
+                      labelText: 'Validity*',
                       prefixIcon:
                           Icon(Icons.calendar_month, color: Colors.grey),
                       border: OutlineInputBorder(),
@@ -455,7 +451,7 @@ class _AddProductsState extends State<AddProducts> {
                     keyboardType: TextInputType.number,
                     controller: remindBefore,
                     decoration: const InputDecoration(
-                      labelText: 'Days Before Reminder',
+                      labelText: 'Remind me before (Days)',
                       prefixIcon: Icon(Icons.edit_calendar, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(

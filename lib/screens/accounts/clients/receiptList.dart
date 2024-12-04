@@ -729,6 +729,7 @@ class _ReceiptListState extends State<ReceiptList> {
                                                                                 if (deleteReceipt.data == true) {
                                                                                   Common.toastMessaage(deleteReceipt.message, Colors.green);
                                                                                   if (context.mounted) {
+                                                                                    getData();
                                                                                     Navigator.pop(context);
                                                                                     Navigator.pop(context);
                                                                                   }

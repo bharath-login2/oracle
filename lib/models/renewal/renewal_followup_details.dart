@@ -2,7 +2,6 @@
 //
 //     final renewalFollowupDetailsModel = renewalFollowupDetailsModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 RenewalFollowupDetailsModel renewalFollowupDetailsModelFromJson(String str) => RenewalFollowupDetailsModel.fromJson(json.decode(str));
@@ -51,6 +50,7 @@ class Data {
     List<PaymentStatusList> paymentStatusList;
     List<PaymentMethod> paymentMethods;
     List<ReasonList> reasonList;
+    List<TargetGroup> targetGroups;
 
     Data({
         required this.renewalId,
@@ -70,6 +70,7 @@ class Data {
         required this.paymentStatusList,
         required this.paymentMethods,
         required this.reasonList,
+        required this.targetGroups,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -90,6 +91,7 @@ class Data {
         paymentStatusList: List<PaymentStatusList>.from(json["payment_status_list"].map((x) => PaymentStatusList.fromJson(x))),
         paymentMethods: List<PaymentMethod>.from(json["payment_methods"].map((x) => PaymentMethod.fromJson(x))),
         reasonList: List<ReasonList>.from(json["reason_list"].map((x) => ReasonList.fromJson(x))),
+    targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -334,5 +336,24 @@ class Staff {
     Map<String, dynamic> toJson() => {
         "account_id": accountId,
         "account_name": accountName,
+    };
+}
+class TargetGroup {
+    String id;
+    String groupName;
+
+    TargetGroup({
+        required this.id,
+        required this.groupName,
+    });
+
+    factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
+        id: json["id"],
+        groupName: json["group_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "group_name": groupName,
     };
 }

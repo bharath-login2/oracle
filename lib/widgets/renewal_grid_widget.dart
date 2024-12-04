@@ -22,9 +22,9 @@ class RenewalGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.all(8.0),
       child: Container(
-        width: MediaQuery.of(context).size.width * .4,
+        width: MediaQuery.of(context).size.width * .5,
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
@@ -114,7 +114,12 @@ class RenewalGridItem extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              const Text("  Paid: ₹",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
+                              const Text(
+                                "  Paid: ₹",
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold),
+                              ),
                               SizedBox(
                                 width: MediaQuery.of(context).size.width * .23,
                                 child: Text("$paidAmount /-",
@@ -130,7 +135,12 @@ class RenewalGridItem extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            const Text("  Total: ₹",style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),),
+                            const Text(
+                              "  Total: ₹",
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            ),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * .23,
                               child: Text("$totalAmount /-",
@@ -166,7 +176,7 @@ class RenewalGridItem extends StatelessWidget {
             //       ),
             //     ),
             //   ],
-            // )  
+            // )
           ],
         ),
       ),

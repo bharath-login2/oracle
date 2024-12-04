@@ -49,6 +49,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   String invoiceNumber = '';
   var invoiceDate = DateTime.now();
   List<Map<String, dynamic>> products = [];
+  List<Map<String, dynamic>> followupProducts = [];
   List productNames = [];
   double totalProductCost = 0;
   bool isLoading = true;
@@ -67,7 +68,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   String productId = "";
   String productName = "Choose Product";
   bool createRenewal = false;
-  bool createOrder = false;
+  bool renew = false;
   String leadStatus = 'Followup';
   String leadStatusId = '2';
   String callResponse = 'Call Response';
@@ -90,6 +91,11 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
   bool isChecked = false;
   bool timeOut = false;
   String token = "";
+  List<TargetGroup> targets = [];
+  List<TargetGroup> filteredTargets = [];
+  List targetGroups = [];
+  List targetGroupNames = [];
+
   void toggleTextFieldVisibility() {
     setState(() {
       checked = !checked;
@@ -122,11 +128,37 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
       detailsResponse =
           await HttpService.getAddRenewalFollowUpDetails(widget.renewalId);
       if (detailsResponse != null) {
+        targets = detailsResponse!.data.targetGroups;
+        filteredTargets.addAll(targets);
         invoiceNumber = detailsResponse!.data.invoiceId.toString();
         items = detailsResponse!.data.allProducts;
         filteredTemplates = detailsResponse!.data.renewalTemplate;
         filteredItems.addAll(items);
         filteredStaff.addAll(detailsResponse!.data.staff);
+        for (int i = 0; i < detailsResponse!.data.productLists.length; i++) {
+          products.add({
+            "product_id": detailsResponse!.data.productLists[i].productId,
+            "product_name": detailsResponse!.data.productLists[i].productName,
+            "product_rate": detailsResponse!.data.productLists[i].rate,
+            "quantity": detailsResponse!.data.productLists[i].qty,
+            "tax_percent": detailsResponse!.data.productLists[i].taxPercentage,
+            "total_tax_amount": detailsResponse!.data.productLists[i].taxAmount,
+            "total_amount": detailsResponse!.data.productLists[i].amount,
+            "description":
+                detailsResponse!.data.productLists[i].productDescription,
+          });
+          subTotal = subTotal +
+              double.parse(detailsResponse!.data.productLists[i].rate == ''
+                  ? '0'
+                  : detailsResponse!.data.productLists[i].rate);
+          totalTaxAmount = totalTaxAmount +
+              double.parse(detailsResponse!.data.productLists[i].taxAmount == ''
+                      ? '0'
+                      : detailsResponse!.data.productLists[i].taxAmount) *
+                  double.parse(productQty.text == '' ? '1' : productQty.text);
+          paidAmount.text = subTotal.toString();
+          allTotal = subTotal + totalTaxAmount;
+        }
       }
       setState(() {});
     } catch (e) {
@@ -239,8 +271,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     await showDatePicker(
                                             context: context,
                                             initialDate: DateTime.now(),
-                                            firstDate: DateTime.now(),
-                                            lastDate: DateTime(2100))
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime.now())
                                         .then((selectedDate) {
                                       if (selectedDate != null) {
                                         showTimePicker(
@@ -342,30 +374,46 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     controller: nextFollowupDate1,
                                     readOnly: true,
                                     onTap: () async {
-                                      await showDatePicker(
-                                              context: context,
-                                              initialDate: DateTime.now(),
-                                              firstDate: DateTime.now(),
-                                              lastDate: DateTime(2100))
-                                          .then((selectedDate) {
-                                        if (selectedDate != null) {
-                                          showTimePicker(
-                                                  context: context,
-                                                  initialTime: TimeOfDay.now())
-                                              .then((selectedTime) {
-                                            String newDate =
-                                                selectedDate.toString();
-                                            newDate = newDate.substring(
-                                                0, newDate.indexOf(" "));
+                                      DateTime? selectedDate =
+                                          await showDatePicker(
+                                        context: context,
+                                        initialDate: DateTime.now(),
+                                        firstDate: DateTime.now(),
+                                        lastDate: DateTime(2100),
+                                      );
+
+                                      if (selectedDate != null) {
+                                        TimeOfDay? selectedTime =
+                                            await showTimePicker(
+                                          context: context,
+                                          initialTime: TimeOfDay.now(),
+                                        );
+
+                                        if (selectedTime != null) {
+                                          final now = DateTime.now();
+                                          final selectedDateTime = DateTime(
+                                            selectedDate.year,
+                                            selectedDate.month,
+                                            selectedDate.day,
+                                            selectedTime.hour,
+                                            selectedTime.minute,
+                                          );
+
+                                          if (selectedDateTime.isAfter(now)) {
                                             String convertedNewDate =
-                                                getYmdFromDmy(newDate);
-                                            if (selectedTime != null) {
-                                              nextFollowupDate1.text =
-                                                  "$convertedNewDate ${selectedTime.format(context)}";
-                                            } else {}
-                                          });
+                                                getYmdFromDmy(selectedDate
+                                                    .toString()
+                                                    .split(' ')[0]);
+                                            nextFollowupDate1.text =
+                                                "$convertedNewDate ${selectedTime.format(context)}";
+                                          } else {
+                                            Common.toastMessaage(
+                                              "You cannot choose a past time for the follow-up date",
+                                              Colors.red,
+                                            );
+                                          }
                                         }
-                                      });
+                                      }
                                     },
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
@@ -656,10 +704,10 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                                             onPressed:
                                                                                 () async {
                                                                               productNames.removeAt(i);
-                                                                              products.removeAt(i);
+                                                                              followupProducts.removeAt(i);
                                                                               totalProductCost = 0;
-                                                                              for (int ind = 0; ind < products.length; ind++) {
-                                                                                totalProductCost += double.parse(await products[ind]["total_amount"]);
+                                                                              for (int ind = 0; ind < followupProducts.length; ind++) {
+                                                                                totalProductCost += double.parse(await followupProducts[ind]["total_amount"]);
                                                                               }
                                                                               productCost.text = (totalProductCost).toString();
                                                                               setState(() {});
@@ -736,38 +784,20 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 const SizedBox(height: 15.0),
                               ],
                             ),
-                          TextFormField(
-                            controller: remarks,
-                            maxLines: 2,
-                            decoration: const InputDecoration(
-                                labelText: 'Remarks',
-                                fillColor: Colors.white,
-                                filled: true,
-                                //prefixIcon: Icon(myIcon, color: prefixIconColor),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                labelStyle: TextStyle(color: Colors.grey)),
-                          ),
-                          const SizedBox(
-                            height: 15,
-                          ),
                           if (leadStatusId == '4')
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
-                                title: const Text('Create Order'),
-                                value:
-                                    createOrder, // initial value of the checkbox
+                                title: const Text('Renew'),
+                                value: renew, // initial value of the checkbox
                                 onChanged: (bool? value) {
                                   setState(() {
-                                    createOrder = value!;
+                                    renew = value!;
                                   });
                                 },
                                 controlAffinity:
                                     ListTileControlAffinity.leading),
                           Visibility(
-                            visible: createOrder && leadStatusId == '4',
+                            visible: renew && leadStatusId == '4',
                             child: Column(
                               children: [
                                 Padding(
@@ -871,17 +901,17 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 30%
+                                                  0.16), // Using 30%
                                           2: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14),
+                                                  0.10),
                                           3: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.14), // Using 20%
+                                                  0.16), // Using 20%
                                           4: FixedColumnWidth(
                                               MediaQuery.of(context)
                                                       .size
@@ -1005,17 +1035,17 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 30%
+                                                          0.16), // Using 30%
                                                   2: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14),
+                                                          0.10),
                                                   3: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
                                                               .width *
-                                                          0.14), // Using 20%
+                                                          0.16), // Using 20%
                                                   4: FixedColumnWidth(
                                                       MediaQuery.of(context)
                                                               .size
@@ -1152,6 +1182,10 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                                       ? '0'
                                                                       : discount
                                                                           .text);
+                                                          paidAmount.text =
+                                                              allTotal
+                                                                  .toString();
+
                                                           products.removeWhere(
                                                             (item) => mapEquals(
                                                                 item,
@@ -1203,6 +1237,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                             shippingCharge
                                                                 .clear();
                                                             allTotal = 0.00;
+                                                            paidAmount.text =
+                                                                allTotal
+                                                                    .toString();
                                                           }
 
                                                           setState(() {});
@@ -1331,6 +1368,11 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                               : shippingCharge
                                                                   .text) -
                                                       double.parse(value);
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+
+                                                  paidAmount.text =
+                                                      allTotal.toString();
                                                   setState(() {});
                                                 } else {
                                                   discount.clear();
@@ -1405,6 +1447,9 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                           discount.text == ''
                                                               ? '0'
                                                               : discount.text);
+                                                  paidAmount.text =
+                                                      allTotal.toString();
+
                                                   setState(() {});
                                                 } else {
                                                   shippingCharge.clear();
@@ -1487,7 +1532,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                       height: 5,
                                     ),
                                     const Divider(),
-
                                     Padding(
                                       padding: const EdgeInsets.only(right: 10),
                                       child: Row(
@@ -1586,7 +1630,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     const SizedBox(
                                       height: 10,
                                     ),
-                                    if (paymentStatus != "unpaid")
+                                    if (paymentStatus == "paid" ||
+                                        paymentStatus == "partial")
                                       Padding(
                                         padding:
                                             const EdgeInsets.only(right: 10),
@@ -1611,7 +1656,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                                     TextStyle(color: paidColor),
                                                 onChanged: (val) {
                                                   if (double.parse(val) >
-                                                      allTotal) {
+                                                      subTotal) {
                                                     Common.toastMessaage(
                                                         'Enter valid amount',
                                                         Colors.red);
@@ -1834,139 +1879,307 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                               ],
                                             ),
                                           ),
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 10.0),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const Text(
+                                                  'Target Group :',
+                                                ),
+                                                const SizedBox(
+                                                  width: 15,
+                                                ),
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.55,
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      targetGroupDialog(
+                                                          context);
+                                                    },
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              1,
+                                                      height: 50,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                        color: Colors
+                                                            .grey.shade300,
+                                                      ),
+                                                      child: targetGroups
+                                                              .isEmpty
+                                                          ? const Padding(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      left: 10,
+                                                                      top: 15,
+                                                                      bottom:
+                                                                          10),
+                                                              child: Text(
+                                                                  'Target Group'))
+                                                          : Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      right:
+                                                                          40),
+                                                              child: SizedBox(
+                                                                height: 35,
+                                                                child: ListView
+                                                                    .builder(
+                                                                  scrollDirection:
+                                                                      Axis.horizontal,
+                                                                  itemCount:
+                                                                      targetGroupNames
+                                                                          .length,
+                                                                  itemBuilder:
+                                                                      (context,
+                                                                          i) {
+                                                                    return Padding(
+                                                                      padding: const EdgeInsets
+                                                                          .only(
+                                                                          left:
+                                                                              5,
+                                                                          right:
+                                                                              5),
+                                                                      child:
+                                                                          InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          setState(
+                                                                              () {});
+                                                                        },
+                                                                        child:
+                                                                            Row(
+                                                                          children: [
+                                                                            Container(
+                                                                              height: 35,
+                                                                              decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.white, borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
+                                                                              child: Center(
+                                                                                child: Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                                  children: [
+                                                                                    Padding(
+                                                                                      padding: const EdgeInsets.all(10),
+                                                                                      child: Text(
+                                                                                        targetGroupNames[i],
+                                                                                        style: const TextStyle(
+                                                                                          color: Colors.black,
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            InkWell(
+                                                                              onTap: () {
+                                                                                showDialog(
+                                                                                    context: context,
+                                                                                    builder: (BuildContext context) {
+                                                                                      return AlertDialog(
+                                                                                        title: const Text('Please Confirm'),
+                                                                                        content: const Text('Are you sure to Remove this Number?'),
+                                                                                        actions: [
+                                                                                          TextButton(
+                                                                                              onPressed: () {
+                                                                                                Navigator.of(context).pop();
+                                                                                              },
+                                                                                              child: const Text('No')),
+                                                                                          TextButton(
+                                                                                              onPressed: () async {
+                                                                                                setState(() {
+                                                                                                  targetGroupNames.remove(targetGroupNames[i]);
+                                                                                                  targetGroups.remove(targetGroups[i]);
+                                                                                                });
+                                                                                                Navigator.of(context).pop();
+                                                                                              },
+                                                                                              child: const Text('Yes')),
+                                                                                        ],
+                                                                                      );
+                                                                                    });
+                                                                              },
+                                                                              child: Container(
+                                                                                height: 35,
+                                                                                width: 30,
+                                                                                decoration: BoxDecoration(border: Border.all(color: Colors.grey, width: 0), color: Colors.grey.shade100, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
+                                                                                child: const Icon(
+                                                                                  Icons.close,
+                                                                                  color: Colors.red,
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ),
+                                                            ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: 20,
+                                          ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: TextFormField(
+                                                  controller: startDate,
+                                                  readOnly: true,
+                                                  onTap: () async {
+                                                    DateTime? selectedValue =
+                                                        await showDatePicker(
+                                                      context: context,
+                                                      initialDate:
+                                                          DateTime.now(),
+                                                      firstDate: DateTime(2000),
+                                                      lastDate: DateTime(2100),
+                                                    );
+                                                    setState(() {
+                                                      startDate
+                                                          .text = DateFormat(
+                                                              'dd-MM-yyyy')
+                                                          .format(
+                                                              selectedValue!);
+                                                      final endValue = selectedValue
+                                                          .add(Duration(
+                                                              days: int.parse(
+                                                                  typeDuration)));
+                                                      endDate.text = DateFormat(
+                                                              'dd-MM-yyyy')
+                                                          .format(endValue);
+                                                    });
+                                                  },
+                                                  validator: (value) {
+                                                    if (value!.isEmpty) {
+                                                      return "Select Start Date";
+                                                    }
+                                                    return null;
+                                                  },
+                                                  decoration:
+                                                      const InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(8),
+                                                          labelText:
+                                                              'Start Date *',
+                                                          prefixIcon: Icon(
+                                                              Icons
+                                                                  .calendar_month,
+                                                              color:
+                                                                  Colors.grey),
+                                                          border:
+                                                              OutlineInputBorder(),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide:
+                                                                BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
+                                                          ),
+                                                          labelStyle: TextStyle(
+                                                              color:
+                                                                  Colors.grey)),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 15.0),
+                                              Expanded(
+                                                child: TextFormField(
+                                                  onTap: () async {
+                                                    DateTime? selectedEndDate =
+                                                        await showDatePicker(
+                                                      context: context,
+                                                      initialDate:
+                                                          DateTime.now(),
+                                                      firstDate: DateTime(2000),
+                                                      lastDate: DateTime(2100),
+                                                    );
+                                                    endDate.text = DateFormat(
+                                                            'dd-MM-yyyy')
+                                                        .format(
+                                                            selectedEndDate!);
+                                                  },
+                                                  validator: (value) {
+                                                    if (value!.isEmpty) {
+                                                      return "Select End Date";
+                                                    }
+                                                    return null;
+                                                  },
+                                                  readOnly: true,
+                                                  controller: endDate,
+                                                  decoration:
+                                                      const InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.all(8),
+                                                          labelText:
+                                                              'End Date *',
+                                                          prefixIcon: Icon(
+                                                              Icons
+                                                                  .calendar_month,
+                                                              color:
+                                                                  Colors.grey),
+                                                          border:
+                                                              OutlineInputBorder(),
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderSide:
+                                                                BorderSide(
+                                                                    color: Colors
+                                                                        .grey),
+                                                          ),
+                                                          labelStyle: TextStyle(
+                                                              color:
+                                                                  Colors.grey)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 14.0),
+                                          TextFormField(
+                                            onTap: () {
+                                              dropDialog(context);
+                                            },
+                                            readOnly: true,
+                                            controller: reminderTemplate,
+                                            decoration: const InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.all(8),
+                                                labelText: 'Remind Template ',
+                                                prefixIcon: Icon(
+                                                    Icons.notifications,
+                                                    color: Colors.grey),
+                                                border: OutlineInputBorder(),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey),
+                                                ),
+                                                labelStyle: TextStyle(
+                                                    color: Colors.grey)),
+                                          )
                                         ],
                                       ),
                                     ),
-                                    // const SizedBox(
-                                    //   height: 10,
-                                    // ),
-                                    // paymentMethod == '2'
-                                    //     ? Container(
-                                    //         child: templateImage == null
-                                    //             ? Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Align(
-                                    //                   alignment:
-                                    //                       Alignment.topRight,
-                                    //                   child: InkWell(
-                                    //                     onTap: _selectFile,
-                                    //                     child: Container(
-                                    //                         width: MediaQuery.of(
-                                    //                                     context)
-                                    //                                 .size
-                                    //                                 .width *
-                                    //                             0.4,
-                                    //                         height: 35,
-                                    //                         decoration: BoxDecoration(
-                                    //                             color: Colors
-                                    //                                 .grey
-                                    //                                 .shade300,
-                                    //                             borderRadius:
-                                    //                                 BorderRadius
-                                    //                                     .circular(
-                                    //                                         5)),
-                                    //                         child:
-                                    //                             const Padding(
-                                    //                           padding: EdgeInsets
-                                    //                               .only(
-                                    //                                   left: 10,
-                                    //                                   right: 10,
-                                    //                                   top: 5,
-                                    //                                   bottom:
-                                    //                                       5),
-                                    //                           child: Center(
-                                    //                               child: Text(
-                                    //                                   'Choose File')),
-                                    //                         )),
-                                    //                   ),
-                                    //                 ),
-                                    //               )
-                                    //             : Padding(
-                                    //                 padding:
-                                    //                     const EdgeInsets.only(
-                                    //                         right: 10),
-                                    //                 child: Stack(
-                                    //                   children: [
-                                    //                     Align(
-                                    //                       alignment: Alignment
-                                    //                           .topRight,
-                                    //                       child: InkWell(
-                                    //                         onTap: _selectFile,
-                                    //                         child: Container(
-                                    //                             width: MediaQuery.of(
-                                    //                                         context)
-                                    //                                     .size
-                                    //                                     .width *
-                                    //                                 0.6,
-                                    //                             height: 80,
-                                    //                             decoration: BoxDecoration(
-                                    //                                 color: Colors
-                                    //                                     .grey
-                                    //                                     .shade300,
-                                    //                                 borderRadius:
-                                    //                                     BorderRadius.circular(
-                                    //                                         5)),
-                                    //                             child: Padding(
-                                    //                               padding:
-                                    //                                   const EdgeInsets
-                                    //                                       .only(
-                                    //                                 right: 10,
-                                    //                               ),
-                                    //                               child: Row(
-                                    //                                 children: [
-                                    //                                   Container(
-                                    //                                     height:
-                                    //                                         80,
-                                    //                                     width:
-                                    //                                         90,
-                                    //                                     decoration:
-                                    //                                         BoxDecoration(
-                                    //                                       image:
-                                    //                                           DecorationImage(
-                                    //                                         fit:
-                                    //                                             BoxFit.fitWidth,
-                                    //                                         image:
-                                    //                                             FileImage(
-                                    //                                           File(templateImage!),
-                                    //                                         ),
-                                    //                                       ),
-                                    //                                     ),
-                                    //                                     // Add your image widget here
-                                    //                                   ),
-                                    //                                   const SizedBox(
-                                    //                                     width:
-                                    //                                         20,
-                                    //                                   ),
-                                    //                                   const Center(
-                                    //                                       child:
-                                    //                                           Text('Change File')),
-                                    //                                 ],
-                                    //                               ),
-                                    //                             )),
-                                    //                       ),
-                                    //                     ),
-                                    //                     Positioned(
-                                    //                       right: 0.0,
-                                    //                       top: 0.0,
-                                    //                       child: InkWell(
-                                    //                         onTap: () {
-                                    //                           templateImage =
-                                    //                               null;
-                                    //                           setState(() {});
-                                    //                         },
-                                    //                         child: const Icon(
-                                    //                           Icons
-                                    //                               .remove_circle,
-                                    //                           color: Colors.red,
-                                    //                         ),
-                                    //                       ),
-                                    //                     )
-                                    //                   ],
-                                    //                 ),
-                                    //               ))
-                                    //     : const SizedBox(),
                                   ],
                                 ),
                                 const SizedBox(
@@ -1975,120 +2188,23 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               ],
                             ),
                           ),
-                          if (leadStatusId == '4' && createOrder)
-                            CheckboxListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text('Create Renewal'),
-                                value:
-                                    createRenewal, // initial value of the checkbox
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    createRenewal = value!;
-                                  });
-                                },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading),
-                          Visibility(
-                              visible: createRenewal && createOrder,
-                              child: Column(
-                                children: [
-                                  TextFormField(
-                                    controller: startDate,
-                                    readOnly: true,
-                                    onTap: () async {
-                                      DateTime? selectedValue =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime(2100),
-                                      );
-                                      setState(() {
-                                        startDate.text =
-                                            DateFormat('dd-MM-yyyy')
-                                                .format(selectedValue!);
-                                        final endValue = selectedValue.add(
-                                            Duration(
-                                                days: int.parse(typeDuration)));
-                                        endDate.text = DateFormat('dd-MM-yyyy')
-                                            .format(endValue);
-                                      });
-                                    },
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Select Start Date";
-                                      }
-                                      return null;
-                                    },
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.all(8),
-                                        labelText: 'Start Date *',
-                                        prefixIcon: Icon(Icons.calendar_month,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                  const SizedBox(height: 14.0),
-                                  TextFormField(
-                                    onTap: () async {
-                                      DateTime? selectedEndDate =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime(2000),
-                                        lastDate: DateTime(2100),
-                                      );
-                                      endDate.text = DateFormat('dd-MM-yyyy')
-                                          .format(selectedEndDate!);
-                                    },
-                                    validator: (value) {
-                                      if (value!.isEmpty) {
-                                        return "Select End Date";
-                                      }
-                                      return null;
-                                    },
-                                    readOnly: true,
-                                    controller: endDate,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.all(8),
-                                        labelText: 'End Date *',
-                                        prefixIcon: Icon(Icons.calendar_month,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                  const SizedBox(height: 14.0),
-                                  TextFormField(
-                                    onTap: () {
-                                      dropDialog(context);
-                                    },
-                                    readOnly: true,
-                                    controller: reminderTemplate,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.all(8),
-                                        labelText: 'Remind Template ',
-                                        prefixIcon: Icon(Icons.notifications,
-                                            color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey),
-                                        ),
-                                        labelStyle:
-                                            TextStyle(color: Colors.grey)),
-                                  ),
-                                ],
-                              )),
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          TextFormField(
+                            controller: remarks,
+                            maxLines: 2,
+                            decoration: const InputDecoration(
+                                labelText: 'Remarks',
+                                fillColor: Colors.white,
+                                filled: true,
+                                //prefixIcon: Icon(myIcon, color: prefixIconColor),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                labelStyle: TextStyle(color: Colors.grey)),
+                          ),
                           const SizedBox(
                             height: 20,
                           ),
@@ -2107,34 +2223,28 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     nextFollowupDate1.text.isEmpty) {
                                   Common.toastMessaage(
                                       'Choose next followup date', Colors.red);
-                                } else if (leadStatusId == '2' &&
-                                        productCost.text.isEmpty ||
-                                    products.isEmpty) {
-                                  Common.toastMessaage(
-                                      'Please select a product', Colors.red);
-                                } else if (createOrder == true &&
-                                    products.isEmpty) {
+                                } else if (renew == true && products.isEmpty) {
                                   Common.toastMessaage(
                                       'Please add a product to continue',
                                       Colors.red);
-                                } else if (createOrder == true &&
+                                } else if (renew == true &&
                                     paymentStatus == null) {
                                   Common.toastMessaage(
                                       'Payment Status is required to add invoice',
                                       Colors.red);
-                                } else if (createOrder == true &&
+                                } else if (renew == true &&
                                     paidAmount.text.isEmpty &&
                                     paymentStatus != "unpaid") {
                                   Common.toastMessaage(
                                       'Paid Amount is required to add invoice',
                                       Colors.red);
-                                } else if (createOrder == true &&
+                                } else if (renew == true &&
                                     paymentStatus != "unpaid" &&
                                     paymentMethod == null) {
                                   Common.toastMessaage(
                                       'Payment Method is required to add invoice',
                                       Colors.red);
-                                } else if (createOrder == true &&
+                                } else if (renew == true &&
                                     paymentStatus != "unpaid" &&
                                     staffId == "") {
                                   Common.toastMessaage(
@@ -2149,6 +2259,29 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                     endDate.text == "") {
                                   Common.toastMessaage(
                                       'End date is required to add renewal',
+                                      Colors.red);
+                                } else if (createRenewal == true &&
+                                    double.parse(discount.text == ""
+                                            ? "0.0"
+                                            : discount.text) >
+                                        subTotal) {
+                                  Common.toastMessaage(
+                                      'The discount should not exceed the total amount',
+                                      Colors.red);
+                                } else if (double.parse(discount.text == ""
+                                        ? "0.0"
+                                        : discount.text) <
+                                    0) {
+                                  Common.toastMessaage(
+                                      'Please enter valid discount amount',
+                                      Colors.red);
+                                } else if (double.parse(
+                                        shippingCharge.text == ""
+                                            ? "0.0"
+                                            : shippingCharge.text) <
+                                    0) {
+                                  Common.toastMessaage(
+                                      'Please enter valid shipping charge',
                                       Colors.red);
                                 } else {
                                   if (context.mounted) {
@@ -2170,9 +2303,10 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                           timeBefore.text,
                                           callResponseId,
                                           callResultReasonId,
-                                          createOrder,
                                           invoiceDate,
-                                          products,
+                                          leadStatusId == '2'
+                                              ? followupProducts
+                                              : products,
                                           reminderTemplate.text,
                                           allTotal,
                                           startDate.text,
@@ -2184,7 +2318,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                           shippingCharge.text,
                                           paymentMethod,
                                           paidAmount.text,
-                                          staffId);
+                                          staffId,
+                                          targetGroups);
                                   if (object1.status == true) {
                                     Common.toastMessaage(
                                         object1.message, Colors.green);
@@ -2627,6 +2762,10 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                             } else if (productTotalAmount.text.isEmpty) {
                               Common.toastMessaage(
                                   'Enter Product Total Amount', Colors.red);
+                            } else if (double.parse(productTaxPercent.text) >
+                                100) {
+                              Common.toastMessaage(
+                                  'Enter valid tax percentage', Colors.red);
                             } else {
                               products.add({
                                 "product_name": productName,
@@ -2640,10 +2779,16 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               });
 
                               subTotal = subTotal +
-                                  double.parse(productTotalAmount.text);
+                                  double.parse(productTotalAmount.text == ''
+                                      ? '0'
+                                      : productTotalAmount.text);
                               totalTaxAmount = totalTaxAmount +
-                                  double.parse(productTaxAmount.text) *
-                                      double.parse(productQty.text);
+                                  double.parse(productTaxAmount.text == ''
+                                          ? '0'
+                                          : productTaxAmount.text) *
+                                      double.parse(productQty.text == ''
+                                          ? '1'
+                                          : productQty.text);
                               allTotal = subTotal +
                                   double.parse(shippingCharge.text == ''
                                       ? '0'
@@ -2651,6 +2796,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                   double.parse(discount.text == ''
                                       ? '0'
                                       : discount.text);
+                              paidAmount.text = allTotal.toString();
                               productName = "Choose Product";
                               productId = "";
                               productDescription.clear();
@@ -2764,7 +2910,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                                 Navigator.pop(context);
                               }
                             } else {
-                              products.add({
+                              followupProducts.add({
                                 "prd_id": filteredItems[index].id,
                                 "total_amount":
                                     filteredItems[index].sellingPrice,
@@ -2772,9 +2918,12 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                               productNames
                                   .add(filteredItems[index].productName);
                               totalProductCost = 0;
-                              for (int i = 0; i < products.length; i++) {
+                              for (int ind = 0;
+                                  ind < followupProducts.length;
+                                  ind++) {
                                 totalProductCost += double.parse(
-                                    await products[i]["total_amount"]);
+                                    await followupProducts[ind]
+                                        ["total_amount"]);
                               }
                               productCost.text = (totalProductCost).toString();
                               setState(() {});
@@ -2813,6 +2962,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
             title: const Text('Call Response'),
             content: SizedBox(
               width: MediaQuery.of(context).size.height * .8,
+              height: MediaQuery.of(context).size.height * .465,
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: detailsResponse!.data.callResponse.length,
@@ -2916,7 +3066,6 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                         }
                         Navigator.pop(context, true);
                       });
-                      products.clear();
                       productNames.clear();
                     },
                     child: SizedBox(
@@ -3087,6 +3236,102 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                     }
                   },
                   child: const Text("Close")),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  Future<dynamic> targetGroupDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      autofocus: true,
+                      onChanged: (value) {
+                        setState(() {
+                          filteredTargets = targets
+                              .where((item) => item.groupName
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(8),
+                        hintText: 'Search',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .32,
+                    width: MediaQuery.of(context).size.width * .8,
+                    child: ListView.builder(
+                      // Remove NeverScrollableScrollPhysics to enable scrolling
+                      shrinkWrap: true,
+                      itemCount: filteredTargets.length,
+                      itemBuilder: (context, ind) {
+                        return CheckboxListTile(
+                          title: SizedBox(
+                            width: 200,
+                            child: Text(
+                              filteredTargets[ind].groupName.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14),
+                            ),
+                          ),
+                          value: targetGroups
+                                  .contains(filteredTargets[ind].id.toString())
+                              ? true
+                              : false,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                targetGroups
+                                    .add(filteredTargets[ind].id.toString());
+                                targetGroupNames.add(
+                                    filteredTargets[ind].groupName.toString());
+                              } else {
+                                targetGroups
+                                    .remove(filteredTargets[ind].id.toString());
+                                targetGroupNames.remove(
+                                    filteredTargets[ind].groupName.toString());
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  filteredTargets.clear();
+                  filteredTargets.addAll(targets);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Done"),
+              ),
             ],
           );
         });

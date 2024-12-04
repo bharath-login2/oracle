@@ -160,11 +160,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
       if (postExistingResponse != null &&
           postExistingResponse!.status == true) {
         Common.toastMessaage(postExistingResponse!.message, Colors.green);
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
+        Navigator.pop(context);
       } else {
         Common.toastMessaage(postExistingResponse!.message, Colors.red);
         setState(() {
@@ -208,11 +204,7 @@ class _QuickRenewalState extends State<QuickRenewal> {
           detailsResponse!.data.checkId);
       if (postNewResponse != null && postNewResponse!.status == true) {
         Common.toastMessaage(postNewResponse!.message, Colors.green);
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
+        Navigator.pop(context);
       } else {
         Common.toastMessaage(postNewResponse!.message, Colors.red);
         setState(() {
@@ -454,7 +446,6 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                             },
                                                                             child:
                                                                                 const Text('Yes')),
-                                                                        
                                                                       ],
                                                                     );
                                                                   });
@@ -1004,14 +995,11 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                                                                 totalProductCostNew += double.parse((await productsNew[ind])["product_rate"]);
                                                                               }
                                                                               productCostNew.text = (totalProductCostNew).toString();
-                                                                              print(productsNew.length);
                                                                               setState(() {});
-
                                                                               Navigator.of(context).pop();
                                                                             },
                                                                             child:
                                                                                 const Text('Yes')),
-                                                                        
                                                                       ],
                                                                     );
                                                                   });

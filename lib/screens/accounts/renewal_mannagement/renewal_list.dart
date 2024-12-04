@@ -15,7 +15,9 @@ import 'package:login2/screens/accounts/renewal_mannagement/edit_quick_renewal.d
 import 'package:login2/screens/accounts/renewal_mannagement/renew_custom_renewal.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/models/renewal/renewal_template_model.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_details.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup.dart';
+import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/view_history.dart';
 import 'package:login2/service/service.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -204,165 +206,258 @@ class _RenewalListState extends State<RenewalList> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: ((didPop) async {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
-      }),
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade300,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        selectedIds.isEmpty
-                            ? InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const RenewalDashboard(),
-                                      ));
-                                },
-                                child: Container(
-                                  height: 25,
-                                  width: 25,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.white),
-                                      shape: BoxShape.circle),
-                                  child: const Icon(
-                                    Icons.arrow_back_ios_outlined,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade300,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      selectedIds.isEmpty
+                          ? InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: 25,
+                                width: 25,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.white),
+                                    shape: BoxShape.circle),
+                                child: const Icon(
+                                  Icons.arrow_back_ios_outlined,
+                                  color: Colors.white,
+                                  size: 16,
                                 ),
-                              )
-                            : Checkbox(
-                                fillColor:
-                                    const WidgetStatePropertyAll(Colors.white),
-                                checkColor: Colors.blue,
-                                value: isAllSelected,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isAllSelected = value!;
-                                    if (isAllSelected == true) {
-                                      for (int i = 0; i < items.length; i++) {
-                                        if (items[i].isRenewed == false) {
-                                          if (selectedIds
-                                              .contains(items[i].id)) {
-                                          } else {
-                                            selectedIds.add(items[i].id);
-                                            selectedNames
-                                                .add(items[i].clientName);
-                                          }
+                              ),
+                            )
+                          : Checkbox(
+                              fillColor:
+                                  const WidgetStatePropertyAll(Colors.white),
+                              checkColor: Colors.blue,
+                              value: isAllSelected,
+                              onChanged: (value) {
+                                setState(() {
+                                  isAllSelected = value!;
+                                  if (isAllSelected == true) {
+                                    for (int i = 0; i < items.length; i++) {
+                                      if (items[i].isRenewed == false) {
+                                        if (selectedIds.contains(items[i].id)) {
+                                        } else {
+                                          selectedIds.add(items[i].id);
+                                          selectedNames
+                                              .add(items[i].clientName);
                                         }
                                       }
-                                    } else {
-                                      selectedNames.clear();
-                                      selectedIds.clear();
                                     }
-                                  });
-                                }),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          selectedIds.isEmpty
-                              ? widget.title
-                              : "Tap to select all",
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    selectedIds.isEmpty
-                        ? InkWell(
-                            onTap: () {
-                              filtration(context);
-                            },
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  color: const Color(0xFFd5f5f4),
-                                  borderRadius: BorderRadius.circular(5)),
-                              child: Center(
-                                  child: Image.asset("assets/icons/filter.png",
-                                      width: 20)),
-                            ),
-                          )
-                        : InkWell(
-                            onTap: () {
-                              bulkReminderSheet();
-                            },
-                            child: Container(
-                              height: 35,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.teal),
-                              child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Image.asset(
-                                      "assets/icons/whatsapp_white.png")),
-                            ),
-                          )
-                  ]),
-            ),
+                                  } else {
+                                    selectedNames.clear();
+                                    selectedIds.clear();
+                                  }
+                                });
+                              }),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        selectedIds.isEmpty
+                            ? widget.title
+                            : "Tap to select all",
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  selectedIds.isEmpty
+                      ? InkWell(
+                          onTap: () {
+                            filtration(context);
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                color: const Color(0xFFd5f5f4),
+                                borderRadius: BorderRadius.circular(5)),
+                            child: Center(
+                                child: Image.asset("assets/icons/filter.png",
+                                    width: 20)),
+                          ),
+                        )
+                      : InkWell(
+                          onTap: () {
+                            bulkReminderSheet();
+                          },
+                          child: Container(
+                            height: 35,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.teal),
+                            child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Image.asset(
+                                    "assets/icons/whatsapp_white.png")),
+                          ),
+                        )
+                ]),
           ),
         ),
-        body: RefreshIndicator(
-            onRefresh: (() async {
-              page = 1;
-              add = 1;
-              items.clear();
-              getList();
-            }),
-            child: isLoading == true
-                ? buildLoaderListItem()
-                : items.isNotEmpty
-                    ? SafeArea(
-                        child: listResponse == null
-                            ? const Center(
-                                child: Text("Something Went Wrong"),
-                              )
-                            : Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: ScrollablePositionedList.builder(
-                                  shrinkWrap: true,
-                                  itemScrollController: itemScrollController,
-                                  itemPositionsListener: itemPositionsListener,
-                                  itemCount: items.length +
-                                      (items.length + 10 == page * pageSize
-                                          ? 1
-                                          : 0),
-                                  initialScrollIndex: 0,
-                                  itemBuilder: (context, index) {
-                                    if (index == items.length) {
-                                      return buildLoaderListItem();
-                                    } else {
-                                      return Padding(
+      ),
+      body: RefreshIndicator(
+          onRefresh: (() async {
+            page = 1;
+            add = 1;
+            items.clear();
+            getList();
+          }),
+          child: isLoading == true
+              ? buildLoaderListItem()
+              : items.isNotEmpty
+                  ? SafeArea(
+                      child: listResponse == null
+                          ? const Center(
+                              child: Text("Something Went Wrong"),
+                            )
+                          : Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: ScrollablePositionedList.builder(
+                                shrinkWrap: true,
+                                itemScrollController: itemScrollController,
+                                itemPositionsListener: itemPositionsListener,
+                                itemCount: items.length +
+                                    (items.length + 10 == page * pageSize
+                                        ? 1
+                                        : 0),
+                                initialScrollIndex: 0,
+                                itemBuilder: (context, index) {
+                                  if (index == items.length) {
+                                    return buildLoaderListItem();
+                                  } else {
+                                    return Dismissible(
+                                      key: const Key('0'),
+                                      background: Container(
+                                        color: Colors.green,
+                                        child: const Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: <Widget>[
+                                              SizedBox(
+                                                width: 20,
+                                              ),
+                                              Icon(
+                                                Icons.restart_alt,
+                                                color: Colors.white,
+                                              ),
+                                              Text(
+                                                " Renew",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                                textAlign: TextAlign.left,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      secondaryBackground: Container(
+                                        color: Colors.blue,
+                                        child: const Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: <Widget>[
+                                              Icon(
+                                                Icons.add,
+                                                color: Colors.white,
+                                              ),
+                                              Text(
+                                                " Add Followup",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                                textAlign: TextAlign.right,
+                                              ),
+                                              SizedBox(
+                                                width: 20,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      confirmDismiss: (direction) async {
+                                        if (direction ==
+                                            DismissDirection.startToEnd) {
+                                          if (items[index].renewalType ==
+                                              "quick") {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      RenewQuickRenewal(
+                                                    id: items[index].id,
+                                                  ),
+                                                )).then((_) {
+                                              page = 1;
+                                              add = 1;
+                                              items.clear();
+                                              getList();
+                                            });
+                                          } else {
+                                            Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      RenewCustomRenewal(
+                                                    renId: items[index].id,
+                                                    renewalType: items[index]
+                                                        .renewalType,
+                                                  ),
+                                                )).then((_) {
+                                              page = 1;
+                                              add = 1;
+                                              items.clear();
+                                              getList();
+                                            });
+                                          }
+                                        } else {
+                                          Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          RenewalFollowup(
+                                                              items[index].id,
+                                                              DateTime.now())))
+                                              .then((_) {
+                                            page = 1;
+                                            add = 1;
+                                            items.clear();
+                                            getList();
+                                          });
+                                        }
+                                        return null;
+                                      },
+                                      child: Padding(
                                         padding: const EdgeInsets.only(
                                             bottom: 8.0, top: 8.0),
                                         child: GestureDetector(
@@ -389,13 +484,11 @@ class _RenewalListState extends State<RenewalList> {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                          builder: (context) =>
-                                                              RenewalFollowup(
-                                                                  items[index]
-                                                                      .id,
-                                                                  DateTime
-                                                                      .now()))).then(
-                                                      (_) {
+                                                        builder: (context) =>
+                                                            RenewalDetails(
+                                                          id: items[index].id,
+                                                        ),
+                                                      )).then((_) {
                                                     page = 1;
                                                     add = 1;
                                                     items.clear();
@@ -432,17 +525,23 @@ class _RenewalListState extends State<RenewalList> {
                                             });
                                           },
                                           child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                .9,
                                             decoration: BoxDecoration(
-                                                color: selectedIds.contains(
-                                                        items[index].id)
-                                                    ? Colors.blueGrey
-                                                    : Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(8)),
+                                              color: selectedIds
+                                                      .contains(items[index].id)
+                                                  ? Colors.blueGrey
+                                                  : items[index].isRenewed ==
+                                                          true
+                                                      ? Colors.green.shade100
+                                                          .withOpacity(.8)
+                                                      : items[index]
+                                                                  .isExpired ==
+                                                              true
+                                                          ? Colors.red.shade100
+                                                              .withOpacity(.5)
+                                                          : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.all(16.0),
@@ -479,7 +578,12 @@ class _RenewalListState extends State<RenewalList> {
                                                                           token,
                                                                           items[index]
                                                                               .clientId),
-                                                                    ));
+                                                                    )).then((_) {
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  items.clear();
+                                                                  getList();
+                                                                });
                                                               }
                                                             },
                                                             child: Row(
@@ -644,7 +748,10 @@ class _RenewalListState extends State<RenewalList> {
                                                                 items[index].isRenewed ==
                                                                         true
                                                                     ? "Renewed"
-                                                                    : "Not Renewed",
+                                                                    : items[index].isExpired ==
+                                                                            true
+                                                                        ? "Expired"
+                                                                        : "Not Renewed",
                                                                 style: const TextStyle(
                                                                     color: Colors
                                                                         .white),
@@ -674,336 +781,437 @@ class _RenewalListState extends State<RenewalList> {
                                                                 style: const TextStyle(
                                                                     fontSize:
                                                                         14,
-                                                                    color: Colors
-                                                                        .black),
-                                                              ),
-                                                            ),
-                                                          )
-                                                        ],
-                                                      )
-                                                    ],
-                                                  ),
-                                                  Visibility(
-                                                    visible:
-                                                        selectedIds.isEmpty,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        Visibility(
-                                                          visible: items[index]
-                                                                  .isRenewed ==
-                                                              false,
-                                                          child: InkWell(
-                                                            onTap: () async {
-                                                              Common.showProgressDialog(
-                                                                  context,
-                                                                  "Loading..");
-                                                              getRenewalReminderMessage(
-                                                                  items[index]
-                                                                      .id,
-                                                                  items[index]
-                                                                      .contactNo);
-                                                              recieverName
-                                                                  .text = items[
-                                                                      index]
-                                                                  .clientName;
-                                                              contactNumber
-                                                                  .text = items[
-                                                                      index]
-                                                                  .contactNo;
-
-                                                              // setState(() {});
-                                                            },
-                                                            child: Container(
-                                                              height: 40,
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: Colors
-                                                                      .teal),
-                                                              child: Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          8.0),
-                                                                  child: Image
-                                                                      .asset(
-                                                                          "assets/icons/whatsapp_white.png")),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        Visibility(
-                                                          visible: items[index]
-                                                                  .isRenewed ==
-                                                              false,
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              if (items[index]
-                                                                      .renewalType ==
-                                                                  "quick") {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              RenewQuickRenewal(
-                                                                        id: items[index]
-                                                                            .id,
-                                                                      ),
-                                                                    )).then((_) {
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  items.clear();
-                                                                  getList();
-                                                                });
-                                                              } else {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              RenewCustomRenewal(
-                                                                        renId: items[index]
-                                                                            .id,
-                                                                        renewalType:
-                                                                            items[index].renewalType,
-                                                                      ),
-                                                                    )).then((_) {
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  items.clear();
-                                                                  getList();
-                                                                });
-                                                              }
-                                                            },
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: Colors
-                                                                      .green),
-                                                              child:
-                                                                  const Padding(
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .all(
-                                                                            8.0),
-                                                                child: Icon(
-                                                                    Icons
-                                                                        .restart_alt,
-                                                                    color: Colors
-                                                                        .white),
+                                                                    color: Color
+                                                                        .fromARGB(
+                                                                            255,
+                                                                            54,
+                                                                            43,
+                                                                            43)),
                                                               ),
                                                             ),
                                                           ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        Visibility(
-                                                          visible: items[index]
-                                                                  .isRenewed ==
-                                                              false,
-                                                          child: InkWell(
-                                                            onTap: () {
-                                                              if (items[index]
-                                                                      .renewalType ==
-                                                                  "quick") {
+                                                          PopupMenuButton<
+                                                              String>(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 35),
+                                                            iconColor:
+                                                                Colors.black,
+                                                            color: Colors.white,
+                                                            onSelected:
+                                                                (value) {
+                                                              if (value ==
+                                                                  "0") {
                                                                 Navigator.push(
                                                                     context,
                                                                     MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            EditQuickRenewalScreen(
-                                                                              id: items[index].id,
-                                                                              invoiceId: items[index].invoiceId,
-                                                                            ))).then(
-                                                                    (r) {
-                                                                  getList();
-                                                                });
-                                                              } else {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) =>
-                                                                            EditCustomRenewal(
-                                                                              renId: items[index].id,
-                                                                              renewalType: items[index].renewalType,
-                                                                            ))).then(
+                                                                        builder: (context) => RenewalFollowup(
+                                                                            items[index]
+                                                                                .id,
+                                                                            DateTime.now()))).then(
                                                                     (_) {
                                                                   page = 1;
                                                                   add = 1;
                                                                   items.clear();
                                                                   getList();
                                                                 });
+                                                              } else if (value ==
+                                                                  "1") {
+                                                                Common.showProgressDialog(
+                                                                    context,
+                                                                    "Loading..");
+                                                                getRenewalReminderMessage(
+                                                                    items[index]
+                                                                        .id,
+                                                                    items[index]
+                                                                        .contactNo);
+                                                                recieverName
+                                                                    .text = items[
+                                                                        index]
+                                                                    .clientName;
+                                                                contactNumber
+                                                                    .text = items[
+                                                                        index]
+                                                                    .contactNo;
+                                                              } else if (value ==
+                                                                  "2") {
+                                                                if (items[index]
+                                                                        .renewalType ==
+                                                                    "quick") {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) => EditQuickRenewalScreen(
+                                                                                id: items[index].id,
+                                                                              ))).then((r) {
+                                                                    getList();
+                                                                  });
+                                                                } else {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                          builder: (context) => EditCustomRenewal(
+                                                                                renId: items[index].id,
+                                                                                renewalType: items[index].renewalType,
+                                                                              ))).then((_) {
+                                                                    page = 1;
+                                                                    add = 1;
+                                                                    items
+                                                                        .clear();
+                                                                    getList();
+                                                                  });
+                                                                }
+                                                              } else if (value ==
+                                                                  "3") {
+                                                                if (items[index]
+                                                                        .renewalType ==
+                                                                    "quick") {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                RenewQuickRenewal(
+                                                                          id: items[index]
+                                                                              .id,
+                                                                        ),
+                                                                      )).then((_) {
+                                                                    page = 1;
+                                                                    add = 1;
+                                                                    items
+                                                                        .clear();
+                                                                    getList();
+                                                                  });
+                                                                } else {
+                                                                  Navigator.push(
+                                                                      context,
+                                                                      MaterialPageRoute(
+                                                                        builder:
+                                                                            (context) =>
+                                                                                RenewCustomRenewal(
+                                                                          renId:
+                                                                              items[index].id,
+                                                                          renewalType:
+                                                                              items[index].renewalType,
+                                                                        ),
+                                                                      )).then((_) {
+                                                                    page = 1;
+                                                                    add = 1;
+                                                                    items
+                                                                        .clear();
+                                                                    getList();
+                                                                  });
+                                                                }
+                                                              } else if (value ==
+                                                                  "4") {
+                                                                showDialog(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (BuildContext
+                                                                            context) {
+                                                                      return AlertDialog(
+                                                                        scrollable:
+                                                                            true,
+                                                                        title: const Text(
+                                                                            'Please Confirm'),
+                                                                        content:
+                                                                            const Text('Are you sure to Hide?'),
+                                                                        actions: [
+                                                                          TextButton(
+                                                                              onPressed: () {
+                                                                                Navigator.of(context).pop();
+                                                                              },
+                                                                              child: const Text('No')),
+                                                                          TextButton(
+                                                                              onPressed: () async {
+                                                                                Navigator.pop(context);
+                                                                                await hide(items[index].id);
+                                                                                page = 1;
+                                                                                add = 1;
+                                                                                items.clear();
+                                                                                getList();
+                                                                              },
+                                                                              child: const Text('Yes')),
+                                                                        ],
+                                                                      );
+                                                                    });
+                                                              } else if (value ==
+                                                                  "5") {
+                                                                Navigator.push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder:
+                                                                          (context) =>
+                                                                              ViewHistory(
+                                                                        id: items[index]
+                                                                            .id,
+                                                                        title: items[index]
+                                                                            .clientName,
+                                                                      ),
+                                                                    ));
                                                               }
                                                             },
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              2),
-                                                                  color: Colors
-                                                                      .blueAccent),
-                                                              child:
-                                                                  const Padding(
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .all(
-                                                                            8.0),
-                                                                child: Icon(
-                                                                    Icons.edit,
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder:
-                                                                    (BuildContext
-                                                                        context) {
-                                                                  return AlertDialog(
-                                                                    scrollable:
-                                                                        true,
-                                                                    title: const Text(
-                                                                        'Please Confirm'),
-                                                                    content:
-                                                                        const Text(
-                                                                            'Are you sure to Hide?'),
-                                                                    actions: [
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.of(context).pop();
-                                                                          },
-                                                                          child:
-                                                                              const Text('No')),
-                                                                      TextButton(
-                                                                          onPressed:
-                                                                              () async {
-                                                                            Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
-                                                                                  builder: (context) => const RenewalDashboard(),
-                                                                                ));
-                                                                            await hide(items[index].id);
-                                                                            page =
-                                                                                1;
-                                                                            add =
-                                                                                1;
-                                                                            items.clear();
-                                                                            getList();
-                                                                          },
-                                                                          child:
-                                                                              const Text('Yes')),
-                                                                    ],
-                                                                  );
-                                                                });
-                                                          },
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2),
-                                                                color: Colors
-                                                                    .grey),
-                                                            child:
-                                                                const Padding(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(8.0),
-                                                              child: Icon(
-                                                                  Icons
-                                                                      .visibility_off,
-                                                                  color: Colors
-                                                                      .white),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        InkWell(
-                                                          onTap: () {
-                                                            Navigator.push(
-                                                                context,
-                                                                MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          ViewHistory(
-                                                                    id: items[
-                                                                            index]
-                                                                        .id,
-                                                                    title: items[
-                                                                            index]
-                                                                        .clientName,
+                                                            itemBuilder:
+                                                                (BuildContext
+                                                                    context) {
+                                                              return [
+                                                                if (items[index]
+                                                                        .isRenewed ==
+                                                                    false)
+                                                                  const PopupMenuItem<
+                                                                      String>(
+                                                                    value: '0',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .add,
+                                                                          color:
+                                                                              Colors.green,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              5,
+                                                                        ),
+                                                                        Text(
+                                                                          'Add Followup',
+                                                                          style:
+                                                                              TextStyle(color: Colors.green),
+                                                                        ),
+                                                                      ],
+                                                                    ),
                                                                   ),
-                                                                ));
-                                                          },
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2),
-                                                                color: Colors
-                                                                    .blueGrey),
-                                                            child:
-                                                                const Padding(
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(8.0),
-                                                              child: Icon(
-                                                                  Icons.history,
-                                                                  color: Colors
-                                                                      .white),
+                                                                if (items[index]
+                                                                        .isRenewed ==
+                                                                    false)
+                                                                  const PopupMenuItem<
+                                                                      String>(
+                                                                    value: '2',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .edit,
+                                                                          color:
+                                                                              Colors.blue,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              5,
+                                                                        ),
+                                                                        Text(
+                                                                          'Edit',
+                                                                          style:
+                                                                              TextStyle(color: Colors.blue),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                const PopupMenuItem<
+                                                                    String>(
+                                                                  value: '4',
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .visibility_off,
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            5,
+                                                                      ),
+                                                                      Text(
+                                                                        'Hide',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                const PopupMenuItem<
+                                                                    String>(
+                                                                  value: '5',
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .history,
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            5,
+                                                                      ),
+                                                                      Text(
+                                                                        'Remind History',
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                )
+                                                              ];
+                                                            },
+                                                          ),
+                                                          Visibility(
+                                                            visible: selectedIds
+                                                                .isEmpty,
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                              children: [
+                                                                Visibility(
+                                                                  visible: items[
+                                                                              index]
+                                                                          .isRenewed ==
+                                                                      false,
+                                                                  child:
+                                                                      InkWell(
+                                                                    onTap:
+                                                                        () async {
+                                                                      Common.showProgressDialog(
+                                                                          context,
+                                                                          "Loading..");
+                                                                      getRenewalReminderMessage(
+                                                                          items[index]
+                                                                              .id,
+                                                                          items[index]
+                                                                              .contactNo);
+                                                                      recieverName
+                                                                          .text = items[
+                                                                              index]
+                                                                          .clientName;
+                                                                      contactNumber
+                                                                          .text = items[
+                                                                              index]
+                                                                          .contactNo;
+                                                                      // setState(() {});
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      height:
+                                                                          40,
+                                                                      decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(
+                                                                              2),
+                                                                          color:
+                                                                              Colors.teal),
+                                                                      child: Padding(
+                                                                          padding: const EdgeInsets
+                                                                              .all(
+                                                                              8.0),
+                                                                          child:
+                                                                              Image.asset("assets/icons/whatsapp_white.png")),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                Visibility(
+                                                                  visible: items[
+                                                                              index]
+                                                                          .isRenewed ==
+                                                                      false,
+                                                                  child:
+                                                                      InkWell(
+                                                                    onTap: () {
+                                                                      if (items[index]
+                                                                              .renewalType ==
+                                                                          "quick") {
+                                                                        Navigator.push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                              builder: (context) => RenewQuickRenewal(
+                                                                                id: items[index].id,
+                                                                              ),
+                                                                            )).then((_) {
+                                                                          page =
+                                                                              1;
+                                                                          add =
+                                                                              1;
+                                                                          items
+                                                                              .clear();
+                                                                          getList();
+                                                                        });
+                                                                      } else {
+                                                                        Navigator.push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                              builder: (context) => RenewCustomRenewal(
+                                                                                renId: items[index].id,
+                                                                                renewalType: items[index].renewalType,
+                                                                              ),
+                                                                            )).then((_) {
+                                                                          page =
+                                                                              1;
+                                                                          add =
+                                                                              1;
+                                                                          items
+                                                                              .clear();
+                                                                          getList();
+                                                                        });
+                                                                      }
+                                                                    },
+                                                                    child:
+                                                                        Container(
+                                                                      decoration: BoxDecoration(
+                                                                          borderRadius: BorderRadius.circular(
+                                                                              2),
+                                                                          color:
+                                                                              Colors.green),
+                                                                      child:
+                                                                          const Padding(
+                                                                        padding:
+                                                                            EdgeInsets.all(8.0),
+                                                                        child: Icon(
+                                                                            Icons
+                                                                                .restart_alt,
+                                                                            color:
+                                                                                Colors.white),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
                                                             ),
                                                           ),
-                                                        ),
-                                                      ],
-                                                    ),
+                                                        ],
+                                                      )
+                                                    ],
                                                   ),
                                                 ],
                                               ),
                                             ),
                                           ),
                                         ),
-                                      );
-                                    }
-                                  },
-                                ),
-                              ))
-                    : Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                                height: 150,
-                                width: 150,
-                                child: Image.asset(
-                                    "assets/icons/nodatafound.png")),
-                            const Text("No Renewals")
-                          ],
-                        ),
-                      )),
-      ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ))
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                              height: 150,
+                              width: 150,
+                              child:
+                                  Image.asset("assets/icons/nodatafound.png")),
+                          const Text("No Renewals")
+                        ],
+                      ),
+                    )),
     );
   }
 

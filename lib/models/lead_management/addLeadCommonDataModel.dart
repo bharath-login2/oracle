@@ -2,7 +2,6 @@
 //
 //     final addLeadCommonDataModel = addLeadCommonDataModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 AddLeadCommonDataModel addLeadCommonDataModelFromJson(String str) => AddLeadCommonDataModel.fromJson(json.decode(str));
@@ -51,6 +50,7 @@ class Data {
     bool customerAddInvoicePermission;
     bool isRenewal;
     bool isInstallment;
+    List<TargetGroup> targetGroups;
 
     Data({
         required this.leadCategory,
@@ -70,6 +70,7 @@ class Data {
         required this.customerAddInvoicePermission,
         required this.isRenewal,
         required this.isInstallment,
+        required this.targetGroups,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -90,6 +91,7 @@ class Data {
         customerAddInvoicePermission: json["customerAddInvoicePermission"],
         isRenewal: json["isRenewal"],
         isInstallment: json["isInstallment"],
+        targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
@@ -274,25 +276,43 @@ class Priority {
 }
 
 class Staff {
-    String staffId;
+    String userId;
     String staffName;
 
     Staff({
-        required this.staffId,
+        required this.userId,
         required this.staffName,
     });
 
     factory Staff.fromJson(Map<String, dynamic> json) => Staff(
-        staffId: json["staff_id"],
+        userId: json["user_id"],
         staffName: json["staff_name"],
     );
 
     Map<String, dynamic> toJson() => {
-        "staff_id": staffId,
+        "user_id": userId,
         "staff_name": staffName,
     };
 }
+class Branch {
+    String branchId;
+    String branchName;
 
+    Branch({
+        required this.branchId,
+        required this.branchName,
+    });
+
+    factory Branch.fromJson(Map<String, dynamic> json) => Branch(
+        branchId: json["branch_id"]??"",
+        branchName: json["branch_name"]??"",
+    );
+
+    Map<String, dynamic> toJson() => {
+        "branch_id": branchId,
+        "branch_name": branchName,
+    };
+}
 class TransferStaff {
     String tranStaffId;
     String tranStaffName;
@@ -310,5 +330,25 @@ class TransferStaff {
     Map<String, dynamic> toJson() => {
         "tran_staff_id": tranStaffId,
         "tran_staff_name": tranStaffName,
+    };
+}
+
+class TargetGroup {
+    String id;
+    String groupName;
+
+    TargetGroup({
+        required this.id,
+        required this.groupName,
+    });
+
+    factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
+        id: json["id"],
+        groupName: json["group_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "group_name": groupName,
     };
 }

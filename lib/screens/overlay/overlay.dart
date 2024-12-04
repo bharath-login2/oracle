@@ -1,8 +1,6 @@
 // ignore_for_file: must_be_immutable
 
-import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/core/common.dart';
@@ -148,7 +146,7 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
                             ],
                           ),
                           const Text(
-                            "Login2 Pro",
+                            "Lead Plus",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15.0,

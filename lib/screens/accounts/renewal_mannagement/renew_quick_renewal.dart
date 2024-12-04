@@ -126,23 +126,14 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
       "quick",
       templateId,
     );
-    try{if (postRenewal != null && postRenewal!.status == true) {
-      // String token = await Common.getSharedPref('token');
-      Common.toastMessaage(postRenewal!.message, Colors.green);
-      Navigator.pop(context);
-      // if (postRenewal!.data.isRedirect == false) {
-      //   Navigator.pop(context);
-      // } else {
-      //   Navigator.push(
-      //       context,
-      //       MaterialPageRoute(
-      //         builder: (context) =>
-      //             AddInvoice(token, postRenewal!.data.customerId.toString()),
-      //       ));
-      // }
-    } else {
-      Common.toastMessaage(postRenewal!.message, Colors.red);
-    }}catch(e){
+    try {
+      if (postRenewal != null && postRenewal!.status == true) {
+        Common.toastMessaage(postRenewal!.message, Colors.green);
+        Navigator.pop(context);
+      } else {
+        Common.toastMessaage(postRenewal!.message, Colors.red);
+      }
+    } catch (e) {
       Common.toastMessaage("Something went wrong!", Colors.red);
     }
   }
@@ -351,16 +342,15 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                                                               content: const Text(
                                                                   'Are you sure to Remove this product?'),
                                                               actions: [
-                                                               TextButton(
+                                                                TextButton(
                                                                     onPressed:
                                                                         () {
                                                                       Navigator.of(
                                                                               context)
                                                                           .pop();
                                                                     },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No')),
+                                                                    child: const Text(
+                                                                        'No')),
                                                                 TextButton(
                                                                     onPressed:
                                                                         () async {
@@ -393,7 +383,6 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                                                                     },
                                                                     child: const Text(
                                                                         'Yes')),
-                                                                
                                                               ],
                                                             );
                                                           });
@@ -696,7 +685,7 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                                 filteredTemplates[index].templateName;
                             templateId = filteredTemplates[index].id;
                             setState(() {});
-                          Navigator.pop(context);
+                            Navigator.pop(context);
                             filterTemplates("");
                           } else {
                             typeDuration = filteredProducts[index].noOfDays;

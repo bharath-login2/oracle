@@ -2,7 +2,6 @@
 //
 //     final pendingInvoiceListModel = pendingInvoiceListModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 PendingInvoiceListModel pendingInvoiceListModelFromJson(String str) => PendingInvoiceListModel.fromJson(json.decode(str));

@@ -673,7 +673,6 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                               MaterialPageRoute(
                                                                                   builder: (context) => EditQuickRenewalScreen(
                                                                                         id: invoiceList!.data.lists[index].renewalId,
-                                                                                        invoiceId: invoiceList!.data.lists[index].id,
                                                                                       ))).then((_) {
                                                                             getData();
                                                                           });
@@ -1176,6 +1175,7 @@ class _InvoiceListState extends State<InvoiceList> {
                           Common.toastMessaage('Choose Client', Colors.red);
                         } else {
                           search.clear();
+                          Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(

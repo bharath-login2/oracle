@@ -25,7 +25,7 @@ class _EditExpenseState extends State<EditExpense> {
   List<ExpenseType> categories = [];
   List<ExpenseType> filteredCategories = [];
   ExpenseMasterData? expenseMasterData;
-  ExpensePostModel? updateResponse;
+  CommonResponse? updateResponse;
   String expId = "";
   String categoryId = "";
   String categoryName = "Tap to select";

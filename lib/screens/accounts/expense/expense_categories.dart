@@ -14,7 +14,7 @@ class ExpenseCategories extends StatefulWidget {
 
 class _ExpenseCategoriesState extends State<ExpenseCategories> {
   ExpenseCategoryList? expenseCategories;
-  ExpensePostModel? response;
+  CommonResponse? response;
 
   bool result = true;
   bool isLoading = true;
@@ -159,7 +159,9 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
               ),
             ),
             body: isLoading == true
-                ?  LinearProgressIndicator(color: Colors.blue.shade900,)
+                ? LinearProgressIndicator(
+                    color: Colors.blue.shade900,
+                  )
                 : expenseCategories == null
                     ? const Center(
                         child: Text(
@@ -176,7 +178,7 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                             ),
                             leading: CircleAvatar(
                               radius: 15,
-                              backgroundColor: Colors.blue.shade900,
+                              backgroundColor: Colors.grey,
                               child: Text(
                                 (index + 1).toString(),
                                 style: const TextStyle(
@@ -186,8 +188,8 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                             ),
                             title: Text(
                               expenseCategories!.data[index].typeName,
-                              style: TextStyle(
-                                  color: Colors.blue.shade900,
+                              style: const TextStyle(
+                                  color: Colors.black,
                                   fontWeight: FontWeight.bold),
                             ),
                             // subtitle:  Text(
@@ -206,13 +208,14 @@ class _ExpenseCategoriesState extends State<ExpenseCategories> {
                                     onTap: () {
                                       categoryBottomsheet(
                                           "Edit Category",
-                                          expenseCategories!.data[index].typeName,
+                                          expenseCategories!
+                                              .data[index].typeName,
                                           expenseCategories!.data[index].typeId
                                               .toString());
                                     },
-                                    child: Icon(
+                                    child: const Icon(
                                       Icons.edit,
-                                      color: Colors.blue.shade900,
+                                      color: Colors.blue,
                                     ),
                                   ),
                                   InkWell(

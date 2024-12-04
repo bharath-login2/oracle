@@ -174,7 +174,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                           content: const Text(
                                               'Are you sure to Delete?'),
                                           actions: [
-                                           TextButton(
+                                            TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop();
                                                 },
@@ -184,7 +184,6 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                   DeleteStaffModel delete =
                                                       await HttpService
                                                           .deleteStaff(
-                                                              widget.token,
                                                               viewStaff!
                                                                   .data!
                                                                   .staffList![
@@ -214,7 +213,6 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                   }
                                                 },
                                                 child: const Text('Yes')),
-                                            
                                           ],
                                         );
                                       });

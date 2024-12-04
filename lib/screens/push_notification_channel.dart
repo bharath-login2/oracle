@@ -44,17 +44,30 @@ class FirebaseServices {
   void _showNotification(RemoteMessage message) async {
     final notification = PushNotificationModel.fromJson(message.data);
     try {
+      // Android-specific configuration
       var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        message.notification!.android!.channelId ?? "Login2",
-        message.notification!.android!.channelId ?? "Login2",
+        message.notification?.android?.channelId ?? "login2",
+        message.notification?.android?.channelId ?? "login2",
         importance: Importance.max,
         priority: Priority.high,
         ticker: notification.message,
         channelShowBadge: true,
         icon: '@mipmap/ic_launcher',
       );
-      var platformChannelSpecifics =
-          NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      // iOS-specific configuration
+      var iosPlatformChannelSpecifics = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: message.notification?.apple?.sound?.name ?? 'default',
+      );
+
+      var platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iosPlatformChannelSpecifics,
+      );
+
       await notificationsPlugin.show(
         notification.notificationId ?? 0,
         notification.title,

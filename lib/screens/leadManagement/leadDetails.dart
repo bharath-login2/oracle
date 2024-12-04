@@ -10,13 +10,15 @@ import 'package:dio/dio.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/models/lead_management/deleteLeadModel.dart';
+import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/leadManagement/post_confirmed_followup.dart';
 import 'package:login2/screens/leadManagement/viewLeads.dart';
+import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -146,13 +148,62 @@ class _LeadDetailsState extends State<LeadDetails> {
     Colors.redAccent,
     Colors.purple,
     Colors.pinkAccent,
-    Colors.blueGrey
+    Colors.blueGrey,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
   ];
   LeadDeatailsModel? leadDetails;
   ListFolderNameModel? listFolder;
   FileManagerPermissionModel? fileManagerPermission;
   LeadDeatailsModelAdd? leadDetailsAdditional;
   String? contactPermission = '';
+  String? transferPermission = '';
 
   LeadMileStoneListModel? mileStone;
   bool? result = true;
@@ -194,6 +245,7 @@ class _LeadDetailsState extends State<LeadDetails> {
 
   getData() async {
     contactPermission = await Common.getSharedPref("saveContactPermission");
+    transferPermission = await Common.getSharedPref("transferLeads");
     setState(() {
       timeOut = false;
     });
@@ -307,11 +359,6 @@ class _LeadDetailsState extends State<LeadDetails> {
             Navigator.pop(context);
           }
         } catch (e) {
-          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          //   backgroundColor: Colors.red,
-          //   content: Text(stackTrace.toString()),
-          //   duration: Duration(seconds: 15),
-          // ));
           log(e.toString());
         }
       },
@@ -403,11 +450,50 @@ class _LeadDetailsState extends State<LeadDetails> {
                           ),
                           Row(
                             children: [
-                              InkWell(
-                                onTap: () async {
-                                  final whatsappLink =
-                                      "https://wa.me/$whatsappNo";
-                                  await launch(whatsappLink);
+                              PopupMenuButton(
+                                iconColor: Colors.white,
+                                color: Colors.white,
+                                onSelected: (value) async {
+                                  if (value == "1") {
+                                    final whatsappLink =
+                                        "https://wa.me/$whatsappNo";
+                                    await launch(whatsappLink);
+                                  } else {
+                                    Common.showProgressDialog(
+                                        context, "Loading...");
+                                    GetWhatsappChat whatsappGroup =
+                                        await HttpService.getWhatsappGroupid(
+                                            leadDetails!.data!.clientName!,
+                                            leadDetails!.data!.countryCode!,
+                                            leadDetails!.data!.contactNumber1!);
+                                    Navigator.pop(context);
+                                    if (whatsappGroup.status == true) {
+                                      if (context.mounted) {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ChatScreen(
+                                                groupId: whatsappGroup.data,
+                                                nav: "",
+                                              ),
+                                            )).then((_) {
+                                          getData();
+                                        });
+                                      }
+                                    }
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return [
+                                    const PopupMenuItem<String>(
+                                      value: '1',
+                                      child: Text('Personal whatsapp'),
+                                    ),
+                                    const PopupMenuItem<String>(
+                                      value: '2',
+                                      child: Text('Official whatsapp'),
+                                    ),
+                                  ];
                                 },
                                 child: Container(
                                   width: 35,
@@ -430,7 +516,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 onTap: () async {
                                   final whatsappLink =
                                       "https://wa.me?text=Name: ${contactFName.text}\nPhone :$whatsappNo1";
-                                  await launch(whatsappLink);
+                                  await launchUrl(Uri.parse(whatsappLink));
                                 },
                                 child: Container(
                                   width: 35,
@@ -619,43 +705,50 @@ class _LeadDetailsState extends State<LeadDetails> {
                                       }
                                     }
                                   } else {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AddFollowup(
-                                              widget.token,
-                                              widget.editLead,
-                                              widget.deleteLead,
-                                              widget.cloudCall,
-                                              widget.callMasterId,
-                                              pageName: widget.pageName,
-                                              status: widget.status,
-                                              staff: widget.staff,
-                                              isCalled: widget.isCalled,
-                                              fromDate: widget.fromDate,
-                                              toDate: widget.toDate,
-                                              category: widget.category,
-                                              leadType: leadDetails!
-                                                  .data!.leadCategory,
-                                              leadTypeId: leadDetails!
-                                                  .data!.leadCategoryId,
-                                              leadSubType: leadDetails!
-                                                  .data!.leadSubCategory,
-                                              leadSubTypeId: leadDetails!
-                                                  .data!.leadSubCategoryId,
-                                              priority:
-                                                  leadDetails!.data!.priority,
-                                              priorityId:
-                                                  leadDetails!.data!.priorityId,
-                                              cost: leadDetails!.data!.cost,
-                                              address:
-                                                  leadDetails!.data!.address,
-                                              searchKey:
-                                                  widget.searchKey.toString(),
-                                              leadType1: widget.leadType)),
-                                    ).then((r) {
-                                      getData();
-                                    });
+                                    if (leadDetails!.data!.callResult !=
+                                        "Confirmed") {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => AddFollowup(
+                                                widget.token,
+                                                widget.editLead,
+                                                widget.deleteLead,
+                                                widget.cloudCall,
+                                                callMasterId,
+                                                pageName: widget.pageName,
+                                                status: widget.status,
+                                                staff: widget.staff,
+                                                isCalled: widget.isCalled,
+                                                fromDate: widget.fromDate,
+                                                toDate: widget.toDate,
+                                                category: widget.category,
+                                                leadType: leadDetails!
+                                                    .data!.leadCategory,
+                                                leadTypeId: leadDetails!
+                                                    .data!.leadCategoryId,
+                                                leadSubType: leadDetails!
+                                                    .data!.leadSubCategory,
+                                                leadSubTypeId: leadDetails!
+                                                    .data!.leadSubCategoryId,
+                                                priority:
+                                                    leadDetails!.data!.priority,
+                                                priorityId: leadDetails!
+                                                    .data!.priorityId,
+                                                cost: leadDetails!.data!.cost,
+                                                address:
+                                                    leadDetails!.data!.address,
+                                                searchKey:
+                                                    widget.searchKey.toString(),
+                                                leadType1: widget.leadType)),
+                                      ).then((r) {
+                                        getData();
+                                      });
+                                    } else {
+                                      Common.toastMessaage(
+                                          "You can't follow up on confirmed leads",
+                                          Colors.red);
+                                    }
                                   }
                                   return null;
                                 },
@@ -697,21 +790,45 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   right: 5,
                                                   top: 2,
                                                 ),
-                                                child: Text(
-                                                  leadDetails!.data!
-                                                              .leadSubCategory !=
-                                                          ''
-                                                      ? '${leadDetails!.data!.leadCategory}-${leadDetails!.data!.leadSubCategory}'
-                                                      : '${leadDetails!.data!.leadCategory}',
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.red,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  softWrap: false,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      leadDetails!.data!
+                                                                  .leadSubCategory !=
+                                                              ''
+                                                          ? '${leadDetails!.data!.leadCategory}-${leadDetails!.data!.leadSubCategory}'
+                                                          : '${leadDetails!.data!.leadCategory}',
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.red,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      softWrap: false,
+                                                    ),
+                                                    Visibility(
+                                                      visible:
+                                                          widget.deleteLead,
+                                                      child: InkWell(
+                                                          onTap: () async {
+                                                            _deleteDialog(
+                                                                context,
+                                                                "",
+                                                                "lead");
+                                                          },
+                                                          child: const Icon(
+                                                            Icons.delete,
+                                                            color: Colors.red,
+                                                            size: 18,
+                                                          )),
+                                                    )
+                                                  ],
                                                 ),
                                               ),
                                             ),
@@ -752,8 +869,12 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                         '2'
                                                                     ? Colors
                                                                         .green
-                                                                    : Colors
-                                                                        .red,
+                                                                    : leadDetails!.data!.priorityId ==
+                                                                            "3"
+                                                                        ? Colors
+                                                                            .red
+                                                                        : Colors
+                                                                            .black,
                                                             shape:
                                                                 BoxShape.circle,
                                                           ),
@@ -762,13 +883,24 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           width: 5,
                                                         ),
                                                         SizedBox(
-                                                          width: 170,
+                                                          width: 240,
                                                           //width: MediaQuery.of(context).size.width * 0.1,
                                                           child: Text(
                                                             leadDetails!.data!
                                                                 .clientName
                                                                 .toString(),
-                                                            style: const TextStyle(
+                                                            style: TextStyle(
+                                                                decoration: leadDetails!
+                                                                            .data!
+                                                                            .priorityId ==
+                                                                        "4"
+                                                                    ? TextDecoration
+                                                                        .lineThrough
+                                                                    : null,
+                                                                decorationThickness:
+                                                                    1.5,
+                                                                decorationColor:
+                                                                    Colors.red,
                                                                 fontSize: 16,
                                                                 color: Colors
                                                                     .black,
@@ -1225,237 +1357,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                 left: 5, right: 5),
                                             child: InkWell(
                                               onTap: () async {
-                                                showGeneralDialog(
-                                                  barrierLabel:
-                                                      "showGeneralDialog",
-                                                  barrierDismissible: true,
-                                                  barrierColor: Colors.black
-                                                      .withOpacity(0.6),
-                                                  transitionDuration:
-                                                      const Duration(
-                                                          milliseconds: 400),
-                                                  context: context,
-                                                  pageBuilder:
-                                                      (context, _, __) {
-                                                    return StatefulBuilder(
-                                                        builder: (context,
-                                                            setState) {
-                                                      return Align(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: IntrinsicHeight(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 10,
-                                                                    right: 10),
-                                                            child: Container(
-                                                              width: double
-                                                                  .maxFinite,
-                                                              clipBehavior: Clip
-                                                                  .antiAlias,
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(16),
-                                                              decoration:
-                                                                  const BoxDecoration(
-                                                                color: Colors
-                                                                    .white,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .only(
-                                                                  topLeft: Radius
-                                                                      .circular(
-                                                                          10),
-                                                                  topRight: Radius
-                                                                      .circular(
-                                                                          10),
-                                                                  bottomRight: Radius
-                                                                      .circular(
-                                                                          10),
-                                                                  bottomLeft: Radius
-                                                                      .circular(
-                                                                          10),
-                                                                ),
-                                                              ),
-                                                              child: Material(
-                                                                child: Column(
-                                                                  children: [
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                    const Text(
-                                                                      'Transfer Leads',
-                                                                      style:
-                                                                          TextStyle(
-                                                                        fontSize:
-                                                                            18,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
-                                                                      ),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                        height:
-                                                                            20),
-                                                                    FormField<
-                                                                        String>(
-                                                                      builder: (FormFieldState<
-                                                                              String>
-                                                                          state) {
-                                                                        return Container(
-                                                                          height:
-                                                                              50,
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * 0.9,
-                                                                          decoration: BoxDecoration(
-                                                                              border: Border.all(color: Colors.grey.shade900, width: 0),
-                                                                              color: Colors.white,
-                                                                              borderRadius: const BorderRadius.all(Radius.circular(5))),
-                                                                          child:
-                                                                              DropdownButtonHideUnderline(
-                                                                            child:
-                                                                                DropdownButton<String>(
-                                                                              isExpanded: true,
-                                                                              hint: const Padding(
-                                                                                padding: EdgeInsets.only(left: 20),
-                                                                                child: Text('Staff'),
-                                                                              ),
-                                                                              value: staff,
-                                                                              items: commonDetails!.data.transferStaffs.map((data) {
-                                                                                return DropdownMenuItem(
-                                                                                  value: data.tranStaffId.toString(),
-                                                                                  child: Padding(
-                                                                                    padding: const EdgeInsets.only(left: 20),
-                                                                                    child: Text(data.tranStaffName.toString()),
-                                                                                  ),
-                                                                                );
-                                                                              }).toList(),
-                                                                              onChanged: (newValue) {
-                                                                                setState(() {
-                                                                                  staff = newValue;
-                                                                                });
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          15,
-                                                                    ),
-                                                                    TextFormField(
-                                                                      controller:
-                                                                          transferRemark,
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        color: Colors
-                                                                            .black,
-                                                                      ),
-                                                                      validator:
-                                                                          (value) {
-                                                                        if (value!
-                                                                            .isEmpty) {
-                                                                          return "Remark";
-                                                                        }
-                                                                        return null;
-                                                                      },
-                                                                      keyboardType:
-                                                                          TextInputType
-                                                                              .name,
-                                                                      decoration: InputDecoration(
-                                                                          filled: true,
-                                                                          //<-- SEE HERE
-                                                                          fillColor: Colors.white,
-                                                                          counterText: "",
-                                                                          hintText: "Remark",
-                                                                          isDense: true,
-                                                                          border: OutlineInputBorder(borderSide: BorderSide(color: Colors.purple.shade100), borderRadius: BorderRadius.circular(5))),
-                                                                    ),
-                                                                    const SizedBox(
-                                                                      height:
-                                                                          25,
-                                                                    ),
-                                                                    Container(
-                                                                      height:
-                                                                          40,
-                                                                      width: double
-                                                                          .maxFinite,
-                                                                      decoration:
-                                                                          const BoxDecoration(
-                                                                        color: Color(
-                                                                            0xFF3375e0),
-                                                                        borderRadius:
-                                                                            BorderRadius.all(Radius.circular(8)),
-                                                                      ),
-                                                                      child:
-                                                                          RawMaterialButton(
-                                                                        onPressed:
-                                                                            () async {
-                                                                          if (staff ==
-                                                                              null) {
-                                                                            Common.toastMessaage('Choose Staff Name',
-                                                                                Colors.red);
-                                                                          } else {
-                                                                            Common.showProgressDialog(context,
-                                                                                "Loading..");
-                                                                            LeadTransferModel transfer = await HttpService.leadTransfer(
-                                                                                widget.token,
-                                                                                callMasterId,
-                                                                                staff,
-                                                                                transferRemark.text);
-                                                                            if (transfer.status ==
-                                                                                true) {
-                                                                              Common.toastMessaage(transfer.message, Colors.green);
-                                                                              if (context.mounted) {
-                                                                                Navigator.pop(context);
-                                                                                Navigator.pop(context);
-                                                                                getData();
-                                                                              }
-                                                                            } else {
-                                                                              Common.toastMessaage(transfer.message, Colors.red);
-                                                                              if (context.mounted) {
-                                                                                Navigator.of(context, rootNavigator: true).pop();
-                                                                              }
-                                                                            }
-                                                                          }
-                                                                        },
-                                                                        child:
-                                                                            const Center(
-                                                                          child:
-                                                                              Text(
-                                                                            'Continue',
-                                                                            style:
-                                                                                TextStyle(
-                                                                              color: Colors.white,
-                                                                              fontWeight: FontWeight.w500,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    });
-                                                  },
-                                                  transitionBuilder: (_,
-                                                      animation1, __, child) {
-                                                    return SlideTransition(
-                                                      position: Tween(
-                                                        begin:
-                                                            const Offset(0, 1),
-                                                        end: const Offset(0, 0),
-                                                      ).animate(animation1),
-                                                      child: child,
-                                                    );
-                                                  },
-                                                );
+                                                if (transferPermission ==
+                                                    "true") {
+                                                  transferLeads(context);
+                                                } else {
+                                                  _dialogue(context,
+                                                      "transfer permission");
+                                                }
                                               },
                                               child: Container(
                                                 width: 85,
@@ -2026,53 +1934,62 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                     index]
                                                                 .isCalled ==
                                                             false) {
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                                builder: (context) => AddFollowup(
-                                                                    widget
-                                                                        .token,
-                                                                    widget
-                                                                        .editLead,
-                                                                    widget
-                                                                        .deleteLead,
-                                                                    widget
-                                                                        .cloudCall,
-                                                                    widget
-                                                                        .callMasterId,
-                                                                    pageName: widget
-                                                                        .pageName,
-                                                                    status: widget
-                                                                        .status,
-                                                                    staff: widget
-                                                                        .staff,
-                                                                    isCalled: widget
-                                                                        .isCalled,
-                                                                    fromDate: widget
-                                                                        .fromDate,
-                                                                    toDate: widget
-                                                                        .toDate,
-                                                                    category: widget
-                                                                        .category,
-                                                                    leadType: leadDetails!
-                                                                        .data!
-                                                                        .leadCategory,
-                                                                    leadTypeId: leadDetails!
-                                                                        .data!
-                                                                        .leadCategoryId,
-                                                                    leadSubType: leadDetails!
-                                                                        .data!
-                                                                        .leadSubCategory,
-                                                                    leadSubTypeId: leadDetails!.data!.leadSubCategoryId,
-                                                                    priority: leadDetails!.data!.priority,
-                                                                    priorityId: leadDetails!.data!.priorityId,
-                                                                    cost: leadDetails!.data!.cost,
-                                                                    address: leadDetails!.data!.address,
-                                                                    searchKey: widget.searchKey.toString(),
-                                                                    leadType1: widget.leadType)),
-                                                          ).then((r) {
-                                                            getData();
-                                                          });
+                                                          if (leadDetails!.data!
+                                                                  .callResult !=
+                                                              "Confirmed") {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                  builder: (context) => AddFollowup(
+                                                                      widget
+                                                                          .token,
+                                                                      widget
+                                                                          .editLead,
+                                                                      widget
+                                                                          .deleteLead,
+                                                                      widget
+                                                                          .cloudCall,
+                                                                      callMasterId,
+                                                                      pageName: widget
+                                                                          .pageName,
+                                                                      status: widget
+                                                                          .status,
+                                                                      staff: widget
+                                                                          .staff,
+                                                                      isCalled: widget
+                                                                          .isCalled,
+                                                                      fromDate: widget
+                                                                          .fromDate,
+                                                                      toDate: widget
+                                                                          .toDate,
+                                                                      category: widget
+                                                                          .category,
+                                                                      leadType: leadDetails!
+                                                                          .data!
+                                                                          .leadCategory,
+                                                                      leadTypeId: leadDetails!
+                                                                          .data!
+                                                                          .leadCategoryId,
+                                                                      leadSubType: leadDetails!
+                                                                          .data!
+                                                                          .leadSubCategory,
+                                                                      leadSubTypeId: leadDetails!
+                                                                          .data!
+                                                                          .leadSubCategoryId,
+                                                                      priority: leadDetails!.data!.priority,
+                                                                      priorityId: leadDetails!.data!.priorityId,
+                                                                      cost: leadDetails!.data!.cost,
+                                                                      address: leadDetails!.data!.address,
+                                                                      searchKey: widget.searchKey.toString(),
+                                                                      leadType1: widget.leadType)),
+                                                            ).then((r) {
+                                                              getData();
+                                                            });
+                                                          } else {
+                                                            Common.toastMessaage(
+                                                                "You can't follow up on confirmed leads",
+                                                                Colors.red);
+                                                          }
                                                         }
                                                       },
                                                       child: Card(
@@ -2452,7 +2369,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                 true
                                                                             ? InkWell(
                                                                                 onTap: () {
-                                                                                  _deleteFollowup(context, leadDetailsAdditional!.data.followUpData[index].callDetailsId);
+                                                                                  _deleteDialog(context, leadDetailsAdditional!.data.followUpData[index].callDetailsId, "followup");
                                                                                 },
                                                                                 child: const Icon(
                                                                                   Icons.delete,
@@ -2948,6 +2865,9 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                                       Get.back();
                                                                                                       Get.back();
                                                                                                     }
+                                                                                                  } else {
+                                                                                                    Common.toastMessaage(uploadAudio.message, Colors.red);
+                                                                                                    Get.back();
                                                                                                   }
                                                                                                 },
                                                                                                 child: const Text(
@@ -3250,7 +3170,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     leadDetailsAdditional!
                                                         .data
                                                         .callHistory[i]
-                                                        .isAttended!,
+                                                        .isAttended,
                                                     leadDetailsAdditional!.data
                                                         .callHistory[i].date
                                                         .toString(),
@@ -3275,7 +3195,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     leadDetailsAdditional!
                                                         .data
                                                         .callHistory[i]
-                                                        .isTransfered!,
+                                                        .isTransfered,
                                                     widget.token,
                                                     widget.editLead,
                                                     widget.deleteLead,
@@ -3291,6 +3211,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                         .staffName,
                                                     leadDetails!
                                                         .data!.clientName,
+                                                    leadDetails!
+                                                        .data!.callResult,
                                                     pageName: widget.pageName,
                                                     sts: widget.status,
                                                     staff: widget.staff,
@@ -5367,26 +5289,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                                   if (deleteMilestoneLead.data == true) {
                                                                                     if (context.mounted) {
                                                                                       // print(updateAssignStaff.data);
-                                                                                      Navigator.push(
-                                                                                        context,
-                                                                                        MaterialPageRoute(
-                                                                                            builder: (context) => LeadDetails(
-                                                                                                  widget.token,
-                                                                                                  widget.editLead,
-                                                                                                  widget.deleteLead,
-                                                                                                  widget.cloudCall,
-                                                                                                  callMasterId,
-                                                                                                  pageName: widget.pageName,
-                                                                                                  status: widget.status,
-                                                                                                  staff: widget.staff,
-                                                                                                  isCalled: widget.isCalled,
-                                                                                                  fromDate: widget.fromDate,
-                                                                                                  toDate: widget.toDate,
-                                                                                                  category: widget.category,
-                                                                                                  searchKey: widget.searchKey,
-                                                                                                  leadType: widget.leadType,
-                                                                                                )),
-                                                                                      );
+                                                                                      Navigator.pop(context);
+                                                                                      Navigator.pop(context);
                                                                                     }
                                                                                   }
                                                                                 },
@@ -5697,1230 +5601,1192 @@ class _LeadDetailsState extends State<LeadDetails> {
                       ),
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.endDocked,
-                floatingActionButton: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      FloatingActionButton(
-                        heroTag: 'add',
-                        backgroundColor: Colors.green,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AddFollowup(
-                                    widget.token,
-                                    widget.editLead,
-                                    widget.deleteLead,
-                                    widget.cloudCall,
-                                    callMasterId,
-                                    pageName: widget.pageName,
-                                    status: widget.status,
-                                    staff: widget.staff,
-                                    isCalled: widget.isCalled,
-                                    fromDate: widget.fromDate,
-                                    toDate: widget.toDate,
-                                    category: widget.category,
-                                    leadType: leadDetails!.data!.leadCategory,
-                                    leadTypeId:
-                                        leadDetails!.data!.leadCategoryId,
-                                    leadSubType:
-                                        leadDetails!.data!.leadSubCategory,
-                                    leadSubTypeId:
-                                        leadDetails!.data!.leadSubCategoryId,
-                                    priorityId: leadDetails!.data!.priorityId,
-                                    priority: leadDetails!.data!.priority,
-                                    cost: leadDetails!.data!.cost,
-                                    address: leadDetails!.data!.address,
-                                    searchKey: widget.searchKey,
-                                    leadType1: widget.leadType)),
-                          ).then((r) {
-                            getData();
-                          });
-                        },
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          decoration: const BoxDecoration(
-                              color: Colors.green, shape: BoxShape.circle),
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                          ),
-                        ), //icon inside button
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      fileManagerPermission != null
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Visibility(
-                                  visible: isExpanded,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      FloatingActionButton(
-                                        tooltip: 'Upload Voice',
-                                        heroTag: 'voice',
-                                        backgroundColor: Colors.green,
-                                        onPressed: () {
-                                          fileManagerPermission!
-                                                      .data!.createFile ==
-                                                  true
-                                              ? showGeneralDialog(
-                                                  barrierLabel:
-                                                      "showGeneralDialog",
-                                                  barrierDismissible: false,
-                                                  barrierColor: Colors.black
-                                                      .withOpacity(0.6),
-                                                  transitionDuration:
-                                                      const Duration(
-                                                          milliseconds: 400),
-                                                  context: context,
-                                                  pageBuilder:
-                                                      (context, _, __) {
-                                                    return Obx(() {
-                                                      return AlertDialog(
-                                                        content:
-                                                            IntrinsicHeight(
-                                                          child: Column(
-                                                            children: [
-                                                              audioCreateController
-                                                                          .isRecording
-                                                                          .value |
-                                                                      audioCreateController
-                                                                          .audioPath
-                                                                          .isNotEmpty
-                                                                  ? Column(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .center,
-                                                                      children: [
-                                                                        Text(
-                                                                          '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
-                                                                          style:
-                                                                              const TextStyle(fontSize: 30),
-                                                                        ),
-                                                                        if (audioCreateController
+                floatingActionButton: Visibility(
+                  visible: selectedIndex != 3,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'add',
+                          backgroundColor: Colors.green,
+                          onPressed: () {
+                            if (leadDetails!.data!.callResult != "Confirmed") {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddFollowup(
+                                        widget.token,
+                                        widget.editLead,
+                                        widget.deleteLead,
+                                        widget.cloudCall,
+                                        callMasterId,
+                                        pageName: widget.pageName,
+                                        status: widget.status,
+                                        staff: widget.staff,
+                                        isCalled: widget.isCalled,
+                                        fromDate: widget.fromDate,
+                                        toDate: widget.toDate,
+                                        category: widget.category,
+                                        leadType:
+                                            leadDetails!.data!.leadCategory,
+                                        leadTypeId:
+                                            leadDetails!.data!.leadCategoryId,
+                                        leadSubType:
+                                            leadDetails!.data!.leadSubCategory,
+                                        leadSubTypeId: leadDetails!
+                                            .data!.leadSubCategoryId,
+                                        priorityId:
+                                            leadDetails!.data!.priorityId,
+                                        priority: leadDetails!.data!.priority,
+                                        cost: leadDetails!.data!.cost,
+                                        address: leadDetails!.data!.address,
+                                        searchKey: widget.searchKey,
+                                        leadType1: widget.leadType)),
+                              ).then((r) {
+                                getData();
+                              });
+                            } else {
+                              Common.toastMessaage(
+                                  "You can't follow up on confirmed leads",
+                                  Colors.red);
+                            }
+                          },
+                          child: Container(
+                            height: 40,
+                            width: 40,
+                            decoration: const BoxDecoration(
+                                color: Colors.green, shape: BoxShape.circle),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                            ),
+                          ), //icon inside button
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        fileManagerPermission != null
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Visibility(
+                                    visible: isExpanded,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        FloatingActionButton(
+                                          tooltip: 'Upload Voice',
+                                          heroTag: 'voice',
+                                          backgroundColor: Colors.green,
+                                          onPressed: () {
+                                            fileManagerPermission!
+                                                        .data!.createFile ==
+                                                    true
+                                                ? showGeneralDialog(
+                                                    barrierLabel:
+                                                        "showGeneralDialog",
+                                                    barrierDismissible: false,
+                                                    barrierColor: Colors.black
+                                                        .withOpacity(0.6),
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 400),
+                                                    context: context,
+                                                    pageBuilder:
+                                                        (context, _, __) {
+                                                      return Obx(() {
+                                                        return AlertDialog(
+                                                          content:
+                                                              IntrinsicHeight(
+                                                            child: Column(
+                                                              children: [
+                                                                audioCreateController
                                                                             .isRecording
-                                                                            .value)
-                                                                          const Text(
-                                                                              "Voice Recording..."),
-                                                                      ],
-                                                                    )
-                                                                  : const Column(
-                                                                      mainAxisAlignment:
-                                                                          MainAxisAlignment
-                                                                              .center,
-                                                                      children: [
-                                                                        SizedBox(
-                                                                          height:
-                                                                              10,
+                                                                            .value |
+                                                                        audioCreateController
+                                                                            .audioPath
+                                                                            .isNotEmpty
+                                                                    ? Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.center,
+                                                                        children: [
+                                                                          Text(
+                                                                            '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
+                                                                            style:
+                                                                                const TextStyle(fontSize: 30),
+                                                                          ),
+                                                                          if (audioCreateController
+                                                                              .isRecording
+                                                                              .value)
+                                                                            const Text("Voice Recording..."),
+                                                                        ],
+                                                                      )
+                                                                    : const Column(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.center,
+                                                                        children: [
+                                                                          SizedBox(
+                                                                            height:
+                                                                                10,
+                                                                          ),
+                                                                          Text(
+                                                                            'Voice Record ',
+                                                                            style:
+                                                                                TextStyle(fontSize: 18),
+                                                                          ),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                20,
+                                                                          ),
+                                                                          Text(
+                                                                              "Do you want to record voice?"),
+                                                                        ],
+                                                                      ),
+                                                                const SizedBox(
+                                                                    height:
+                                                                        20.0),
+                                                                Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .only(
+                                                                      bottom:
+                                                                          20.0),
+                                                                  child: Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .center,
+                                                                    children: [
+                                                                      if (audioCreateController.isRecording.value ==
+                                                                              false &&
+                                                                          audioCreateController
+                                                                              .audioPath
+                                                                              .isNotEmpty)
+                                                                        FloatingActionButton(
+                                                                            heroTag:
+                                                                                "play tag",
+                                                                            onPressed:
+                                                                                () {
+                                                                              audioCreateController.resetTimer();
+                                                                              audioCreateController.playRcording();
+                                                                            },
+                                                                            shape:
+                                                                                const CircleBorder(),
+                                                                            backgroundColor:
+                                                                                Colors.white,
+                                                                            foregroundColor: Colors.teal,
+                                                                            child: const Icon(
+                                                                              Icons.play_arrow_rounded,
+                                                                              color: Colors.green,
+                                                                              size: 30,
+                                                                            )),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            25,
+                                                                      ),
+                                                                      if (audioCreateController
+                                                                              .isRecording
+                                                                              .value ==
+                                                                          true)
+                                                                        FloatingActionButton(
+                                                                            heroTag:
+                                                                                "start tag",
+                                                                            onPressed:
+                                                                                () {
+                                                                              audioCreateController.stopRecording();
+                                                                              // recordController.stopTimer();
+                                                                            },
+                                                                            shape:
+                                                                                const CircleBorder(),
+                                                                            backgroundColor:
+                                                                                Colors.redAccent,
+                                                                            foregroundColor: Colors.white,
+                                                                            child: const Text("Stop")),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            25,
+                                                                      ),
+                                                                      if (audioCreateController.isRecording.value ==
+                                                                              false &&
+                                                                          audioCreateController
+                                                                              .audioPath
+                                                                              .isNotEmpty)
+                                                                        FloatingActionButton(
+                                                                            heroTag:
+                                                                                "delete tag",
+                                                                            onPressed:
+                                                                                () {
+                                                                              showDialog(
+                                                                                  context: context,
+                                                                                  builder: (BuildContext context) {
+                                                                                    return AlertDialog(
+                                                                                      title: const Text('Are You Sure'),
+                                                                                      iconColor: Colors.blue,
+                                                                                      actions: <Widget>[
+                                                                                        TextButton(
+                                                                                          onPressed: () {
+                                                                                            Get.back();
+                                                                                          },
+                                                                                          child: const Text('Cancel'),
+                                                                                        ),
+                                                                                        TextButton(
+                                                                                          onPressed: () {
+                                                                                            audioCreateController.resetTimer();
+                                                                                            audioCreateController.audioPath.value = "";
+                                                                                            Get.back();
+                                                                                          },
+                                                                                          child: const Text('Delete'),
+                                                                                        ),
+                                                                                      ],
+                                                                                    );
+                                                                                  });
+                                                                            },
+                                                                            shape:
+                                                                                const CircleBorder(),
+                                                                            backgroundColor:
+                                                                                Colors.white,
+                                                                            foregroundColor: Colors.red,
+                                                                            child: const Icon(
+                                                                              Icons.delete,
+                                                                              color: Colors.red,
+                                                                              size: 30,
+                                                                            )),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                if (audioCreateController
+                                                                            .isRecording
+                                                                            .value ==
+                                                                        false &&
+                                                                    audioCreateController
+                                                                        .audioPath
+                                                                        .isNotEmpty)
+                                                                  TextFormField(
+                                                                    controller:
+                                                                        fileName,
+                                                                    decoration: const InputDecoration(
+                                                                        contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                                                                        labelText: 'File Name',
+                                                                        fillColor: Colors.white,
+                                                                        filled: true,
+                                                                        prefixIcon: Icon(Icons.file_copy, color: Colors.grey),
+                                                                        border: OutlineInputBorder(),
+                                                                        focusedBorder: OutlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.grey),
                                                                         ),
-                                                                        Text(
-                                                                          'Voice Record ',
-                                                                          style:
-                                                                              TextStyle(fontSize: 18),
-                                                                        ),
-                                                                        SizedBox(
-                                                                          height:
-                                                                              20,
-                                                                        ),
-                                                                        Text(
-                                                                            "Do you want to record voice?"),
-                                                                      ],
+                                                                        labelStyle: TextStyle(color: Colors.grey)),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            audioCreateController
+                                                                        .isRecording
+                                                                        .value ==
+                                                                    false
+                                                                ? TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      if (audioCreateController
+                                                                              .isBack
+                                                                              .value ==
+                                                                          true) {
+                                                                        audioCreateController
+                                                                            .audioPath
+                                                                            .value = '';
+                                                                        audioCreateController
+                                                                            .stopTimer();
+                                                                        audioCreateController
+                                                                            .audioPlayer
+                                                                            .stop();
+                                                                        audioCreateController
+                                                                            .resetTimer();
+                                                                        fileName.text =
+                                                                            '';
+                                                                      }
+
+                                                                      // if(audioCreateController
+                                                                      //     .isRecording.value ==
+                                                                      //     false &&
+                                                                      //     audioCreateController
+                                                                      //         .audioPath.isNotEmpty)
+                                                                      //   {
+                                                                      //     audioCreateController
+                                                                      //         .resetTimer();
+                                                                      //   }
+                                                                      Get.back();
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Back',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.black),
                                                                     ),
-                                                              const SizedBox(
-                                                                  height: 20.0),
-                                                              Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        bottom:
-                                                                            20.0),
-                                                                child: Row(
+                                                                  )
+                                                                : const SizedBox(),
+                                                            audioCreateController
+                                                                            .isRecording
+                                                                            .value ==
+                                                                        false &&
+                                                                    audioCreateController
+                                                                        .audioPath
+                                                                        .isNotEmpty
+                                                                ? TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      bool containsString = json.encode(listFolder!.data).contains(audioCreateController
+                                                                          .audioPath
+                                                                          .value
+                                                                          .split(
+                                                                              '/')
+                                                                          .last);
+                                                                      bool
+                                                                          containsString1;
+                                                                      if (fileName
+                                                                          .text
+                                                                          .isNotEmpty) {
+                                                                        containsString1 = json
+                                                                            .encode(listFolder!
+                                                                                .data)
+                                                                            .contains(fileName.text +
+                                                                                extension(audioCreateController.audioPath.value));
+                                                                      } else {
+                                                                        containsString1 =
+                                                                            false;
+                                                                      }
+                                                                      setState(
+                                                                          () {});
+                                                                      File file = File.fromUri(Uri.parse(audioCreateController
+                                                                          .audioPath
+                                                                          .value
+                                                                          .toString()));
+                                                                      // File file = File(audioCreateController
+                                                                      //     .audioPath
+                                                                      //     .value);
+                                                                      int fileSizeInBytes =
+                                                                          await file
+                                                                              .length();
+                                                                      double
+                                                                          fileSizeInKB =
+                                                                          fileSizeInBytes /
+                                                                              1024;
+                                                                      double
+                                                                          fileSizeInMB =
+                                                                          fileSizeInKB /
+                                                                              1024;
+                                                                      //print('file Size :$fileSizeInMB');
+                                                                      if (fileName
+                                                                              .text
+                                                                              .isEmpty &&
+                                                                          containsString ==
+                                                                              true) {
+                                                                        Common.toastMessaage(
+                                                                            'File Name already exist',
+                                                                            Colors.red);
+                                                                      } else if (fileName
+                                                                              .text
+                                                                              .isNotEmpty &&
+                                                                          containsString1 ==
+                                                                              true) {
+                                                                        Common.toastMessaage(
+                                                                            'File Name already exist1',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .maxFileSize
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Maximum Size 5 MB',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .remainingStorage
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Insufficient Storage',
+                                                                            Colors.red);
+                                                                      } else {
+                                                                        if (context
+                                                                            .mounted) {
+                                                                          Common.showProgressDialog(
+                                                                              context,
+                                                                              "Uploading..");
+                                                                        }
+                                                                        UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
+                                                                            widget.token,
+                                                                            widget.callMasterId,
+                                                                            listPath,
+                                                                            audioCreateController.audioPath.value,
+                                                                            fileName.text);
+                                                                        if (uploadAudio.data ==
+                                                                            true) {
+                                                                          audioCreateController
+                                                                              .audioPath
+                                                                              .value = '';
+                                                                          fileName.text =
+                                                                              '';
+                                                                          audioCreateController
+                                                                              .resetTimer();
+                                                                          Common.toastMessaage(
+                                                                              uploadAudio.message,
+                                                                              Colors.green);
+                                                                          listFolderList(
+                                                                              widget.token,
+                                                                              callMasterId,
+                                                                              listPath);
+                                                                          if (context
+                                                                              .mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        } else {
+                                                                          Common.toastMessaage(
+                                                                              uploadAudio.message,
+                                                                              Colors.red);
+                                                                          if (context
+                                                                              .mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Save',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.green),
+                                                                    ),
+                                                                  )
+                                                                : audioCreateController
+                                                                            .isRecording
+                                                                            .value ==
+                                                                        false
+                                                                    ? TextButton(
+                                                                        onPressed:
+                                                                            () {
+                                                                          if (audioCreateController
+                                                                              .audioPath
+                                                                              .isNotEmpty) {
+                                                                            audioCreateController.isBack.value =
+                                                                                true;
+                                                                            audioCreateController.resetTimer();
+
+                                                                            audioCreateController.startRecording();
+                                                                          } else {
+                                                                            audioCreateController.startRecording();
+                                                                          }
+                                                                          isBack =
+                                                                              true;
+                                                                        },
+                                                                        child:
+                                                                            const Text(
+                                                                          'Record',
+                                                                          style:
+                                                                              TextStyle(color: Colors.black),
+                                                                        ),
+                                                                      )
+                                                                    : const SizedBox(),
+                                                          ],
+                                                        );
+                                                      });
+                                                    },
+                                                    transitionBuilder: (_,
+                                                        animation1, __, child) {
+                                                      return SlideTransition(
+                                                        position: Tween(
+                                                          begin: const Offset(
+                                                              0, 1),
+                                                          end: const Offset(
+                                                              0, 0),
+                                                        ).animate(animation1),
+                                                        child: child,
+                                                      );
+                                                    },
+                                                  )
+                                                : _dialogue(
+                                                    context, 'Create File');
+                                          },
+                                          child: Container(
+                                            height: 40,
+                                            width: 40,
+                                            decoration: const BoxDecoration(
+                                                color: Colors.green,
+                                                shape: BoxShape.circle),
+                                            child: const Icon(
+                                              Icons.mic,
+                                              color: Colors.white,
+                                            ),
+                                          ), //icon inside button
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        FloatingActionButton(
+                                          tooltip: 'Upload image',
+                                          heroTag: 'image',
+                                          backgroundColor: Colors.green,
+                                          onPressed: () {
+                                            fileManagerPermission!
+                                                        .data!.createFile ==
+                                                    true
+                                                ? showGeneralDialog(
+                                                    barrierLabel:
+                                                        "showGeneralDialog",
+                                                    barrierDismissible: false,
+                                                    barrierColor: Colors.black
+                                                        .withOpacity(0.6),
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 400),
+                                                    context: context,
+                                                    pageBuilder:
+                                                        (context, _, __) {
+                                                      return Obx(() {
+                                                        return AlertDialog(
+                                                          content:
+                                                              IntrinsicHeight(
+                                                            child: Column(
+                                                              children: [
+                                                                Column(
                                                                   mainAxisAlignment:
                                                                       MainAxisAlignment
                                                                           .center,
                                                                   children: [
-                                                                    if (audioCreateController.isRecording.value ==
-                                                                            false &&
-                                                                        audioCreateController
-                                                                            .audioPath
-                                                                            .isNotEmpty)
-                                                                      FloatingActionButton(
-                                                                          heroTag:
-                                                                              "play tag",
-                                                                          onPressed:
-                                                                              () {
-                                                                            audioCreateController.resetTimer();
-                                                                            audioCreateController.playRcording();
-                                                                          },
-                                                                          shape:
-                                                                              const CircleBorder(),
-                                                                          backgroundColor: Colors
-                                                                              .white,
-                                                                          foregroundColor: Colors
-                                                                              .teal,
-                                                                          child:
-                                                                              const Icon(
-                                                                            Icons.play_arrow_rounded,
-                                                                            color:
-                                                                                Colors.green,
-                                                                            size:
-                                                                                30,
-                                                                          )),
                                                                     const SizedBox(
-                                                                      width: 25,
+                                                                      height:
+                                                                          10,
                                                                     ),
-                                                                    if (audioCreateController
-                                                                            .isRecording
-                                                                            .value ==
-                                                                        true)
-                                                                      FloatingActionButton(
-                                                                          heroTag:
-                                                                              "start tag",
-                                                                          onPressed:
-                                                                              () {
-                                                                            audioCreateController.stopRecording();
-                                                                            // recordController.stopTimer();
-                                                                          },
-                                                                          shape:
-                                                                              const CircleBorder(),
-                                                                          backgroundColor: Colors
-                                                                              .redAccent,
-                                                                          foregroundColor: Colors
-                                                                              .white,
-                                                                          child:
-                                                                              const Text("Stop")),
+                                                                    const Text(
+                                                                      'Upload Image',
+                                                                      style: TextStyle(
+                                                                          fontSize:
+                                                                              18),
+                                                                    ),
                                                                     const SizedBox(
-                                                                      width: 25,
+                                                                      height:
+                                                                          20,
                                                                     ),
-                                                                    if (audioCreateController.isRecording.value ==
-                                                                            false &&
-                                                                        audioCreateController
-                                                                            .audioPath
-                                                                            .isNotEmpty)
-                                                                      FloatingActionButton(
-                                                                          heroTag:
-                                                                              "delete tag",
-                                                                          onPressed:
-                                                                              () {
-                                                                            showDialog(
-                                                                                context: context,
-                                                                                builder: (BuildContext context) {
-                                                                                  return AlertDialog(
-                                                                                    title: const Text('Are You Sure'),
-                                                                                    iconColor: Colors.blue,
-                                                                                    actions: <Widget>[
-                                                                                      TextButton(
-                                                                                        onPressed: () {
-                                                                                          Get.back();
-                                                                                        },
-                                                                                        child: const Text('Cancel'),
-                                                                                      ),
-                                                                                      TextButton(
-                                                                                        onPressed: () {
-                                                                                          audioCreateController.resetTimer();
-                                                                                          audioCreateController.audioPath.value = "";
-                                                                                          Get.back();
-                                                                                        },
-                                                                                        child: const Text('Delete'),
-                                                                                      ),
-                                                                                    ],
-                                                                                  );
-                                                                                });
-                                                                          },
-                                                                          shape:
-                                                                              const CircleBorder(),
-                                                                          backgroundColor: Colors
-                                                                              .white,
-                                                                          foregroundColor: Colors
-                                                                              .red,
-                                                                          child:
-                                                                              const Icon(
-                                                                            Icons.delete,
-                                                                            color:
-                                                                                Colors.red,
-                                                                            size:
-                                                                                30,
-                                                                          )),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              if (audioCreateController
-                                                                          .isRecording
-                                                                          .value ==
-                                                                      false &&
-                                                                  audioCreateController
-                                                                      .audioPath
-                                                                      .isNotEmpty)
-                                                                TextFormField(
-                                                                  controller:
-                                                                      fileName,
-                                                                  decoration: const InputDecoration(
-                                                                      contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                                                                      labelText: 'File Name',
-                                                                      fillColor: Colors.white,
-                                                                      filled: true,
-                                                                      prefixIcon: Icon(Icons.file_copy, color: Colors.grey),
-                                                                      border: OutlineInputBorder(),
-                                                                      focusedBorder: OutlineInputBorder(
-                                                                        borderSide:
-                                                                            BorderSide(color: Colors.grey),
-                                                                      ),
-                                                                      labelStyle: TextStyle(color: Colors.grey)),
-                                                                ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        actions: [
-                                                          audioCreateController
-                                                                      .isRecording
-                                                                      .value ==
-                                                                  false
-                                                              ? TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    if (audioCreateController
-                                                                            .isBack
-                                                                            .value ==
-                                                                        true) {
-                                                                      audioCreateController
-                                                                          .audioPath
-                                                                          .value = '';
-                                                                      audioCreateController
-                                                                          .stopTimer();
-                                                                      audioCreateController
-                                                                          .audioPlayer
-                                                                          .stop();
-                                                                      audioCreateController
-                                                                          .resetTimer();
-                                                                      fileName.text =
-                                                                          '';
-                                                                    }
-
-                                                                    // if(audioCreateController
-                                                                    //     .isRecording.value ==
-                                                                    //     false &&
-                                                                    //     audioCreateController
-                                                                    //         .audioPath.isNotEmpty)
-                                                                    //   {
-                                                                    //     audioCreateController
-                                                                    //         .resetTimer();
-                                                                    //   }
-                                                                    Get.back();
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Back',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black),
-                                                                  ),
-                                                                )
-                                                              : const SizedBox(),
-                                                          audioCreateController
-                                                                          .isRecording
-                                                                          .value ==
-                                                                      false &&
-                                                                  audioCreateController
-                                                                      .audioPath
-                                                                      .isNotEmpty
-                                                              ? TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    bool containsString = json
-                                                                        .encode(listFolder!
-                                                                            .data)
-                                                                        .contains(audioCreateController
-                                                                            .audioPath
-                                                                            .value
-                                                                            .split('/')
-                                                                            .last);
-                                                                    bool
-                                                                        containsString1;
-                                                                    if (fileName
-                                                                        .text
-                                                                        .isNotEmpty) {
-                                                                      containsString1 = json
-                                                                          .encode(listFolder!
-                                                                              .data)
-                                                                          .contains(fileName.text +
-                                                                              extension(audioCreateController.audioPath.value));
-                                                                    } else {
-                                                                      containsString1 =
-                                                                          false;
-                                                                    }
-                                                                    setState(
-                                                                        () {});
-                                                                    File file = File.fromUri(Uri.parse(audioCreateController
-                                                                        .audioPath
-                                                                        .value
-                                                                        .toString()));
-                                                                    // File file = File(audioCreateController
-                                                                    //     .audioPath
-                                                                    //     .value);
-                                                                    int fileSizeInBytes =
-                                                                        await file
-                                                                            .length();
-                                                                    double
-                                                                        fileSizeInKB =
-                                                                        fileSizeInBytes /
-                                                                            1024;
-                                                                    double
-                                                                        fileSizeInMB =
-                                                                        fileSizeInKB /
-                                                                            1024;
-                                                                    //print('file Size :$fileSizeInMB');
-                                                                    if (fileName
-                                                                            .text
-                                                                            .isEmpty &&
-                                                                        containsString ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileName
-                                                                            .text
-                                                                            .isNotEmpty &&
-                                                                        containsString1 ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist1',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .maxFileSize
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Maximum Size 5 MB',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .remainingStorage
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Insufficient Storage',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else {
-                                                                      if (context
-                                                                          .mounted) {
-                                                                        Common.showProgressDialog(
-                                                                            context,
-                                                                            "Uploading..");
-                                                                      }
-                                                                      UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
-                                                                          widget
-                                                                              .token,
-                                                                          widget
-                                                                              .callMasterId,
-                                                                          listPath,
-                                                                          audioCreateController
-                                                                              .audioPath
-                                                                              .value,
-                                                                          fileName
-                                                                              .text);
-                                                                      if (uploadAudio
-                                                                              .data ==
-                                                                          true) {
-                                                                        audioCreateController
-                                                                            .audioPath
-                                                                            .value = '';
-                                                                        fileName.text =
-                                                                            '';
-                                                                        audioCreateController
-                                                                            .resetTimer();
-                                                                        Common.toastMessaage(
-                                                                            uploadAudio.message,
-                                                                            Colors.green);
-                                                                        listFolderList(
-                                                                            widget.token,
-                                                                            callMasterId,
-                                                                            listPath);
-                                                                        if (context
-                                                                            .mounted) {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                        }
-                                                                      } else {
-                                                                        Common.toastMessaage(
-                                                                            uploadAudio.message,
-                                                                            Colors.red);
-                                                                        if (context
-                                                                            .mounted) {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                        }
-                                                                      }
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Save',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .green),
-                                                                  ),
-                                                                )
-                                                              : audioCreateController
-                                                                          .isRecording
-                                                                          .value ==
-                                                                      false
-                                                                  ? TextButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        if (audioCreateController
-                                                                            .audioPath
-                                                                            .isNotEmpty) {
-                                                                          audioCreateController
-                                                                              .isBack
-                                                                              .value = true;
-                                                                          audioCreateController
-                                                                              .resetTimer();
-
-                                                                          audioCreateController
-                                                                              .startRecording();
-                                                                        } else {
-                                                                          audioCreateController
-                                                                              .startRecording();
-                                                                        }
-                                                                        isBack =
-                                                                            true;
-                                                                      },
-                                                                      child:
-                                                                          const Text(
-                                                                        'Record',
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Colors.black),
-                                                                      ),
-                                                                    )
-                                                                  : const SizedBox(),
-                                                        ],
-                                                      );
-                                                    });
-                                                  },
-                                                  transitionBuilder: (_,
-                                                      animation1, __, child) {
-                                                    return SlideTransition(
-                                                      position: Tween(
-                                                        begin:
-                                                            const Offset(0, 1),
-                                                        end: const Offset(0, 0),
-                                                      ).animate(animation1),
-                                                      child: child,
-                                                    );
-                                                  },
-                                                )
-                                              : _dialogue(
-                                                  context, 'Create File');
-                                        },
-                                        child: Container(
-                                          height: 40,
-                                          width: 40,
-                                          decoration: const BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle),
-                                          child: const Icon(
-                                            Icons.mic,
-                                            color: Colors.white,
-                                          ),
-                                        ), //icon inside button
-                                      ),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
-                                      FloatingActionButton(
-                                        tooltip: 'Upload image',
-                                        heroTag: 'image',
-                                        backgroundColor: Colors.green,
-                                        onPressed: () {
-                                          fileManagerPermission!
-                                                      .data!.createFile ==
-                                                  true
-                                              ? showGeneralDialog(
-                                                  barrierLabel:
-                                                      "showGeneralDialog",
-                                                  barrierDismissible: false,
-                                                  barrierColor: Colors.black
-                                                      .withOpacity(0.6),
-                                                  transitionDuration:
-                                                      const Duration(
-                                                          milliseconds: 400),
-                                                  context: context,
-                                                  pageBuilder:
-                                                      (context, _, __) {
-                                                    return Obx(() {
-                                                      return AlertDialog(
-                                                        content:
-                                                            IntrinsicHeight(
-                                                          child: Column(
-                                                            children: [
-                                                              Column(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  const SizedBox(
-                                                                    height: 10,
-                                                                  ),
-                                                                  const Text(
-                                                                    'Upload Image',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    height: 20,
-                                                                  ),
-                                                                  imageUploadController
-                                                                              .file
-                                                                              .value ==
-                                                                          ''
-                                                                      ? const Text(
-                                                                          "Do you want to upload image?")
-                                                                      : Column(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.center,
-                                                                          children: <Widget>[
-                                                                            Padding(
-                                                                                padding: const EdgeInsets.only(left: 20, right: 20),
-                                                                                child: Center(
-                                                                                  child: Container(
-                                                                                    height: 150,
-                                                                                    width: 150,
-                                                                                    decoration: BoxDecoration(
-                                                                                      border: Border.all(
-                                                                                        color: Colors.white,
-                                                                                      ),
-                                                                                      color: Colors.transparent,
-                                                                                      image: DecorationImage(
-                                                                                        fit: BoxFit.cover,
-                                                                                        image: FileImage(File(imageUploadController.file.value)),
+                                                                    imageUploadController.file.value ==
+                                                                            ''
+                                                                        ? const Text(
+                                                                            "Do you want to upload image?")
+                                                                        : Column(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.center,
+                                                                            children: <Widget>[
+                                                                              Padding(
+                                                                                  padding: const EdgeInsets.only(left: 20, right: 20),
+                                                                                  child: Center(
+                                                                                    child: Container(
+                                                                                      height: 150,
+                                                                                      width: 150,
+                                                                                      decoration: BoxDecoration(
+                                                                                        border: Border.all(
+                                                                                          color: Colors.white,
+                                                                                        ),
+                                                                                        color: Colors.transparent,
+                                                                                        image: DecorationImage(
+                                                                                          fit: BoxFit.cover,
+                                                                                          image: FileImage(File(imageUploadController.file.value)),
+                                                                                        ),
                                                                                       ),
                                                                                     ),
-                                                                                  ),
-                                                                                )),
-                                                                            TextButton(
-                                                                              onPressed: () async {
-                                                                                setState(() {
-                                                                                  imageUploadController.file.value = '';
-                                                                                });
-                                                                              },
-                                                                              child: const Icon(
-                                                                                Icons.delete,
-                                                                                color: Colors.red,
-                                                                              ),
-                                                                            ),
-                                                                            const SizedBox(
-                                                                              height: 10,
-                                                                            ),
-                                                                            TextFormField(
-                                                                              controller: fileName,
-                                                                              decoration: const InputDecoration(
-                                                                                  contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
-                                                                                  labelText: 'File Name',
-                                                                                  fillColor: Colors.white,
-                                                                                  filled: true,
-                                                                                  prefixIcon: Icon(Icons.file_copy, color: Colors.grey),
-                                                                                  border: OutlineInputBorder(),
-                                                                                  focusedBorder: OutlineInputBorder(
-                                                                                    borderSide: BorderSide(color: Colors.grey),
-                                                                                  ),
-                                                                                  labelStyle: TextStyle(color: Colors.grey)),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 20.0),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              imageUploadController
-                                                                  .file
-                                                                  .value = '';
-                                                              fileName.text =
-                                                                  '';
-                                                              Get.back();
-                                                            },
-                                                            child: const Text(
-                                                              'Back',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .black),
-                                                            ),
-                                                          ),
-                                                          imageUploadController
-                                                                      .file
-                                                                      .value !=
-                                                                  ''
-                                                              ? TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    bool containsString = json
-                                                                        .encode(listFolder!
-                                                                            .data)
-                                                                        .contains(imageUploadController
-                                                                            .fileName
-                                                                            .value);
-                                                                    bool
-                                                                        containsString1;
-                                                                    if (fileName
-                                                                        .text
-                                                                        .isNotEmpty) {
-                                                                      containsString1 = json
-                                                                          .encode(listFolder!
-                                                                              .data)
-                                                                          .contains(fileName.text +
-                                                                              extension(imageUploadController.file.value));
-                                                                    } else {
-                                                                      containsString1 =
-                                                                          false;
-                                                                    }
-                                                                    File file = File(
-                                                                        imageUploadController
-                                                                            .file
-                                                                            .value);
-                                                                    int fileSizeInBytes =
-                                                                        await file
-                                                                            .length();
-                                                                    double
-                                                                        fileSizeInKB =
-                                                                        fileSizeInBytes /
-                                                                            1024;
-                                                                    double
-                                                                        fileSizeInMB =
-                                                                        fileSizeInKB /
-                                                                            1024;
-
-                                                                    if (fileName
-                                                                            .text
-                                                                            .isEmpty &&
-                                                                        containsString ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileName
-                                                                            .text
-                                                                            .isNotEmpty &&
-                                                                        containsString1 ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .maxFileSize
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Maximum Size 5 MB',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .remainingStorage
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Insufficient Storage',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else {
-                                                                      if (mounted) {
-                                                                        Common.showProgressDialog(
-                                                                            context,
-                                                                            "Uploading..");
-                                                                      }
-
-                                                                      UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
-                                                                          widget
-                                                                              .token,
-                                                                          widget
-                                                                              .callMasterId,
-                                                                          listPath,
-                                                                          imageUploadController
-                                                                              .file
-                                                                              .value,
-                                                                          fileName
-                                                                              .text);
-                                                                      if (uploadAudio
-                                                                              .data ==
-                                                                          true) {
-                                                                        imageUploadController
-                                                                            .file
-                                                                            .value = '';
-                                                                        fileName.text =
-                                                                            '';
-                                                                        Common.toastMessaage(
-                                                                            uploadAudio.message,
-                                                                            Colors.green);
-                                                                        listFolderList(
-                                                                            widget.token,
-                                                                            callMasterId,
-                                                                            listPath);
-                                                                        if (mounted) {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                        }
-                                                                      }
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Save',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .green),
-                                                                  ),
-                                                                )
-                                                              : TextButton(
-                                                                  onPressed:
-                                                                      () {
-                                                                    showModalBottomSheet(
-                                                                      context:
-                                                                          context,
-                                                                      builder:
-                                                                          ((builder) {
-                                                                        return Container(
-                                                                          height:
-                                                                              100.0,
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * 1,
-                                                                          margin:
-                                                                              const EdgeInsets.symmetric(
-                                                                            horizontal:
-                                                                                20,
-                                                                            vertical:
-                                                                                20,
-                                                                          ),
-                                                                          child:
-                                                                              Column(
-                                                                            children: <Widget>[
-                                                                              const Text(
-                                                                                "Choose Profile photo",
-                                                                                style: TextStyle(
-                                                                                  fontSize: 20.0,
+                                                                                  )),
+                                                                              TextButton(
+                                                                                onPressed: () async {
+                                                                                  setState(() {
+                                                                                    imageUploadController.file.value = '';
+                                                                                  });
+                                                                                },
+                                                                                child: const Icon(
+                                                                                  Icons.delete,
+                                                                                  color: Colors.red,
                                                                                 ),
                                                                               ),
                                                                               const SizedBox(
-                                                                                height: 20,
+                                                                                height: 10,
                                                                               ),
-                                                                              Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-                                                                                InkWell(
-                                                                                  onTap: () async {
-                                                                                    imageUploadController.takePhoto(ImageSource.camera);
-                                                                                    Get.back();
-                                                                                  },
-                                                                                  child: const Column(
-                                                                                    children: [
-                                                                                      Icon(Icons.camera),
-                                                                                      Text('Camera')
-                                                                                    ],
+                                                                              TextFormField(
+                                                                                controller: fileName,
+                                                                                decoration: const InputDecoration(
+                                                                                    contentPadding: EdgeInsets.only(left: 10, top: 2, bottom: 2),
+                                                                                    labelText: 'File Name',
+                                                                                    fillColor: Colors.white,
+                                                                                    filled: true,
+                                                                                    prefixIcon: Icon(Icons.file_copy, color: Colors.grey),
+                                                                                    border: OutlineInputBorder(),
+                                                                                    focusedBorder: OutlineInputBorder(
+                                                                                      borderSide: BorderSide(color: Colors.grey),
+                                                                                    ),
+                                                                                    labelStyle: TextStyle(color: Colors.grey)),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                    height:
+                                                                        20.0),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                imageUploadController
+                                                                    .file
+                                                                    .value = '';
+                                                                fileName.text =
+                                                                    '';
+                                                                Get.back();
+                                                              },
+                                                              child: const Text(
+                                                                'Back',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            ),
+                                                            imageUploadController
+                                                                        .file
+                                                                        .value !=
+                                                                    ''
+                                                                ? TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      bool containsString = json
+                                                                          .encode(listFolder!
+                                                                              .data)
+                                                                          .contains(imageUploadController
+                                                                              .fileName
+                                                                              .value);
+                                                                      bool
+                                                                          containsString1;
+                                                                      if (fileName
+                                                                          .text
+                                                                          .isNotEmpty) {
+                                                                        containsString1 = json
+                                                                            .encode(listFolder!
+                                                                                .data)
+                                                                            .contains(fileName.text +
+                                                                                extension(imageUploadController.file.value));
+                                                                      } else {
+                                                                        containsString1 =
+                                                                            false;
+                                                                      }
+                                                                      File
+                                                                          file =
+                                                                          File(imageUploadController
+                                                                              .file
+                                                                              .value);
+                                                                      int fileSizeInBytes =
+                                                                          await file
+                                                                              .length();
+                                                                      double
+                                                                          fileSizeInKB =
+                                                                          fileSizeInBytes /
+                                                                              1024;
+                                                                      double
+                                                                          fileSizeInMB =
+                                                                          fileSizeInKB /
+                                                                              1024;
+
+                                                                      if (fileName
+                                                                              .text
+                                                                              .isEmpty &&
+                                                                          containsString ==
+                                                                              true) {
+                                                                        Common.toastMessaage(
+                                                                            'File Name already exist',
+                                                                            Colors.red);
+                                                                      } else if (fileName
+                                                                              .text
+                                                                              .isNotEmpty &&
+                                                                          containsString1 ==
+                                                                              true) {
+                                                                        Common.toastMessaage(
+                                                                            'File Name already exist',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .maxFileSize
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Maximum Size 5 MB',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .remainingStorage
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Insufficient Storage',
+                                                                            Colors.red);
+                                                                      } else {
+                                                                        if (mounted) {
+                                                                          Common.showProgressDialog(
+                                                                              context,
+                                                                              "Uploading..");
+                                                                        }
+
+                                                                        UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
+                                                                            widget.token,
+                                                                            widget.callMasterId,
+                                                                            listPath,
+                                                                            imageUploadController.file.value,
+                                                                            fileName.text);
+                                                                        if (uploadAudio.data ==
+                                                                            true) {
+                                                                          imageUploadController
+                                                                              .file
+                                                                              .value = '';
+                                                                          fileName.text =
+                                                                              '';
+                                                                          Common.toastMessaage(
+                                                                              uploadAudio.message,
+                                                                              Colors.green);
+                                                                          listFolderList(
+                                                                              widget.token,
+                                                                              callMasterId,
+                                                                              listPath);
+                                                                          if (mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Save',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.green),
+                                                                    ),
+                                                                  )
+                                                                : TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      showModalBottomSheet(
+                                                                        context:
+                                                                            context,
+                                                                        builder:
+                                                                            ((builder) {
+                                                                          return Container(
+                                                                            height:
+                                                                                100.0,
+                                                                            width:
+                                                                                MediaQuery.of(context).size.width * 1,
+                                                                            margin:
+                                                                                const EdgeInsets.symmetric(
+                                                                              horizontal: 20,
+                                                                              vertical: 20,
+                                                                            ),
+                                                                            child:
+                                                                                Column(
+                                                                              children: <Widget>[
+                                                                                const Text(
+                                                                                  "Choose Profile photo",
+                                                                                  style: TextStyle(
+                                                                                    fontSize: 20.0,
                                                                                   ),
                                                                                 ),
                                                                                 const SizedBox(
-                                                                                  width: 30,
+                                                                                  height: 20,
                                                                                 ),
-                                                                                InkWell(
-                                                                                  onTap: () {
-                                                                                    imageUploadController.takePhoto(ImageSource.gallery);
-                                                                                    Get.back();
-                                                                                  },
-                                                                                  child: const Column(
-                                                                                    children: [
-                                                                                      Icon(Icons.image),
-                                                                                      Text('Gallery'),
-                                                                                    ],
+                                                                                Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+                                                                                  InkWell(
+                                                                                    onTap: () async {
+                                                                                      imageUploadController.takePhoto(ImageSource.camera);
+                                                                                      Get.back();
+                                                                                    },
+                                                                                    child: const Column(
+                                                                                      children: [
+                                                                                        Icon(Icons.camera),
+                                                                                        Text('Camera')
+                                                                                      ],
+                                                                                    ),
                                                                                   ),
-                                                                                ),
-                                                                              ])
-                                                                            ],
-                                                                          ),
-                                                                        );
-                                                                      }),
-                                                                    );
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Upload',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .black),
-                                                                  ),
-                                                                ),
-                                                        ],
-                                                      );
-                                                    });
-                                                  },
-                                                  transitionBuilder: (_,
-                                                      animation1, __, child) {
-                                                    return SlideTransition(
-                                                      position: Tween(
-                                                        begin:
-                                                            const Offset(0, 1),
-                                                        end: const Offset(0, 0),
-                                                      ).animate(animation1),
-                                                      child: child,
-                                                    );
-                                                  },
-                                                )
-                                              : _dialogue(
-                                                  context, 'Create File');
-                                        },
-                                        child: Container(
-                                          height: 40,
-                                          width: 40,
-                                          decoration: const BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle),
-                                          child: const Icon(
-                                            Icons.image,
-                                            color: Colors.white,
-                                          ),
-                                        ), //icon inside button
-                                      ),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
-                                      FloatingActionButton(
-                                        tooltip: 'Upload doc/pdf',
-                                        heroTag: 'doc',
-                                        backgroundColor: Colors.green,
-                                        onPressed: () {
-                                          fileManagerPermission!
-                                                      .data!.createFile ==
-                                                  true
-                                              ? showGeneralDialog(
-                                                  barrierLabel:
-                                                      "showGeneralDialog",
-                                                  barrierDismissible: false,
-                                                  barrierColor: Colors.black
-                                                      .withOpacity(0.6),
-                                                  transitionDuration:
-                                                      const Duration(
-                                                          milliseconds: 400),
-                                                  context: context,
-                                                  pageBuilder:
-                                                      (context, _, __) {
-                                                    return StatefulBuilder(
-                                                        builder: (context,
-                                                            setState) {
-                                                      return AlertDialog(
-                                                        content:
-                                                            IntrinsicHeight(
-                                                          child: Column(
-                                                            children: [
-                                                              Column(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  const SizedBox(
-                                                                    height: 10,
-                                                                  ),
-                                                                  const Text(
-                                                                    'Upload Docs/Pdf',
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    height: 20,
-                                                                  ),
-                                                                  isFile == true
-                                                                      ? DottedBorder(
-                                                                          borderType:
-                                                                              BorderType.RRect,
-                                                                          radius: const Radius
-                                                                              .circular(
-                                                                              5),
-                                                                          dashPattern: const [
-                                                                            8,
-                                                                            4
-                                                                          ],
-                                                                          strokeCap:
-                                                                              StrokeCap.round,
-                                                                          color:
-                                                                              Colors.black,
-                                                                          child:
-                                                                              Container(
-                                                                            width:
-                                                                                100,
-                                                                            height:
-                                                                                100,
-                                                                            decoration:
-                                                                                BoxDecoration(color: Colors.blue.shade50.withOpacity(.3), borderRadius: BorderRadius.circular(10)),
-                                                                            child:
-                                                                                const Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                                              children: [
-                                                                                Icon(Icons.upload, color: Colors.black, size: 50),
-                                                                                SizedBox(
-                                                                                  height: 10,
-                                                                                ),
-                                                                                Text('Doc/Pdf')
+                                                                                  const SizedBox(
+                                                                                    width: 30,
+                                                                                  ),
+                                                                                  InkWell(
+                                                                                    onTap: () {
+                                                                                      imageUploadController.takePhoto(ImageSource.gallery);
+                                                                                      Get.back();
+                                                                                    },
+                                                                                    child: const Column(
+                                                                                      children: [
+                                                                                        Icon(Icons.image),
+                                                                                        Text('Gallery'),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                ])
                                                                               ],
                                                                             ),
-                                                                          ),
-                                                                        )
-                                                                      : const Text(
-                                                                          'Do you want to upload document?'),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                  height: 20.0),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Get.back();
-                                                              isFile = false;
-                                                              setState(() {});
-                                                            },
-                                                            child: const Text(
-                                                              'Back',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .black),
+                                                                          );
+                                                                        }),
+                                                                      );
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Upload',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.black),
+                                                                    ),
+                                                                  ),
+                                                          ],
+                                                        );
+                                                      });
+                                                    },
+                                                    transitionBuilder: (_,
+                                                        animation1, __, child) {
+                                                      return SlideTransition(
+                                                        position: Tween(
+                                                          begin: const Offset(
+                                                              0, 1),
+                                                          end: const Offset(
+                                                              0, 0),
+                                                        ).animate(animation1),
+                                                        child: child,
+                                                      );
+                                                    },
+                                                  )
+                                                : _dialogue(
+                                                    context, 'Create File');
+                                          },
+                                          child: Container(
+                                            height: 40,
+                                            width: 40,
+                                            decoration: const BoxDecoration(
+                                                color: Colors.green,
+                                                shape: BoxShape.circle),
+                                            child: const Icon(
+                                              Icons.image,
+                                              color: Colors.white,
+                                            ),
+                                          ), //icon inside button
+                                        ),
+                                        const SizedBox(
+                                          width: 10,
+                                        ),
+                                        FloatingActionButton(
+                                          tooltip: 'Upload doc/pdf',
+                                          heroTag: 'doc',
+                                          backgroundColor: Colors.green,
+                                          onPressed: () {
+                                            fileManagerPermission!
+                                                        .data!.createFile ==
+                                                    true
+                                                ? showGeneralDialog(
+                                                    barrierLabel:
+                                                        "showGeneralDialog",
+                                                    barrierDismissible: false,
+                                                    barrierColor: Colors.black
+                                                        .withOpacity(0.6),
+                                                    transitionDuration:
+                                                        const Duration(
+                                                            milliseconds: 400),
+                                                    context: context,
+                                                    pageBuilder:
+                                                        (context, _, __) {
+                                                      return StatefulBuilder(
+                                                          builder: (context,
+                                                              setState) {
+                                                        return AlertDialog(
+                                                          content:
+                                                              IntrinsicHeight(
+                                                            child: Column(
+                                                              children: [
+                                                                Column(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .center,
+                                                                  children: [
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          10,
+                                                                    ),
+                                                                    const Text(
+                                                                      'Upload Docs/Pdf',
+                                                                      style: TextStyle(
+                                                                          fontSize:
+                                                                              18),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          20,
+                                                                    ),
+                                                                    isFile ==
+                                                                            true
+                                                                        ? DottedBorder(
+                                                                            borderType:
+                                                                                BorderType.RRect,
+                                                                            radius:
+                                                                                const Radius.circular(5),
+                                                                            dashPattern: const [
+                                                                              8,
+                                                                              4
+                                                                            ],
+                                                                            strokeCap:
+                                                                                StrokeCap.round,
+                                                                            color:
+                                                                                Colors.black,
+                                                                            child:
+                                                                                Container(
+                                                                              width: 100,
+                                                                              height: 100,
+                                                                              decoration: BoxDecoration(color: Colors.blue.shade50.withOpacity(.3), borderRadius: BorderRadius.circular(10)),
+                                                                              child: const Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                                                children: [
+                                                                                  Icon(Icons.upload, color: Colors.black, size: 50),
+                                                                                  SizedBox(
+                                                                                    height: 10,
+                                                                                  ),
+                                                                                  Text('Doc/Pdf')
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          )
+                                                                        : const Text(
+                                                                            'Do you want to upload document?'),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                    height:
+                                                                        20.0),
+                                                              ],
                                                             ),
                                                           ),
-                                                          isFile == false
-                                                              ? TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    FilePickerResult?
-                                                                        result =
-                                                                        await FilePicker
-                                                                            .platform
-                                                                            .pickFiles(
-                                                                      type: FileType
-                                                                          .custom,
-                                                                      allowedExtensions: [
-                                                                        'pdf',
-                                                                        'doc',
-                                                                        'docx'
-                                                                      ],
-                                                                    );
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Get.back();
+                                                                isFile = false;
+                                                                setState(() {});
+                                                              },
+                                                              child: const Text(
+                                                                'Back',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            ),
+                                                            isFile == false
+                                                                ? TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      FilePickerResult?
+                                                                          result =
+                                                                          await FilePicker
+                                                                              .platform
+                                                                              .pickFiles(
+                                                                        type: FileType
+                                                                            .custom,
+                                                                        allowedExtensions: [
+                                                                          'pdf',
+                                                                          'doc',
+                                                                          'docx'
+                                                                        ],
+                                                                      );
 
-                                                                    if (result !=
-                                                                        null) {
-                                                                      isFile =
-                                                                          true;
-                                                                      file = result
-                                                                          .files
-                                                                          .first;
-                                                                    } else {
-                                                                      isFile =
-                                                                          false;
-                                                                      // User cance
-                                                                      // isled the file selection.
-                                                                    }
-                                                                    setState(
-                                                                        () {});
-                                                                  },
-                                                                  child: const Text(
-                                                                      "Pick a Document"),
-                                                                )
-                                                              : TextButton(
-                                                                  onPressed:
-                                                                      () async {
-                                                                    String fileName1 = file!
-                                                                        .path!
-                                                                        .split(
-                                                                            '/')
-                                                                        .last;
-                                                                    bool containsString = json
-                                                                        .encode(listFolder!
-                                                                            .data)
-                                                                        .contains(
-                                                                            fileName1);
-                                                                    bool
-                                                                        containsString1;
-                                                                    if (fileName
-                                                                        .text
-                                                                        .isNotEmpty) {
-                                                                      containsString1 = json
+                                                                      if (result !=
+                                                                          null) {
+                                                                        isFile =
+                                                                            true;
+                                                                        file = result
+                                                                            .files
+                                                                            .first;
+                                                                      } else {
+                                                                        isFile =
+                                                                            false;
+                                                                        // User cance
+                                                                        // isled the file selection.
+                                                                      }
+                                                                      setState(
+                                                                          () {});
+                                                                    },
+                                                                    child: const Text(
+                                                                        "Pick a Document"),
+                                                                  )
+                                                                : TextButton(
+                                                                    onPressed:
+                                                                        () async {
+                                                                      String fileName1 = file!
+                                                                          .path!
+                                                                          .split(
+                                                                              '/')
+                                                                          .last;
+                                                                      bool containsString = json
                                                                           .encode(listFolder!
                                                                               .data)
-                                                                          .contains(fileName.text +
-                                                                              extension(file!.path.toString()));
-                                                                    } else {
-                                                                      containsString1 =
-                                                                          false;
-                                                                    }
-
-                                                                    int sizeInBytes = await File(file!
-                                                                            .path
-                                                                            .toString())
-                                                                        .length();
-                                                                    double
-                                                                        fileSizeInKB =
-                                                                        sizeInBytes /
-                                                                            1024;
-                                                                    double
-                                                                        fileSizeInMB =
-                                                                        fileSizeInKB /
-                                                                            1024;
-                                                                    if (fileName
-                                                                            .text
-                                                                            .isEmpty &&
-                                                                        containsString ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileName
-                                                                            .text
-                                                                            .isNotEmpty &&
-                                                                        containsString1 ==
-                                                                            true) {
-                                                                      Common.toastMessaage(
-                                                                          'File Name already exist',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .maxFileSize
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Maximum Size 5 MB',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else if (fileSizeInMB >
-                                                                        double.parse(fileManagerPermission!
-                                                                            .data!
-                                                                            .remainingStorage
-                                                                            .toString())) {
-                                                                      Common.toastMessaage(
-                                                                          'Insufficient Storage',
-                                                                          Colors
-                                                                              .red);
-                                                                    } else {
-                                                                      if (mounted) {
-                                                                        Common.showProgressDialog(
-                                                                            context,
-                                                                            "Uploading..");
+                                                                          .contains(
+                                                                              fileName1);
+                                                                      bool
+                                                                          containsString1;
+                                                                      if (fileName
+                                                                          .text
+                                                                          .isNotEmpty) {
+                                                                        containsString1 = json
+                                                                            .encode(listFolder!
+                                                                                .data)
+                                                                            .contains(fileName.text +
+                                                                                extension(file!.path.toString()));
+                                                                      } else {
+                                                                        containsString1 =
+                                                                            false;
                                                                       }
-                                                                      UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
-                                                                          widget
-                                                                              .token,
-                                                                          widget
-                                                                              .callMasterId,
-                                                                          listPath,
-                                                                          file!
+
+                                                                      int sizeInBytes = await File(file!
                                                                               .path
-                                                                              .toString(),
-                                                                          fileName
-                                                                              .text);
-                                                                      if (uploadAudio
-                                                                              .data ==
-                                                                          true) {
-                                                                        setState(
-                                                                            () {
-                                                                          isFile =
-                                                                              false;
-                                                                        });
-                                                                        imageUploadController
-                                                                            .file
-                                                                            .value = '';
-                                                                        fileName.text =
-                                                                            '';
+                                                                              .toString())
+                                                                          .length();
+                                                                      double
+                                                                          fileSizeInKB =
+                                                                          sizeInBytes /
+                                                                              1024;
+                                                                      double
+                                                                          fileSizeInMB =
+                                                                          fileSizeInKB /
+                                                                              1024;
+                                                                      if (fileName
+                                                                              .text
+                                                                              .isEmpty &&
+                                                                          containsString ==
+                                                                              true) {
                                                                         Common.toastMessaage(
-                                                                            uploadAudio.message,
-                                                                            Colors.green);
-                                                                        listFolderList(
-                                                                            widget.token,
-                                                                            callMasterId,
-                                                                            listPath);
+                                                                            'File Name already exist',
+                                                                            Colors.red);
+                                                                      } else if (fileName
+                                                                              .text
+                                                                              .isNotEmpty &&
+                                                                          containsString1 ==
+                                                                              true) {
+                                                                        Common.toastMessaage(
+                                                                            'File Name already exist',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .maxFileSize
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Maximum Size 5 MB',
+                                                                            Colors.red);
+                                                                      } else if (fileSizeInMB >
+                                                                          double.parse(fileManagerPermission!
+                                                                              .data!
+                                                                              .remainingStorage
+                                                                              .toString())) {
+                                                                        Common.toastMessaage(
+                                                                            'Insufficient Storage',
+                                                                            Colors.red);
+                                                                      } else {
                                                                         if (mounted) {
-                                                                          Navigator.pop(
-                                                                              context);
+                                                                          Common.showProgressDialog(
+                                                                              context,
+                                                                              "Uploading..");
+                                                                        }
+                                                                        UploadAudioRecord uploadAudio = await HttpService.uploadRecord(
+                                                                            widget.token,
+                                                                            widget.callMasterId,
+                                                                            listPath,
+                                                                            file!.path.toString(),
+                                                                            fileName.text);
+                                                                        if (uploadAudio.data ==
+                                                                            true) {
+                                                                          setState(
+                                                                              () {
+                                                                            isFile =
+                                                                                false;
+                                                                          });
+                                                                          imageUploadController
+                                                                              .file
+                                                                              .value = '';
+                                                                          fileName.text =
+                                                                              '';
+                                                                          Common.toastMessaage(
+                                                                              uploadAudio.message,
+                                                                              Colors.green);
+                                                                          listFolderList(
+                                                                              widget.token,
+                                                                              callMasterId,
+                                                                              listPath);
+                                                                          if (mounted) {
+                                                                            Navigator.pop(context);
+                                                                          }
                                                                         }
                                                                       }
-                                                                    }
-                                                                  },
-                                                                  child:
-                                                                      const Text(
-                                                                    'Upload',
-                                                                    style: TextStyle(
-                                                                        color: Colors
-                                                                            .green),
-                                                                  ),
-                                                                )
-                                                        ],
+                                                                    },
+                                                                    child:
+                                                                        const Text(
+                                                                      'Upload',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.green),
+                                                                    ),
+                                                                  )
+                                                          ],
+                                                        );
+                                                      });
+                                                    },
+                                                    transitionBuilder: (_,
+                                                        animation1, __, child) {
+                                                      return SlideTransition(
+                                                        position: Tween(
+                                                          begin: const Offset(
+                                                              0, 1),
+                                                          end: const Offset(
+                                                              0, 0),
+                                                        ).animate(animation1),
+                                                        child: child,
                                                       );
-                                                    });
-                                                  },
-                                                  transitionBuilder: (_,
-                                                      animation1, __, child) {
-                                                    return SlideTransition(
-                                                      position: Tween(
-                                                        begin:
-                                                            const Offset(0, 1),
-                                                        end: const Offset(0, 0),
-                                                      ).animate(animation1),
-                                                      child: child,
-                                                    );
-                                                  },
-                                                )
-                                              : _dialogue(
-                                                  context, 'Create File');
-                                        },
-                                        child: Container(
-                                          height: 40,
-                                          width: 40,
-                                          decoration: const BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle),
-                                          child: const Icon(
-                                            Icons.file_copy,
-                                            color: Colors.white,
-                                          ),
-                                        ), //icon inside button
-                                      ),
-                                    ],
+                                                    },
+                                                  )
+                                                : _dialogue(
+                                                    context, 'Create File');
+                                          },
+                                          child: Container(
+                                            height: 40,
+                                            width: 40,
+                                            decoration: const BoxDecoration(
+                                                color: Colors.green,
+                                                shape: BoxShape.circle),
+                                            child: const Icon(
+                                              Icons.file_copy,
+                                              color: Colors.white,
+                                            ),
+                                          ), //icon inside button
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                FloatingActionButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      isExpanded = !isExpanded;
-                                    });
-                                  },
-                                  child: Icon(
-                                      isExpanded ? Icons.close : Icons.upload),
-                                ),
-                              ],
-                            )
-                          : const SizedBox()
-                    ],
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  FloatingActionButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isExpanded = !isExpanded;
+                                      });
+                                    },
+                                    child: Icon(isExpanded
+                                        ? Icons.close
+                                        : Icons.upload),
+                                  ),
+                                ],
+                              )
+                            : const SizedBox()
+                      ],
+                    ),
                   ),
                 ),
               )
@@ -6984,6 +6850,186 @@ class _LeadDetailsState extends State<LeadDetails> {
                   ),
                 )),
       ),
+    );
+  }
+
+  Future<Object?> transferLeads(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Align(
+            alignment: Alignment.center,
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                child: Container(
+                  width: double.maxFinite,
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                  ),
+                  child: Material(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Transfer Leads',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        FormField<String>(
+                          builder: (FormFieldState<String> state) {
+                            return Container(
+                              height: 50,
+                              width: MediaQuery.of(context).size.width * 0.9,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.grey.shade900, width: 0),
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(5))),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  hint: const Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text('Staff'),
+                                  ),
+                                  value: staff,
+                                  items: commonDetails!.data.transferStaffs
+                                      .map((data) {
+                                    return DropdownMenuItem(
+                                      value: data.tranStaffId.toString(),
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 20),
+                                        child:
+                                            Text(data.tranStaffName.toString()),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      staff = newValue;
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(
+                          height: 15,
+                        ),
+                        TextFormField(
+                          controller: transferRemark,
+                          style: const TextStyle(
+                            color: Colors.black,
+                          ),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Remark";
+                            }
+                            return null;
+                          },
+                          keyboardType: TextInputType.name,
+                          decoration: InputDecoration(
+                              filled: true,
+                              //<-- SEE HERE
+                              fillColor: Colors.white,
+                              counterText: "",
+                              hintText: "Remark",
+                              isDense: true,
+                              border: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: Colors.purple.shade100),
+                                  borderRadius: BorderRadius.circular(5))),
+                        ),
+                        const SizedBox(
+                          height: 25,
+                        ),
+                        Container(
+                          height: 40,
+                          width: double.maxFinite,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3375e0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: RawMaterialButton(
+                            onPressed: () async {
+                              if (staff == null) {
+                                Common.toastMessaage(
+                                    'Choose Staff Name', Colors.red);
+                              } else {
+                                Common.showProgressDialog(context, "Loading..");
+                                LeadTransferModel transfer =
+                                    await HttpService.leadTransfer(
+                                        widget.token,
+                                        callMasterId,
+                                        staff,
+                                        transferRemark.text);
+                                if (transfer.status == true) {
+                                  Common.toastMessaage(
+                                      transfer.message, Colors.green);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    Navigator.pop(context);
+                                    getData();
+                                  }
+                                } else {
+                                  Common.toastMessaage(
+                                      transfer.message, Colors.red);
+                                  if (context.mounted) {
+                                    Navigator.of(context, rootNavigator: true)
+                                        .pop();
+                                  }
+                                }
+                              }
+                            },
+                            child: const Center(
+                              child: Text(
+                                'Continue',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
     );
   }
 
@@ -7281,7 +7327,7 @@ class _LeadDetailsState extends State<LeadDetails> {
       },
     );
   }
- 
+
   Future<dynamic> chooseCallDialog(BuildContext context) {
     return showDialog(
         context: context,
@@ -7348,7 +7394,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                     // String url =
                     //     'tel:${'+${leadDetails!.data!.contactNumber1}'}';
                     // await launch(url);
-                    Common.directCall(
+                    Common.dialPad(
                         leadDetails!.data!.contactNumber1.toString());
                   },
                   child: SizedBox(
@@ -7401,7 +7447,7 @@ class _LeadDetailsState extends State<LeadDetails> {
         });
   }
 
-  void _deleteFollowup(BuildContext context, followupId) {
+  void _deleteDialog(BuildContext context, followupId, String type) {
     showDialog(
         context: context,
         builder: (BuildContext ctx) {
@@ -7416,38 +7462,10 @@ class _LeadDetailsState extends State<LeadDetails> {
                   child: const Text('No')),
               TextButton(
                   onPressed: () async {
-                    DeleteLeadFollowModel delete =
-                        await HttpService.deleteLeadFollowup(
-                            widget.token, followupId, callMasterId);
-                    if (delete.data == true) {
-                      Common.toastMessaage(delete.message, Colors.green);
-                      if (context.mounted) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => LeadDetails(
-                                    widget.token,
-                                    widget.editLead,
-                                    widget.deleteLead,
-                                    widget.cloudCall,
-                                    callMasterId,
-                                    pageName: widget.pageName,
-                                    status: widget.status,
-                                    staff: widget.staff,
-                                    isCalled: widget.isCalled,
-                                    fromDate: widget.fromDate,
-                                    toDate: widget.toDate,
-                                    category: widget.category,
-                                    searchKey: widget.searchKey,
-                                    leadType: widget.leadType,
-                                  )),
-                        );
-                      }
+                    if (type == "lead") {
+                      deleteLead(context);
                     } else {
-                      Common.toastMessaage(delete.message, Colors.red);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
+                      deleteFollowup(context, followupId);
                     }
                   },
                   child: const Text('Yes')),
@@ -7455,10 +7473,41 @@ class _LeadDetailsState extends State<LeadDetails> {
           );
         });
   }
+
+  deleteFollowup(BuildContext context, followupId) async {
+    DeleteLeadFollowModel delete = await HttpService.deleteLeadFollowup(
+        widget.token, followupId, callMasterId);
+    if (delete.data == true) {
+      Common.toastMessaage(delete.message, Colors.green);
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      Common.toastMessaage(delete.message, Colors.red);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  deleteLead(BuildContext context) async {
+    DeleteLeadModel delete =
+        await HttpService.deleteLead(widget.token, callMasterId);
+    if (delete.data == true) {
+      Common.toastMessaage(delete.message, Colors.green);
+      if (context.mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
+    } else {
+      Common.toastMessaage(delete.message, Colors.red);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
 }
 
-
- 
 // ignore: must_be_immutable
 class AudioItem extends StatefulWidget {
   String direction;
@@ -7476,6 +7525,7 @@ class AudioItem extends StatefulWidget {
   bool deleteLead;
   bool cloudCall;
   String callMasterId;
+  String callResult;
   String? fromDate;
   String? toDate;
   String? sts;
@@ -7503,6 +7553,7 @@ class AudioItem extends StatefulWidget {
     this.deleteLead,
     this.cloudCall,
     this.callMasterId,
+    this.callResult,
     this.image,
     this.staffName,
     this.clientName, {
@@ -7773,28 +7824,40 @@ class _AudioItemState extends State<AudioItem> {
                                 widget.isTransfer == false
                                     ? InkWell(
                                         onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddFollowup(
-                                                      widget.token,
-                                                      widget.editLead,
-                                                      widget.deleteLead,
-                                                      widget.cloudCall,
-                                                      widget.callMasterId,
-                                                      pageName: widget.pageName,
-                                                      status: widget.sts,
-                                                      staff: widget.staff,
-                                                      isCalled: widget.isCalled,
-                                                      fromDate: widget.fromDate,
-                                                      toDate: widget.toDate,
-                                                      category: widget.category,
-                                                      callingDate: widget.date,
-                                                      callHistoryId:
-                                                          widget.callHistoryId,
-                                                    )),
-                                          );
+                                          if (widget.callResult !=
+                                              "Confirmed") {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AddFollowup(
+                                                        widget.token,
+                                                        widget.editLead,
+                                                        widget.deleteLead,
+                                                        widget.cloudCall,
+                                                        widget.callMasterId,
+                                                        pageName:
+                                                            widget.pageName,
+                                                        status: widget.sts,
+                                                        staff: widget.staff,
+                                                        isCalled:
+                                                            widget.isCalled,
+                                                        fromDate:
+                                                            widget.fromDate,
+                                                        toDate: widget.toDate,
+                                                        category:
+                                                            widget.category,
+                                                        callingDate:
+                                                            widget.date,
+                                                        callHistoryId: widget
+                                                            .callHistoryId,
+                                                      )),
+                                            );
+                                          } else {
+                                            Common.toastMessaage(
+                                                "You can't follow up on confirmed leads",
+                                                Colors.red);
+                                          }
                                         },
                                         child: CircleAvatar(
                                           backgroundColor: Colors.white,

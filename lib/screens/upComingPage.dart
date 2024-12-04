@@ -201,9 +201,7 @@ class _UpComingPageState extends State<UpComingPage> {
           child: Image.asset("assets/icons/menu.png",
               width: 25), //icon inside button
         ),
-        bottomNavigationBar: BottomNavigation(widget.token!, false,
+        bottomNavigationBar: BottomNavigation(widget.token!,
             phoneCallLogPermission: phoneCallLogPermission));
   }
-
-   
 }

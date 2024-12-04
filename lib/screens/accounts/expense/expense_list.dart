@@ -22,7 +22,13 @@ class ExpenseList extends StatefulWidget {
   String? status;
   String? catId;
   String? catName;
-  ExpenseList({super.key, this.fdate, this.tdate, this.status,this.catId,this.catName});
+  ExpenseList(
+      {super.key,
+      this.fdate,
+      this.tdate,
+      this.status,
+      this.catId,
+      this.catName});
   @override
   State<ExpenseList> createState() => _ExpenseListState();
 }
@@ -30,7 +36,7 @@ class ExpenseList extends StatefulWidget {
 class _ExpenseListState extends State<ExpenseList> {
   ExpenseListModel? expenseList;
   ExpenseMasterData? expenseMasterData;
-  ExpensePostModel? deleteResponse;
+  CommonResponse? deleteResponse;
 
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener =
@@ -61,7 +67,7 @@ class _ExpenseListState extends State<ExpenseList> {
 
   getData() async {
     categoryId = widget.catId ?? "";
-    categoryName = widget.catName ?? "";
+    categoryName = widget.catName ?? "Tap to select";
 
     if (widget.fdate != null && widget.tdate != null) {
       fDate = widget.fdate!;
@@ -186,50 +192,73 @@ class _ExpenseListState extends State<ExpenseList> {
                             ),
                           ],
                         ),
-                        PopupMenuButton<String>(
-                          iconColor: Colors.white,
-                          color: Colors.white,
-                          onSelected: (value) {
-                            if (value == "0") {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const AddExpense(),
-                                  )).then((_) {
-                                page = 1;
-                                add = 1;
-                                items.clear();
-                                getList();
-                              });
-                            } else if (value == "1") {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ExpenseCategories(),
-                                  )).then((_) {
-                                getDetails();
-                              });
-                            } else if (value == "2") {
-                              filtrationSheet(context);
-                            }
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              const PopupMenuItem<String>(
-                                value: '0',
-                                child: Text('Add Expense'),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                filtrationSheet(context);
+                              },
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    color: const Color(0xFFd5f5f4),
+                                    borderRadius: BorderRadius.circular(5)),
+                                child: Center(
+                                    child: Image.asset(
+                                        "assets/icons/filter.png",
+                                        width: 18)),
                               ),
-                              const PopupMenuItem<String>(
-                                value: '1',
-                                child: Text('Expense Category'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: '2',
-                                child: Text('Filter'),
-                              ),
-                            ];
-                          },
+                            ),
+                            PopupMenuButton<String>(
+                              iconColor: Colors.white,
+                              color: Colors.white,
+                              onSelected: (value) {
+                                if (value == "0") {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddExpense(),
+                                      )).then((_) {
+                                    page = 1;
+                                    add = 1;
+                                    items.clear();
+                                    getList();
+                                  });
+                                } else if (value == "1") {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ExpenseCategories(),
+                                      )).then((_) {
+                                    getDetails();
+                                  });
+                                }
+                                // else if (value == "2") {
+                                //   filtrationSheet(context);
+                                // }
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return [
+                                  const PopupMenuItem<String>(
+                                    value: '0',
+                                    child: Text('Add Expense'),
+                                  ),
+                                  const PopupMenuItem<String>(
+                                    value: '1',
+                                    child: Text('Expense Category'),
+                                  ),
+                                  // const PopupMenuItem<String>(
+                                  //   value: '2',
+                                  //   child: Text('Filter'),
+                                  // ),
+                                ];
+                              },
+                            ),
+                          ],
                         ),
                       ]),
                 ),
@@ -263,219 +292,235 @@ class _ExpenseListState extends State<ExpenseList> {
                             return Padding(
                               padding: const EdgeInsets.only(
                                   bottom: 8.0, top: 8.0, left: 8.0, right: 8.0),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * .9,
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        blurRadius: 0.95,
-                                        color: Colors.black12,
-                                      )
-                                    ],
-                                    borderRadius: BorderRadius.circular(8)),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      CircleAvatar(
-                                          radius: 15,
-                                          backgroundColor: Colors.blue,
-                                          foregroundColor: Colors.white,
-                                          child: Text(
-                                            (index + 1).toString(),
-                                            style: const TextStyle(),
-                                          )),
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .6,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .7,
-                                              child: Text(
-                                                "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
-                                                style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight:
-                                                        FontWeight.bold),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ExpenseHistory(
+                                          expId: items[index].cmpnyExId,
+                                        ),
+                                      ));
+                                },
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width * .9,
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          blurRadius: 0.95,
+                                          color: Colors.black12,
+                                        )
+                                      ],
+                                      borderRadius: BorderRadius.circular(8)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        CircleAvatar(
+                                            radius: 15,
+                                            backgroundColor: Colors.blue,
+                                            foregroundColor: Colors.white,
+                                            child: Text(
+                                              (index + 1).toString(),
+                                              style: const TextStyle(),
+                                            )),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              .6,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .7,
+                                                child: Text(
+                                                  items[index].expCatName,
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .7,
-                                              child: Text(
-                                                "Created by: ${items[index].staffName}",
+                                              const SizedBox(
+                                                height: 5,
+                                              ),
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .7,
+                                                child: Text(
+                                                  "Created by: ${items[index].staffName}",
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                      fontSize: 14),
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 5,
+                                              ),
+                                              Text(
+                                                "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
                                                 overflow: TextOverflow.ellipsis,
                                                 style: const TextStyle(
                                                     fontSize: 14),
                                               ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Text(
-                                              "Date: ${DateFormat('dd-MM-yyyy').format(items[index].trnDate)}",
-                                              overflow: TextOverflow.ellipsis,
-                                              style:
-                                                  const TextStyle(fontSize: 14),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .5,
-                                              child: Text(
-                                                "Category: ${items[index].expCatName}",
-                                                style: const TextStyle(
-                                                    fontSize: 14),
+                                              const SizedBox(
+                                                height: 5,
                                               ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  .5,
-                                              child: Text(
-                                                "Remarks: ${items[index].remarks}",
-                                                style: const TextStyle(
-                                                    fontSize: 14),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10,
-                                            ),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.currency_rupee,
-                                                  size: 20,
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .5,
+                                                child: Text(
+                                                  "${items[index].fromAccountPerson} ➜ ${items[index].toAccountPerson}",
+                                                  style: const TextStyle(
+                                                      fontSize: 14),
                                                 ),
-                                                SizedBox(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      .45,
-                                                  child: Text(
-                                                    " ${items[index].amount} /-",
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 20),
+                                              ),
+                                              const SizedBox(
+                                                height: 5,
+                                              ),
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .5,
+                                                child: Text(
+                                                  "Remarks: ${items[index].remarks}",
+                                                  style: const TextStyle(
+                                                      fontSize: 14),
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 5,
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.currency_rupee,
+                                                    size: 20,
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                                  SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .45,
+                                                    child: Text(
+                                                      " ${items[index].amount} /-",
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 20),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () async {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        EditExpense(
-                                                      data: items[index],
-                                                    ),
-                                                  )).then((_) {
-                                                page = 1;
-                                                add = 1;
-                                                items.clear();
-                                                getList();
-                                              });
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                  color: Colors.blue),
-                                              child: const Padding(
-                                                padding: EdgeInsets.all(5.0),
-                                                child: Icon(Icons.edit,
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          GestureDetector(
-                                            onTap: () async {
-                                              deleteDialog(context,
-                                                  items[index].cmpnyExId);
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                  color: Colors.red),
-                                              child: const Padding(
-                                                padding: EdgeInsets.all(5.0),
-                                                child: Icon(Icons.delete,
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          GestureDetector(
-                                            onTap: () async {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        ExpenseHistory(
-                                                      expId: items[index]
-                                                          .cmpnyExId,
-                                                    ),
-                                                  ));
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(2),
-                                                  color: Colors.teal),
-                                              child: const Padding(
-                                                padding: EdgeInsets.all(5.0),
-                                                child: Icon(
-                                                  Icons.history,
-                                                  color: Colors.white,
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () async {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          EditExpense(
+                                                        data: items[index],
+                                                      ),
+                                                    )).then((_) {
+                                                  page = 1;
+                                                  add = 1;
+                                                  items.clear();
+                                                  getList();
+                                                });
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            2),
+                                                    color: Colors.blue),
+                                                child: const Padding(
+                                                  padding: EdgeInsets.all(5.0),
+                                                  child: Icon(Icons.edit,
+                                                      color: Colors.white),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      )
-                                    ],
+                                            const SizedBox(
+                                              height: 10,
+                                            ),
+                                            GestureDetector(
+                                              onTap: () async {
+                                                deleteDialog(context,
+                                                    items[index].cmpnyExId);
+                                              },
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            2),
+                                                    color: Colors.red),
+                                                child: const Padding(
+                                                  padding: EdgeInsets.all(5.0),
+                                                  child: Icon(Icons.delete,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                            // const SizedBox(
+                                            //   height: 10,
+                                            // ),
+                                            // GestureDetector(
+                                            //   onTap: () async {
+                                            //     Navigator.push(
+                                            //         context,
+                                            //         MaterialPageRoute(
+                                            //           builder: (context) =>
+                                            //               ExpenseHistory(
+                                            //             expId: items[index]
+                                            //                 .cmpnyExId,
+                                            //           ),
+                                            //         ));
+                                            //   },
+                                            //   child: Container(
+                                            //     decoration: BoxDecoration(
+                                            //         borderRadius:
+                                            //             BorderRadius.circular(2),
+                                            //         color: Colors.teal),
+                                            //     child: const Padding(
+                                            //       padding: EdgeInsets.all(5.0),
+                                            //       child: Icon(
+                                            //         Icons.history,
+                                            //         color: Colors.white,
+                                            //       ),
+                                            //     ),
+                                            //   ),
+                                            // ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),

@@ -89,6 +89,30 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
     Colors.redAccent,
     Colors.green.shade800,
     Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
   ];
   CommonConfigureModel? configure;
   bool isSort = true;
@@ -577,8 +601,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                         value:
                                                                             branch,
                                                                         items: commonDetails!
-                                                                            .data!
-                                                                            .branch!
+                                                                            .data
+                                                                            .branch
                                                                             .map((data) {
                                                                           return DropdownMenuItem(
                                                                             value:
@@ -647,8 +671,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     shrinkWrap:
                                                                         true,
                                                                     itemCount: commonDetails!
-                                                                        .data!
-                                                                        .leadCategory!
+                                                                        .data
+                                                                        .leadCategory
                                                                         .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -660,14 +684,14 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                               200,
                                                                           child:
                                                                               Text(
-                                                                            commonDetails!.data!.leadCategory![ind].leadCategory.toString(),
+                                                                            commonDetails!.data.leadCategory[ind].leadCategory.toString(),
                                                                             style: const TextStyle(
                                                                                 color: Colors.black,
                                                                                 fontWeight: FontWeight.w400,
                                                                                 fontSize: 14),
                                                                           ),
                                                                         ),
-                                                                        value: checkedCategoryItems!.contains(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString())
+                                                                        value: checkedCategoryItems.contains(commonDetails!.data.leadCategory[ind].leadCategoryId.toString())
                                                                             ? true
                                                                             : false,
                                                                         onChanged:
@@ -676,15 +700,15 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                           if (value ==
                                                                               true) {
                                                                             setState(() {
-                                                                              checkedCategoryItems!.add(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
-                                                                              checkedCategoryItemsName!.add(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
+                                                                              checkedCategoryItems.add(commonDetails!.data.leadCategory[ind].leadCategoryId.toString());
+                                                                              checkedCategoryItemsName.add(commonDetails!.data.leadCategory[ind].leadCategory.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
                                                                           } else {
                                                                             setState(() {
-                                                                              checkedCategoryItems!.remove(commonDetails!.data!.leadCategory![ind].leadCategoryId.toString());
-                                                                              checkedCategoryItemsName!.remove(commonDetails!.data!.leadCategory![ind].leadCategory.toString());
+                                                                              checkedCategoryItems.remove(commonDetails!.data.leadCategory[ind].leadCategoryId.toString());
+                                                                              checkedCategoryItemsName.remove(commonDetails!.data.leadCategory[ind].leadCategory.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
@@ -713,7 +737,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                               BorderRadius
                                                                   .circular(5),
                                                         ),
-                                                        child: checkedCategoryItems!
+                                                        child: checkedCategoryItems
                                                                 .isEmpty
                                                             ? const Padding(
                                                                 padding: EdgeInsets
@@ -738,7 +762,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     scrollDirection:
                                                                         Axis.horizontal,
                                                                     itemCount:
-                                                                        checkedCategoryItemsName!
+                                                                        checkedCategoryItemsName
                                                                             .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -769,7 +793,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                       Padding(
                                                                                         padding: const EdgeInsets.all(10),
                                                                                         child: Text(
-                                                                                          checkedCategoryItemsName![i],
+                                                                                          checkedCategoryItemsName[i],
                                                                                           style: const TextStyle(
                                                                                             color: Colors.black,
                                                                                           ),
@@ -796,8 +820,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
-                                                                                                    checkedCategoryItemsName!.remove(checkedCategoryItemsName![i]);
-                                                                                                    checkedCategoryItems!.remove(checkedCategoryItems![i]);
+                                                                                                    checkedCategoryItemsName.remove(checkedCategoryItemsName[i]);
+                                                                                                    checkedCategoryItems.remove(checkedCategoryItems[i]);
                                                                                                   });
                                                                                                   // if (checkedItemsName.length > 1) {
                                                                                                   //   setState(() {
@@ -887,8 +911,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     shrinkWrap:
                                                                         true,
                                                                     itemCount: commonDetails!
-                                                                        .data!
-                                                                        .callResult!
+                                                                        .data
+                                                                        .callResult
                                                                         .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -900,14 +924,14 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                               200,
                                                                           child:
                                                                               Text(
-                                                                            commonDetails!.data!.callResult![ind].callResult.toString(),
+                                                                            commonDetails!.data.callResult[ind].callResult.toString(),
                                                                             style: const TextStyle(
                                                                                 color: Colors.black,
                                                                                 fontWeight: FontWeight.w400,
                                                                                 fontSize: 14),
                                                                           ),
                                                                         ),
-                                                                        value: checkedCallResultItems!.contains(commonDetails!.data!.callResult![ind].callResultId.toString())
+                                                                        value: checkedCallResultItems.contains(commonDetails!.data.callResult[ind].callResultId.toString())
                                                                             ? true
                                                                             : false,
                                                                         onChanged:
@@ -916,15 +940,15 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                           if (value ==
                                                                               true) {
                                                                             setState(() {
-                                                                              checkedCallResultItems!.add(commonDetails!.data!.callResult![ind].callResultId.toString());
-                                                                              checkedCallResultItemsName!.add(commonDetails!.data!.callResult![ind].callResult.toString());
+                                                                              checkedCallResultItems.add(commonDetails!.data.callResult[ind].callResultId.toString());
+                                                                              checkedCallResultItemsName.add(commonDetails!.data.callResult[ind].callResult.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
                                                                           } else {
                                                                             setState(() {
-                                                                              checkedCallResultItems!.remove(commonDetails!.data!.callResult![ind].callResultId.toString());
-                                                                              checkedCallResultItemsName!.remove(commonDetails!.data!.callResult![ind].callResult.toString());
+                                                                              checkedCallResultItems.remove(commonDetails!.data.callResult[ind].callResultId.toString());
+                                                                              checkedCallResultItemsName.remove(commonDetails!.data.callResult[ind].callResult.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
@@ -953,7 +977,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                               BorderRadius
                                                                   .circular(5),
                                                         ),
-                                                        child: checkedCallResultItems!
+                                                        child: checkedCallResultItems
                                                                 .isEmpty
                                                             ? const Padding(
                                                                 padding: EdgeInsets
@@ -978,7 +1002,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     scrollDirection:
                                                                         Axis.horizontal,
                                                                     itemCount:
-                                                                        checkedCallResultItemsName!
+                                                                        checkedCallResultItemsName
                                                                             .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -1009,7 +1033,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                       Padding(
                                                                                         padding: const EdgeInsets.all(10),
                                                                                         child: Text(
-                                                                                          checkedCallResultItemsName![i],
+                                                                                          checkedCallResultItemsName[i],
                                                                                           style: const TextStyle(
                                                                                             color: Colors.black,
                                                                                           ),
@@ -1036,8 +1060,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
-                                                                                                    checkedCallResultItemsName!.remove(checkedCallResultItemsName![i]);
-                                                                                                    checkedCallResultItems!.remove(checkedCallResultItems![i]);
+                                                                                                    checkedCallResultItemsName.remove(checkedCallResultItemsName[i]);
+                                                                                                    checkedCallResultItems.remove(checkedCallResultItems[i]);
                                                                                                   });
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
@@ -1110,8 +1134,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     shrinkWrap:
                                                                         true,
                                                                     itemCount: commonDetails!
-                                                                        .data!
-                                                                        .staff!
+                                                                        .data
+                                                                        .staff
                                                                         .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -1123,14 +1147,14 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                               200,
                                                                           child:
                                                                               Text(
-                                                                            commonDetails!.data!.staff![ind].staffName.toString(),
+                                                                            commonDetails!.data.staff[ind].staffName.toString(),
                                                                             style: const TextStyle(
                                                                                 color: Colors.black,
                                                                                 fontWeight: FontWeight.w400,
                                                                                 fontSize: 14),
                                                                           ),
                                                                         ),
-                                                                        value: checkedAssignedStaffItems!.contains(commonDetails!.data!.staff![ind].staffId.toString())
+                                                                        value: checkedAssignedStaffItems.contains(commonDetails!.data.staff[ind].userId.toString())
                                                                             ? true
                                                                             : false,
                                                                         onChanged:
@@ -1139,15 +1163,15 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                           if (value ==
                                                                               true) {
                                                                             setState(() {
-                                                                              checkedAssignedStaffItems!.add(commonDetails!.data!.staff![ind].staffId.toString());
-                                                                              checkedAssignedStaffItemsName!.add(commonDetails!.data!.staff![ind].staffName.toString());
+                                                                              checkedAssignedStaffItems.add(commonDetails!.data.staff[ind].userId.toString());
+                                                                              checkedAssignedStaffItemsName.add(commonDetails!.data.staff[ind].staffName.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
                                                                           } else {
                                                                             setState(() {
-                                                                              checkedAssignedStaffItems!.remove(commonDetails!.data!.staff![ind].staffId.toString());
-                                                                              checkedAssignedStaffItemsName!.remove(commonDetails!.data!.staff![ind].staffName.toString());
+                                                                              checkedAssignedStaffItems.remove(commonDetails!.data.staff[ind].userId.toString());
+                                                                              checkedAssignedStaffItemsName.remove(commonDetails!.data.staff[ind].staffName.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
@@ -1176,7 +1200,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                               BorderRadius
                                                                   .circular(5),
                                                         ),
-                                                        child: checkedAssignedStaffItems!
+                                                        child: checkedAssignedStaffItems
                                                                 .isEmpty
                                                             ? const Padding(
                                                                 padding: EdgeInsets
@@ -1201,7 +1225,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     scrollDirection:
                                                                         Axis.horizontal,
                                                                     itemCount:
-                                                                        checkedAssignedStaffItemsName!
+                                                                        checkedAssignedStaffItemsName
                                                                             .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -1232,7 +1256,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                       Padding(
                                                                                         padding: const EdgeInsets.all(10),
                                                                                         child: Text(
-                                                                                          checkedAssignedStaffItemsName![i],
+                                                                                          checkedAssignedStaffItemsName[i],
                                                                                           style: const TextStyle(
                                                                                             color: Colors.black,
                                                                                           ),
@@ -1259,8 +1283,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                                             TextButton(
                                                                                                 onPressed: () async {
                                                                                                   setState(() {
-                                                                                                    checkedAssignedStaffItemsName!.remove(checkedAssignedStaffItemsName![i]);
-                                                                                                    checkedAssignedStaffItems!.remove(checkedAssignedStaffItems![i]);
+                                                                                                    checkedAssignedStaffItemsName.remove(checkedAssignedStaffItemsName[i]);
+                                                                                                    checkedAssignedStaffItems.remove(checkedAssignedStaffItems[i]);
                                                                                                   });
                                                                                                   Navigator.of(context).pop();
                                                                                                 },
@@ -1333,8 +1357,8 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                     shrinkWrap:
                                                                         true,
                                                                     itemCount: commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs!
+                                                                        .data
+                                                                        .transferStaffs
                                                                         .length,
                                                                     itemBuilder:
                                                                         (context,
@@ -1346,14 +1370,14 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                               200,
                                                                           child:
                                                                               Text(
-                                                                            commonDetails!.data!.transferStaffs![ind].tranStaffName.toString(),
+                                                                            commonDetails!.data.transferStaffs[ind].tranStaffName.toString(),
                                                                             style: const TextStyle(
                                                                                 color: Colors.black,
                                                                                 fontWeight: FontWeight.w400,
                                                                                 fontSize: 14),
                                                                           ),
                                                                         ),
-                                                                        value: checkedCreatedStaffItems.contains(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString())
+                                                                        value: checkedCreatedStaffItems.contains(commonDetails!.data.transferStaffs[ind].tranStaffId.toString())
                                                                             ? true
                                                                             : false,
                                                                         onChanged:
@@ -1362,15 +1386,15 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                           if (value ==
                                                                               true) {
                                                                             setState(() {
-                                                                              checkedCreatedStaffItems.add(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                              checkedCreatedStaffItemsName.add(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                              checkedCreatedStaffItems.add(commonDetails!.data.transferStaffs[ind].tranStaffId.toString());
+                                                                              checkedCreatedStaffItemsName.add(commonDetails!.data.transferStaffs[ind].tranStaffName.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
                                                                           } else {
                                                                             setState(() {
-                                                                              checkedCreatedStaffItems.remove(commonDetails!.data!.transferStaffs![ind].tranStaffId.toString());
-                                                                              checkedCreatedStaffItemsName.remove(commonDetails!.data!.transferStaffs![ind].tranStaffName.toString());
+                                                                              checkedCreatedStaffItems.remove(commonDetails!.data.transferStaffs[ind].tranStaffId.toString());
+                                                                              checkedCreatedStaffItemsName.remove(commonDetails!.data.transferStaffs[ind].tranStaffName.toString());
 
                                                                               Navigator.pop(context, true);
                                                                             });
@@ -2298,7 +2322,6 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                                         );
                                                                       });
                                                                 } else {
-                                                                  
                                                                   Common.dialPad(
                                                                       items[index]
                                                                           .contactNumber1);

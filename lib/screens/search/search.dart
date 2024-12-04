@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
-import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
 import 'package:login2/service/service.dart';
 
@@ -36,6 +35,54 @@ class _SearchState extends State<Search> {
   bool custSwitch = true;
   bool leadSwitch = true;
   final List<Color> _colors = [
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
+    Colors.black,
+    Colors.teal,
+    Colors.amberAccent,
+    Colors.redAccent,
+    Colors.green.shade800,
+    Colors.blueAccent,
     Colors.black,
     Colors.teal,
     Colors.amberAccent,
@@ -102,7 +149,7 @@ class _SearchState extends State<Search> {
   Widget build(BuildContext context) {
     return result == true
         ? Scaffold(
-            backgroundColor: Colors.grey.shade300,
+            backgroundColor: Colors.white,
             appBar: PreferredSize(
               preferredSize:
                   Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
@@ -172,10 +219,10 @@ class _SearchState extends State<Search> {
                             controller: searchController,
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.all(8),
-                              hintStyle: const TextStyle(color: Colors.grey),
+                              hintStyle: const TextStyle(color: Colors.black),
                               hintText: 'Search',
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: Colors.grey.shade300,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(5),
                                 borderSide: BorderSide
@@ -183,7 +230,7 @@ class _SearchState extends State<Search> {
                               ),
                               prefixIcon: const Icon(
                                 Icons.search,
-                                color: Colors.grey,
+                                color: Colors.black,
                               ),
                             ),
                           ),
@@ -218,11 +265,11 @@ class _SearchState extends State<Search> {
                       ? LinearProgressIndicator(
                           color: Colors.blue.shade600,
                         )
-                      : response == null
-                          ? noResultWidget(context,"No Result Found")
+                      : response == null || searchController.text == ""
+                          ? noResultWidget(context, "Type to search...")
                           : response!.data.customers.isEmpty &&
                                   response!.data.leadData.isEmpty
-                              ? noResultWidget(context,"No Result Found")
+                              ? noResultWidget(context, "No Result Found")
                               : Column(
                                   children: [
                                     if (response!.data.customers.isNotEmpty)
@@ -239,7 +286,7 @@ class _SearchState extends State<Search> {
                                               width: MediaQuery.of(context)
                                                   .size
                                                   .width,
-                                              color: Colors.white,
+                                              color: Colors.grey.shade100,
                                               child: const Padding(
                                                 padding: EdgeInsets.symmetric(
                                                     horizontal: 16.0,
@@ -276,7 +323,7 @@ class _SearchState extends State<Search> {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 4.0, vertical: 0),
                                             child: Card(
-                                              color: Colors.white,
+                                              color: Colors.grey.shade100,
                                               child: ListTile(
                                                 onTap: () {
                                                   Navigator.push(
@@ -325,7 +372,7 @@ class _SearchState extends State<Search> {
                                               width: MediaQuery.of(context)
                                                   .size
                                                   .width,
-                                              color: Colors.white,
+                                              color: Colors.grey.shade100,
                                               child: const Padding(
                                                 padding: EdgeInsets.symmetric(
                                                     horizontal: 16.0,
@@ -370,7 +417,6 @@ class _SearchState extends State<Search> {
           )
         : noInternetWidget(context);
   }
-
 
   Scaffold noInternetWidget(BuildContext context) {
     return Scaffold(
@@ -452,7 +498,7 @@ class _SearchState extends State<Search> {
           width: MediaQuery.of(context).size.width * 1,
           decoration: BoxDecoration(
             color: response!.data.leadData[index].isSelected == false
-                ? Colors.white
+                ? Colors.grey.shade100
                 : Colors.blue.shade100,
             boxShadow: const [
               BoxShadow(
@@ -508,6 +554,16 @@ class _SearchState extends State<Search> {
                                       shape: BoxShape.circle,
                                     ),
                                   ),
+                                if (response!.data.leadData[index].priority ==
+                                    '4')
+                                  Container(
+                                    width: 10.0,
+                                    height: 10.0,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                                 const SizedBox(
                                   width: 5,
                                 ),
@@ -520,6 +576,13 @@ class _SearchState extends State<Search> {
                                     // response!.data.leadData.length.toString(),
                                     style: TextStyle(
                                         fontSize: 16,
+                                        decoration: response!.data
+                                                    .leadData[index].priority ==
+                                                "4"
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                        decorationThickness: 1.5,
+                                        decorationColor: Colors.red,
                                         color: response!
                                                 .data.leadData[index].isCustomer
                                             ? Colors.green
@@ -965,8 +1028,8 @@ class _SearchState extends State<Search> {
                                     //     'tel:+${response!.data.leadData[index].contactNumber1}';
                                     // await launchUrl(
                                     //     Uri.parse(url));
-                                    Common.directCall(
-                                        '+${response!.data.leadData[index].contactNumber1}');
+                                    Common.dialPad(response!
+                                        .data.leadData[index].contactNumber1);
                                   }
                                 }
                               },
@@ -1082,8 +1145,8 @@ class _SearchState extends State<Search> {
                 InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    Common.directCall(
-                        '+${response!.data.leadData[index].contactNumber1}');
+                    Common.dialPad(
+                        response!.data.leadData[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,

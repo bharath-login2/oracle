@@ -9,7 +9,7 @@ ProductListModel productListModelFromJson(String str) => ProductListModel.fromJs
 String productListModelToJson(ProductListModel data) => json.encode(data.toJson());
 
 class ProductListModel {
-    List<Datum> data;
+    List<ProductList> data;
     bool status;
     String message;
 
@@ -20,7 +20,7 @@ class ProductListModel {
     });
 
     factory ProductListModel.fromJson(Map<String, dynamic> json) => ProductListModel(
-        data: List<Datum>.from(json["data"].map((x) => Datum.fromJson(x))),
+        data: List<ProductList>.from(json["data"].map((x) => ProductList.fromJson(x))),
         status: json["status"],
         message: json["message"],
     );
@@ -32,7 +32,7 @@ class ProductListModel {
     };
 }
 
-class Datum {
+class ProductList {
     String id;
     String productName;
     String totalAmount;
@@ -42,7 +42,7 @@ class Datum {
     String productMrp;
     String contentId;
 
-    Datum({
+    ProductList({
         required this.id,
         required this.productName,
         required this.totalAmount,
@@ -53,7 +53,7 @@ class Datum {
         required this.contentId,
     });
 
-    factory Datum.fromJson(Map<String, dynamic> json) => Datum(
+    factory ProductList.fromJson(Map<String, dynamic> json) => ProductList(
         id: json["id"],
         productName: json["product_name"],
         totalAmount: json["total_amount"],

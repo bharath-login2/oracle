@@ -27,7 +27,8 @@ class _ViewHistoryState extends State<ViewHistory> {
       setState(() {
         isLoading = false;
       });
-    }{
+    }
+    {
       setState(() {
         isLoading = false;
       });

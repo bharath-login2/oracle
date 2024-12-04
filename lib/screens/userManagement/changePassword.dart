@@ -82,30 +82,23 @@ class _ChangePasswordState extends State<ChangePassword> {
               height: 30,
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10),
-              child: TextFormField(
-                obscureText: true,
-                controller: newPassword,
-                decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.only(
-                        left: 10, top: 10, bottom: 10),
-                    labelText: 'New Password',
-                    fillColor: Colors.white,
-                    filled: true,
-                    prefixIcon: Icon(
-                        Icons.lock,
-                        color: Colors.grey),
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                          color: Colors.grey),
-                    ),
-                    labelStyle: TextStyle(
-                        color: Colors.grey)),
-              )
-
-
-            ),
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                child: TextFormField(
+                  obscureText: true,
+                  controller: newPassword,
+                  decoration: const InputDecoration(
+                      contentPadding:
+                          EdgeInsets.only(left: 10, top: 10, bottom: 10),
+                      labelText: 'New Password',
+                      fillColor: Colors.white,
+                      filled: true,
+                      prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                      border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      labelStyle: TextStyle(color: Colors.grey)),
+                )),
             const SizedBox(
               height: 15,
             ),
@@ -115,26 +108,18 @@ class _ChangePasswordState extends State<ChangePassword> {
                   obscureText: true,
                   controller: confirmPassword,
                   decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(
-                          left: 10, top: 10, bottom: 10),
+                      contentPadding:
+                          EdgeInsets.only(left: 10, top: 10, bottom: 10),
                       labelText: 'Confirm Password',
                       fillColor: Colors.white,
                       filled: true,
-                      prefixIcon: Icon(
-                          Icons.lock,
-                          color: Colors.grey),
+                      prefixIcon: Icon(Icons.lock, color: Colors.grey),
                       border: OutlineInputBorder(),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                            color: Colors.grey),
+                        borderSide: BorderSide(color: Colors.grey),
                       ),
-                      labelStyle: TextStyle(
-                          color: Colors.grey)),
-                )
-
-
-            ),
-
+                      labelStyle: TextStyle(color: Colors.grey)),
+                )),
             const SizedBox(
               height: 20,
             ),
@@ -149,7 +134,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                   } else if (newPassword.text != confirmPassword.text) {
                     Common.toastMessaage('Password does not match', Colors.red);
                   } else {
-                    if(mounted) {
+                    if (mounted) {
                       Common.showProgressDialog(context, "Loading..");
                     }
                     ChangePasswordModel changePassword =
@@ -158,17 +143,14 @@ class _ChangePasswordState extends State<ChangePassword> {
                     if (changePassword.data == true) {
                       Common.toastMessaage(
                           changePassword.message, Colors.green);
-                      if(mounted) {
-                        Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ViewUsers(widget.token)),
-                      );
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
                       }
                     } else {
                       Common.toastMessaage(
                           changePassword.message, Colors.green);
-                      if(mounted) {
+                      if (context.mounted) {
                         Navigator.pop(context, true);
                       }
                     }

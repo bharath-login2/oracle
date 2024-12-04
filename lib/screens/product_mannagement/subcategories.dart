@@ -109,11 +109,7 @@ class _SubCategoriesState extends State<SubCategories> {
                     children: [
                       InkWell(
                         onTap: () async {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProductCategories(),
-                              ));
+                          Navigator.pop(context);
                         },
                         child: Container(
                           height: 25,
@@ -178,217 +174,57 @@ class _SubCategoriesState extends State<SubCategories> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: isLoading == true
-                  ? ShimmerGridView(
+                  ? ShimmerListView(
                       type: "s",
                     )
-                  : GridView.builder(
+                  : ListView.builder(
                       shrinkWrap: true,
                       itemCount: filteredSubCategories.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 5,
-                              childAspectRatio: 1.1),
                       itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ProductList(
-                                    catId: widget.catId,
-                                    subCatId: filteredSubCategories[index].id,
-                                    title: filteredSubCategories[index]
-                                        .subCategory,
-                                    subCat: widget.title,
-                                  ),
-                                ));
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(colors: [
-                                    Colors.grey.shade100,
-                                    Colors.white
-                                  ]),
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      blurRadius: 2,
-                                      color: Colors.grey.shade600,
-                                      offset: const Offset(0, 2.0),
-                                    )
-                                  ]),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 16.0,
-                                    left: 8.0,
-                                    bottom: 8.0,
-                                    right: 8.0),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          .4,
-                                      child: Text(
+                        return ListTile(
+                          shape: const Border(
+                            bottom: BorderSide(color: Colors.grey),
+                          ),
+                          leading: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.grey.shade300,
+                            child: Text(
+                              (index + 1).toString(),
+                              style: TextStyle(
+                                  color: Colors.blue.shade900,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          title: Text(filteredSubCategories[index].subCategory),
+                          trailing: SizedBox(
+                            width: MediaQuery.of(context).size.width * .17,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    subCategory.text =
                                         filteredSubCategories[index]
-                                            .subCategory,
-                                        style: const TextStyle(
-                                            fontFamily: "MontserratMedium",
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            subCategory.text =
-                                                filteredSubCategories[index]
-                                                    .subCategory;
-                                            subCategoriesBottomSheet(
-                                                "Edit Sub Category",
-                                                filteredSubCategories[index]
-                                                    .id);
-                                          },
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                .19,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height *
-                                                .038,
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue,
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Center(
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.edit,
-                                                    color: Colors.white,
-                                                    size: 15,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                  Text('Edit',
-                                                      style: TextStyle(
-                                                          fontFamily:
-                                                              "MontserratMedium",
-                                                          fontSize: 14,
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          width: 5,
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text('Delete'),
-                                                    content: const Text(
-                                                        'Are you sure?'),
-                                                    actions: [
-                                                       TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('No')),
-                                                      TextButton(
-                                                          onPressed: () async {
-                                                            Navigator.pop(
-                                                                context);
-                                                            deleteProductSubCategory(
-                                                                filteredSubCategories[
-                                                                        index]
-                                                                    .id);
-                                                          },
-                                                          child: const Text(
-                                                              'Yes')),
-                                                     
-                                                    ],
-                                                  );
-                                                });
-                                          },
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                .19,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height *
-                                                .038,
-                                            decoration: BoxDecoration(
-                                              color: Colors.red,
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Center(
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.delete,
-                                                    color: Colors.white,
-                                                    size: 15,
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                  Text('Delete',
-                                                      style: TextStyle(
-                                                          fontFamily:
-                                                              "MontserratMedium",
-                                                          fontSize: 14,
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.bold)),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                            .subCategory;
+                                    subCategoriesBottomSheet(
+                                        "Edit Sub Category",
+                                        filteredSubCategories[index].id);
+                                  },
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: Colors.blue,
+                                  ),
                                 ),
-                              ),
+                                InkWell(
+                                  onTap: () {
+                                    deleteDialog(context, index);
+                                  },
+                                  child: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -399,6 +235,31 @@ class _SubCategoriesState extends State<SubCategories> {
         ),
       ),
     );
+  }
+
+  Future<dynamic> deleteDialog(BuildContext context, int index) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Delete'),
+            content: const Text('Are you sure?'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('No')),
+              TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    deleteProductSubCategory(filteredSubCategories[index].id);
+                  },
+                  child: const Text('Yes')),
+            ],
+          );
+        });
   }
 
   subCategoriesBottomSheet(String title, String rowId) {

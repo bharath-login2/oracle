@@ -27,7 +27,7 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
   PostModel? postResponse;
   bool isLoading = true;
   List remarks = [];
-  String? selectedDropValue ;
+  String? selectedDropValue;
   String selectedDropName = "";
 
   final TextEditingController nameController = TextEditingController();
@@ -43,7 +43,7 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
   void initState() {
     getData();
     super.initState();
-    dateController.text =DateFormat('dd-MM-yyyy').format(DateTime.now());
+    dateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
   }
 
   getData() async {
@@ -191,12 +191,14 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                             children: [
                               getResponse!.data.complaintType.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text(
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text(
                                         "Please Add Complaint Types",
-                                        style: TextStyle(color: Colors.red,),
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                        ),
                                       ),
-                                  )
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -569,10 +571,10 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                             children: [
                               getResponse!.data.complaintReporter.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Reporters Type",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Reporters Type",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -682,10 +684,10 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                             children: [
                               getResponse!.data.complaintNature.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Complaint Nature",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Complaint Nature",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -901,10 +903,10 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                             children: [
                               getResponse!.data.complaintStatus.isEmpty
                                   ? const Padding(
-                                    padding: EdgeInsets.all(25.0),
-                                    child: Text("Please Add Complaint Status",
-                                        style: TextStyle(color: Colors.red)),
-                                  )
+                                      padding: EdgeInsets.all(25.0),
+                                      child: Text("Please Add Complaint Status",
+                                          style: TextStyle(color: Colors.red)),
+                                    )
                                   : ListView.builder(
                                       shrinkWrap: true,
                                       physics:
@@ -1010,7 +1012,7 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                         child: Column(
                           children: [
                             Container(
-                              width: MediaQuery.of(context).size.width*.85,
+                              width: MediaQuery.of(context).size.width * .85,
                               height: 50,
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -1051,7 +1053,9 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                                     });
                                   },
                                   hint: Text(
-                                   getResponse!.data.staffLists.isNotEmpty? " Tap to select":" Staff details is Empty",
+                                    getResponse!.data.staffLists.isNotEmpty
+                                        ? " Tap to select"
+                                        : " Staff details is Empty",
                                     textAlign: TextAlign.left,
                                     style: const TextStyle(
                                       color: Colors.grey,
@@ -1188,7 +1192,8 @@ class ComplaintRegisterScreenState extends State<ComplaintRegisterScreen> {
                         onTap: () async {
                           if (selectedStatus.isNotEmpty ||
                               selectedTypes.isNotEmpty) {
-                            if (remarksController.text != "" && selectedDropValue != "") {
+                            if (remarksController.text != "" &&
+                                selectedDropValue != "") {
                               remarks.add({
                                 "id": selectedDropValue,
                                 "value": remarksController.text,

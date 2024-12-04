@@ -120,11 +120,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
         productImage,
         widget.productId);
     if (postResponse != null && postResponse!.status == true) {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ProductCategories(),
-          ));
+      Navigator.pop(context);
+      Navigator.pop(context);
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
       Common.toastMessaage(postResponse!.message, Colors.red);
@@ -295,14 +292,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           onTap: (() {
                             dropDialog(context, "category");
                           }),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Add Category";
-                            }
-                            return null;
-                          },
                           decoration: const InputDecoration(
-                              labelText: 'Category *',
+                              labelText: 'Category ',
                               prefixIcon:
                                   Icon(Icons.category, color: Colors.grey),
                               border: OutlineInputBorder(),
@@ -321,14 +312,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                               onTap: (() {
                                 dropDialog(context, "sub category");
                               }),
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "Please Add Sub Category";
-                                }
-                                return null;
-                              },
                               decoration: const InputDecoration(
-                                  labelText: 'Sub Category *',
+                                  labelText: 'Sub Category ',
                                   prefixIcon:
                                       Icon(Icons.category, color: Colors.grey),
                                   border: OutlineInputBorder(),
@@ -430,8 +415,20 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           validator: (value) {
                             if (value!.isEmpty) {
                               return "Please Enter Selling Price";
+                            } else if (double.parse(value) <
+                                double.parse(totalAmount.text)) {
+                              return "MRP should not be lower than the selling price";
+                            } else {
+                              return null;
                             }
-                            return null;
+                          },
+                          onChanged: (value) {
+                            if (double.parse(value) <
+                                double.parse(totalAmount.text)) {
+                              Common.toastMessaage(
+                                  "MRP should not be lower than the selling price",
+                                  Colors.red);
+                            }
                           },
                           controller: mrp,
                           decoration: const InputDecoration(
@@ -449,12 +446,6 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           height: 14,
                         ),
                         TextFormField(
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Content Id";
-                            }
-                            return null;
-                          },
                           controller: contentId,
                           decoration: const InputDecoration(
                             labelText: 'Content Id *',
@@ -479,7 +470,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           },
                           controller: noOfDays,
                           decoration: const InputDecoration(
-                            labelText: 'Number of Days(Expiry) *',
+                            labelText: 'Validity *',
                             prefixIcon:
                                 Icon(Icons.calendar_month, color: Colors.grey),
                             border: OutlineInputBorder(),
@@ -534,6 +525,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           child: RawMaterialButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
+                                Common.showProgressDialog(context, "Loading..");
                                 updateProduct();
                               }
                             },
@@ -594,8 +586,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                   ],
                 ),
                 content: SizedBox(
-                  height: MediaQuery.of(context).size.height*.32,
-                                                          width: MediaQuery.of(context).size.height*.8,
+                  height: MediaQuery.of(context).size.height * .32,
+                  width: MediaQuery.of(context).size.height * .8,
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: title == "category"

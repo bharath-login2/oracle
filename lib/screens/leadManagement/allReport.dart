@@ -3,18 +3,15 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
-import '../../models/lead_management/deleteLeadModel.dart';
 import '../../models/lead_management/viewLeadsModel.dart';
 import '../../service/service.dart';
 import 'dashboard.dart';
@@ -64,8 +61,8 @@ class _AllReportState extends State<AllReport> {
   AddLeadCommonDataModel? commonDetails;
   bool? result = true;
   bool? result1 = true;
-  var fromdate = DateTime.now();
-  var todate = DateTime.now();
+  String fromdate = DateTime.now().toString();
+  String todate = DateTime.now().toString();
   var outputFormat = DateFormat('dd-MM-yyyy');
   bool? isCalled = true;
   List selectedIUsers = [];
@@ -155,29 +152,15 @@ class _AllReportState extends State<AllReport> {
           result = false;
         });
       }
-      // if (widget.page != null) {
-      //   page = widget.page! - 1;
-      // }
-      // else if (widget.pageSize != null) {
-      //   pageSize = widget.pageSize!;
-      // }
-      // else  if (widget.checkedCategoryItems != null) {checkedCategoryItems=widget.checkedCategoryItems!;}
-      // else if(widget.checkedCategoryItemsName != null){ checkedCategoryItemsName=widget.checkedCategoryItemsName!;}
-      // else if(widget.checkedCallResultItems!=null){  checkedCallResultItems=widget.checkedCallResultItems!;}
-      // else if(widget.checkedCallResultItemsName!=null){  checkedCallResultItemsName=widget.checkedCallResultItemsName!;}
-      // else if(widget.checkedPriorityItems!=null){  checkedPriorityItems=widget.checkedPriorityItems!;}
-      // else if(widget.checkedPriorityItemsName!=null){  checkedPriorityItemsName=widget.checkedPriorityItemsName!;}
-      // else if(widget.checkedAssignedStaffItems!=null){  checkedAssignedStaffItems=widget.checkedAssignedStaffItems!;}
-      // else if(widget.checkedAssignedStaffItemsName!=null){  checkedAssignedStaffItemsName=widget.checkedAssignedStaffItemsName!;}
-      // else if(widget.checkedCreatedStaffItems!=null){  checkedCreatedStaffItems=widget.checkedCreatedStaffItems!;}
-      // else if(widget.checkedCreatedStaffItemsName!=null){  checkedCreatedStaffItemsName=widget.checkedCreatedStaffItemsName!;}
-      //setState(() {});
+
       roleId = await Common.getSharedPref("roleId");
       multiBranch = await Common.getSharedPref("multiBranch");
       Map<String, dynamic> body = {
         "token": widget.token,
-        "fromDate": outputFormat.format(fromdate),
-        "toDate": outputFormat.format(todate),
+        "fromDate":
+            fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
+        "toDate":
+            todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
         "page": page,
         "pageSize": pageSize,
         "callResultId": checkedCallResultItems,
@@ -211,184 +194,173 @@ class _AllReportState extends State<AllReport> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
-        );
-        return true;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade200,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => Dashboard(widget.token)),
-                          );
-                        },
-                        child: Container(
-                          height: 25,
-                          width: 25,
-                          decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white),
-                              shape: BoxShape.circle),
-                          child: const Icon(
-                            Icons.arrow_back_ios_outlined,
-                            color: Colors.white,
-                            size: 16,
-                          ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade200,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        height: 25,
+                        width: 25,
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            shape: BoxShape.circle),
+                        child: const Icon(
+                          Icons.arrow_back_ios_outlined,
+                          color: Colors.white,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(
-                        width: 25,
-                      ),
-                      const Text(
-                        'All Report',
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                    ],
+                    ),
+                    const SizedBox(
+                      width: 25,
+                    ),
+                    const Text(
+                      'All Report',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: () {
+                    fromdate = "";
+                    todate = "";
+                    filtrationSheet(context);
+                  },
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        color: const Color(0xFFd5f5f4),
+                        borderRadius: BorderRadius.circular(5)),
+                    child: Center(
+                        child:
+                            Image.asset("assets/icons/filter.png", width: 20)),
                   ),
-                ],
-              ),
+                )
+              ],
             ),
           ),
         ),
-        body: viewLeads != null && configure != null
-            ? Column(
-                children: [
+      ),
+      body: viewLeads != null && configure != null
+          ? Column(
+              children: [
+                if (fromdate != "" && todate != "")
                   Padding(
                     padding:
-                        const EdgeInsets.only(left: 15, right: 10, top: 15),
+                        const EdgeInsets.only(left: 50, right: 50, top: 15),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Date from ',
                             style: TextStyle(fontSize: 16)),
-                        Text(outputFormat.format(fromdate),
+                        Text(outputFormat.format(DateTime.parse(fromdate)),
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                         const Text(' to ', style: TextStyle(fontSize: 16)),
-                        Text(outputFormat.format(todate),
+                        Text(outputFormat.format(DateTime.parse(todate)),
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        InkWell(
-                          onTap: () {
-                            filtrationSheet(context);
-                          },
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                color: const Color(0xFFd5f5f4),
-                                borderRadius: BorderRadius.circular(5)),
-                            child: Center(
-                                child: Image.asset("assets/icons/filter.png",
-                                    width: 20)),
-                          ),
-                        )
                       ],
                     ),
                   ),
-                  Text('Total Leads : ${viewLeads!.data.totalLeads}',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  viewLeads!.data.details.isNotEmpty
-                      ? Expanded(
-                          child: ScrollablePositionedList.builder(
-                            //reverse: true,
-                            initialScrollIndex: 0,
-                            //you can pass the desired index here//
-                            itemCount: items.length + (isLoading ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == items.length) {
-                                // When reaching the end of the list, show a loader
-                                return _buildLoaderListItem();
-                              }
-                              return Dismissible(
-                                key: const Key('0'),
-                                background: Container(
-                                  color: Colors.green,
-                                  child: const Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        SizedBox(
-                                          width: 20,
-                                        ),
-                                        Icon(
-                                          Icons.call,
+                Text('Total Leads : ${viewLeads!.data.totalLeads}',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(
+                  height: 10,
+                ),
+                viewLeads!.data.details.isNotEmpty
+                    ? Expanded(
+                        child: ScrollablePositionedList.builder(
+                          //reverse: true,
+                          initialScrollIndex: 0,
+                          //you can pass the desired index here//
+                          itemCount: items.length + (isLoading ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == items.length) {
+                              // When reaching the end of the list, show a loader
+                              return _buildLoaderListItem();
+                            }
+                            return Dismissible(
+                              key: const Key('0'),
+                              background: Container(
+                                color: Colors.green,
+                                child: const Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      SizedBox(
+                                        width: 20,
+                                      ),
+                                      Icon(
+                                        Icons.call,
+                                        color: Colors.white,
+                                      ),
+                                      Text(
+                                        " Call",
+                                        style: TextStyle(
                                           color: Colors.white,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        Text(
-                                          " Call",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                      ],
-                                    ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                secondaryBackground: Container(
-                                  color: Colors.blue,
-                                  child: const Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.add,
+                              ),
+                              secondaryBackground: Container(
+                                color: Colors.blue,
+                                child: const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: <Widget>[
+                                      Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                      ),
+                                      Text(
+                                        "Add Followup",
+                                        style: TextStyle(
                                           color: Colors.white,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        Text(
-                                          "Add Followup",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                          textAlign: TextAlign.right,
-                                        ),
-                                        SizedBox(
-                                          width: 20,
-                                        ),
-                                      ],
-                                    ),
+                                        textAlign: TextAlign.right,
+                                      ),
+                                      SizedBox(
+                                        width: 20,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                confirmDismiss: (direction) async {
-                                  if (direction ==
-                                      DismissDirection.endToStart) {
+                              ),
+                              confirmDismiss: (direction) async {
+                                if (direction == DismissDirection.endToStart) {
+                                  if (items[index].callResult != "Confirmed") {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -419,456 +391,450 @@ class _AllReportState extends State<AllReport> {
                                       page = 1;
                                       getData();
                                     });
-                                    // showDialog(
-                                    //     context: context,
-                                    //     builder: (BuildContext context) {
-                                    //       return AlertDialog(
-                                    //         scrollable: true,
-                                    //         title: const Text('Please Confirm'),
-                                    //         content: const Text(
-                                    //             'Are you sure to Delete?'),
-                                    //         actions: [
-                                    //           TextButton(
-                                    //               onPressed: () async {
-                                    //                 DeleteLeadModel delete =
-                                    //                     await HttpService
-                                    //                         .deleteLead(
-                                    //                             widget.token,
-                                    //                             items[index]
-                                    //                                 .callMasterId);
-                                    //                 if (delete.data == true) {
-                                    //                   Common.toastMessaage(
-                                    //                       delete.message,
-                                    //                       Colors.green);
-                                    //                   if (context.mounted) {
-                                    //                     Navigator.push(
-                                    //                       context,
-                                    //                       MaterialPageRoute(
-                                    //                           builder:
-                                    //                               (context) =>
-                                    //                                   AllReport(
-                                    //                                     widget
-                                    //                                         .token!,
-                                    //                                     widget
-                                    //                                         .editLead,
-                                    //                                     widget
-                                    //                                         .deleteLead,
-                                    //                                     widget
-                                    //                                         .cloudCall,
-                                    //                                     pageName:
-                                    //                                         widget.pageName,
-                                    //                                   )),
-                                    //                     );
-                                    //                   }
-                                    //                 } else {
-                                    //                   Common.toastMessaage(
-                                    //                       delete.message,
-                                    //                       Colors.red);
-                                    //                   if (context.mounted) {
-                                    //                     Navigator.of(context)
-                                    //                         .pop();
-                                    //                   }
-                                    //                 }
-                                    //               },
-                                    //               child: const Text('Yes')),
-                                    //           TextButton(
-                                    //               onPressed: () {
-                                    //                 Navigator.of(context).pop();
-                                    //               },
-                                    //               child: const Text('No'))
-                                    //         ],
-                                    //       );
-                                    //     });
                                   } else {
-                                    if (widget.cloudCall == false) {
-                                      showDialog(
-                                          context: context,
-                                          builder: (BuildContext ctx) {
-                                            return AlertDialog(
-                                              title: const Text('Alert !!!'),
-                                              content: Text(""),
-                                              actions: [
-                                                TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: const Text('Close')),
-                                                TextButton(
-                                                    onPressed: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder:
-                                                                (context) =>
-                                                                    LeadDetails(
-                                                                      widget
-                                                                          .token!,
-                                                                      widget
-                                                                          .editLead,
-                                                                      widget
-                                                                          .deleteLead,
-                                                                      widget
-                                                                          .cloudCall,
-                                                                      viewLeads!
-                                                                          .data
-                                                                          .details[
-                                                                              index]
-                                                                          .callMasterId
-                                                                          .toString(),
-                                                                      pageName: widget
-                                                                          .pageName
-                                                                          .toString(),
-                                                                      page:
-                                                                          page,
-                                                                      pageSize:
-                                                                          page *
-                                                                              pageSize,
-                                                                      fromDate:
-                                                                          fromdate
-                                                                              .toString(),
-                                                                      toDate: todate
-                                                                          .toString(),
-                                                                    )),
-                                                      ).then((r) {
-                                                        items.clear();
-                                                        page = 1;
-                                                        getData();
-                                                      });
-                                                    },
-                                                    child:
-                                                        const Text('followup')),
-                                              ],
-                                            );
-                                          });
+                                    Common.toastMessaage(
+                                        "You can't follow up on confirmed leads",
+                                        Colors.red);
+                                  }
+                                } else {
+                                  if (widget.cloudCall == false) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext ctx) {
+                                          return AlertDialog(
+                                            title: const Text('Alert !!!'),
+                                            content: Text(""),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Close')),
+                                              TextButton(
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              LeadDetails(
+                                                                widget.token!,
+                                                                widget.editLead,
+                                                                widget
+                                                                    .deleteLead,
+                                                                widget
+                                                                    .cloudCall,
+                                                                viewLeads!
+                                                                    .data
+                                                                    .details[
+                                                                        index]
+                                                                    .callMasterId
+                                                                    .toString(),
+                                                                pageName: widget
+                                                                    .pageName
+                                                                    .toString(),
+                                                                page: page,
+                                                                pageSize: page *
+                                                                    pageSize,
+                                                                fromDate: fromdate
+                                                                    .toString(),
+                                                                toDate: todate
+                                                                    .toString(),
+                                                              )),
+                                                    ).then((r) {
+                                                      items.clear();
+                                                      page = 1;
+                                                      getData();
+                                                    });
+                                                  },
+                                                  child:
+                                                      const Text('followup')),
+                                            ],
+                                          );
+                                        });
+                                  } else {
+                                    if (widget.cloudCall == true) {
+                                      chooseCallDialog(context, index);
                                     } else {
-                                      if (widget.cloudCall == true) {
-                                        chooseCallDialog(context, index);
-                                      } else {
-                                        Common.dialPad(
-                                            items[index].contactNumber1);
-                                      }
+                                      Common.dialPad(
+                                          items[index].contactNumber1);
                                     }
                                   }
-                                  return null;
-                                },
-                                child: InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => LeadDetails(
-                                                  widget.token!,
-                                                  widget.editLead,
-                                                  widget.deleteLead,
-                                                  widget.cloudCall,
-                                                  items[index]
-                                                      .callMasterId
-                                                      .toString(),
-                                                  pageName: widget.pageName
-                                                      .toString(),
-                                                  page: page,
-                                                  pageSize: page * pageSize,
-                                                  fromDate: fromdate.toString(),
-                                                  toDate: todate.toString(),
-                                                )),
-                                      ).then((r) {
-                                        items.clear();
-                                        page = 1;
-                                        getData();
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 10, right: 10, bottom: 10),
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                1,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              items[index].isSelected == false
-                                                  ? Colors.white
-                                                  : Colors.blue.shade100,
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Colors.grey,
-                                              offset: Offset(2.0, 2.0),
-                                            )
-                                          ],
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 10, right: 10, left: 10),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  SingleChildScrollView(
-                                                    scrollDirection:
-                                                        Axis.horizontal,
-                                                    child: SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              .88,
-                                                      child: Stack(
-                                                        children: [
-                                                          Row(
-                                                            children: [
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '1')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
+                                }
+                                return null;
+                              },
+                              child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => LeadDetails(
+                                                widget.token!,
+                                                widget.editLead,
+                                                widget.deleteLead,
+                                                widget.cloudCall,
+                                                items[index]
+                                                    .callMasterId
+                                                    .toString(),
+                                                pageName:
+                                                    widget.pageName.toString(),
+                                                page: page,
+                                                pageSize: page * pageSize,
+                                                fromDate: fromdate.toString(),
+                                                toDate: todate.toString(),
+                                              )),
+                                    ).then((r) {
+                                      items.clear();
+                                      page = 1;
+                                      getData();
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 10, right: 10, bottom: 10),
+                                    child: Container(
+                                      width:
+                                          MediaQuery.of(context).size.width * 1,
+                                      decoration: BoxDecoration(
+                                        color: items[index].isSelected == false
+                                            ? Colors.white
+                                            : Colors.blue.shade100,
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Colors.grey,
+                                            offset: Offset(2.0, 2.0),
+                                          )
+                                        ],
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                top: 10, right: 10, left: 10),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  child: SizedBox(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            .88,
+                                                    child: Stack(
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            if (items[index]
+                                                                    .priority ==
+                                                                '1')
+                                                              Container(
+                                                                width: 10.0,
+                                                                height: 10.0,
+                                                                decoration:
+                                                                    const BoxDecoration(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                ),
+                                                              ),
+                                                            if (items[index]
+                                                                    .priority ==
+                                                                '2')
+                                                              Container(
+                                                                width: 10.0,
+                                                                height: 10.0,
+                                                                decoration:
+                                                                    const BoxDecoration(
+                                                                  color: Colors
+                                                                      .green,
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                ),
+                                                              ),
+                                                            if (items[index]
+                                                                    .priority ==
+                                                                '3')
+                                                              Container(
+                                                                width: 10.0,
+                                                                height: 10.0,
+                                                                decoration:
+                                                                    const BoxDecoration(
+                                                                  color: Colors
+                                                                      .red,
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                ),
+                                                              ),
+                                                            if (items[index]
+                                                                    .priority ==
+                                                                '4')
+                                                              Container(
+                                                                width: 10.0,
+                                                                height: 10.0,
+                                                                decoration:
+                                                                    const BoxDecoration(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  shape: BoxShape
+                                                                      .circle,
+                                                                ),
+                                                              ),
+                                                            const SizedBox(
+                                                              width: 5,
+                                                            ),
+                                                            SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  .46,
+                                                              child: Text(
+                                                                items[index]
+                                                                    .clientName
+                                                                    .toString(),
+                                                                // items.length.toString(),
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        16,
+                                                                    decoration: items[index].priority ==
+                                                                            "4"
+                                                                        ? TextDecoration
+                                                                            .lineThrough
+                                                                        : null,
+                                                                    decorationThickness:
+                                                                        1.5,
+                                                                    decorationColor:
+                                                                        Colors
+                                                                            .red,
+                                                                    color: items[index]
+                                                                            .isCustomer
+                                                                        ? Colors
+                                                                            .green
+                                                                        : Colors
+                                                                            .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold),
+                                                                maxLines: 1,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                            Align(
+                                                              alignment:
+                                                                  Alignment
+                                                                      .topRight,
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
                                                                     color: Colors
-                                                                        .grey,
-                                                                    shape: BoxShape
-                                                                        .circle,
+                                                                        .pink
+                                                                        .shade100,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            5)),
+                                                                child: Padding(
+                                                                  padding: const EdgeInsets
+                                                                      .only(
+                                                                      left: 5,
+                                                                      right: 5,
+                                                                      top: 2,
+                                                                      bottom:
+                                                                          2),
+                                                                  child: Text(
+                                                                    items[index]
+                                                                        .leadCategory
+                                                                        .toString(),
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color: Colors
+                                                                          .red,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    softWrap:
+                                                                        false,
                                                                   ),
                                                                 ),
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '2')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
-                                                                    color: Colors
-                                                                        .green,
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                              if (items[index]
-                                                                      .priority ==
-                                                                  '3')
-                                                                Container(
-                                                                  width: 10.0,
-                                                                  height: 10.0,
-                                                                  decoration:
-                                                                      const BoxDecoration(
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .end,
+                                                          children: [
+                                                            Visibility(
+                                                              visible: items[index]
+                                                                          .categoryCount
+                                                                          .toString() !=
+                                                                      "1" &&
+                                                                  items[index]
+                                                                          .categoryCount
+                                                                          .toString() !=
+                                                                      "",
+                                                              child: Container(
+                                                                height: 20,
+                                                                width: 20,
+                                                                decoration: const BoxDecoration(
                                                                     color: Colors
                                                                         .red,
                                                                     shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                                ),
-                                                              const SizedBox(
-                                                                width: 5,
-                                                              ),
-                                                              SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    .46,
-                                                                child: Text(
-                                                                  items[index]
-                                                                      .clientName
-                                                                      .toString(),
-                                                                  // items.length.toString(),
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          16,
-                                                                      color: items[index].isCustomer
-                                                                          ? Colors
-                                                                              .green
-                                                                          : Colors
-                                                                              .black,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold),
-                                                                  maxLines: 1,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                ),
-                                                              ),
-                                                              Align(
-                                                                alignment:
-                                                                    Alignment
-                                                                        .topRight,
-                                                                child:
-                                                                    Container(
-                                                                  decoration: BoxDecoration(
-                                                                      color: Colors
-                                                                          .pink
-                                                                          .shade100,
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              5)),
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .only(
-                                                                        left: 5,
-                                                                        right:
-                                                                            5,
-                                                                        top: 2,
-                                                                        bottom:
-                                                                            2),
-                                                                    child: Text(
-                                                                      items[index]
-                                                                          .leadCategory
-                                                                          .toString(),
-                                                                      style:
-                                                                          const TextStyle(
-                                                                        fontSize:
-                                                                            13,
-                                                                        color: Colors
-                                                                            .red,
-                                                                        fontWeight:
-                                                                            FontWeight.w500,
-                                                                      ),
-                                                                      maxLines:
-                                                                          1,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      softWrap:
-                                                                          false,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .end,
-                                                            children: [
-                                                              Visibility(
-                                                                visible: items[index]
-                                                                            .categoryCount
-                                                                            .toString() !=
-                                                                        "1" &&
+                                                                        .circle),
+                                                                child: Center(
+                                                                  child: Text(
                                                                     items[index]
-                                                                            .categoryCount
-                                                                            .toString() !=
-                                                                        "",
-                                                                child:
-                                                                    Container(
-                                                                  height: 20,
-                                                                  width: 20,
-                                                                  decoration: const BoxDecoration(
-                                                                      color: Colors
-                                                                          .red,
-                                                                      shape: BoxShape
-                                                                          .circle),
-                                                                  child: Center(
-                                                                    child: Text(
-                                                                      items[index]
-                                                                          .categoryCount
-                                                                          .toString(),
-                                                                      // items.length.toString(),
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              12,
-                                                                          color: Colors
-                                                                              .white,
-                                                                          fontWeight:
-                                                                              FontWeight.bold),
-                                                                      maxLines:
-                                                                          1,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 3,
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                0.68,
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .only(
-                                                                      left: 10),
-                                                              child: Column(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .start,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Text(
-                                                                    items[index]
-                                                                        .contactNumber1
+                                                                        .categoryCount
                                                                         .toString(),
+                                                                    // items.length.toString(),
                                                                     style: const TextStyle(
                                                                         fontSize:
-                                                                            13,
+                                                                            12,
                                                                         color: Colors
-                                                                            .black54,
+                                                                            .white,
                                                                         fontWeight:
-                                                                            FontWeight.w500),
+                                                                            FontWeight.bold),
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
                                                                   ),
-                                                                  Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
-                                                                    children: [
-                                                                      SizedBox(
-                                                                        width:
-                                                                            150,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  height: 3,
+                                                ),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.68,
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 10),
+                                                            child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  items[index]
+                                                                      .contactNumber1
+                                                                      .toString(),
+                                                                  style: const TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color: Colors
+                                                                          .black54,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500),
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    SizedBox(
+                                                                      width:
+                                                                          150,
+                                                                      child:
+                                                                          Text(
+                                                                        'Assigned to : ${items[index].staffName}',
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                13,
+                                                                            color:
+                                                                                Colors.black54,
+                                                                            fontWeight: FontWeight.w500),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    Container(
+                                                                      decoration: BoxDecoration(
+                                                                          color: _colors[items[index]
+                                                                              .callResultId!],
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(5)),
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            left:
+                                                                                5,
+                                                                            right:
+                                                                                5,
+                                                                            top:
+                                                                                2,
+                                                                            bottom:
+                                                                                2),
                                                                         child:
                                                                             Text(
-                                                                          'Assigned to : ${items[index].staffName}',
+                                                                          items[index]
+                                                                              .callResult
+                                                                              .toString(),
                                                                           style: const TextStyle(
                                                                               fontSize: 13,
-                                                                              color: Colors.black54,
+                                                                              color: Colors.white,
                                                                               fontWeight: FontWeight.w500),
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
                                                                         ),
                                                                       ),
-                                                                      Container(
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 2,
+                                                                ),
+                                                                items[index].callResultId ==
+                                                                        1
+                                                                    ? Container(
                                                                         decoration: BoxDecoration(
                                                                             color:
-                                                                                _colors[items[index].callResultId!],
+                                                                                const Color(0xFFd5f5f4),
                                                                             borderRadius: BorderRadius.circular(5)),
                                                                         child:
                                                                             Padding(
@@ -876,397 +842,377 @@ class _AllReportState extends State<AllReport> {
                                                                               .only(
                                                                               left: 5,
                                                                               right: 5,
-                                                                              top: 2,
-                                                                              bottom: 2),
+                                                                              top: 5,
+                                                                              bottom: 5),
                                                                           child:
-                                                                              Text(
-                                                                            items[index].callResult.toString(),
-                                                                            style: const TextStyle(
-                                                                                fontSize: 13,
-                                                                                color: Colors.white,
-                                                                                fontWeight: FontWeight.w500),
+                                                                              Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.start,
+                                                                            crossAxisAlignment:
+                                                                                CrossAxisAlignment.center,
+                                                                            children: [
+                                                                              Image.asset("assets/icons/calendar.png", width: 20),
+                                                                              const SizedBox(
+                                                                                width: 15,
+                                                                              ),
+                                                                              Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  const Text(
+                                                                                    'Created Time',
+                                                                                    style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                  const SizedBox(
+                                                                                    height: 3,
+                                                                                  ),
+                                                                                  Text(
+                                                                                    items[index].createdDate.toString(),
+                                                                                    style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                            ],
                                                                           ),
                                                                         ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    height: 2,
-                                                                  ),
-                                                                  items[index].callResultId ==
-                                                                          1
-                                                                      ? Container(
-                                                                          decoration: BoxDecoration(
-                                                                              color: const Color(0xFFd5f5f4),
-                                                                              borderRadius: BorderRadius.circular(5)),
-                                                                          child:
-                                                                              Padding(
-                                                                            padding: const EdgeInsets.only(
-                                                                                left: 5,
-                                                                                right: 5,
-                                                                                top: 5,
-                                                                                bottom: 5),
+                                                                      )
+                                                                    : Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Container(
+                                                                            decoration:
+                                                                                BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
                                                                             child:
-                                                                                Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                                                              children: [
-                                                                                Image.asset("assets/icons/calendar.png", width: 20),
-                                                                                const SizedBox(
-                                                                                  width: 15,
-                                                                                ),
-                                                                                Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                  children: [
-                                                                                    const Text(
-                                                                                      'Created Time',
-                                                                                      style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                    ),
-                                                                                    const SizedBox(
-                                                                                      height: 3,
-                                                                                    ),
-                                                                                    Text(
-                                                                                      items[index].createdDate.toString(),
-                                                                                      style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ],
+                                                                                Padding(
+                                                                              padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
+                                                                              child: Row(
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                children: [
+                                                                                  Image.asset("assets/icons/calendar.png", width: 20),
+                                                                                  const SizedBox(
+                                                                                    width: 5,
+                                                                                  ),
+                                                                                  Column(
+                                                                                    children: [
+                                                                                      const Text(
+                                                                                        'Called Date',
+                                                                                        style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                      ),
+                                                                                      const SizedBox(
+                                                                                        height: 3,
+                                                                                      ),
+                                                                                      Text(
+                                                                                        items[index].isCalled == false ? '--' : items[index].calledDate.toString(),
+                                                                                        style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                ],
+                                                                              ),
                                                                             ),
                                                                           ),
-                                                                        )
-                                                                      : Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            Container(
-                                                                              decoration: BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                                                                                child: Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                  children: [
-                                                                                    Image.asset("assets/icons/calendar.png", width: 20),
-                                                                                    const SizedBox(
-                                                                                      width: 5,
-                                                                                    ),
-                                                                                    Column(
-                                                                                      children: [
-                                                                                        const Text(
-                                                                                          'Called Date',
-                                                                                          style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                        ),
-                                                                                        const SizedBox(
-                                                                                          height: 3,
-                                                                                        ),
-                                                                                        Text(
-                                                                                          items[index].isCalled == false ? '--' : items[index].calledDate.toString(),
-                                                                                          style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
+                                                                          Container(
+                                                                            decoration:
+                                                                                BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
+                                                                            child:
+                                                                                Padding(
+                                                                              padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
+                                                                              child: Row(
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                children: [
+                                                                                  Image.asset("assets/icons/calendar.png", width: 20),
+                                                                                  const SizedBox(
+                                                                                    width: 5,
+                                                                                  ),
+                                                                                  Column(
+                                                                                    children: [
+                                                                                      const Text(
+                                                                                        'Followup Date',
+                                                                                        style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                      ),
+                                                                                      const SizedBox(
+                                                                                        height: 3,
+                                                                                      ),
+                                                                                      Text(
+                                                                                        items[index].scheduledDate.toString(),
+                                                                                        style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                ],
                                                                               ),
                                                                             ),
-                                                                            Container(
-                                                                              decoration: BoxDecoration(color: const Color(0xFFd5f5f4), borderRadius: BorderRadius.circular(5)),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.only(left: 5, right: 5, top: 5, bottom: 5),
-                                                                                child: Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                                                                  children: [
-                                                                                    Image.asset("assets/icons/calendar.png", width: 20),
-                                                                                    const SizedBox(
-                                                                                      width: 5,
-                                                                                    ),
-                                                                                    Column(
-                                                                                      children: [
-                                                                                        const Text(
-                                                                                          'Followup Date',
-                                                                                          style: TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                        ),
-                                                                                        const SizedBox(
-                                                                                          height: 3,
-                                                                                        ),
-                                                                                        Text(
-                                                                                          items[index].scheduledDate.toString(),
-                                                                                          style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                ],
-                                                              ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                              ],
                                                             ),
                                                           ),
-                                                        ],
-                                                      ),
-                                                      Column(
-                                                        children: [
-                                                          Container(
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    Column(
+                                                      children: [
+                                                        Container(
+                                                          constraints:
+                                                              const BoxConstraints(
+                                                            maxHeight: 60,
+                                                          ),
+                                                          child: Container(
                                                             constraints:
                                                                 const BoxConstraints(
-                                                              maxHeight: 60,
+                                                              minHeight: 20,
+                                                              minWidth: 20,
+                                                              maxHeight: 50,
+                                                              maxWidth: 50,
                                                             ),
-                                                            child: Container(
-                                                              constraints:
-                                                                  const BoxConstraints(
-                                                                minHeight: 20,
-                                                                minWidth: 20,
-                                                                maxHeight: 50,
-                                                                maxWidth: 50,
-                                                              ),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                border: Border.all(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  width: 0),
+                                                              boxShadow: const [
+                                                                BoxShadow(
                                                                     color: Colors
-                                                                        .white,
-                                                                    width: 0),
-                                                                boxShadow: const [
-                                                                  BoxShadow(
-                                                                      color: Colors
-                                                                          .grey,
-                                                                      blurRadius:
-                                                                          5,
-                                                                      offset:
-                                                                          Offset(
-                                                                              1,
-                                                                              1)),
-                                                                ],
-                                                                color: Colors
-                                                                    .white,
-                                                                shape: BoxShape
-                                                                    .circle,
-                                                                image: DecorationImage(
-                                                                    fit: BoxFit
-                                                                        .cover,
-                                                                    image: NetworkImage(items[
-                                                                            index]
-                                                                        .profilePic
-                                                                        .toString())),
-                                                                // image: AssetImage(
-                                                                //     'assets/images/img.jpeg')),
-                                                              ),
+                                                                        .grey,
+                                                                    blurRadius:
+                                                                        5,
+                                                                    offset:
+                                                                        Offset(
+                                                                            1,
+                                                                            1)),
+                                                              ],
+                                                              color:
+                                                                  Colors.white,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              image: DecorationImage(
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                  image: NetworkImage(items[
+                                                                          index]
+                                                                      .profilePic
+                                                                      .toString())),
+                                                              // image: AssetImage(
+                                                              //     'assets/images/img.jpeg')),
                                                             ),
                                                           ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          InkWell(
-                                                            onTap: () async {
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        InkWell(
+                                                          onTap: () async {
+                                                            if (widget
+                                                                    .cloudCall ==
+                                                                false) {
+                                                              showDialog(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (BuildContext
+                                                                          ctx) {
+                                                                    return AlertDialog(
+                                                                      title: const Text(
+                                                                          'Alert !!!'),
+                                                                      content:
+                                                                          Text(
+                                                                              ""),
+                                                                      actions: [
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.of(context).pop();
+                                                                            },
+                                                                            child:
+                                                                                const Text('Close')),
+                                                                        TextButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                    builder: (context) => LeadDetails(
+                                                                                          widget.token!,
+                                                                                          widget.editLead,
+                                                                                          widget.deleteLead,
+                                                                                          widget.cloudCall,
+                                                                                          viewLeads!.data.details[index].callMasterId.toString(),
+                                                                                          pageName: widget.pageName.toString(),
+                                                                                          page: page,
+                                                                                          pageSize: page * pageSize,
+                                                                                          fromDate: fromdate.toString(),
+                                                                                          toDate: todate.toString(),
+                                                                                        )),
+                                                                              ).then((r) {
+                                                                                items.clear();
+                                                                                page = 1;
+                                                                                getData();
+                                                                                itemPositionsListener.itemPositions.addListener(() {
+                                                                                  if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
+                                                                                    if (items.length < viewLeads!.data.totalLeads) {
+                                                                                      getData();
+                                                                                    }
+                                                                                  }
+                                                                                });
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                const Text('followup')),
+                                                                      ],
+                                                                    );
+                                                                  });
+                                                            } else {
                                                               if (widget
                                                                       .cloudCall ==
-                                                                  false) {
-                                                                showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (BuildContext
-                                                                            ctx) {
-                                                                      return AlertDialog(
-                                                                        title: const Text(
-                                                                            'Alert !!!'),
-                                                                        content:
-                                                                            Text(""),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                              onPressed: () {
-                                                                                Navigator.of(context).pop();
-                                                                              },
-                                                                              child: const Text('Close')),
-                                                                          TextButton(
-                                                                              onPressed: () {
-                                                                                Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                      builder: (context) => LeadDetails(
-                                                                                            widget.token!,
-                                                                                            widget.editLead,
-                                                                                            widget.deleteLead,
-                                                                                            widget.cloudCall,
-                                                                                            viewLeads!.data.details[index].callMasterId.toString(),
-                                                                                            pageName: widget.pageName.toString(),
-                                                                                            page: page,
-                                                                                            pageSize: page * pageSize,
-                                                                                            fromDate: fromdate.toString(),
-                                                                                            toDate: todate.toString(),
-                                                                                          )),
-                                                                                ).then((r) {
-                                                                                  items.clear();
-                                                                                  page = 1;
-                                                                                  getData();
-                                                                                  itemPositionsListener.itemPositions.addListener(() {
-                                                                                    if (itemPositionsListener.itemPositions.value.last.index == items.length - 1) {
-                                                                                      if (items.length < viewLeads!.data.totalLeads) {
-                                                                                        getData();
-                                                                                      }
-                                                                                    }
-                                                                                  });
-                                                                                });
-                                                                              },
-                                                                              child: const Text('followup')),
-                                                                        ],
-                                                                      );
-                                                                    });
+                                                                  true) {
+                                                                chooseCallDialog(
+                                                                    context,
+                                                                    index);
                                                               } else {
-                                                                if (widget
-                                                                        .cloudCall ==
-                                                                    true) {
-                                                                  chooseCallDialog(
-                                                                      context,
-                                                                      index);
-                                                                } else {
-                                                                  Common.dialPad(
-                                                                      items[index]
-                                                                          .contactNumber1);
-                                                                  Common.dialPad(
-                                                                      items[index]
-                                                                          .contactNumber1);
-                                                                }
+                                                                Common.dialPad(
+                                                                    items[index]
+                                                                        .contactNumber1);
+                                                                Common.dialPad(
+                                                                    items[index]
+                                                                        .contactNumber1);
                                                               }
-                                                            },
-                                                            child: Container(
-                                                              width: 65,
-                                                              height: 30,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .green,
-                                                                border: Border.all(
+                                                            }
+                                                          },
+                                                          child: Container(
+                                                            width: 65,
+                                                            height: 30,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.green,
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade300),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                            ),
+                                                            child: const Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons.call,
                                                                     color: Colors
-                                                                        .grey
-                                                                        .shade300),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            8),
-                                                              ),
-                                                              child:
-                                                                  const Center(
-                                                                child: Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .center,
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .center,
-                                                                  children: [
-                                                                    Icon(
-                                                                      Icons
-                                                                          .call,
-                                                                      color: Colors
-                                                                          .white,
-                                                                      size: 15,
-                                                                    ),
-                                                                    SizedBox(
-                                                                      width: 5,
-                                                                    ),
-                                                                    Text('Call',
-                                                                        style: TextStyle(
-                                                                            fontFamily:
-                                                                                "MontserratMedium",
-                                                                            fontSize:
-                                                                                14,
-                                                                            color:
-                                                                                Colors.white,
-                                                                            fontWeight: FontWeight.bold)),
-                                                                  ],
-                                                                ),
+                                                                        .white,
+                                                                    size: 15,
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width: 5,
+                                                                  ),
+                                                                  Text('Call',
+                                                                      style: TextStyle(
+                                                                          fontFamily:
+                                                                              "MontserratMedium",
+                                                                          fontSize:
+                                                                              14,
+                                                                          color: Colors
+                                                                              .white,
+                                                                          fontWeight:
+                                                                              FontWeight.bold)),
+                                                                ],
                                                               ),
                                                             ),
                                                           ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(
-                                                    height: 8,
-                                                  ),
-                                                ],
-                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(
+                                                  height: 8,
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                    )),
-                              );
-                            },
-                            itemScrollController: itemScrollController,
-                            itemPositionsListener: itemPositionsListener,
-                          ),
-                        )
-                      : SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.6,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 200,
-                                height: 200,
-                                child: Image.asset(
-                                  "assets/icons/nodatafound.png",
-                                ),
-                              ),
-                              const Text(
-                                'Result Not Found',
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              const Text(
-                                'Whoops... this information is \n not available for a moment',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              const SizedBox(
-                                height: 25,
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            Dashboard(widget.token)),
-                                  );
-                                },
-                                child: Container(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.4,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Center(
-                                    child: Text('Go Back',
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500)),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
+                                    ),
+                                  )),
+                            );
+                          },
+                          itemScrollController: itemScrollController,
+                          itemPositionsListener: itemPositionsListener,
                         ),
-                ],
-              )
-            : Center(
-                child:
-                    Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
-              ),
-      ),
+                      )
+                    : SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        width: MediaQuery.of(context).size.width,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 200,
+                              height: 200,
+                              child: Image.asset(
+                                "assets/icons/nodatafound.png",
+                              ),
+                            ),
+                            const Text(
+                              'Result Not Found',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            const Text(
+                              'Whoops... this information is \n not available for a moment',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                            const SizedBox(
+                              height: 25,
+                            ),
+                            InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          Dashboard(widget.token)),
+                                );
+                              },
+                              child: Container(
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Center(
+                                  child: Text('Go Back',
+                                      style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500)),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+              ],
+            )
+          : Center(
+              child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
+            ),
     );
   }
 
@@ -1336,7 +1282,7 @@ class _AllReportState extends State<AllReport> {
                     //     'tel:${'+${items[index].contactNumber1}'}';
                     // await launchUrl(Uri.parse(url));
                     Navigator.pop(context);
-                    Common.directCall(items[index].contactNumber1);
+                    Common.dialPad(items[index].contactNumber1);
                   },
                   child: SizedBox(
                       height: 50,
@@ -1452,14 +1398,16 @@ class _AllReportState extends State<AllReport> {
                                       onChanged: (value) {
                                         if (value.isNotEmpty) {
                                           setState(() {
-                                            fromdate = DateTime.parse(value);
+                                            fromdate = DateTime.parse(value)
+                                                .toString();
                                           });
                                         }
                                       },
                                       // We can also use onSaved
                                       onSaved: (value) {
                                         if (value!.isNotEmpty) {
-                                          fromdate = DateTime.parse(value);
+                                          fromdate =
+                                              DateTime.parse(value).toString();
                                         }
                                       },
                                     ),
@@ -1518,14 +1466,16 @@ class _AllReportState extends State<AllReport> {
                                       onChanged: (value) {
                                         if (value.isNotEmpty) {
                                           setState(() {
-                                            todate = DateTime.parse(value);
+                                            todate = DateTime.parse(value)
+                                                .toString();
                                           });
                                         }
                                       },
                                       // We can also use onSaved
                                       onSaved: (value) {
                                         if (value!.isNotEmpty) {
-                                          todate = DateTime.parse(value);
+                                          todate =
+                                              DateTime.parse(value).toString();
                                         }
                                       },
                                     ),
@@ -1555,7 +1505,7 @@ class _AllReportState extends State<AllReport> {
                                     ),
                                     SizedBox(
                                       width: MediaQuery.of(context).size.width *
-                                          0.9,
+                                          0.95,
                                       child: FormField<String>(
                                         builder:
                                             (FormFieldState<String> state) {
@@ -1566,8 +1516,8 @@ class _AllReportState extends State<AllReport> {
                                                 0.9,
                                             decoration: BoxDecoration(
                                                 border: Border.all(
-                                                    color: Colors.grey.shade900,
-                                                    width: 0),
+                                                    color: Colors.black,
+                                                    width: 1),
                                                 color: Colors.white,
                                                 borderRadius:
                                                     const BorderRadius.all(
@@ -1597,10 +1547,16 @@ class _AllReportState extends State<AllReport> {
                                                     ),
                                                   );
                                                 }).toList(),
-                                                onChanged: (newValue1) {
+                                                onChanged: (newValue1) async {
                                                   setState(() {
                                                     branch = newValue1;
                                                   });
+                                                  commonDetails =
+                                                      await HttpService
+                                                          .addLeadCommonData(
+                                                              widget.token,
+                                                              branchId: branch);
+                                                  setState(() {});
                                                 },
                                               ),
                                             ),
@@ -1817,23 +1773,7 @@ class _AllReportState extends State<AllReport> {
                                                                             checkedCategoryItemsName.remove(checkedCategoryItemsName[i]);
                                                                             checkedCategoryItems.remove(checkedCategoryItems[i]);
                                                                           });
-                                                                          // if (checkedItemsName.length > 1) {
-                                                                          //   setState(() {
-                                                                          //     checkedItemsName.remove(checkedItemsName[i]);
-                                                                          //     checkedItems.remove(checkedItems[i]);
-                                                                          //   });
-                                                                          // }
-                                                                          // else {
-                                                                          //   ScaffoldMessenger.of(context).showSnackBar(
-                                                                          //     const SnackBar(
-                                                                          //       content: Text('Minimum 1 Number required'),
-                                                                          //       backgroundColor: Colors.redAccent,
-                                                                          //       elevation: 10,
-                                                                          //       behavior: SnackBarBehavior.floating,
-                                                                          //       margin: EdgeInsets.all(10),
-                                                                          //     ),
-                                                                          //   );
-                                                                          // }
+
                                                                           Navigator.of(context)
                                                                               .pop();
                                                                         },
@@ -1886,7 +1826,7 @@ class _AllReportState extends State<AllReport> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Call Result'),
+                            const Text('Lead Status'),
                             const SizedBox(
                               height: 10,
                             ),
@@ -1897,7 +1837,7 @@ class _AllReportState extends State<AllReport> {
                                     builder: (BuildContext context) {
                                       return AlertDialog(
                                         scrollable: true,
-                                        title: const Text('Call Result'),
+                                        title: const Text('Lead Status'),
                                         content: SizedBox(
                                           height: MediaQuery.of(context)
                                                   .size
@@ -1996,7 +1936,7 @@ class _AllReportState extends State<AllReport> {
                                     ? const Padding(
                                         padding: EdgeInsets.only(
                                             left: 10, top: 15, bottom: 10),
-                                        child: Text('Call Result'))
+                                        child: Text('Lead Status'))
                                     : Padding(
                                         padding:
                                             const EdgeInsets.only(right: 40),
@@ -2156,7 +2096,7 @@ class _AllReportState extends State<AllReport> {
                                           height: MediaQuery.of(context)
                                                   .size
                                                   .height *
-                                              .23,
+                                              .3,
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .height *
@@ -2203,7 +2143,6 @@ class _AllReportState extends State<AllReport> {
                                                               .priority[ind]
                                                               .priority
                                                               .toString());
-
                                                       Navigator.pop(
                                                           context, true);
                                                     });
@@ -2436,7 +2375,7 @@ class _AllReportState extends State<AllReport> {
                                                         .contains(commonDetails!
                                                             .data
                                                             .staff[ind]
-                                                            .staffId
+                                                            .userId
                                                             .toString())
                                                     ? true
                                                     : false,
@@ -2447,7 +2386,7 @@ class _AllReportState extends State<AllReport> {
                                                           .add(commonDetails!
                                                               .data
                                                               .staff[ind]
-                                                              .staffId
+                                                              .userId
                                                               .toString());
                                                       checkedAssignedStaffItemsName
                                                           .add(commonDetails!
@@ -2465,7 +2404,7 @@ class _AllReportState extends State<AllReport> {
                                                           .remove(commonDetails!
                                                               .data
                                                               .staff[ind]
-                                                              .staffId
+                                                              .userId
                                                               .toString());
                                                       checkedAssignedStaffItemsName
                                                           .remove(commonDetails!
@@ -3164,8 +3103,7 @@ class _AllReportState extends State<AllReport> {
                                 items.clear();
                                 page = 1;
                                 getData();
-                                Navigator.of(context, rootNavigator: true)
-                                    .pop();
+                                Navigator.pop(context);
                               });
                             },
                             child: const Center(

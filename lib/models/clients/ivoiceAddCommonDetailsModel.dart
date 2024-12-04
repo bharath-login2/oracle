@@ -2,7 +2,6 @@
 //
 //     final invoiceAddCommonDetailsModel = invoiceAddCommonDetailsModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 InvoiceAddCommonDetailsModel invoiceAddCommonDetailsModelFromJson(String str) =>
@@ -51,6 +50,7 @@ class Data {
   List<Staff> staff;
   List<Template> template;
   bool createRenewal;
+  List<TargetGroup> targetGroups;
 
   Data(
       {required this.customerId,
@@ -66,7 +66,9 @@ class Data {
       required this.products,
       required this.staff,
       required this.template,
-      required this.createRenewal});
+      required this.createRenewal,
+      required this.targetGroups,
+      });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
         customerId: json["customer_id"],
@@ -88,6 +90,8 @@ class Data {
         template: List<Template>.from(
             json["template"].map((x) => Template.fromJson(x))),
         createRenewal: json["create_renewal"],
+      targetGroups: List<TargetGroup>.from(json["target_groups"].map((x) => TargetGroup.fromJson(x))),
+
       );
 
   Map<String, dynamic> toJson() => {
@@ -345,4 +349,24 @@ class Template {
         "id": id,
         "template_name": templateName,
       };
+}
+
+class TargetGroup {
+    String id;
+    String groupName;
+
+    TargetGroup({
+        required this.id,
+        required this.groupName,
+    });
+
+    factory TargetGroup.fromJson(Map<String, dynamic> json) => TargetGroup(
+        id: json["id"],
+        groupName: json["group_name"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "id": id,
+        "group_name": groupName,
+    };
 }

@@ -122,302 +122,310 @@ class _HiddenCilientsScreenState extends State<HiddenCilientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const RenewalDashboard(),
-            ));
-      },
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade300,
-        appBar: PreferredSize(
-          preferredSize:
-              Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
-          child: Container(
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            decoration: const BoxDecoration(
-              // color: Colors.teal,
-              // image: DecorationImage(
-              //   fit: BoxFit.cover,
-              //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
-              gradient: LinearGradient(
-                  colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, top: 10.0, bottom: 10.0, right: 10),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const RenewalDashboard(),
-                                ));
-                          },
-                          child: Container(
-                            height: 25,
-                            width: 25,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                shape: BoxShape.circle),
-                            child: const Icon(
-                              Icons.arrow_back_ios_outlined,
-                              color: Colors.white,
-                              size: 16,
-                            ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade300,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.3),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            // color: Colors.teal,
+            // image: DecorationImage(
+            //   fit: BoxFit.cover,
+            //   image: NetworkImage("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxm1-0D3a3KOSC29gIUrre2R8sMnYVr-_6rA&usqp=CAU")),
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          height: 25,
+                          width: 25,
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white),
+                              shape: BoxShape.circle),
+                          child: const Icon(
+                            Icons.arrow_back_ios_outlined,
+                            color: Colors.white,
+                            size: 16,
                           ),
                         ),
-                        const SizedBox(
-                          width: 25,
-                        ),
-                        const Text(
-                          "Hidden List",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      ],
-                    ),
-                    InkWell(
-                      onTap: () {
-                        filtration(context);
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            color: const Color(0xFFd5f5f4),
-                            borderRadius: BorderRadius.circular(5)),
-                        child: Center(
-                            child: Image.asset("assets/icons/filter.png",
-                                width: 20)),
                       ),
-                    )
-                  ]),
-            ),
+                      const SizedBox(
+                        width: 25,
+                      ),
+                      const Text(
+                        "Hidden List",
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  InkWell(
+                    onTap: () {
+                      filtration(context);
+                    },
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          color: const Color(0xFFd5f5f4),
+                          borderRadius: BorderRadius.circular(5)),
+                      child: Center(
+                          child: Image.asset("assets/icons/filter.png",
+                              width: 20)),
+                    ),
+                  )
+                ]),
           ),
         ),
-        body: RefreshIndicator(
-          onRefresh: (() async {
-            getList();
-          }),
-          child: isLoading == true
-              ? buildLoaderListItem()
-              : items.isEmpty
-                  ? Center(
-                      child: SizedBox(
-                          height: 150,
-                          width: 150,
-                          child: Image.asset("assets/icons/missed_leads.png")),
-                    )
-                  : SafeArea(
-                      child: listResponse == null
-                          ? const Center(
-                              child: Text("SomeThing Went Wrong!!!"),
-                            )
-                          : Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: ScrollablePositionedList.builder(
-                                shrinkWrap: true,
-                                itemScrollController: itemScrollController,
-                                itemPositionsListener: itemPositionsListener,
-                                itemCount: items.length +
-                                    (items.length + 20 == page * pageSize
-                                        ? 1
-                                        : 0),
-                                initialScrollIndex: 0,
-                                itemBuilder: (context, index) {
-                                  if (index == items.length) {
-                                    return buildLoaderListItem();
-                                  } else {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                          bottom: 8.0, top: 8.0),
-                                      child: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                .9,
-                                        decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(8)),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16.0),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons.person,
-                                                            size: 18,
-                                                          ),
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .6,
-                                                            child: Text(
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              " ${items[index].clientName}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons.phone,
-                                                            size: 18,
-                                                          ),
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .6,
-                                                            child: Text(
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              " ${items[index].contactNo}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons
-                                                                .calendar_month,
-                                                            size: 18,
-                                                          ),
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .6,
-                                                            child: Text(
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              " ${items[index].startDate} To ${items[index].endDate}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons
-                                                                .shopping_basket,
-                                                            size: 18,
-                                                          ),
-                                                          SizedBox(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .6,
-                                                            child: Text(
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              " ${items[index].products}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Row(
-                                                        children: [
-                                                          const Icon(
-                                                            Icons
-                                                                .currency_rupee,
-                                                            size: 18,
-                                                            color: Colors.black,
-                                                          ),
-                                                          Text(
+      ),
+      body: RefreshIndicator(
+        onRefresh: (() async {
+          getList();
+        }),
+        child: isLoading == true
+            ? buildLoaderListItem()
+            : items.isEmpty
+                ? Center(
+                    child: SizedBox(
+                        height: 150,
+                        width: 150,
+                        child: Image.asset("assets/icons/missed_leads.png")),
+                  )
+                : SafeArea(
+                    child: listResponse == null
+                        ? const Center(
+                            child: Text("SomeThing Went Wrong!!!"),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: ScrollablePositionedList.builder(
+                              shrinkWrap: true,
+                              itemScrollController: itemScrollController,
+                              itemPositionsListener: itemPositionsListener,
+                              itemCount: items.length +
+                                  (items.length + 20 == page * pageSize
+                                      ? 1
+                                      : 0),
+                              initialScrollIndex: 0,
+                              itemBuilder: (context, index) {
+                                if (index == items.length) {
+                                  return buildLoaderListItem();
+                                } else {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        bottom: 8.0, top: 8.0),
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          .9,
+                                      decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.person,
+                                                          size: 18,
+                                                        ),
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              .6,
+                                                          child: Text(
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
-                                                            " ${items[index].cost}/-",
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 18),
+                                                            " ${items[index].clientName}",
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14),
                                                           ),
-                                                        ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.phone,
+                                                          size: 18,
+                                                        ),
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              .6,
+                                                          child: Text(
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            " ${items[index].contactNo}",
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.calendar_month,
+                                                          size: 18,
+                                                        ),
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              .6,
+                                                          child: Text(
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            " ${items[index].startDate} To ${items[index].endDate}",
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.shopping_basket,
+                                                          size: 18,
+                                                        ),
+                                                        SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              .6,
+                                                          child: Text(
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            " ${items[index].products}",
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.currency_rupee,
+                                                          size: 18,
+                                                          color: Colors.black,
+                                                        ),
+                                                        Text(
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          " ${items[index].cost}/-",
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 18),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    Container(
+                                                      color: items[index]
+                                                                  .isExpired ==
+                                                              true
+                                                          ? Colors.red
+                                                          : Colors.teal,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 4.0,
+                                                                horizontal:
+                                                                    8.0),
+                                                        child: Text(
+                                                          items[index].isExpired ==
+                                                                  true
+                                                              ? "Expired"
+                                                              : "Not Expired",
+                                                          style:
+                                                              const TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                        ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                  Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.end,
-                                                    children: [
-                                                      Container(
-                                                        color: items[index]
-                                                                    .isExpired ==
-                                                                true
-                                                            ? Colors.red
-                                                            : Colors.teal,
+                                                    ),
+                                                    const SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Visibility(
+                                                      visible: items[index]
+                                                              .isExpired ==
+                                                          false,
+                                                      child: Container(
+                                                        color: Colors.yellow,
                                                         child: Padding(
                                                           padding:
                                                               const EdgeInsets
@@ -426,188 +434,155 @@ class _HiddenCilientsScreenState extends State<HiddenCilientsScreen> {
                                                                   horizontal:
                                                                       8.0),
                                                           child: Text(
-                                                            items[index].isExpired ==
-                                                                    true
-                                                                ? "Expired"
-                                                                : "Not Expired",
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            "${items[index].remainingDays} days",
                                                             style:
                                                                 const TextStyle(
-                                                                    color: Colors
-                                                                        .white),
+                                                                    fontSize:
+                                                                        14),
                                                           ),
                                                         ),
                                                       ),
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-                                                      Visibility(
-                                                        visible: items[index]
-                                                                .isExpired ==
-                                                            false,
-                                                        child: Container(
-                                                          color: Colors.yellow,
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        4.0,
-                                                                    horizontal:
-                                                                        8.0),
-                                                            child: Text(
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                              "${items[index].remainingDays} days",
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      )
-                                                    ],
-                                                  )
-                                                ],
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return AlertDialog(
-                                                              scrollable: true,
-                                                              title: const Text(
-                                                                  'Rivert'),
-                                                              content: const Text(
-                                                                  'Are you sure?'),
-                                                              actions: [
-                                                                 TextButton(
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop();
-                                                                    },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No')),
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () async {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                      await rivert(
-                                                                          items[index]
-                                                                              .id);
-                                                                      page = 1;
-                                                                      items
-                                                                          .clear();
-                                                                      getList();
-                                                                    },
-                                                                    child: const Text(
-                                                                        'Yes')),
-                                                               
-                                                              ],
-                                                            );
-                                                          });
-                                                    },
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(2),
-                                                          color: Colors.grey),
-                                                      child: const Padding(
-                                                        padding:
-                                                            EdgeInsets.all(8.0),
-                                                        child: Icon(
-                                                            Icons.visibility,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
+                                                    )
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return AlertDialog(
+                                                            scrollable: true,
+                                                            title: const Text(
+                                                                'Rivert'),
+                                                            content: const Text(
+                                                                'Are you sure?'),
+                                                            actions: [
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          'No')),
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () async {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    await rivert(
+                                                                        items[index]
+                                                                            .id);
+                                                                    page = 1;
+                                                                    items
+                                                                        .clear();
+                                                                    getList();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          'Yes')),
+                                                            ],
+                                                          );
+                                                        });
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(2),
+                                                        color: Colors.grey),
+                                                    child: const Padding(
+                                                      padding:
+                                                          EdgeInsets.all(8.0),
+                                                      child: Icon(
+                                                          Icons.visibility,
+                                                          color: Colors.white),
                                                     ),
                                                   ),
-                                                  const SizedBox(
-                                                    width: 10,
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext
-                                                              context) {
-                                                            return AlertDialog(
-                                                              scrollable: true,
-                                                              title: const Text(
-                                                                  'Delete'),
-                                                              content: const Text(
-                                                                  'Are you sure?'),
-                                                              actions: [
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.of(
-                                                                              context)
-                                                                          .pop();
-                                                                    },
-                                                                    child:
-                                                                        const Text(
-                                                                            'No')),
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () async {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                      await deleteClient(
-                                                                          items[index]
-                                                                              .id);
-                                                                      page = 1;
-                                                                      items
-                                                                          .clear();
-                                                                      getList();
-                                                                    },
-                                                                    child: const Text(
-                                                                        'Yes')),
-                                                                
-                                                              ],
-                                                            );
-                                                          });
-                                                    },
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(2),
-                                                          color: Colors.red),
-                                                      child: const Padding(
-                                                        padding:
-                                                            EdgeInsets.all(8.0),
-                                                        child: Icon(
-                                                            Icons.delete,
-                                                            color:
-                                                                Colors.white),
-                                                      ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 10,
+                                                ),
+                                                InkWell(
+                                                  onTap: () {
+                                                    showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return AlertDialog(
+                                                            scrollable: true,
+                                                            title: const Text(
+                                                                'Delete'),
+                                                            content: const Text(
+                                                                'Are you sure?'),
+                                                            actions: [
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          'No')),
+                                                              TextButton(
+                                                                  onPressed:
+                                                                      () async {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    await deleteClient(
+                                                                        items[index]
+                                                                            .id);
+                                                                    page = 1;
+                                                                    items
+                                                                        .clear();
+                                                                    getList();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          'Yes')),
+                                                            ],
+                                                          );
+                                                        });
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(2),
+                                                        color: Colors.red),
+                                                    child: const Padding(
+                                                      padding:
+                                                          EdgeInsets.all(8.0),
+                                                      child: Icon(Icons.delete,
+                                                          color: Colors.white),
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    );
-                                  }
-                                },
-                              ),
-                            )),
-        ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          )),
       ),
     );
   }

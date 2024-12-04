@@ -633,28 +633,31 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                   const SizedBox(
                                                     height: 5,
                                                   ),
-                                                  SizedBox(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.8,
-                                                    child: Text(
-                                                      filteredInvoices[index]
-                                                                  .products
-                                                                  .length !=
-                                                              1
-                                                          ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
-                                                          : "Products : ${filteredInvoices[index].products[0].productName}",
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
+                                                  if (filteredInvoices[index]
+                                                      .products
+                                                      .isNotEmpty)
+                                                    SizedBox(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              0.8,
+                                                      child: Text(
+                                                        filteredInvoices[index]
+                                                                    .products
+                                                                    .length !=
+                                                                1
+                                                            ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
+                                                            : "Products : ${filteredInvoices[index].products[0].productName}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
                                                   const SizedBox(
                                                     height: 5,
                                                   ),
@@ -884,7 +887,9 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                                               widget.token,
                                                                               filteredInvoices[index].clientId.toString(),
                                                                               filteredInvoices[index].id.toString())),
-                                                                    );
+                                                                    ).then((_) {
+                                                                      getData();
+                                                                    });
                                                                   },
                                                                   child:
                                                                       Container(

@@ -1,4 +1,3 @@
-
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
@@ -7,13 +6,11 @@ import 'package:lottie/lottie.dart';
 import '../../models/officialWhatsapp/mediaModel.dart';
 import '../../service/service.dart';
 
-
 class ListFileManager extends StatefulWidget {
   String? format;
   String groupId;
 
-
-  ListFileManager(this.format,this.groupId, {Key? key}) : super(key: key);
+  ListFileManager(this.format, this.groupId, {Key? key}) : super(key: key);
 
   @override
   State<ListFileManager> createState() => _ListFileManagerState();
@@ -37,19 +34,17 @@ class _ListFileManagerState extends State<ListFileManager> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize:
-        Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
         child: Container(
           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
           decoration: const BoxDecoration(
             gradient:
-            LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
           ),
           child: Padding(
             padding: const EdgeInsets.only(
@@ -82,13 +77,11 @@ class _ListFileManagerState extends State<ListFileManager> {
                       width: 25,
                     ),
                     const Text(
-                     'Upload',
+                      'Upload',
                       style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ],
                 ),
-
-
               ],
             ),
           ),
@@ -96,140 +89,123 @@ class _ListFileManagerState extends State<ListFileManager> {
       ),
       body: mediaDetails != null
           ? SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 15,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4, // Number of columns in the grid
-                    crossAxisSpacing: 2, // Spacing between columns
-                    mainAxisSpacing: 2, // Spacing between rows
-                    childAspectRatio: 1),
-                itemCount: mediaDetails!.data!.length,
-
-                itemBuilder: (BuildContext context, int index) {
-                  return InkWell(
-                    onTap:(){
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              FileSendingScreen(
-                                documentUrl: mediaDetails!
-                                    .data![index].url
-                                    .toString(),
-                                title: mediaDetails!.data![index].fileName
-                                    .toString(),
-                                extension: mediaDetails!
-                                    .data![index].extension
-                                    .toString(),
-                                groupId:widget.groupId,
-
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount:
+                                  4, // Number of columns in the grid
+                              crossAxisSpacing: 2, // Spacing between columns
+                              mainAxisSpacing: 2, // Spacing between rows
+                              childAspectRatio: 1),
+                      itemCount: mediaDetails!.data!.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FileSendingScreen(
+                                  documentUrl:
+                                      mediaDetails!.data![index].url.toString(),
+                                  title: mediaDetails!.data![index].fileName
+                                      .toString(),
+                                  extension: mediaDetails!
+                                      .data![index].extension
+                                      .toString(),
+                                  groupId: widget.groupId,
+                                ),
                               ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      color:  Colors.white,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 50.0,
-                            width: 50.0,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: mediaDetails!.data![index].extension ==
-                                    'M4A' ||
-                                    mediaDetails!
-                                        .data![index].extension ==
-                                        'm4a'||mediaDetails!
-                                    .data![index].extension ==
-                                    'wav' || mediaDetails!
-                                    .data![index].extension ==
-                                    'WAV'
-                                    ? const AssetImage(
-                                    'assets/icons/audio.png')
-                                    : mediaDetails!.data![index].extension ==
-                                    'doc' ||
-                                    mediaDetails!.data![index]
-                                        .extension ==
-                                        'docx'
-                                    ? const AssetImage(
-                                    'assets/icons/doc.png')
-                                    : mediaDetails!.data![index]
-                                    .extension ==
-                                    'pdf' ||
-                                    mediaDetails!.data![index]
-                                        .extension ==
-                                        'PDF'
-                                    ? const AssetImage(
-                                    'assets/icons/pdf.png'):
-                                mediaDetails!.data![index].extension ==
-                                    'pptx' || mediaDetails!.data![index]
-                                    .extension ==
-                                    'pptm'||
-                                    mediaDetails!.data![index]
-                                        .extension ==
-                                        'ppt'?const AssetImage(
-                                    'assets/icons/ppt.png'):
-                                mediaDetails!.data![index].extension ==
-                                    'csv' || mediaDetails!.data![index]
-                                    .extension ==
-                                    'xls'||
-                                    mediaDetails!.data![index]
-                                        .extension ==
-                                        'xlsx'?const AssetImage(
-                                    'assets/icons/xls.png'):
-                                mediaDetails!.data![index].extension ==
-                                    'mp4' || mediaDetails!.data![index]
-                                    .extension ==
-                                    'mkv'||
-                                    mediaDetails!.data![index]
-                                        .extension ==
-                                        'webm'?const AssetImage(
-                                    'assets/icons/mp4.png')
-                                    : const AssetImage(
-                                    'assets/icons/picture.png'),
-                                fit: BoxFit.fill,
-                              ),
+                            );
+                          },
+                          child: Container(
+                            color: Colors.white,
+                            child: Column(
+                              children: [
+                                Container(
+                                  height: 50.0,
+                                  width: 50.0,
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      image: mediaDetails!.data![index].extension == 'M4A' ||
+                                              mediaDetails!.data![index].extension ==
+                                                  'm4a' ||
+                                              mediaDetails!.data![index].extension ==
+                                                  'wav' ||
+                                              mediaDetails!.data![index].extension ==
+                                                  'WAV'
+                                          ? const AssetImage(
+                                              'assets/icons/audio.png')
+                                          : mediaDetails!.data![index].extension == 'doc' ||
+                                                  mediaDetails!.data![index].extension ==
+                                                      'docx'
+                                              ? const AssetImage(
+                                                  'assets/icons/doc.png')
+                                              : mediaDetails!.data![index].extension == 'pdf' ||
+                                                      mediaDetails!.data![index]
+                                                              .extension ==
+                                                          'PDF'
+                                                  ? const AssetImage(
+                                                      'assets/icons/pdf.png')
+                                                  : mediaDetails!.data![index].extension == 'pptx' ||
+                                                          mediaDetails!
+                                                                  .data![index]
+                                                                  .extension ==
+                                                              'pptm' ||
+                                                          mediaDetails!
+                                                                  .data![index]
+                                                                  .extension ==
+                                                              'ppt'
+                                                      ? const AssetImage(
+                                                          'assets/icons/ppt.png')
+                                                      : mediaDetails!.data![index].extension == 'csv' ||
+                                                              mediaDetails!
+                                                                      .data![index]
+                                                                      .extension ==
+                                                                  'xls' ||
+                                                              mediaDetails!.data![index].extension == 'xlsx'
+                                                          ? const AssetImage('assets/icons/xls.png')
+                                                          : mediaDetails!.data![index].extension == 'mp4' || mediaDetails!.data![index].extension == 'mkv' || mediaDetails!.data![index].extension == 'webm'
+                                                              ? const AssetImage('assets/icons/mp4.png')
+                                                              : const AssetImage('assets/icons/picture.png'),
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 3,
+                                ),
+                                SizedBox(
+                                  width: 100,
+                                  child: Center(
+                                    child: Text(
+                                      mediaDetails!.data![index].fileName
+                                          .toString(),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                              ],
                             ),
                           ),
-                          const SizedBox(
-                            height: 3,
-                          ),
-                          SizedBox(
-                            width: 100,
-                            child: Center(
-                              child: Text(
-                                mediaDetails!.data![index].fileName.toString(),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
+            )
+          : Center(
+              child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
             ),
-          ],
-        ),
-      )
-          :  Center(
-        child: Lottie.asset('assets/main/loading.json',
-            fit: BoxFit.fill),
-      ),
-
     );
   }
-
-
 }

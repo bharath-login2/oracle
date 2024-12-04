@@ -2,90 +2,128 @@
 //
 //     final userDashboardModel = userDashboardModelFromJson(jsonString);
 
-
 import 'dart:convert';
 
-UserDashboardModel userDashboardModelFromJson(String str) => UserDashboardModel.fromJson(json.decode(str));
+UserDashboardModel userDashboardModelFromJson(String str) =>
+    UserDashboardModel.fromJson(json.decode(str));
 
-String userDashboardModelToJson(UserDashboardModel data) => json.encode(data.toJson());
+String userDashboardModelToJson(UserDashboardModel data) =>
+    json.encode(data.toJson());
 
 class UserDashboardModel {
-    String message;
-    Data data;
-    bool status;
+  String message;
+  Data data;
+  bool status;
 
-    UserDashboardModel({
-        required this.message,
-        required this.data,
-        required this.status,
-    });
+  UserDashboardModel({
+    required this.message,
+    required this.data,
+    required this.status,
+  });
 
-    factory UserDashboardModel.fromJson(Map<String, dynamic> json) => UserDashboardModel(
+  factory UserDashboardModel.fromJson(Map<String, dynamic> json) =>
+      UserDashboardModel(
         message: json["message"],
         data: Data.fromJson(json["data"]),
         status: json["status"],
-    );
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "message": message,
         "data": data.toJson(),
         "status": status,
-    };
+      };
 }
 
 class Data {
-    UserData userData;
-    UserTarget userTarget;
+  UserData userData;
+  List<UserTarget> userTarget;
+  List<StaffCallTarget> staffCallTarget;
 
-    Data({
-        required this.userData,
-        required this.userTarget,
-    });
+  Data({
+    required this.userData,
+    required this.userTarget,
+    required this.staffCallTarget,
+  });
 
-    factory Data.fromJson(Map<String, dynamic> json) => Data(
+  factory Data.fromJson(Map<String, dynamic> json) => Data(
         userData: UserData.fromJson(json["UserData"]),
-        userTarget: UserTarget.fromJson(json["UserTarget"]),
-    );
+        userTarget: List<UserTarget>.from(
+            json["UserTarget"].map((x) => UserTarget.fromJson(x))),
+        staffCallTarget: List<StaffCallTarget>.from(
+            json["staffCallTarget"].map((x) => StaffCallTarget.fromJson(x))),
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "UserData": userData.toJson(),
-        "UserTarget": userTarget.toJson(),
-    };
+        "UserTarget": List<dynamic>.from(userTarget.map((x) => x.toJson())),
+        "staffCallTarget":
+            List<dynamic>.from(staffCallTarget.map((x) => x.toJson())),
+      };
+}
+
+class StaffCallTarget {
+  String groupName;
+  String targetCall;
+  String achieved;
+  String progressPercentage;
+
+  StaffCallTarget({
+    required this.groupName,
+    required this.targetCall,
+    required this.achieved,
+    required this.progressPercentage,
+  });
+
+  factory StaffCallTarget.fromJson(Map<String, dynamic> json) =>
+      StaffCallTarget(
+        groupName: json["group_name"] ?? "",
+        targetCall: json["target_call"] ?? "",
+        achieved: json["achieved"] ?? "",
+        progressPercentage: json["progress_percentage"] ?? "",
+      );
+
+  Map<String, dynamic> toJson() => {
+        "group_name": groupName,
+        "target_call": targetCall,
+        "achieved": achieved,
+        "progress_percentage": progressPercentage,
+      };
 }
 
 class UserData {
-    String userId;
-    String staffName;
-    String phoneNo;
-    String address;
-    String email;
-    String proPicThumb;
-    String designation;
-    String profilePic;
+  String userId;
+  String staffName;
+  String phoneNo;
+  String address;
+  String email;
+  String proPicThumb;
+  String designation;
+  String profilePic;
 
-    UserData({
-        required this.userId,
-        required this.staffName,
-        required this.phoneNo,
-        required this.address,
-        required this.email,
-        required this.proPicThumb,
-        required this.designation,
-        required this.profilePic,
-    });
+  UserData({
+    required this.userId,
+    required this.staffName,
+    required this.phoneNo,
+    required this.address,
+    required this.email,
+    required this.proPicThumb,
+    required this.designation,
+    required this.profilePic,
+  });
 
-    factory UserData.fromJson(Map<String, dynamic> json) => UserData(
-        userId: json["user_id"],
-        staffName: json["staff_name"],
-        phoneNo: json["phone_no"],
-        address: json["address"],
-        email: json["email"],
-        proPicThumb: json["pro_pic_thumb"],
-        designation: json["designation"],
-        profilePic: json["profile_pic"],
-    );
+  factory UserData.fromJson(Map<String, dynamic> json) => UserData(
+        userId: json["user_id"] ?? "",
+        staffName: json["staff_name"] ?? "",
+        phoneNo: json["phone_no"] ?? "",
+        address: json["address"] ?? "",
+        email: json["email"] ?? "",
+        proPicThumb: json["pro_pic_thumb"] ?? "",
+        designation: json["designation"] ?? "",
+        profilePic: json["profile_pic"] ?? "",
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "user_id": userId,
         "staff_name": staffName,
         "phone_no": phoneNo,
@@ -94,33 +132,33 @@ class UserData {
         "pro_pic_thumb": proPicThumb,
         "designation": designation,
         "profile_pic": profilePic,
-    };
+      };
 }
 
 class UserTarget {
-    int targetCallCount;
-    int targetCost;
-    int achievedCalls;
-    String achievedCost;
+  String groupName;
+  String targetAmount;
+  String achieved;
+  String progressPercentage;
 
-    UserTarget({
-        required this.targetCallCount,
-        required this.targetCost,
-        required this.achievedCalls,
-        required this.achievedCost,
-    });
+  UserTarget({
+    required this.groupName,
+    required this.targetAmount,
+    required this.achieved,
+    required this.progressPercentage,
+  });
 
-    factory UserTarget.fromJson(Map<String, dynamic> json) => UserTarget(
-        targetCallCount: json["targetCallCount"],
-        targetCost: json["targetCost"],
-        achievedCalls: json["achievedCalls"],
-        achievedCost: json["achievedCost"],
-    );
+  factory UserTarget.fromJson(Map<String, dynamic> json) => UserTarget(
+        groupName: json["group_name"] ?? "",
+        targetAmount: json["target_amount"] ?? "",
+        achieved: json["achieved"] ?? "",
+        progressPercentage: json["progress_percentage"] ?? "",
+      );
 
-    Map<String, dynamic> toJson() => {
-        "targetCallCount": targetCallCount,
-        "targetCost": targetCost,
-        "achievedCalls": achievedCalls,
-        "achievedCost": achievedCost,
-    };
+  Map<String, dynamic> toJson() => {
+        "group_name": groupName,
+        "target_amount": targetAmount,
+        "achieved": achieved,
+        "progress_percentage": progressPercentage,
+      };
 }
