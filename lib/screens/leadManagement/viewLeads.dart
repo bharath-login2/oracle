@@ -572,7 +572,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                                 "token": widget
                                                                     .token,
                                                                 'leadMasterIds':
-                                                                    selectedIUsers,
+                                                                    selectedIUsers, 
                                                               };
                                                               BulkDeleteLeadModel
                                                                   deleteBulk =

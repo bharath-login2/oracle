@@ -55,7 +55,6 @@ class Common {
 
   static getSharedPref(String key) async {
     final prefs = await SharedPreferences.getInstance();
-    print('$key:${prefs.get(key)}');
     return prefs.get(key);
   }
 

@@ -1003,7 +1003,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                   fontWeight: FontWeight.w500),
                                             ),
                                             Text(
-                                              'Source : ${leadDetails!.data!.leadMethod}',
+                                              'Source : ${leadDetails!.data!.leadSource}',
                                               style: const TextStyle(
                                                   fontSize: 13,
                                                   color: Colors.black54,
@@ -3723,7 +3723,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                               child: Text(
                                                                 leadDetails!
                                                                     .data!
-                                                                    .leadMethod
+                                                                    .leadSource
                                                                     .toString(),
                                                                 style:
                                                                     const TextStyle(

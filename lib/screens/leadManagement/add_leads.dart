@@ -61,10 +61,10 @@ class _AddLeadsState extends State<AddLeads> {
   String assignStaffId = '';
   String callResult = 'New';
   String callResultId = '1';
-  // String leadSource = '';
-  // String leadSourceId = "";
+  String leadSource = 'Direct Entry';
+  String leadSourceId = "1";
   String priority = 'Normal';
-  String priorityId = '2';
+  String priorityId = '2';    
   String? contactPermission = '';
   TextEditingController clientName = TextEditingController();
   TextEditingController contactNo = TextEditingController();
@@ -156,6 +156,7 @@ class _AddLeadsState extends State<AddLeads> {
     assignStaffVal.text = assignStaff;
     priorityVal.text = priority;
     callResultVal.text = callResult;
+    leadSourceVal.text = leadSource;
     if (widget.page == 'leadDetails') {
       clientName.text = widget.clientName.toString();
       final myString = widget.phoneNumber;
@@ -302,7 +303,6 @@ class _AddLeadsState extends State<AddLeads> {
                                     : const SizedBox(
                                         height: 20,
                                       ),
-
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10, top: 15),
@@ -427,7 +427,6 @@ class _AddLeadsState extends State<AddLeads> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -586,11 +585,9 @@ class _AddLeadsState extends State<AddLeads> {
                                     ],
                                   ),
                                 ),
-
                                 const SizedBox(
                                   height: 15,
                                 ),
-
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -779,7 +776,104 @@ class _AddLeadsState extends State<AddLeads> {
                                         ),
                                       )
                                     : const SizedBox(),
-
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 10, right: 10),
+                                  child: TextFormField(
+                                    controller: leadSourceVal,
+                                    onTap: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text('Lead Source'),
+                                              content: SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    .8,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    .46,
+                                                child: ListView.builder(
+                                                  shrinkWrap: true,
+                                                  itemCount: commonDetails!
+                                                      .data.leadSource.length,
+                                                  itemBuilder: (context, ind) {
+                                                    return InkWell(
+                                                      onTap: () async {
+                                                        setState(() {
+                                                          leadSource =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadSource[
+                                                                      ind]
+                                                                  .leadSource
+                                                                  .toString();
+                                                          leadSourceId =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadSource[
+                                                                      ind]
+                                                                  .leadSourceId
+                                                                  .toString();
+                                                          leadSourceVal.text =
+                                                              commonDetails!
+                                                                  .data
+                                                                  .leadSource[
+                                                                      ind]
+                                                                  .leadSource
+                                                                  .toString();
+                                                          Navigator.pop(
+                                                              context, true);
+                                                        });
+                                                      },
+                                                      child: SizedBox(
+                                                        height: 50,
+                                                        child: Text(
+                                                          commonDetails!
+                                                              .data
+                                                              .leadSource[ind]
+                                                              .leadSource
+                                                              .toString(),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 18),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          });
+                                    },
+                                    maxLines: 1,
+                                    readOnly: true,
+                                    decoration: const InputDecoration(
+                                        contentPadding: EdgeInsets.only(
+                                            left: 10, top: 2, bottom: 2),
+                                        labelText: 'Lead Source',
+                                        fillColor: Colors.white,
+                                        filled: true,
+                                        prefixIcon: Icon(
+                                            Icons
+                                                .arrow_drop_down_circle_outlined,
+                                            color: Colors.grey),
+                                        border: OutlineInputBorder(),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
+                                        labelStyle:
+                                            TextStyle(color: Colors.grey)),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 15,
+                                ),
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -918,100 +1012,6 @@ class _AddLeadsState extends State<AddLeads> {
                                 const SizedBox(
                                   height: 15,
                                 ),
-
-                                // Padding(
-                                //   padding: const EdgeInsets.only(
-                                //       left: 10, right: 10),
-                                //   child: TextFormField(
-                                //     controller: leadSourceVal,
-                                //     onTap: () {
-                                //       showDialog(
-                                //           context: context,
-                                //           builder: (BuildContext context) {
-                                //             return AlertDialog(
-                                //               scrollable: true,
-                                //               title: const Text('Lead Source'),
-                                //               content: SizedBox(
-                                //                 width: MediaQuery.of(context)
-                                //                         .size
-                                //                         .width *
-                                //                     .7,
-                                //                 child: ListView.builder(
-                                //                   shrinkWrap: true,
-                                //                   itemCount: commonDetails!
-                                //                       .data.leadSource.length,
-                                //                   itemBuilder: (context, ind) {
-                                //                     return InkWell(
-                                //                       onTap: () {
-                                //                         setState(() {
-                                //                           leadSource =
-                                //                               commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSource
-                                //                                   .toString();
-                                //                           leadSourceId =
-                                //                               commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSourceId
-                                //                                   .toString();
-                                //                           Navigator.pop(
-                                //                               context, true);
-                                //                               leadSourceVal.text =commonDetails!
-                                //                                   .data
-                                //                                   .leadSource[
-                                //                                       ind]
-                                //                                   .leadSource
-                                //                                   .toString();
-                                //                         });
-                                //                       },
-                                //                       child: SizedBox(
-                                //                         height: 50,
-                                //                         child: Text(
-                                //                           commonDetails!
-                                //                               .data
-                                //                               .leadSource[ind]
-                                //                               .leadSource
-                                //                               .toString(),
-                                //                           style:
-                                //                               const TextStyle(
-                                //                                   fontSize: 18),
-                                //                         ),
-                                //                       ),
-                                //                     );
-                                //                   },
-                                //                 ),
-                                //               ),
-                                //             );
-                                //           });
-                                //     },
-                                //     maxLines: 1,
-                                //     readOnly: true,
-                                //     decoration: const InputDecoration(
-                                //         contentPadding: EdgeInsets.only(
-                                //             left: 10, top: 2, bottom: 2),
-                                //         labelText: 'Lead Source',
-                                //         fillColor: Colors.white,
-                                //         filled: true,
-                                //         prefixIcon: Icon(
-                                //             Icons
-                                //                 .arrow_drop_down_circle_outlined,
-                                //             color: Colors.grey),
-                                //         border: OutlineInputBorder(),
-                                //         focusedBorder: OutlineInputBorder(
-                                //           borderSide:
-                                //               BorderSide(color: Colors.grey),
-                                //         ),
-                                //         labelStyle:
-                                //             TextStyle(color: Colors.grey)),
-                                //   ),
-                                // ),
-                                // const SizedBox(
-                                //   height: 15,
-                                // ),
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 10, right: 10),
@@ -1400,30 +1400,28 @@ class _AddLeadsState extends State<AddLeads> {
                                                                     context,
                                                                     "Loading..");
                                                               }
-                                                              AddLeadModel
-                                                                  object =
-                                                                  await HttpService
-                                                                      .addLeads(
-                                                                widget.token,
-                                                                branch,
-                                                                clientName.text,
-                                                                leadTypeId,
-                                                                leadSubTypeId,
-                                                                contactNo.text,
-                                                                assignStaffId,
-                                                                cost.text,
-                                                                priorityId,
-                                                                address.text,
-                                                                remark.text,
-                                                                callResultId,
-                                                                nextFollowupDate1
-                                                                    .text,
-                                                                descriptions,
-                                                                code,
-                                                                checked,
-                                                                timeBefore,
-                                                                // leadSourceId
-                                                              );
+                                                              AddLeadModel object = await HttpService.addLeads(
+                                                                  widget.token,
+                                                                  branch,
+                                                                  clientName
+                                                                      .text,
+                                                                  leadTypeId,
+                                                                  leadSubTypeId,
+                                                                  contactNo
+                                                                      .text,
+                                                                  assignStaffId,
+                                                                  cost.text,
+                                                                  priorityId,
+                                                                  address.text,
+                                                                  remark.text,
+                                                                  callResultId,
+                                                                  nextFollowupDate1
+                                                                      .text,
+                                                                  descriptions,
+                                                                  code,
+                                                                  checked,
+                                                                  timeBefore,
+                                                                  leadSourceId);
                                                               if (object
                                                                       .status ==
                                                                   true) {
@@ -1463,25 +1461,26 @@ class _AddLeadsState extends State<AddLeads> {
                                           } else {
                                             AddLeadModel object =
                                                 await HttpService.addLeads(
-                                              widget.token,
-                                              branch,
-                                              clientName.text,
-                                              leadTypeId,
-                                              leadSubTypeId,
-                                              contactNo.text,
-                                              assignStaffId,
-                                              cost.text,
-                                              priorityId,
-                                              address.text,
-                                              remark.text,
-                                              callResultId,
-                                              nextFollowupDate1.text,
-                                              descriptions,
-                                              code,
-                                              checked,
-                                              timeBefore.text,
-                                              //  leadSourceId
-                                            );
+                                                    widget.token,
+                                                    branch,
+                                                    clientName.text,
+                                                    leadTypeId,
+                                                    leadSubTypeId,
+                                                    contactNo.text,
+                                                    assignStaffId,
+                                                    cost.text,
+                                                    priorityId,
+                                                    address.text,
+                                                    remark.text,
+                                                    callResultId,
+                                                    nextFollowupDate1.text,
+                                                    descriptions,
+                                                    code,
+                                                    checked,
+                                                    timeBefore.text,
+                                                    leadSourceId
+                                                    //  leadSourceId
+                                                    );
                                             if (object.status == true) {
                                               Common.toastMessaage(
                                                   object.message, Colors.green);
@@ -1586,7 +1585,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                     const Spacer(),
                                                     TextButton(
                                                       child: const Text(
-                                                        "UPGRADE",
+                                                        "UPGRADE", 
                                                       ),
                                                       onPressed: () {
                                                         _upgrade(context);
@@ -1715,7 +1714,7 @@ class _AddLeadsState extends State<AddLeads> {
                           InkWell(
                             onTap: () {
                               Navigator.pop(context);
-                            },
+                            }, 
                             child: Container(
                               width: MediaQuery.of(context).size.width * 0.35,
                               height: 30,
