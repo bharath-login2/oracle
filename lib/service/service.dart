@@ -241,7 +241,7 @@ class HttpService {
   static Future forceUpdate() async {
     try {
       var result = await _dio.get(
-        "https://login2.co.in/serverAuth.php",
+        "https://account.login2.in/serverAuth.php",
         // options: Options(receiveTimeout: const Duration(seconds: 30)),
       );
       if (kDebugMode) {}
@@ -3231,7 +3231,7 @@ class HttpService {
 
   ////// complaints ends  ///////
 
-  ///// Staff Dashboard //////
+  ///// Staff Dashboard ////// 
 
   static Future<UserDashboardModel?> getStaffDashboard(
       String userId, String fDate, String tDate) async {
