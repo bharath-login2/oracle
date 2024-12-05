@@ -180,7 +180,7 @@ void showWindow() async {
         if (await FlutterOverlayWindow.isActive()) return;
         await FlutterOverlayWindow.showOverlay(
           enableDrag: true,
-          overlayTitle: "Lead Plus",
+          overlayTitle: "Login2 Pro",
           overlayContent: 'Overlay Enabled',
           flag: OverlayFlag.defaultFlag,
           visibility: NotificationVisibility.visibilityPublic,

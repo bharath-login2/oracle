@@ -88,7 +88,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                       height: 10,
                     ),
                     const Text(
-                      "Lead Plus",
+                      "Login2",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                     ),

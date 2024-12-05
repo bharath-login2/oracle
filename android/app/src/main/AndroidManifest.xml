@@ -9,23 +9,21 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <!-- <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" /> -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> --> 
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/> -->
     <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/> -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_..." />
-0
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- <uses-permission android:name="android.permission.USE_EXACT_ALARM" /> -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> 
     <!-- <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" /> -->
-    <application android:label="Lead Plus" android:name='.YourApplication' android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true">
+    <application android:label="Login2 Pro" android:name='.YourApplication' android:icon="@mipmap/ic_launcher" android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true">
         <receiver android:name="com.login2Pro.MyStartupReceiver" android:enabled="true" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
+            </intent-filter> 
         </receiver>
         <activity android:name="com.yalantis.ucrop.UCropActivity" android:screenOrientation="portrait" android:theme="@style/Theme.AppCompat.Light.NoActionBar" tools:ignore="MissingClass"/>
         <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">

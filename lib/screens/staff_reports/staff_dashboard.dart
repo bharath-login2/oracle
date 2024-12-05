@@ -41,7 +41,7 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
   // var targetFDate = DateFormat('dd-MM-yyyy').format(DateTime.now()).toString();
   // var targetTDate = DateFormat('dd-MM-yyyy').format(DateTime.now()).toString();
   var fromDate = DateTime.now().toString();
-  var toDate = DateTime.now().toString();
+  var toDate = DateTime.now().toString(); 
   // var fDate = DateFormat('dd-MM-yyyy').format(DateTime.now()).toString();
   // var tDate = DateFormat('dd-MM-yyyy').format(DateTime.now()).toString();
   String? updateStaffPermission;

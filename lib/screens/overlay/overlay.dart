@@ -146,7 +146,7 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
                             ],
                           ),
                           const Text(
-                            "Lead Plus",
+                            "Login2",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15.0,

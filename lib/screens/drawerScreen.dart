@@ -47,7 +47,7 @@ class _DraweScreenState extends State<DraweScreen> {
     Colors.purple,
   ];
 
-  List supportNames = ["Pradeesh", "Swetha", "Abina", "Unnimaya", "Lead Plus"];
+  List supportNames = ["Pradeesh", "Swetha", "Abina", "Unnimaya", "Login2"];
   List supportPhone = [
     "8086935814",
     "9746981138",
@@ -305,7 +305,7 @@ class _DraweScreenState extends State<DraweScreen> {
                                             builder: (context) {
                                               return AlertDialog(
                                                 title: Text(
-                                                  "Lead Plus Support",
+                                                  "Login2 Support",
                                                   style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
