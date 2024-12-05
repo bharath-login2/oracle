@@ -495,7 +495,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           const SizedBox(
                             height: 15,
                           ),
-                          callResultReason!.data!.isNotEmpty
+                          callResultId == "3"
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 15),
                                   child: TextFormField(
@@ -515,41 +515,59 @@ class _AddFollowupState extends State<AddFollowup> {
                                                         .size
                                                         .height *
                                                     .8,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount: callResultReason!
-                                                      .data!.length,
-                                                  itemBuilder: (context, ind) {
-                                                    return InkWell(
-                                                      onTap: () {
-                                                        setState(() {
-                                                          callResultReasonName =
-                                                              callResultReason!
-                                                                  .data![ind]
-                                                                  .reason
-                                                                  .toString();
-                                                          callResultReasonId =
-                                                              callResultReason!
-                                                                  .data![ind].id
-                                                                  .toString();
-                                                          Navigator.pop(
-                                                              context, true);
-                                                        });
-                                                      },
-                                                      child: SizedBox(
-                                                        height: 50,
+                                                child: callResultReason!
+                                                        .data!.isEmpty
+                                                    ? const Center(
                                                         child: Text(
-                                                          callResultReason!
-                                                              .data![ind].reason
-                                                              .toString(),
-                                                          style:
-                                                              const TextStyle(
-                                                                  fontSize: 18),
+                                                          "Reason list is Empty...",
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.red),
                                                         ),
+                                                      )
+                                                    : ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount:
+                                                            callResultReason!
+                                                                .data!.length,
+                                                        itemBuilder:
+                                                            (context, ind) {
+                                                          return InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                callResultReasonName =
+                                                                    callResultReason!
+                                                                        .data![
+                                                                            ind]
+                                                                        .reason
+                                                                        .toString();
+                                                                callResultReasonId =
+                                                                    callResultReason!
+                                                                        .data![
+                                                                            ind]
+                                                                        .id
+                                                                        .toString();
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              });
+                                                            },
+                                                            child: SizedBox(
+                                                              height: 50,
+                                                              child: Text(
+                                                                callResultReason!
+                                                                    .data![ind]
+                                                                    .reason
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            18),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
                                                       ),
-                                                    );
-                                                  },
-                                                ),
                                               ),
                                             );
                                           });
