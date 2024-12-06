@@ -118,6 +118,10 @@ class _LoginState extends State<Login> {
             if (object1.status == true) {
               Common.saveSharedPref("isVisible", 'true');
               Common.saveSharedPref(
+                  "accPermission", object1.data!.readAccount.toString());
+              Common.saveSharedPref(
+                  "renewalPermission", object1.data!.readRenewal.toString());
+              Common.saveSharedPref(
                   "createLeadPermission", object1.data!.createLead.toString());
               Common.saveSharedPref(
                   "viewLeadPermission", object1.data!.viewLead.toString());
@@ -180,6 +184,7 @@ class _LoginState extends State<Login> {
             Common.saveSharedPref(
                 "multiBranch", object.data!.isMultiBranch.toString());
             Common.saveSharedPref("callLogPermission", 'false');
+
             if (object.status == true) {
               if (mounted) {
                 Navigator.of(context).push(
