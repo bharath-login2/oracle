@@ -157,7 +157,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                 ),
                               ),
                             ),
-                            SizedBox(
+                            const SizedBox(
                               width: 15,
                             ),
                             Column(
@@ -344,7 +344,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                   removeTop: true,
                                   child: Padding(
                                     padding: const EdgeInsets.only(
-                                        bottom: 30, left: 16.0, right: 16.0),
+                                        bottom: 30, left: 12.0, right: 12.0),
                                     child: filteredStaffs.isNotEmpty
                                         ? ListView.builder(
                                             // gridDelegate:
@@ -390,200 +390,392 @@ class _ViewUsersState extends State<ViewUsers> {
                                                             BorderRadius
                                                                 .circular(10),
                                                       ),
-                                                      child: Column(
-                                                        children: [
-                                                          Container(
-                                                            color: Colors
-                                                                .grey.shade100,
-                                                            // height: MediaQuery.of(
-                                                            //             context)
-                                                            //         .size
-                                                            //         .height *
-                                                            //     .16,
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                .45,
-                                                            child: Column(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                          left: 10.0,
+                                                          right: 10.0,
+                                                          bottom: 10.0,
+                                                          top: 10.0,
+                                                        ),
+                                                        child: Column(
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
                                                               children: [
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .only(
-                                                                      top: 10.0,
-                                                                      left:
-                                                                          10.0,
-                                                                      right:
-                                                                          10.0),
-                                                                  child: Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
+                                                                Container(
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade100,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            12),
+                                                                  ),
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      .4,
+                                                                  child: Column(
                                                                     children: [
-                                                                      Container(
-                                                                        constraints:
-                                                                            const BoxConstraints(
-                                                                          maxHeight:
-                                                                              60,
-                                                                        ),
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            top:
+                                                                                10.0,
+                                                                            left:
+                                                                                10.0,
+                                                                            right:
+                                                                                10.0),
                                                                         child:
+                                                                            Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceBetween,
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
                                                                             Container(
-                                                                          constraints:
-                                                                              const BoxConstraints(
-                                                                            minHeight:
-                                                                                20,
-                                                                            minWidth:
-                                                                                20,
-                                                                            maxHeight:
-                                                                                50,
-                                                                            maxWidth:
-                                                                                50,
-                                                                          ),
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            border:
-                                                                                Border.all(color: Colors.white, width: 0),
-                                                                            boxShadow: const [
-                                                                              BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                            ],
-                                                                            color:
-                                                                                Colors.white,
-                                                                            shape:
-                                                                                BoxShape.circle,
-                                                                            image:
-                                                                                DecorationImage(fit: BoxFit.cover, image: NetworkImage(filteredStaffs[i].imageUrl.toString())),
-                                                                          ),
+                                                                              constraints: const BoxConstraints(
+                                                                                maxHeight: 60,
+                                                                              ),
+                                                                              child: Container(
+                                                                                constraints: const BoxConstraints(
+                                                                                  minHeight: 20,
+                                                                                  minWidth: 20,
+                                                                                  maxHeight: 40,
+                                                                                  maxWidth: 40,
+                                                                                ),
+                                                                                decoration: BoxDecoration(
+                                                                                  border: Border.all(color: Colors.white, width: 0),
+                                                                                  boxShadow: const [
+                                                                                    BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
+                                                                                  ],
+                                                                                  color: Colors.white,
+                                                                                  shape: BoxShape.circle,
+                                                                                  image: DecorationImage(fit: BoxFit.cover, image: NetworkImage(filteredStaffs[i].imageUrl.toString())),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            Column(
+                                                                              mainAxisAlignment: MainAxisAlignment.start,
+                                                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                                                              children: [
+                                                                                Container(
+                                                                                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(5)),
+                                                                                  child: Padding(
+                                                                                    padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
+                                                                                    child: SizedBox(
+                                                                                        width: 76,
+                                                                                        child: Center(
+                                                                                          child: Text(
+                                                                                            filteredStaffs[i].designation.toString(),
+                                                                                            style: const TextStyle(
+                                                                                              fontSize: 12,
+                                                                                              color: Colors.black,
+                                                                                              fontWeight: FontWeight.w500,
+                                                                                            ),
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                          ),
+                                                                                        )),
+                                                                                  ),
+                                                                                ),
+                                                                                Padding(
+                                                                                  padding: const EdgeInsets.only(left: 10),
+                                                                                  child: Column(
+                                                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                    children: [
+                                                                                      SizedBox(
+                                                                                        width: MediaQuery.of(context).size.width * .22,
+                                                                                        child: Text(
+                                                                                          filteredStaffs[i].name.toString(),
+                                                                                          style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                        ),
+                                                                                      ),
+                                                                                      SizedBox(
+                                                                                        width: MediaQuery.of(context).size.width * .22,
+                                                                                        child: Text(
+                                                                                          filteredStaffs[i].phoneNo.toString(),
+                                                                                          style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                        ),
+                                                                                      ),
+                                                                                      filteredStaffs[i].branchName != ''
+                                                                                          ? SizedBox(
+                                                                                              width: MediaQuery.of(context).size.width * .22,
+                                                                                              child: Text(
+                                                                                                'Branch:${filteredStaffs[i].branchName}',
+                                                                                                style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                                maxLines: 1,
+                                                                                                overflow: TextOverflow.ellipsis,
+                                                                                              ),
+                                                                                            )
+                                                                                          : const SizedBox(),
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ],
                                                                         ),
                                                                       ),
-                                                                      Column(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.start,
-                                                                        crossAxisAlignment:
-                                                                            CrossAxisAlignment.start,
-                                                                        children: [
-                                                                          Container(
-                                                                            decoration:
-                                                                                BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(5)),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
-                                                                              child: SizedBox(
-                                                                                  width: 76,
-                                                                                  child: Center(
-                                                                                    child: Text(
-                                                                                      filteredStaffs[i].designation.toString(),
-                                                                                      style: const TextStyle(
-                                                                                        fontSize: 13,
-                                                                                        color: Colors.black,
-                                                                                        fontWeight: FontWeight.w500,
-                                                                                      ),
-                                                                                      maxLines: 1,
-                                                                                      overflow: TextOverflow.ellipsis,
-                                                                                    ),
-                                                                                  )),
-                                                                            ),
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            top:
+                                                                                6.0,
+                                                                            bottom:
+                                                                                8.0),
+                                                                        child:
+                                                                            Container(
+                                                                          width:
+                                                                              MediaQuery.of(context).size.width * .37,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(10),
                                                                           ),
-                                                                          Padding(
+                                                                          child:
+                                                                              Padding(
                                                                             padding:
-                                                                                const EdgeInsets.only(left: 10),
+                                                                                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8),
                                                                             child:
                                                                                 Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
                                                                               children: [
-                                                                                SizedBox(
-                                                                                  width: MediaQuery.of(context).size.width * .24,
-                                                                                  child: Text(
-                                                                                    filteredStaffs[i].name.toString(),
-                                                                                    style: const TextStyle(fontSize: 15, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 5,
-                                                                                ),
-                                                                                SizedBox(
-                                                                                  width: MediaQuery.of(context).size.width * .24,
-                                                                                  child: Text(
-                                                                                    filteredStaffs[i].phoneNo.toString(),
-                                                                                    style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                  ),
-                                                                                ),
-                                                                                filteredStaffs[i].branchName != ''
-                                                                                    ? Padding(
-                                                                                        padding: const EdgeInsets.only(top: 5),
-                                                                                        child: SizedBox(
-                                                                                          width: 150,
+                                                                                Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                  children: [
+                                                                                    Container(
+                                                                                      decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(5)),
+                                                                                      child: const Padding(
+                                                                                        padding: EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
+                                                                                        child: Center(
                                                                                           child: Text(
-                                                                                            'Branch:${filteredStaffs[i].branchName}',
-                                                                                            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                            "Leads",
+                                                                                            style: TextStyle(
+                                                                                              fontSize: 12,
+                                                                                              color: Colors.black,
+                                                                                              fontWeight: FontWeight.w500,
+                                                                                            ),
                                                                                             maxLines: 1,
                                                                                             overflow: TextOverflow.ellipsis,
                                                                                           ),
                                                                                         ),
-                                                                                      )
-                                                                                    : const SizedBox(),
+                                                                                      ),
+                                                                                    ),
+                                                                                    const Text(
+                                                                                      "5000",
+                                                                                      style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  height: 5,
+                                                                                ),
+                                                                                const Text(
+                                                                                  "This month, Dec 2024",
+                                                                                  style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                ),
                                                                               ],
                                                                             ),
                                                                           ),
-                                                                        ],
+                                                                        ),
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                SizedBox(
+                                                                  height: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .height *
+                                                                      .17,
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .start,
+                                                                    children: [
+                                                                      Container(
+                                                                        width: MediaQuery.of(context).size.width *
+                                                                            .46,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          color: Colors
+                                                                              .grey
+                                                                              .shade100,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(8),
+                                                                        ),
+                                                                        child:
+                                                                            Padding(
+                                                                          padding: const EdgeInsets
+                                                                              .symmetric(
+                                                                              vertical: 8.0),
+                                                                          child:
+                                                                              Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.spaceEvenly,
+                                                                            children: [
+                                                                              const Column(
+                                                                                children: [
+                                                                                  Text(
+                                                                                    "Phone Call",
+                                                                                    style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                  Text(
+                                                                                    "28 m:30 s",
+                                                                                    style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              Container(
+                                                                                width: 1,
+                                                                                height: 40,
+                                                                                color: Colors.grey,
+                                                                                // margin: const EdgeInsets.symmetric(horizontal: 5),
+                                                                              ),
+                                                                              const Column(
+                                                                                children: [
+                                                                                  Text(
+                                                                                    "Cloud Call",
+                                                                                    style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                  Text(
+                                                                                    "28 m:30 s",
+                                                                                    style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        height:
+                                                                            10,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width: MediaQuery.of(context).size.width *
+                                                                            .46,
+                                                                        child:
+                                                                            Row(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.spaceBetween,
+                                                                          children: [
+                                                                            Container(
+                                                                              width: MediaQuery.of(context).size.width * .22,
+                                                                              decoration: BoxDecoration(
+                                                                                color: Colors.grey.shade100,
+                                                                                borderRadius: BorderRadius.circular(8),
+                                                                              ),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(8.0),
+                                                                                child: Column(
+                                                                                  children: [
+                                                                                    Text(
+                                                                                      "Cost",
+                                                                                      style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                    Text(
+                                                                                      "₹ 100000",
+                                                                                      style: TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            Container(
+                                                                              width: MediaQuery.of(context).size.width * .22,
+                                                                              decoration: BoxDecoration(
+                                                                                color: Colors.grey.shade100,
+                                                                                borderRadius: BorderRadius.circular(8),
+                                                                              ),
+                                                                              child: const Padding(
+                                                                                padding: EdgeInsets.all(8.0),
+                                                                                child: Column(
+                                                                                  children: [
+                                                                                    Text(
+                                                                                      "Closed",
+                                                                                      style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                    Text(
+                                                                                      "25",
+                                                                                      style: TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
                                                                       ),
                                                                     ],
                                                                   ),
                                                                 ),
-                                                                Padding(
-                                                                  padding: const EdgeInsets
-                                                                      .only(
-                                                                      top: 8.0,
-                                                                      bottom:
-                                                                          16.0),
-                                                                  child:
-                                                                      Container(
-                                                                    width: MediaQuery.of(context)
-                                                                            .size
-                                                                            .width *
-                                                                        .35,
-                                                                    decoration:
-                                                                        BoxDecoration(
-                                                                      color: Colors
-                                                                          .white,
-                                                                      boxShadow: const [
-                                                                        BoxShadow(
-                                                                          color:
-                                                                              Colors.grey,
-                                                                          offset: Offset(
-                                                                              2.0,
-                                                                              2.0),
-                                                                        )
-                                                                      ],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                              10),
-                                                                    ),
-                                                                    child:
-                                                                        Column(
-                                                                      children: [
-                                                                        Text(
-                                                                          filteredStaffs[i]
-                                                                              .phoneNo
-                                                                              .toString(),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 13,
-                                                                              color: Colors.black54,
-                                                                              fontWeight: FontWeight.w500),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                )
                                                               ],
                                                             ),
-                                                          ),
-                                                        ],
+                                                            const SizedBox(
+                                                              height: 5,
+                                                            ),
+                                                            Column(
+                                                              children: [
+                                                                const Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Text(
+                                                                        "Target : ₹ ${10000}",
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontWeight: FontWeight.w600,
+                                                                            fontSize: 11)),
+                                                                    Text(
+                                                                        "Achieved : ₹ ${5000}",
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.black,
+                                                                            fontWeight: FontWeight.w600,
+                                                                            fontSize: 11)),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 3,
+                                                                ),
+                                                                LinearProgressIndicator(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .grey
+                                                                          .shade400,
+                                                                  value: double
+                                                                          .parse(
+                                                                              "50") /
+                                                                      100,
+                                                                  valueColor: AlwaysStoppedAnimation<
+                                                                          Color>(
+                                                                      Colors
+                                                                          .green
+                                                                          .shade200),
+                                                                  minHeight: 7,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     )),
                                               );
