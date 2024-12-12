@@ -2892,6 +2892,9 @@ class _EditInvoiceState extends State<EditInvoice> {
                                       Navigator.pop(context);
                                     }
                                   } else {
+                                    if (context.mounted) {   
+                                      Navigator.pop(context);
+                                    }
                                     Common.toastMessaage(
                                         inv.message, Colors.red);
                                   }

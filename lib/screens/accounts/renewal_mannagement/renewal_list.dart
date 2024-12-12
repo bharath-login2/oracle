@@ -51,6 +51,7 @@ class _RenewalListState extends State<RenewalList> {
   TextEditingController recieverName = TextEditingController();
   TextEditingController contactNumber = TextEditingController();
   TextEditingController expireIn = TextEditingController();
+  TextEditingController search = TextEditingController();
 
   RenewalListModel? listResponse;
   HideModel? hideResponse;
@@ -171,7 +172,8 @@ class _RenewalListState extends State<RenewalList> {
         daysToExpire,
         widget.searchKey,
         widget.searchMonth,
-        expireIn.text);
+        expireIn.text,
+        search.text);
     if (listResponse != null && listResponse!.status == true) {
       // items = listResponse!.data.lists;
       items.addAll(listResponse!.data.lists);
@@ -333,159 +335,166 @@ class _RenewalListState extends State<RenewalList> {
                           ? const Center(
                               child: Text("Something Went Wrong"),
                             )
-                          : Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: ScrollablePositionedList.builder(
-                                shrinkWrap: true,
-                                itemScrollController: itemScrollController,
-                                itemPositionsListener: itemPositionsListener,
-                                itemCount: items.length +
-                                    (items.length + 10 == page * pageSize
-                                        ? 1
-                                        : 0),
-                                initialScrollIndex: 0,
-                                itemBuilder: (context, index) {
-                                  if (index == items.length) {
-                                    return buildLoaderListItem();
-                                  } else {
-                                    return Dismissible(
-                                      key: const Key('0'),
-                                      background: Container(
-                                        color: Colors.green,
-                                        child: const Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: <Widget>[
-                                              SizedBox(
-                                                width: 20,
-                                              ),
-                                              Icon(
-                                                Icons.restart_alt,
-                                                color: Colors.white,
-                                              ),
-                                              Text(
-                                                " Renew",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                                textAlign: TextAlign.left,
-                                              ),
-                                            ],
+                          : Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.6,
+                                        child: TextFormField(
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
+                                          controller: search,
+                                          decoration: InputDecoration(
+                                            contentPadding:
+                                                const EdgeInsets.all(8),
+                                            hintStyle: const TextStyle(
+                                                color: Colors.grey),
+                                            hintText: 'search',
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              borderSide: BorderSide
+                                                  .none, // Set the border color to none
+                                            ),
+                                            prefixIcon: const Icon(
+                                              Icons.search,
+                                              color: Colors.grey,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      secondaryBackground: Container(
-                                        color: Colors.blue,
-                                        child: const Align(
-                                          alignment: Alignment.centerRight,
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              Icon(
-                                                Icons.add,
-                                                color: Colors.white,
-                                              ),
-                                              Text(
-                                                " Add Followup",
+                                      InkWell(
+                                        onTap: () {
+                                          // setState(() {
+                                          //   isLoading == true;
+                                          // }); 
+                                          page = 1;
+                                          add = 1;
+                                          items.clear();
+                                          getList();
+                                        },
+                                        child: Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.31,
+                                          height: 45,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              color: const Color(0xff2590cf)),
+                                          child: const Center(
+                                            child: Text("Submit",
                                                 style: TextStyle(
+                                                  fontSize: 16,
                                                   color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                                textAlign: TextAlign.right,
-                                              ),
-                                              SizedBox(
-                                                width: 20,
-                                              ),
-                                            ],
+                                                  fontWeight: FontWeight.w600,
+                                                )),
                                           ),
                                         ),
-                                      ),
-                                      confirmDismiss: (direction) async {
-                                        if (direction ==
-                                            DismissDirection.startToEnd) {
-                                          if (items[index].renewalType ==
-                                              "quick") {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      RenewQuickRenewal(
-                                                    id: items[index].id,
-                                                  ),
-                                                )).then((_) {
-                                              page = 1;
-                                              add = 1;
-                                              items.clear();
-                                              getList();
-                                            });
-                                          } else {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      RenewCustomRenewal(
-                                                    renId: items[index].id,
-                                                    renewalType: items[index]
-                                                        .renewalType,
-                                                  ),
-                                                )).then((_) {
-                                              page = 1;
-                                              add = 1;
-                                              items.clear();
-                                              getList();
-                                            });
-                                          }
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8),
+                                    child: ScrollablePositionedList.builder(
+                                      shrinkWrap: true,
+                                      itemScrollController:
+                                          itemScrollController,
+                                      itemPositionsListener:
+                                          itemPositionsListener,
+                                      itemCount: items.length +
+                                          (items.length + 10 == page * pageSize
+                                              ? 1
+                                              : 0),
+                                      initialScrollIndex: 0,
+                                      itemBuilder: (context, index) {
+                                        if (index == items.length) {
+                                          return buildLoaderListItem();
                                         } else {
-                                          Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          RenewalFollowup(
-                                                              items[index].id,
-                                                              DateTime.now())))
-                                              .then((_) {
-                                            page = 1;
-                                            add = 1;
-                                            items.clear();
-                                            getList();
-                                          });
-                                        }
-                                        return null;
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 8.0, top: 8.0),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            if (items[index].isRenewed ==
-                                                false) {
-                                              setState(() {
-                                                if (selectedIds.isNotEmpty) {
-                                                  if (selectedIds.contains(
-                                                      items[index].id)) {
-                                                    selectedIds.remove(
-                                                        items[index].id);
-                                                    selectedNames.remove(
-                                                        items[index]
-                                                            .clientName);
-                                                  } else {
-                                                    selectedIds
-                                                        .add(items[index].id);
-                                                    selectedNames.add(
-                                                        items[index]
-                                                            .clientName);
-                                                  }
-                                                } else {
+                                          return Dismissible(
+                                            key: const Key('0'),
+                                            background: Container(
+                                              color: Colors.green,
+                                              child: const Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    Icon(
+                                                      Icons.restart_alt,
+                                                      color: Colors.white,
+                                                    ),
+                                                    Text(
+                                                      " Renew",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                      textAlign: TextAlign.left,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            secondaryBackground: Container(
+                                              color: Colors.blue,
+                                              child: const Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.end,
+                                                  children: <Widget>[
+                                                    Icon(
+                                                      Icons.add,
+                                                      color: Colors.white,
+                                                    ),
+                                                    Text(
+                                                      " Add Followup",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.right,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            confirmDismiss: (direction) async {
+                                              if (direction ==
+                                                  DismissDirection.startToEnd) {
+                                                if (items[index].renewalType ==
+                                                    "quick") {
                                                   Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (context) =>
-                                                            RenewalDetails(
+                                                            RenewQuickRenewal(
                                                           id: items[index].id,
                                                         ),
                                                       )).then((_) {
@@ -494,589 +503,416 @@ class _RenewalListState extends State<RenewalList> {
                                                     items.clear();
                                                     getList();
                                                   });
-                                                }
-                                              });
-                                              if ((items.length -
-                                                      widget.renewed) ==
-                                                  selectedIds.length) {
-                                                isAllSelected = true;
-                                              } else {
-                                                isAllSelected = false;
-                                              }
-                                            }
-                                          },
-                                          onLongPress: () {
-                                            setState(() {
-                                              if (items[index].isRenewed ==
-                                                  false) {
-                                                if (selectedIds.contains(
-                                                    items[index].id)) {
-                                                  selectedIds
-                                                      .remove(items[index].id);
-                                                  selectedNames.remove(
-                                                      items[index].clientName);
                                                 } else {
-                                                  selectedIds
-                                                      .add(items[index].id);
-                                                  selectedNames.add(
-                                                      items[index].clientName);
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            RenewCustomRenewal(
+                                                          renId:
+                                                              items[index].id,
+                                                          renewalType:
+                                                              items[index]
+                                                                  .renewalType,
+                                                        ),
+                                                      )).then((_) {
+                                                    page = 1;
+                                                    add = 1;
+                                                    items.clear();
+                                                    getList();
+                                                  });
                                                 }
+                                              } else {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            RenewalFollowup(
+                                                                items[index].id,
+                                                                DateTime
+                                                                    .now()))).then(
+                                                    (_) {
+                                                  page = 1;
+                                                  add = 1;
+                                                  items.clear();
+                                                  getList();
+                                                });
                                               }
-                                            });
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: selectedIds
-                                                      .contains(items[index].id)
-                                                  ? Colors.blueGrey
-                                                  : items[index].isRenewed ==
-                                                          true
-                                                      ? Colors.green.shade100
-                                                          .withOpacity(.8)
-                                                      : items[index]
-                                                                  .isExpired ==
-                                                              true
-                                                          ? Colors.red.shade100
-                                                              .withOpacity(.5)
-                                                          : Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
+                                              return null;
+                                            },
                                             child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(16.0),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          GestureDetector(
-                                                            onTap: () async {
-                                                              if (selectedIds
-                                                                  .isEmpty) {
-                                                                String token =
-                                                                    await Common
-                                                                        .getSharedPref(
-                                                                            "token");
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder: (context) => ClientDetails(
-                                                                          token,
-                                                                          items[index]
-                                                                              .clientId),
-                                                                    )).then((_) {
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  items.clear();
-                                                                  getList();
-                                                                });
-                                                              }
-                                                            },
-                                                            child: Row(
+                                              padding: const EdgeInsets.only(
+                                                  bottom: 8.0),
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  if (items[index].isRenewed ==
+                                                      false) {
+                                                    setState(() {
+                                                      if (selectedIds
+                                                          .isNotEmpty) {
+                                                        if (selectedIds
+                                                            .contains(
+                                                                items[index]
+                                                                    .id)) {
+                                                          selectedIds.remove(
+                                                              items[index].id);
+                                                          selectedNames.remove(
+                                                              items[index]
+                                                                  .clientName);
+                                                        } else {
+                                                          selectedIds.add(
+                                                              items[index].id);
+                                                          selectedNames.add(
+                                                              items[index]
+                                                                  .clientName);
+                                                        }
+                                                      } else {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  RenewalDetails(
+                                                                id: items[index]
+                                                                    .id,
+                                                              ),
+                                                            )).then((_) {
+                                                          page = 1;
+                                                          add = 1;
+                                                          items.clear();
+                                                          getList();
+                                                        });
+                                                      }
+                                                    });
+                                                    if ((items.length -
+                                                            widget.renewed) ==
+                                                        selectedIds.length) {
+                                                      isAllSelected = true;
+                                                    } else {
+                                                      isAllSelected = false;
+                                                    }
+                                                  }
+                                                },
+                                                onLongPress: () {
+                                                  setState(() {
+                                                    if (items[index]
+                                                            .isRenewed ==
+                                                        false) {
+                                                      if (selectedIds.contains(
+                                                          items[index].id)) {
+                                                        selectedIds.remove(
+                                                            items[index].id);
+                                                        selectedNames.remove(
+                                                            items[index]
+                                                                .clientName);
+                                                      } else {
+                                                        selectedIds.add(
+                                                            items[index].id);
+                                                        selectedNames.add(
+                                                            items[index]
+                                                                .clientName);
+                                                      }
+                                                    }
+                                                  });
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: selectedIds.contains(
+                                                            items[index].id)
+                                                        ? Colors.blueGrey
+                                                        : items[index]
+                                                                    .isRenewed ==
+                                                                true
+                                                            ? Colors
+                                                                .green.shade100
+                                                                .withOpacity(.8)
+                                                            : items[index]
+                                                                        .isExpired ==
+                                                                    true
+                                                                ? Colors.red
+                                                                    .shade100
+                                                                    .withOpacity(
+                                                                        .5)
+                                                                : Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            16.0),
+                                                    child: Column(
+                                                      children: [
+                                                        Row(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
                                                               children: [
-                                                                const Icon(
-                                                                  Icons.person,
-                                                                  size: 18,
-                                                                ),
-                                                                SizedBox(
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      .50,
-                                                                  child: Text(
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    " ${items[index].clientName}",
-                                                                    style: const TextStyle(
-                                                                        fontSize:
-                                                                            14),
+                                                                GestureDetector(
+                                                                  onTap:
+                                                                      () async {
+                                                                    if (selectedIds
+                                                                        .isEmpty) {
+                                                                      String
+                                                                          token =
+                                                                          await Common.getSharedPref(
+                                                                              "token");
+                                                                      Navigator.push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                ClientDetails(token, items[index].clientId),
+                                                                          )).then((_) {
+                                                                        page =
+                                                                            1;
+                                                                        add = 1;
+                                                                        items
+                                                                            .clear();
+                                                                        getList();
+                                                                      });
+                                                                    }
+                                                                  },
+                                                                  child: Row(
+                                                                    children: [
+                                                                      const Icon(
+                                                                        Icons
+                                                                            .person,
+                                                                        size:
+                                                                            18,
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width: MediaQuery.of(context).size.width *
+                                                                            .50,
+                                                                        child:
+                                                                            Text(
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                          " ${items[index].clientName}",
+                                                                          style:
+                                                                              const TextStyle(fontSize: 14),
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .phone,
+                                                                      size: 18,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .50,
+                                                                      child:
+                                                                          Text(
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                        " ${items[index].contactNo}",
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                14),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .calendar_month,
+                                                                      size: 18,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .50,
+                                                                      child:
+                                                                          Text(
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                        " ${items[index].startDate} To ${items[index].endDate}",
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                14),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .shopping_basket,
+                                                                      size: 18,
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width: MediaQuery.of(context)
+                                                                              .size
+                                                                              .width *
+                                                                          .50,
+                                                                      child:
+                                                                          Text(
+                                                                        " ${items[index].products}",
+                                                                        style: const TextStyle(
+                                                                            fontSize:
+                                                                                14),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .currency_rupee,
+                                                                      size: 18,
+                                                                      color: Colors
+                                                                          .black,
+                                                                    ),
+                                                                    Text(
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      " ${items[index].cost}/-",
+                                                                      style: const TextStyle(
+                                                                          fontWeight: FontWeight
+                                                                              .bold,
+                                                                          fontSize:
+                                                                              18),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          10,
+                                                                    ),
+                                                                  ],
                                                                 ),
                                                               ],
                                                             ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Icon(
-                                                                Icons.phone,
-                                                                size: 18,
-                                                              ),
-                                                              SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    .50,
-                                                                child: Text(
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  " ${items[index].contactNo}",
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Icon(
-                                                                Icons
-                                                                    .calendar_month,
-                                                                size: 18,
-                                                              ),
-                                                              SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    .50,
-                                                                child: Text(
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  " ${items[index].startDate} To ${items[index].endDate}",
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              const Icon(
-                                                                Icons
-                                                                    .shopping_basket,
-                                                                size: 18,
-                                                              ),
-                                                              SizedBox(
-                                                                width: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width *
-                                                                    .50,
-                                                                child: Text(
-                                                                  " ${items[index].products}",
-                                                                  style: const TextStyle(
-                                                                      fontSize:
-                                                                          14),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Row(
-                                                            children: [
-                                                              const Icon(
-                                                                Icons
-                                                                    .currency_rupee,
-                                                                size: 18,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                              Text(
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                " ${items[index].cost}/-",
-                                                                style: const TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    fontSize:
-                                                                        18),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          Container(
-                                                            color: items[index]
-                                                                        .isRenewed ==
-                                                                    false
-                                                                ? Colors.red
-                                                                : Colors.teal,
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                      vertical:
-                                                                          4.0,
-                                                                      horizontal:
-                                                                          8.0),
-                                                              child: Text(
-                                                                items[index].isRenewed ==
-                                                                        true
-                                                                    ? "Renewed"
-                                                                    : items[index].isExpired ==
-                                                                            true
-                                                                        ? "Expired"
-                                                                        : "Not Renewed",
-                                                                style: const TextStyle(
-                                                                    color: Colors
-                                                                        .white),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 10,
-                                                          ),
-                                                          Container(
-                                                            color:
-                                                                Colors.yellow,
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                      vertical:
-                                                                          4.0,
-                                                                      horizontal:
-                                                                          8.0),
-                                                              child: Text(
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                items[index]
-                                                                    .remainingDays,
-                                                                style: const TextStyle(
-                                                                    fontSize:
-                                                                        14,
-                                                                    color: Color
-                                                                        .fromARGB(
-                                                                            255,
-                                                                            54,
-                                                                            43,
-                                                                            43)),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                          PopupMenuButton<
-                                                              String>(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    left: 35),
-                                                            iconColor:
-                                                                Colors.black,
-                                                            color: Colors.white,
-                                                            onSelected:
-                                                                (value) {
-                                                              if (value ==
-                                                                  "0") {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                        builder: (context) => RenewalFollowup(
-                                                                            items[index]
-                                                                                .id,
-                                                                            DateTime.now()))).then(
-                                                                    (_) {
-                                                                  page = 1;
-                                                                  add = 1;
-                                                                  items.clear();
-                                                                  getList();
-                                                                });
-                                                              } else if (value ==
-                                                                  "1") {
-                                                                Common.showProgressDialog(
-                                                                    context,
-                                                                    "Loading..");
-                                                                getRenewalReminderMessage(
-                                                                    items[index]
-                                                                        .id,
-                                                                    items[index]
-                                                                        .contactNo);
-                                                                recieverName
-                                                                    .text = items[
-                                                                        index]
-                                                                    .clientName;
-                                                                contactNumber
-                                                                    .text = items[
-                                                                        index]
-                                                                    .contactNo;
-                                                              } else if (value ==
-                                                                  "2") {
-                                                                if (items[index]
-                                                                        .renewalType ==
-                                                                    "quick") {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => EditQuickRenewalScreen(
-                                                                                id: items[index].id,
-                                                                              ))).then((r) {
-                                                                    getList();
-                                                                  });
-                                                                } else {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                          builder: (context) => EditCustomRenewal(
-                                                                                renId: items[index].id,
-                                                                                renewalType: items[index].renewalType,
-                                                                              ))).then((_) {
-                                                                    page = 1;
-                                                                    add = 1;
-                                                                    items
-                                                                        .clear();
-                                                                    getList();
-                                                                  });
-                                                                }
-                                                              } else if (value ==
-                                                                  "3") {
-                                                                if (items[index]
-                                                                        .renewalType ==
-                                                                    "quick") {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                        builder:
-                                                                            (context) =>
-                                                                                RenewQuickRenewal(
-                                                                          id: items[index]
-                                                                              .id,
-                                                                        ),
-                                                                      )).then((_) {
-                                                                    page = 1;
-                                                                    add = 1;
-                                                                    items
-                                                                        .clear();
-                                                                    getList();
-                                                                  });
-                                                                } else {
-                                                                  Navigator.push(
-                                                                      context,
-                                                                      MaterialPageRoute(
-                                                                        builder:
-                                                                            (context) =>
-                                                                                RenewCustomRenewal(
-                                                                          renId:
-                                                                              items[index].id,
-                                                                          renewalType:
-                                                                              items[index].renewalType,
-                                                                        ),
-                                                                      )).then((_) {
-                                                                    page = 1;
-                                                                    add = 1;
-                                                                    items
-                                                                        .clear();
-                                                                    getList();
-                                                                  });
-                                                                }
-                                                              } else if (value ==
-                                                                  "4") {
-                                                                showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (BuildContext
-                                                                            context) {
-                                                                      return AlertDialog(
-                                                                        scrollable:
-                                                                            true,
-                                                                        title: const Text(
-                                                                            'Please Confirm'),
-                                                                        content:
-                                                                            const Text('Are you sure to Hide?'),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                              onPressed: () {
-                                                                                Navigator.of(context).pop();
-                                                                              },
-                                                                              child: const Text('No')),
-                                                                          TextButton(
-                                                                              onPressed: () async {
-                                                                                Navigator.pop(context);
-                                                                                await hide(items[index].id);
-                                                                                page = 1;
-                                                                                add = 1;
-                                                                                items.clear();
-                                                                                getList();
-                                                                              },
-                                                                              child: const Text('Yes')),
-                                                                        ],
-                                                                      );
-                                                                    });
-                                                              } else if (value ==
-                                                                  "5") {
-                                                                Navigator.push(
-                                                                    context,
-                                                                    MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              ViewHistory(
-                                                                        id: items[index]
-                                                                            .id,
-                                                                        title: items[index]
-                                                                            .clientName,
-                                                                      ),
-                                                                    ));
-                                                              }
-                                                            },
-                                                            itemBuilder:
-                                                                (BuildContext
-                                                                    context) {
-                                                              return [
-                                                                if (items[index]
-                                                                        .isRenewed ==
-                                                                    false)
-                                                                  const PopupMenuItem<
-                                                                      String>(
-                                                                    value: '0',
-                                                                    child: Row(
-                                                                      children: [
-                                                                        Icon(
-                                                                          Icons
-                                                                              .add,
-                                                                          color:
-                                                                              Colors.green,
-                                                                        ),
-                                                                        SizedBox(
-                                                                          width:
-                                                                              5,
-                                                                        ),
-                                                                        Text(
-                                                                          'Add Followup',
-                                                                          style:
-                                                                              TextStyle(color: Colors.green),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                if (items[index]
-                                                                        .isRenewed ==
-                                                                    false)
-                                                                  const PopupMenuItem<
-                                                                      String>(
-                                                                    value: '2',
-                                                                    child: Row(
-                                                                      children: [
-                                                                        Icon(
-                                                                          Icons
-                                                                              .edit,
-                                                                          color:
-                                                                              Colors.blue,
-                                                                        ),
-                                                                        SizedBox(
-                                                                          width:
-                                                                              5,
-                                                                        ),
-                                                                        Text(
-                                                                          'Edit',
-                                                                          style:
-                                                                              TextStyle(color: Colors.blue),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                const PopupMenuItem<
-                                                                    String>(
-                                                                  value: '4',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .visibility_off,
-                                                                        color: Colors
-                                                                            .black,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            5,
-                                                                      ),
-                                                                      Text(
-                                                                        'Hide',
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Colors.black),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                const PopupMenuItem<
-                                                                    String>(
-                                                                  value: '5',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .history,
-                                                                        color: Colors
-                                                                            .black,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            5,
-                                                                      ),
-                                                                      Text(
-                                                                        'Remind History',
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Colors.black),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                )
-                                                              ];
-                                                            },
-                                                          ),
-                                                          Visibility(
-                                                            visible: selectedIds
-                                                                .isEmpty,
-                                                            child: Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
+                                                            Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
                                                                       .end,
                                                               children: [
-                                                                Visibility(
-                                                                  visible: items[
-                                                                              index]
-                                                                          .isRenewed ==
-                                                                      false,
+                                                                Container(
+                                                                  color: items[index].isRenewed ==
+                                                                          false
+                                                                      ? Colors
+                                                                          .red
+                                                                      : Colors
+                                                                          .teal,
                                                                   child:
-                                                                      InkWell(
-                                                                    onTap:
-                                                                        () async {
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        vertical:
+                                                                            4.0,
+                                                                        horizontal:
+                                                                            8.0),
+                                                                    child: Text(
+                                                                      items[index].isRenewed ==
+                                                                              true
+                                                                          ? "Renewed"
+                                                                          : items[index].isExpired == true
+                                                                              ? "Expired"
+                                                                              : "Not Renewed",
+                                                                      style: const TextStyle(
+                                                                          color:
+                                                                              Colors.white),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Container(
+                                                                  color: Colors
+                                                                      .yellow,
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                        .symmetric(
+                                                                        vertical:
+                                                                            4.0,
+                                                                        horizontal:
+                                                                            8.0),
+                                                                    child: Text(
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                      items[index]
+                                                                          .remainingDays,
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              14,
+                                                                          color: Color.fromARGB(
+                                                                              255,
+                                                                              54,
+                                                                              43,
+                                                                              43)),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                PopupMenuButton<
+                                                                    String>(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          left:
+                                                                              35),
+                                                                  iconColor:
+                                                                      Colors
+                                                                          .black,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  onSelected:
+                                                                      (value) {
+                                                                    if (value ==
+                                                                        "0") {
+                                                                      Navigator.push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                              builder: (context) => RenewalFollowup(items[index].id, DateTime.now()))).then(
+                                                                          (_) {
+                                                                        page =
+                                                                            1;
+                                                                        add = 1;
+                                                                        items
+                                                                            .clear();
+                                                                        getList();
+                                                                      });
+                                                                    } else if (value ==
+                                                                        "1") {
                                                                       Common.showProgressDialog(
                                                                           context,
                                                                           "Loading..");
@@ -1093,37 +929,38 @@ class _RenewalListState extends State<RenewalList> {
                                                                           .text = items[
                                                                               index]
                                                                           .contactNo;
-                                                                      // setState(() {});
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      height:
-                                                                          40,
-                                                                      decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                              2),
-                                                                          color:
-                                                                              Colors.teal),
-                                                                      child: Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .all(
-                                                                              8.0),
-                                                                          child:
-                                                                              Image.asset("assets/icons/whatsapp_white.png")),
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 10,
-                                                                ),
-                                                                Visibility(
-                                                                  visible: items[
-                                                                              index]
-                                                                          .isRenewed ==
-                                                                      false,
-                                                                  child:
-                                                                      InkWell(
-                                                                    onTap: () {
+                                                                    } else if (value ==
+                                                                        "2") {
+                                                                      if (items[index]
+                                                                              .renewalType ==
+                                                                          "quick") {
+                                                                        Navigator.push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                                builder: (context) => EditQuickRenewalScreen(
+                                                                                      id: items[index].id,
+                                                                                    ))).then((r) {
+                                                                          getList();
+                                                                        });
+                                                                      } else {
+                                                                        Navigator.push(
+                                                                            context,
+                                                                            MaterialPageRoute(
+                                                                                builder: (context) => EditCustomRenewal(
+                                                                                      renId: items[index].id,
+                                                                                      renewalType: items[index].renewalType,
+                                                                                    ))).then((_) {
+                                                                          page =
+                                                                              1;
+                                                                          add =
+                                                                              1;
+                                                                          items
+                                                                              .clear();
+                                                                          getList();
+                                                                        });
+                                                                      }
+                                                                    } else if (value ==
+                                                                        "3") {
                                                                       if (items[index]
                                                                               .renewalType ==
                                                                           "quick") {
@@ -1160,44 +997,258 @@ class _RenewalListState extends State<RenewalList> {
                                                                           getList();
                                                                         });
                                                                       }
-                                                                    },
-                                                                    child:
-                                                                        Container(
-                                                                      decoration: BoxDecoration(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                              2),
-                                                                          color:
-                                                                              Colors.green),
-                                                                      child:
-                                                                          const Padding(
-                                                                        padding:
-                                                                            EdgeInsets.all(8.0),
-                                                                        child: Icon(
-                                                                            Icons
-                                                                                .restart_alt,
-                                                                            color:
-                                                                                Colors.white),
+                                                                    } else if (value ==
+                                                                        "4") {
+                                                                      showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (BuildContext context) {
+                                                                            return AlertDialog(
+                                                                              scrollable: true,
+                                                                              title: const Text('Please Confirm'),
+                                                                              content: const Text('Are you sure to Hide?'),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.of(context).pop();
+                                                                                    },
+                                                                                    child: const Text('No')),
+                                                                                TextButton(
+                                                                                    onPressed: () async {
+                                                                                      Navigator.pop(context);
+                                                                                      await hide(items[index].id);
+                                                                                      page = 1;
+                                                                                      add = 1;
+                                                                                      items.clear();
+                                                                                      getList();
+                                                                                    },
+                                                                                    child: const Text('Yes')),
+                                                                              ],
+                                                                            );
+                                                                          });
+                                                                    } else if (value ==
+                                                                        "5") {
+                                                                      Navigator.push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (context) =>
+                                                                                ViewHistory(
+                                                                              id: items[index].id,
+                                                                              title: items[index].clientName,
+                                                                            ),
+                                                                          ));
+                                                                    }
+                                                                  },
+                                                                  itemBuilder:
+                                                                      (BuildContext
+                                                                          context) {
+                                                                    return [
+                                                                      if (items[index]
+                                                                              .isRenewed ==
+                                                                          false)
+                                                                        const PopupMenuItem<
+                                                                            String>(
+                                                                          value:
+                                                                              '0',
+                                                                          child:
+                                                                              Row(
+                                                                            children: [
+                                                                              Icon(
+                                                                                Icons.add,
+                                                                                color: Colors.green,
+                                                                              ),
+                                                                              SizedBox(
+                                                                                width: 5,
+                                                                              ),
+                                                                              Text(
+                                                                                'Add Followup',
+                                                                                style: TextStyle(color: Colors.green),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      if (items[index]
+                                                                              .isRenewed ==
+                                                                          false)
+                                                                        const PopupMenuItem<
+                                                                            String>(
+                                                                          value:
+                                                                              '2',
+                                                                          child:
+                                                                              Row(
+                                                                            children: [
+                                                                              Icon(
+                                                                                Icons.edit,
+                                                                                color: Colors.blue,
+                                                                              ),
+                                                                              SizedBox(
+                                                                                width: 5,
+                                                                              ),
+                                                                              Text(
+                                                                                'Edit',
+                                                                                style: TextStyle(color: Colors.blue),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      const PopupMenuItem<
+                                                                          String>(
+                                                                        value:
+                                                                            '4',
+                                                                        child:
+                                                                            Row(
+                                                                          children: [
+                                                                            Icon(
+                                                                              Icons.visibility_off,
+                                                                              color: Colors.black,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              width: 5,
+                                                                            ),
+                                                                            Text(
+                                                                              'Hide',
+                                                                              style: TextStyle(color: Colors.black),
+                                                                            ),
+                                                                          ],
+                                                                        ),
                                                                       ),
-                                                                    ),
+                                                                      const PopupMenuItem<
+                                                                          String>(
+                                                                        value:
+                                                                            '5',
+                                                                        child:
+                                                                            Row(
+                                                                          children: [
+                                                                            Icon(
+                                                                              Icons.history,
+                                                                              color: Colors.black,
+                                                                            ),
+                                                                            SizedBox(
+                                                                              width: 5,
+                                                                            ),
+                                                                            Text(
+                                                                              'Remind History',
+                                                                              style: TextStyle(color: Colors.black),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      )
+                                                                    ];
+                                                                  },
+                                                                ),
+                                                                Visibility(
+                                                                  visible:
+                                                                      selectedIds
+                                                                          .isEmpty,
+                                                                  child: Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .end,
+                                                                    children: [
+                                                                      Visibility(
+                                                                        visible:
+                                                                            items[index].isRenewed ==
+                                                                                false,
+                                                                        child:
+                                                                            InkWell(
+                                                                          onTap:
+                                                                              () async {
+                                                                            Common.showProgressDialog(context,
+                                                                                "Loading..");
+                                                                            getRenewalReminderMessage(items[index].id,
+                                                                                items[index].contactNo);
+                                                                            recieverName.text =
+                                                                                items[index].clientName;
+                                                                            contactNumber.text =
+                                                                                items[index].contactNo;
+                                                                            // setState(() {});
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            height:
+                                                                                40,
+                                                                            decoration:
+                                                                                BoxDecoration(borderRadius: BorderRadius.circular(2), color: Colors.teal),
+                                                                            child:
+                                                                                Padding(padding: const EdgeInsets.all(8.0), child: Image.asset("assets/icons/whatsapp_white.png")),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            10,
+                                                                      ),
+                                                                      Visibility(
+                                                                        visible:
+                                                                            items[index].isRenewed ==
+                                                                                false,
+                                                                        child:
+                                                                            InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            if (items[index].renewalType ==
+                                                                                "quick") {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => RenewQuickRenewal(
+                                                                                      id: items[index].id,
+                                                                                    ),
+                                                                                  )).then((_) {
+                                                                                page = 1;
+                                                                                add = 1;
+                                                                                items.clear();
+                                                                                getList();
+                                                                              });
+                                                                            } else {
+                                                                              Navigator.push(
+                                                                                  context,
+                                                                                  MaterialPageRoute(
+                                                                                    builder: (context) => RenewCustomRenewal(
+                                                                                      renId: items[index].id,
+                                                                                      renewalType: items[index].renewalType,
+                                                                                    ),
+                                                                                  )).then((_) {
+                                                                                page = 1;
+                                                                                add = 1;
+                                                                                items.clear();
+                                                                                getList();
+                                                                              });
+                                                                            }
+                                                                          },
+                                                                          child:
+                                                                              Container(
+                                                                            decoration:
+                                                                                BoxDecoration(borderRadius: BorderRadius.circular(2), color: Colors.green),
+                                                                            child:
+                                                                                const Padding(
+                                                                              padding: EdgeInsets.all(8.0),
+                                                                              child: Icon(Icons.restart_alt, color: Colors.white),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                               ],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      )
-                                                    ],
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ))
                   : Center(
                       child: Column(

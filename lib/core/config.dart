@@ -5,11 +5,11 @@ class Config {
   static getUrl() async {
     String? url = await Common.getSharedPref("url");
     String baseUrl;
-    String? api = '/v1_1_0/Api/';
+    String? api = '/v1_1_1/Api/';
     if (url != null) {
       baseUrl = url.toString() + api;
     } else {
-      baseUrl = 'https://myaccount.login2.in/index.php/v1_1_0/Api/';
+      baseUrl = 'https://myaccount.login2.in/index.php/v1_1_1/Api/';
     }
     return baseUrl;
   }

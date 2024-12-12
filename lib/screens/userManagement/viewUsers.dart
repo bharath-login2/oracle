@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:intl/intl.dart';
 
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/screens/userManagement/branches.dart';
@@ -93,7 +94,7 @@ class _ViewUsersState extends State<ViewUsers> {
     viewStaff = await HttpService.viewStaffs(widget.token);
     if (viewStaff != null) {
       filteredStaffs.clear();
-      filteredStaffs.addAll(viewStaff!.data!.staffList!);
+      filteredStaffs.addAll(viewStaff!.data.staffList);
       setState(() {});
       configure = await HttpService.configure(widget.token);
       if (configure != null) {
@@ -218,8 +219,8 @@ class _ViewUsersState extends State<ViewUsers> {
                                     onChanged: (value) {
                                       setState(() {
                                         filteredStaffs = viewStaff!
-                                            .data!.staffList!
-                                            .where((item) => item.name!
+                                            .data.staffList
+                                            .where((item) => item.name
                                                 .toLowerCase()
                                                 .contains(value.toLowerCase()))
                                             .toList();
@@ -394,8 +395,8 @@ class _ViewUsersState extends State<ViewUsers> {
                                                         padding:
                                                             const EdgeInsets
                                                                 .only(
-                                                          left: 10.0,
-                                                          right: 10.0,
+                                                          left: 8.0,
+                                                          right: 8.0,
                                                           bottom: 10.0,
                                                           top: 10.0,
                                                         ),
@@ -407,6 +408,11 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                       .spaceBetween,
                                                               children: [
                                                                 Container(
+                                                                  height: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .height *
+                                                                      .175,
                                                                   decoration:
                                                                       BoxDecoration(
                                                                     color: Colors
@@ -420,7 +426,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                               context)
                                                                           .size
                                                                           .width *
-                                                                      .4,
+                                                                      .42,
                                                                   child: Column(
                                                                     children: [
                                                                       Padding(
@@ -470,12 +476,12 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                   child: Padding(
                                                                                     padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
                                                                                     child: SizedBox(
-                                                                                        width: 76,
+                                                                                        width: 65,
                                                                                         child: Center(
                                                                                           child: Text(
                                                                                             filteredStaffs[i].designation.toString(),
                                                                                             style: const TextStyle(
-                                                                                              fontSize: 12,
+                                                                                              fontSize: 8,
                                                                                               color: Colors.black,
                                                                                               fontWeight: FontWeight.w500,
                                                                                             ),
@@ -555,7 +561,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                                   children: [
                                                                                     Container(
-                                                                                      decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(5)),
+                                                                                      decoration: BoxDecoration(color: const Color(0xFFCDD6FE), borderRadius: BorderRadius.circular(5)),
                                                                                       child: const Padding(
                                                                                         padding: EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
                                                                                         child: Center(
@@ -572,18 +578,18 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                         ),
                                                                                       ),
                                                                                     ),
-                                                                                    const Text(
-                                                                                      "5000",
-                                                                                      style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.bold),
+                                                                                    Text(
+                                                                                      filteredStaffs[i].totalLeadsCount,
+                                                                                      style: const TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.bold),
                                                                                     ),
                                                                                   ],
                                                                                 ),
                                                                                 const SizedBox(
                                                                                   height: 5,
                                                                                 ),
-                                                                                const Text(
-                                                                                  "This month, Dec 2024",
-                                                                                  style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w500),
+                                                                                Text(
+                                                                                  "This month, ${DateFormat('MMM yyyy').format(DateTime.now()).toString()}",
+                                                                                  style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
                                                                                 ),
                                                                               ],
                                                                             ),
@@ -598,7 +604,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                               context)
                                                                           .size
                                                                           .height *
-                                                                      .17,
+                                                                      .175,
                                                                   child: Column(
                                                                     mainAxisAlignment:
                                                                         MainAxisAlignment
@@ -609,9 +615,8 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                             .46,
                                                                         decoration:
                                                                             BoxDecoration(
-                                                                          color: Colors
-                                                                              .grey
-                                                                              .shade100,
+                                                                          color:
+                                                                              const Color(0xFFCDD6FE),
                                                                           borderRadius:
                                                                               BorderRadius.circular(8),
                                                                         ),
@@ -625,15 +630,15 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                             mainAxisAlignment:
                                                                                 MainAxisAlignment.spaceEvenly,
                                                                             children: [
-                                                                              const Column(
+                                                                              Column(
                                                                                 children: [
-                                                                                  Text(
+                                                                                  const Text(
                                                                                     "Phone Call",
                                                                                     style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                   Text(
-                                                                                    "28 m:30 s",
-                                                                                    style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                    filteredStaffs[i].totalCallDuration,
+                                                                                    style: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                 ],
                                                                               ),
@@ -643,15 +648,15 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                 color: Colors.grey,
                                                                                 // margin: const EdgeInsets.symmetric(horizontal: 5),
                                                                               ),
-                                                                              const Column(
+                                                                              Column(
                                                                                 children: [
-                                                                                  Text(
+                                                                                  const Text(
                                                                                     "Cloud Call",
                                                                                     style: TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                   Text(
-                                                                                    "28 m:30 s",
-                                                                                    style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
+                                                                                    filteredStaffs[i].totalCloudCallDuration,
+                                                                                    style: const TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                 ],
                                                                               ),
@@ -677,17 +682,17 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                 color: Colors.grey.shade100,
                                                                                 borderRadius: BorderRadius.circular(8),
                                                                               ),
-                                                                              child: const Padding(
-                                                                                padding: EdgeInsets.all(8.0),
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.all(8.0),
                                                                                 child: Column(
                                                                                   children: [
-                                                                                    Text(
+                                                                                    const Text(
                                                                                       "Cost",
                                                                                       style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
                                                                                     ),
                                                                                     Text(
-                                                                                      "₹ 100000",
-                                                                                      style: TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                      "₹ ${filteredStaffs[i].totalClosedLeadCost}",
+                                                                                      style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
                                                                                     ),
                                                                                   ],
                                                                                 ),
@@ -699,17 +704,17 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                                 color: Colors.grey.shade100,
                                                                                 borderRadius: BorderRadius.circular(8),
                                                                               ),
-                                                                              child: const Padding(
-                                                                                padding: EdgeInsets.all(8.0),
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.all(8.0),
                                                                                 child: Column(
                                                                                   children: [
-                                                                                    Text(
+                                                                                    const Text(
                                                                                       "Closed",
                                                                                       style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
                                                                                     ),
                                                                                     Text(
-                                                                                      "25",
-                                                                                      style: TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
+                                                                                      filteredStaffs[i].totalClosedLeadCount,
+                                                                                      style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
                                                                                     ),
                                                                                   ],
                                                                                 ),
@@ -728,21 +733,21 @@ class _ViewUsersState extends State<ViewUsers> {
                                                             ),
                                                             Column(
                                                               children: [
-                                                                const Row(
+                                                                Row(
                                                                   mainAxisAlignment:
                                                                       MainAxisAlignment
                                                                           .spaceBetween,
                                                                   children: [
                                                                     Text(
-                                                                        "Target : ₹ ${10000}",
-                                                                        style: TextStyle(
+                                                                        "Target : ₹ ${filteredStaffs[i].targetAmount}",
+                                                                        style: const TextStyle(
                                                                             color:
                                                                                 Colors.black,
                                                                             fontWeight: FontWeight.w600,
                                                                             fontSize: 11)),
                                                                     Text(
-                                                                        "Achieved : ₹ ${5000}",
-                                                                        style: TextStyle(
+                                                                        "Achieved : ₹ ${filteredStaffs[i].targetAmountAchieved}",
+                                                                        style: const TextStyle(
                                                                             color:
                                                                                 Colors.black,
                                                                             fontWeight: FontWeight.w600,
@@ -761,9 +766,9 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                       Colors
                                                                           .grey
                                                                           .shade400,
-                                                                  value: double
-                                                                          .parse(
-                                                                              "50") /
+                                                                  value: double.parse(
+                                                                          filteredStaffs[i]
+                                                                              .targetPercentage) /
                                                                       100,
                                                                   valueColor: AlwaysStoppedAnimation<
                                                                           Color>(

@@ -121,7 +121,7 @@ class _InvoiceListState extends State<InvoiceList> {
                         children: [
                           InkWell(
                             onTap: () {
-                              Navigator.pop(context);
+                              Navigator.pop(context); 
                             },
                             child: Container(
                               height: 25,

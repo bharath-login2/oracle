@@ -3612,7 +3612,7 @@ class HttpService {
   }
 
   static Future renewalList(page, pageSize, clientId, fromDate, toDate,
-      daysToExpire, String searchKey, searchMonth, String expireIn) async {
+      daysToExpire, String searchKey, searchMonth, String expireIn,String search) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "page": page,
@@ -3623,7 +3623,8 @@ class HttpService {
       "days_to_expire": daysToExpire,
       "search_key": searchKey,
       "search_month": searchMonth,
-      "expiry_in_days": expireIn
+      "expiry_in_days": expireIn,
+      "renewal_customer":search
     });
     try {
       var result = await _dio
