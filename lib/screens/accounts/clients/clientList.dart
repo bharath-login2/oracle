@@ -14,6 +14,7 @@ import '../../../models/clients/mainClientListModel.dart';
 import '../../../service/service.dart';
 import 'addClients.dart';
 import 'editClient.dart';
+import 'log_screen.dart';
 
 class ClientList extends StatefulWidget {
   String token;
@@ -720,7 +721,7 @@ class _ClientListState extends State<ClientList> {
                                                                   padding:
                                                                       EdgeInsets
                                                                           .all(
-                                                                              8.0),
+                                                                              4.0),
                                                                   child: Icon(
                                                                       Icons
                                                                           .currency_rupee,
@@ -730,7 +731,7 @@ class _ClientListState extends State<ClientList> {
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                              width: 10,
+                                                              width: 7,
                                                             ),
                                                             InkWell(
                                                               onTap: () {
@@ -763,7 +764,7 @@ class _ClientListState extends State<ClientList> {
                                                                   padding:
                                                                       EdgeInsets
                                                                           .all(
-                                                                              8.0),
+                                                                              4.0),
                                                                   child: Icon(
                                                                       Icons
                                                                           .mode_edit_outlined,
@@ -773,7 +774,7 @@ class _ClientListState extends State<ClientList> {
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                              width: 10,
+                                                              width: 7,
                                                             ),
                                                             InkWell(
                                                               onTap: () {
@@ -833,12 +834,54 @@ class _ClientListState extends State<ClientList> {
                                                                   padding:
                                                                       EdgeInsets
                                                                           .all(
-                                                                              8.0),
+                                                                              4.0),
                                                                   child: Icon(
                                                                       Icons
                                                                           .delete_outline,
                                                                       color: Colors
                                                                           .red),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 7,
+                                                            ),
+                                                            InkWell(
+                                                              onTap: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                      builder: (context) => CustomerLogHistory(
+                                                                          custId: items[index]
+                                                                              .id
+                                                                              .toString())),
+                                                                ).then((_) {
+                                                                  items.clear();
+                                                                  page = 1;
+                                                                  add = 1;
+                                                                  getData();
+                                                                });
+                                                              },
+                                                              child: Container(
+                                                                decoration: BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(
+                                                                                2),
+                                                                    color: Colors
+                                                                        .blueGrey
+                                                                        .shade400),
+                                                                child:
+                                                                    const Padding(
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                              4.0),
+                                                                  child: Icon(
+                                                                      Icons
+                                                                          .history,
+                                                                      color: Colors
+                                                                          .white),
                                                                 ),
                                                               ),
                                                             ),

@@ -830,7 +830,7 @@ class _EditLeadState extends State<EditLead> {
                                     content: SizedBox(
                                       height:
                                           MediaQuery.of(context).size.height *
-                                              .18,
+                                              .24,
                                       width:
                                           MediaQuery.of(context).size.height *
                                               .8,
@@ -900,7 +900,7 @@ class _EditLeadState extends State<EditLead> {
                         backgroundColor: Colors.white,
                         controller: address,
                         width: 1,
-                        height: 80,
+                        height: 80, 
                         maxLine: 2,
                       ),
                     ),
@@ -1051,22 +1051,21 @@ class _EditLeadState extends State<EditLead> {
                               }
                               EditLeadModel object =
                                   await HttpService.editLeads(
-                                widget.token,
-                                widget.callMasterId,
-                                branch,
-                                clientName.text,
-                                leadTypeId,
-                                leadSubTypeId,
-                                contactNo.text,
-                                assignStaffId,
-                                cost.text,
-                                priorityId,
-                                address.text,
-                                remark.text,
-                                descriptions,
-                                code,
-                                leadSourceId
-                              );
+                                      widget.token,
+                                      widget.callMasterId,
+                                      branch,
+                                      clientName.text,
+                                      leadTypeId,
+                                      leadSubTypeId,
+                                      contactNo.text,
+                                      assignStaffId,
+                                      cost.text,
+                                      priorityId,
+                                      address.text,
+                                      remark.text,
+                                      descriptions,
+                                      code,
+                                      leadSourceId);
                               if (object.status == true) {
                                 Common.toastMessaage(
                                     object.message, Colors.green);

@@ -85,6 +85,7 @@ import '../../models/lead_management/editLeadModel.dart';
 import '../../models/lead_management/followupDetailsModel.dart';
 import '../../models/lead_management/leadCategoryDeleteModel.dart';
 import '../../models/lead_management/leadDashboardModel.dart';
+import '../models/clients/customer_log.dart';
 import '../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
 import '../../models/lead_management/leadTransferModel.dart';
@@ -1563,7 +1564,7 @@ class HttpService {
   static Future deleteContactGroup(token, groupId) async {
     var formData = FormData.fromMap({
       "token": token,
-      "contact_group_id": groupId,
+      "contact_group_id": groupId, 
     });
     try {
       var result = await _dio
@@ -3231,7 +3232,7 @@ class HttpService {
 
   ////// complaints ends  ///////
 
-  ///// Staff Dashboard ////// 
+  ///// Staff Dashboard //////
 
   static Future<UserDashboardModel?> getStaffDashboard(
       String userId, String fDate, String tDate) async {
@@ -3343,8 +3344,8 @@ class HttpService {
   static Future getRenewalDetailsById(String id, String type) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-      "renewal_type": type,
-      "renewal_id": id
+      "renewal_type": type, 
+      "renewal_id": id 
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getRenewalById",
@@ -3611,8 +3612,17 @@ class HttpService {
     }
   }
 
-  static Future renewalList(page, pageSize, clientId, fromDate, toDate,
-      daysToExpire, String searchKey, searchMonth, String expireIn,String search) async {
+  static Future renewalList(
+      page,
+      pageSize,
+      clientId,
+      fromDate,
+      toDate,
+      daysToExpire,
+      String searchKey,
+      searchMonth,
+      String expireIn,
+      String search) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "page": page,
@@ -3624,7 +3634,7 @@ class HttpService {
       "search_key": searchKey,
       "search_month": searchMonth,
       "expiry_in_days": expireIn,
-      "renewal_customer":search
+      "renewal_customer": search
     });
     try {
       var result = await _dio
@@ -4678,6 +4688,25 @@ class HttpService {
       if (kDebugMode) {}
       if (result.statusCode == 200) {
         BankAccountList model = BankAccountList.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future getCustomerLog(custId) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+      "customer_id": custId,
+    });
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}getCustomerLogHistory",
+          data: formData);
+      if (kDebugMode) {}
+      if (result.statusCode == 200) {
+        CustomerLogModel model = CustomerLogModel.fromJson(result.data);
         return model;
       }
     } catch (e) {

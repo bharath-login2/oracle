@@ -63,7 +63,7 @@ class _AddLeadsState extends State<AddLeads> {
   String leadSource = 'Direct Entry';
   String leadSourceId = "1";
   String priority = 'Normal';
-  String priorityId = '2';    
+  String priorityId = '2';
   String? contactPermission = '';
   TextEditingController clientName = TextEditingController();
   TextEditingController contactNo = TextEditingController();
@@ -889,7 +889,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                 height: MediaQuery.of(context)
                                                         .size
                                                         .height *
-                                                    .18,
+                                                    .24,
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .height *
@@ -1584,7 +1584,7 @@ class _AddLeadsState extends State<AddLeads> {
                                                     const Spacer(),
                                                     TextButton(
                                                       child: const Text(
-                                                        "UPGRADE", 
+                                                        "UPGRADE",
                                                       ),
                                                       onPressed: () {
                                                         _upgrade(context);
@@ -1713,7 +1713,7 @@ class _AddLeadsState extends State<AddLeads> {
                           InkWell(
                             onTap: () {
                               Navigator.pop(context);
-                            }, 
+                            },
                             child: Container(
                               width: MediaQuery.of(context).size.width * 0.35,
                               height: 30,
