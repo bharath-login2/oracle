@@ -242,7 +242,7 @@ class HttpService {
   static Future forceUpdate() async {
     try {
       var result = await _dio.get(
-        "https://account.login2.in/serverAuth.php",
+        "https://account.login2.in/apiAuth.php",
         // options: Options(receiveTimeout: const Duration(seconds: 30)),
       );
       if (kDebugMode) {}

@@ -100,7 +100,8 @@ class _LoginState extends State<Login> {
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
         } else if (serverChoose == false) {
-          Common.toastMessaage('Choose any one server', Colors.red);
+          Common.toastMessaage('Choose Any Server', Colors.red);
+          staffDialog(context);
         } else {
           setState(() {
             _loading = true;
@@ -748,6 +749,40 @@ class _LoginState extends State<Login> {
                 ],
               ),
             ));
+  }
+
+  Future<dynamic> staffDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+              title: const Center(child: Text("Choose Server")),
+              content: SizedBox(
+                height: updatedata!.data!.server!.length * 50,
+                width: MediaQuery.of(context).size.width * .2,
+                child: ListView.builder(
+                  itemCount: updatedata!.data!.server!.length,
+                  physics: const ScrollPhysics(),
+                  shrinkWrap: true,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                        onTap: () {
+                          Common.saveSharedPref(
+                              "url", updatedata!.data!.server![index].url!);
+                          serverChoose = true;
+                          setState(() {});
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        title: Text(updatedata!.data!.server![index].name!));
+                  },
+                ),
+              ));
+        });
+      },
+    );
   }
 }
 
