@@ -34,15 +34,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
   List checkedMenuItems = [];
   List checkedPermissionItems = [];
 
-  String designation = 'Designation';
-  String designationId = '';
   StaffDetailsModel? staffDetails;
   AddUserCommonDataModel? commonDetails;
   TextEditingController name = TextEditingController();
   TextEditingController phoneNumber = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController emailId = TextEditingController();
-  TextEditingController designationVal = TextEditingController();
   bool sts = false;
   bool permissionSts = false;
   final ImagePicker _picker = ImagePicker();
@@ -98,12 +95,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         if (staffDetails!.data!.branchId.toString() != '') {
           branch = staffDetails!.data!.branchId.toString();
         }
-        designation = staffDetails!.data!.designation.toString();
-        designationId = staffDetails!.data!.designationId.toString();
+
         name.text = staffDetails!.data!.staffName.toString();
         phoneNumber.text = staffDetails!.data!.phoneNo.toString();
         emailId.text = staffDetails!.data!.email.toString();
-        designationVal.text = staffDetails!.data!.designation.toString();
         if (staffDetails!.data!.staffIds!.isNotEmpty) {
           for (int a = 0; a < staffDetails!.data!.staffIds!.length; a++) {
             checkedItems.add(staffDetails!.data!.staffIds![a]);
@@ -788,110 +783,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         ],
                                       ),
                                       const SizedBox(
-                                        height: 20,
-                                      ),
-                                      TextFormField(
-                                        controller: designationVal,
-                                        onTap: () {
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  scrollable: true,
-                                                  title:
-                                                      const Text('Designation'),
-                                                  content: SizedBox(
-                                                    height:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .height *
-                                                            .32,
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .height *
-                                                            .8,
-                                                    child: ListView.builder(
-                                                      shrinkWrap: true,
-                                                      itemCount: commonDetails!
-                                                          .data!
-                                                          .designations!
-                                                          .length,
-                                                      itemBuilder:
-                                                          (context, ind) {
-                                                        return InkWell(
-                                                          onTap: () async {
-                                                            setState(() {
-                                                              designationVal
-                                                                      .text =
-                                                                  commonDetails!
-                                                                      .data!
-                                                                      .designations![
-                                                                          ind]
-                                                                      .designation
-                                                                      .toString();
-                                                              designation =
-                                                                  commonDetails!
-                                                                      .data!
-                                                                      .designations![
-                                                                          ind]
-                                                                      .designation
-                                                                      .toString();
-                                                              designationId =
-                                                                  commonDetails!
-                                                                      .data!
-                                                                      .designations![
-                                                                          ind]
-                                                                      .id
-                                                                      .toString();
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
-                                                            });
-                                                          },
-                                                          child: SizedBox(
-                                                            height: 50,
-                                                            child: Text(
-                                                              commonDetails!
-                                                                  .data!
-                                                                  .designations![
-                                                                      ind]
-                                                                  .designation
-                                                                  .toString(),
-                                                              style:
-                                                                  const TextStyle(
-                                                                      fontSize:
-                                                                          18),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                );
-                                              });
-                                        },
-                                        maxLines: 1,
-                                        readOnly: true,
-                                        decoration: const InputDecoration(
-                                            contentPadding: EdgeInsets.only(
-                                                left: 10, top: 2, bottom: 2),
-                                            labelText: 'Designation',
-                                            fillColor: Colors.white,
-                                            filled: true,
-                                            prefixIcon: Icon(
-                                                Icons
-                                                    .arrow_drop_down_circle_outlined,
-                                                color: Colors.grey),
-                                            border: OutlineInputBorder(),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors.grey),
-                                            ),
-                                            labelStyle:
-                                                TextStyle(color: Colors.grey)),
-                                      ),
-                                      const SizedBox(
                                         height: 35,
                                       ),
                                       InkWell(
@@ -913,7 +804,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                 context, "Loading..");
                                             Map<String, dynamic> body = {
                                               'token': token,
-                                              "designation": designationId,
                                               'phoneNumber': phoneNumber.text,
                                               'name': name.text,
                                               'email': emailId.text,
@@ -958,6 +848,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                                         FontWeight.w500)),
                                           ),
                                         ),
+                                      ),
+                                      const SizedBox(
+                                        height: 20,
                                       )
                                     ],
                                   ),
@@ -1144,8 +1037,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           "token": token,
                                           'staff_id': widget.staffId,
                                           'sub_menu_id': checkedMenuItems,
-                                          'designation_id':
-                                              staffDetails!.data!.designationId,
                                         };
                                         PostEditStaffSubmenuModel postSubmenu =
                                             await HttpService

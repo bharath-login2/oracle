@@ -88,6 +88,8 @@ class _DashboardState extends State<Dashboard> {
   DashboardModel? userDashboard;
   RenewalDashboardModel? renewalDashboard;
   bool isExpired = false;
+  String accPermission = "";
+  String renewalPermission = "true";
 
   var fromdate = DateTime.now();
   var todate = DateTime.now();
@@ -316,6 +318,7 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
+
     getData(widget.token, fromdate, todate);
   }
 
@@ -325,6 +328,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   getData(token, fromDate, toDate) async {
+    renewalPermission = await Common.getSharedPref("renewalPermission");
+    accPermission = await Common.getSharedPref("accPermission");
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
     toggle = tog == "true" ? true : false;
     setState(() {
@@ -343,6 +348,7 @@ class _DashboardState extends State<Dashboard> {
           result = false;
         });
       }
+
       name = await Common.getSharedPref("name");
       role = await Common.getSharedPref("role");
       userId = await Common.getSharedPref("userId");
@@ -531,19 +537,21 @@ class _DashboardState extends State<Dashboard> {
         },
         child: result == true && timeOut == false
             ? DefaultTabController(
-                initialIndex: 1,
-                length: 3,
+                initialIndex: renewalPermission == "true" ? 1 : 0,
+                length: renewalPermission == "true" && accPermission == "true"
+                    ? 3
+                    : 2,
                 child: Scaffold(
                     key: _scaffoldKey,
                     backgroundColor: Colors.white,
-                    body: userDashboard != null
+                    body: renewalPermission == "true" || accPermission == "true"
                         ? TabBarView(children: [
-                            if (userDashboard!.data.viewRenewalDashboard)
+                            if (renewalPermission == "true")
                               isLoading == true
                                   ? accDashShimmer()
                                   : renewalDashboardView(context),
                             leadDashboardView(context),
-                            if (userDashboard!.data.viewAccDashboard)
+                            if (accPermission == "true")
                               isLoading == true
                                   ? accDashShimmer()
                                   : accountDashboardView(context),
@@ -7692,11 +7700,9 @@ class _DashboardState extends State<Dashboard> {
           physics: const NeverScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10),
+                padding: const EdgeInsets.only(top: 30.0, left: 10, right: 10),
                 child: Container(
                   width: MediaQuery.of(context).size.width * .95,
                   height: MediaQuery.of(context).size.height * .25,

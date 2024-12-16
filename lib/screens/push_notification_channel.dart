@@ -60,7 +60,7 @@ class FirebaseServices {
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        sound: message.notification?.apple?.sound?.name ?? 'default',
+        sound: message.notification?.apple?.sound?.name ?? 'default', 
       );
 
       var platformChannelSpecifics = NotificationDetails(

@@ -62,50 +62,53 @@ class Data {
   String? whatsappUnofficial;
   String? whatsappOfficial;
   String? transferLead;
+  String? readRenewal;
+  String? readAccount;
   bool? uploadCallLog;
 
   Data(
       {this.createStaff,
-        this.viewStaff,
-        this.updateStaff,
-        this.deleteStaff,
-        this.viewStaffReport,
-        this.createStaffDesignation,
-        this.viewStaffDesignation,
-        this.updateStaffDesignation,
-        this.deleteStaffDesignation,
-        this.updateStaffPassword,
-        this.updateStaffPermission,
-        this.createLead,
-        this.viewLead,
-        this.updateLead,
-        this.deleteLead,
-        this.createLeadCategory,
-        this.viewLeadCategory,
-        this.updateLeadCategory,
-        this.deleteLeadCategory,
-        this.viewLeadReport,
-        this.viewWhatsappSettings,
-        this.updateWhatsappSettings,
-        this.createFacebookSettings,
-        this.updateFacebookSettings,
-        this.deleteFacebookSettings,
-        this.createLeadImports,
-        this.cloudCall,
-        this.accessCallHistory,
-        this.accessCallRecording,
-        this.fileManager,
-        this.phoneCallLog,
-        this.createFile,
-        this.openFile,
-        this.renameFile,
-        this.deleteFile,
-        this.downloadFile,
-        this.whatsappUnofficial,
-        this.whatsappOfficial,
-        this.transferLead,
-        this.uploadCallLog
-        });
+      this.viewStaff,
+      this.updateStaff,
+      this.deleteStaff,
+      this.viewStaffReport,
+      this.createStaffDesignation,
+      this.viewStaffDesignation,
+      this.updateStaffDesignation,
+      this.deleteStaffDesignation,
+      this.updateStaffPassword,
+      this.updateStaffPermission,
+      this.createLead,
+      this.viewLead,
+      this.updateLead,
+      this.deleteLead,
+      this.createLeadCategory,
+      this.viewLeadCategory,
+      this.updateLeadCategory,
+      this.deleteLeadCategory,
+      this.viewLeadReport,
+      this.viewWhatsappSettings,
+      this.updateWhatsappSettings,
+      this.createFacebookSettings,
+      this.updateFacebookSettings,
+      this.deleteFacebookSettings,
+      this.createLeadImports,
+      this.cloudCall,
+      this.accessCallHistory,
+      this.accessCallRecording,
+      this.fileManager,
+      this.phoneCallLog,
+      this.createFile,
+      this.openFile,
+      this.renameFile,
+      this.deleteFile,
+      this.downloadFile,
+      this.whatsappUnofficial,
+      this.whatsappOfficial,
+      this.transferLead,
+      this.uploadCallLog,
+      this.readRenewal,
+      this.readAccount});
 
   Data.fromJson(Map<String, dynamic> json) {
     createStaff = json['create_staff'];
@@ -148,12 +151,14 @@ class Data {
     whatsappOfficial = json['whatsapp_official'];
     transferLead = json['transfer_lead'];
     uploadCallLog = json['upload_call_log'];
+    readRenewal = json['read_renewal'];
+    readAccount = json['read_account'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['create_staff'] = this.createStaff;
-    data['view_staff'] = this.viewStaff; 
+    data['view_staff'] = this.viewStaff;
     data['update_staff'] = this.updateStaff;
     data['delete_staff'] = this.deleteStaff;
     data['view_staff_report'] = this.viewStaffReport;

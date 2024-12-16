@@ -300,9 +300,9 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                   .data.nextMonthData.totalAmount
                                   .toString(),
                               totalCount: renewalDashboard!
-                                  .data.nextMonthData.totalCount
+                                  .data.nextMonthData.totalCount 
                                   .toString(),
-                              color: const Color(0xFF2a86c9),
+                              color: const Color(0xFF2a86c9), 
                             ),
                           ),
                           GestureDetector(
@@ -358,7 +358,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                 title: "Expired",
                                 paidAmount: renewalDashboard!
                                     .data.expiredData.paidAmount
-                                    .toString(),
+                                    .toString(), 
                                 paidCount: renewalDashboard!
                                     .data.expiredData.paidCount
                                     .toString(),
@@ -396,7 +396,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                               decoration: BoxDecoration(
                                   gradient: LinearGradient(colors: [
                                     Colors.blue.shade600,
-                                    Colors.blue.shade500,
+                                    Colors.blue.shade500, 
                                   ]),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(8),
@@ -460,7 +460,7 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                                 Text(renewalDashboard!.data
                                                     .monthReport[index].label),
                                                 Text(
-                                                  " ${renewalDashboard!.data.monthReport[index].amount.toString()}",
+                                                  "₹ ${renewalDashboard!.data.monthReport[index].amount.toString()} /-",
                                                   style: const TextStyle(
                                                       fontSize: 12),
                                                 ),
@@ -473,12 +473,12 @@ class _RenewalDashboardState extends State<RenewalDashboard> {
                                               value: renewalDashboard!
                                                       .data
                                                       .monthReport[index]
-                                                      .percentage /
+                                                      .percentage / 
                                                   100,
                                               valueColor:
                                                   AlwaysStoppedAnimation<Color>(
                                                       Colors.blue.shade400),
-                                              minHeight: 6,
+                                              minHeight: 6, 
                                             ),
                                           ],
                                         ),
