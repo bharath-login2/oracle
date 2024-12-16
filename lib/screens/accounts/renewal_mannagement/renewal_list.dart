@@ -357,7 +357,7 @@ class _RenewalListState extends State<RenewalList> {
                                                 const EdgeInsets.all(8),
                                             hintStyle: const TextStyle(
                                                 color: Colors.grey),
-                                            hintText: 'search',
+                                            hintText: 'Search',
                                             filled: true,
                                             fillColor: Colors.white,
                                             border: OutlineInputBorder(
@@ -377,7 +377,7 @@ class _RenewalListState extends State<RenewalList> {
                                         onTap: () {
                                           // setState(() {
                                           //   isLoading == true;
-                                          // }); 
+                                          // });
                                           page = 1;
                                           add = 1;
                                           items.clear();

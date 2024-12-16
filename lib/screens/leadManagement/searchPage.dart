@@ -487,7 +487,7 @@ class _SearchPageState extends State<SearchPage> {
                                                                             widget.cloudCall,
                                                                             search!.data.callLeadId.toString(),
                                                                             pageName:
-                                                                                'search',
+                                                                                'Search',
                                                                             searchKey:
                                                                                 searchkey.text,
                                                                           )),
@@ -525,7 +525,7 @@ class _SearchPageState extends State<SearchPage> {
                                                         search!.data.details[i]
                                                             .callMasterId
                                                             .toString(),
-                                                        pageName: 'search',
+                                                        pageName: 'Search',
                                                         searchKey:
                                                             searchkey.text,
                                                       )),
@@ -1061,7 +1061,7 @@ class _SearchPageState extends State<SearchPage> {
                                                                                             widget.deleteLead,
                                                                                             widget.cloudCall,
                                                                                             search!.data.callLeadId.toString(),
-                                                                                            pageName: 'search',
+                                                                                            pageName: 'Search',
                                                                                             searchKey: searchkey.text,
                                                                                           )),
                                                                                 ).then(getData(resultFoundSts));

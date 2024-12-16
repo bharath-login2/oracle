@@ -230,7 +230,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                       contentPadding: const EdgeInsets.all(8),
                                       hintStyle:
                                           const TextStyle(color: Colors.grey),
-                                      hintText: 'search',
+                                      hintText: 'Search',
                                       filled: true,
                                       fillColor: Colors.white,
                                       border: OutlineInputBorder(

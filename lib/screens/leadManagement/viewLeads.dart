@@ -375,7 +375,7 @@ class _ViewLeadsState extends State<ViewLeads> {
                                     decoration: const InputDecoration(
                                       contentPadding: EdgeInsets.only(
                                           left: 10, top: 2, bottom: 2),
-                                      labelText: 'search',
+                                      labelText: 'Search',
                                       fillColor: Colors.white,
                                       filled: true,
                                       prefixIcon: Icon(Icons.person,
