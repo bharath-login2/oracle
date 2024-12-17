@@ -400,6 +400,18 @@ class _ViewLeadsState extends State<ViewLeads> {
                             selectedIUsers.isNotEmpty
                                 ? Row(
                                     children: [
+                                      CircleAvatar(
+                                        radius: 13,
+                                        backgroundColor: Colors.white,
+                                        child: Text(
+                                          selectedIUsers.length.toString(),
+                                          style: const TextStyle(
+                                              color: Colors.blue, fontSize: 17),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 15,
+                                      ),
                                       InkWell(
                                           onTap: () {
                                             if (transferPermission == "true") {

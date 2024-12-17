@@ -739,14 +739,14 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                           .spaceBetween,
                                                                   children: [
                                                                     Text(
-                                                                        "Target : ₹ ${filteredStaffs[i].targetAmount}",
+                                                                        "Achieved : ₹ ${filteredStaffs[i].targetAmountAchieved}",
                                                                         style: const TextStyle(
                                                                             color:
                                                                                 Colors.black,
                                                                             fontWeight: FontWeight.w600,
                                                                             fontSize: 11)),
                                                                     Text(
-                                                                        "Achieved : ₹ ${filteredStaffs[i].targetAmountAchieved}",
+                                                                        "Target : ₹ ${filteredStaffs[i].targetAmount}",
                                                                         style: const TextStyle(
                                                                             color:
                                                                                 Colors.black,
@@ -774,7 +774,7 @@ class _ViewUsersState extends State<ViewUsers> {
                                                                           Color>(
                                                                       Colors
                                                                           .green
-                                                                          .shade200),
+                                                                          .shade400),
                                                                   minHeight: 7,
                                                                 ),
                                                               ],
