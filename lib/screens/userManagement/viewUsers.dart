@@ -271,19 +271,62 @@ class _ViewUsersState extends State<ViewUsers> {
                                           return [
                                             const PopupMenuItem<int>(
                                                 value: 1,
-                                                child: Text('Add Designation')),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.add,
+                                                      color: Colors.green,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text('Add Designation'),
+                                                  ],
+                                                )),
                                             const PopupMenuItem<int>(
                                                 value: 2,
-                                                child:
-                                                    Text('List Designation')),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.list,
+                                                      color: Colors.purple,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text('List Designation'),
+                                                  ],
+                                                )),
                                             const PopupMenuItem<int>(
                                                 value: 3,
-                                                child: Text('Add User')),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.person_add,
+                                                      color: Colors.blue,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 10,
+                                                    ),
+                                                    Text('Add User'),
+                                                  ],
+                                                )),
                                             if (multiBranch == 'true' &&
                                                 roleId == "2")
                                               const PopupMenuItem<int>(
                                                   value: 4,
-                                                  child: Text('Branches'))
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.groups,
+                                                        color: Colors.green,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                      Text('Branches'),
+                                                    ],
+                                                  ))
                                           ];
                                         },
                                         onSelected: (value) {

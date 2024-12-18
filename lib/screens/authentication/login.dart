@@ -100,7 +100,7 @@ class _LoginState extends State<Login> {
         } else if (password.text.isEmpty) {
           Common.toastMessaage('Password cannot be empty', Colors.red);
         } else if (serverChoose == false) {
-          Common.toastMessaage('Choose Any Server', Colors.red);
+          Common.toastMessaage('Choose a Server', Colors.red);
           staffDialog(context);
         } else {
           setState(() {
@@ -129,7 +129,7 @@ class _LoginState extends State<Login> {
               Common.saveSharedPref(
                   "updateLeadPermission", object1.data!.updateLead.toString());
               Common.saveSharedPref(
-                  "deleteLeadPermission", object1.data!.deleteLead.toString());
+                  "deleteLeadPermission", object1.data!.deleteLead.toString()); 
               Common.saveSharedPref("phoneCallLogPermission",
                   object1.data!.phoneCallLog.toString());
               Common.saveSharedPref("accessCallHistoryPermission",
@@ -492,7 +492,7 @@ class _LoginState extends State<Login> {
                                         );
                                       } else {
                                         Common.toastMessaage(
-                                            'Choose any one server',
+                                            'Choose a server',
                                             Colors.red);
                                       }
                                     },
