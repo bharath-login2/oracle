@@ -125,13 +125,14 @@ class _CallLogsState extends State<CallLogs> {
 
   void getSimDetails() async {
     try {
+      simList.clear();
       SimData simData = await SimDataPlugin.getSimData();
       for (var s in simData.cards) {
         log('id: ${s.subscriptionId}');
         simList.add({"id": s.subscriptionId, "name": s.displayName});
       }
       if (simList.length > 1) {
-        simList.add({"id": "3", "name": "Both"});
+        simList.add({"id": "", "name": "Both"});
       }
     } on PlatformException catch (e) {
       debugPrint("error! code: ${e.code} - message: ${e.message}");
@@ -580,7 +581,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                   phoneNumber: _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
-                                                                      .number, 
+                                                                      .number,
                                                                 ),
                                                               ));
                                                         }

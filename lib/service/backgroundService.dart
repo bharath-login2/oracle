@@ -160,6 +160,7 @@ void isWindowActive() async {
 }
 
 void showWindow() async {
+  String selectedSimId = "";
   if (!isActive) {
     switch (status1.status) {
       case PhoneStateStatus.NOTHING:
@@ -195,6 +196,12 @@ void showWindow() async {
       case PhoneStateStatus.CALL_ENDED:
         log('~~ CALL_ENDED ~~~');
         if (uploadCall == false && doUpload == true) {
+          var sim = await Common.getSharedPref("simName");
+          if (sim != null) {
+            selectedSimId = await Common.getSharedPref("simId");
+          } else {
+            selectedSimId = "";
+          }
           log('~~~~~~~~~~ UPLOADING ~~~~~~~~~~~');
           doUpload = false;
 
@@ -216,34 +223,10 @@ void showWindow() async {
                   .toString()
                   .substring(lastCall.callType.toString().indexOf('.') + 1);
               //  log(callType);
-              if (perm.data!.outgoing == true && callType == 'outgoing') {
-                log(await Common.getSharedPref("token"));
-                history.add({
-                  "name": lastCall.name,
-                  "phone_number": lastCall.number,
-                  "callTypes": lastCall.callType
-                      .toString()
-                      .substring(lastCall.callType.toString().indexOf('.') + 1),
-                  "time":
-                      '${DateTime.fromMillisecondsSinceEpoch(lastCall.timestamp!)}',
-                  "duration": lastCall.duration,
-                  "simName": lastCall.simDisplayName,
-                  "timeStamp": lastCall.timestamp,
-                });
-                Map<String, dynamic> body = {
-                  "token": await Common.getSharedPref("token"),
-                  'log': history,
-                };
-                CallLogUploadModel object1 =
-                    await HttpService.callLogUpload(body);
-                if (object1.data == true) {
-                  log('success');
-                  PhoneStateStatus.NOTHING;
-                } else {
-                  log('failure');
-                }
-              } else if (perm.data!.incoming == true) {
-                if (callType == 'incoming' || callType == 'missed') {
+              if (selectedSimId == "" ||
+                  selectedSimId == lastCall.phoneAccountId) {
+                if (perm.data!.outgoing == true && callType == 'outgoing') {
+                  log(await Common.getSharedPref("token"));
                   history.add({
                     "name": lastCall.name,
                     "phone_number": lastCall.number,
@@ -263,8 +246,34 @@ void showWindow() async {
                       await HttpService.callLogUpload(body);
                   if (object1.data == true) {
                     log('success');
+                    PhoneStateStatus.NOTHING;
                   } else {
-                    log('failed');
+                    log('failure');
+                  }
+                } else if (perm.data!.incoming == true) {
+                  if (callType == 'incoming' || callType == 'missed') {
+                    history.add({
+                      "name": lastCall.name,
+                      "phone_number": lastCall.number,
+                      "callTypes": lastCall.callType.toString().substring(
+                          lastCall.callType.toString().indexOf('.') + 1),
+                      "time":
+                          '${DateTime.fromMillisecondsSinceEpoch(lastCall.timestamp!)}',
+                      "duration": lastCall.duration,
+                      "simName": lastCall.simDisplayName,
+                      "timeStamp": lastCall.timestamp,
+                    });
+                    Map<String, dynamic> body = {
+                      "token": await Common.getSharedPref("token"),
+                      'log': history,
+                    };
+                    CallLogUploadModel object1 =
+                        await HttpService.callLogUpload(body);
+                    if (object1.data == true) {
+                      log('success');
+                    } else {
+                      log('failed');
+                    }
                   }
                 }
               }
