@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
-import 'package:login2/screens/authentication/forgotPasswordPhoneNumber.dart';
+import 'package:login2/screens/authentication/forgot_password.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 import 'package:workmanager/workmanager.dart';
@@ -488,7 +488,7 @@ class _LoginState extends State<Login> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  const ForgotPasswordNumber()),
+                                                   ForgotPassword()),
                                         );
                                       } else {
                                         Common.toastMessaage(
