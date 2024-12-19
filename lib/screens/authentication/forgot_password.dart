@@ -1,9 +1,14 @@
+import 'dart:math';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:login2/core/common.dart';
-import 'package:login2/models/expense/exp_category_list.dart';
-import 'package:login2/models/expense/expense_post.dart';
-import 'package:login2/service/service.dart';
+
+import '../../core/common.dart';
+import '../../models/sendOtpModel.dart';
+import '../../models/verifyPhoneModel.dart';
+import '../../service/service.dart';
+import 'otp_screen.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -13,24 +18,39 @@ class ForgotPassword extends StatefulWidget {
 }
 
 class _ForgotPasswordState extends State<ForgotPassword> {
-  ExpenseCategoryList? expenseCategories;
-  CommonResponse? response;
-
   bool result = true;
-  bool isLoading = true;
+  bool isLoading = false;
+  String selectedCode = '+91';
   final formKey = GlobalKey<FormState>();
-  final TextEditingController category = TextEditingController();
+  final TextEditingController phoneNumber = TextEditingController();
 
-  @override
-  void initState() {
-    getData();
-    super.initState();
-  }
-
-  getData() async {
+  sendOtp() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
+      VerifyPhoneModel verify = await HttpService.verifyPhone(phoneNumber.text);
+      if (verify.data == true) {
+        int min = 1000;
+        int max = 9999;
+        var randomizer = Random();
+        var rNum = min + randomizer.nextInt(max - min);
+        SendOtpModel otp = await HttpService.sendOtp(phoneNumber.text, rNum,"default");
+
+        if (otp.status == true) {
+          if (mounted) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        OtpScreen(rNum.toString(), phoneNumber.text)));
+          }
+          Common.toastMessaage(otp.message, Colors.green);
+        } else {
+          Common.toastMessaage(otp.message, Colors.red);
+        }
+      } else {
+        Common.toastMessaage('Phone Number Not Registered', Colors.red);
+      }
       setState(() {
         result = true;
       });
@@ -39,204 +59,117 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         result = false;
       });
     }
-    getList();
-  }
-
-  getList() async {
-    setState(() {
-      isLoading = true;
-    });
-    expenseCategories = await HttpService.expenseCategoryList();
-    if (expenseCategories != null && expenseCategories!.status == true) {
-      setState(() {
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  addCategory(String cat) async {
-    response = await HttpService.addExpenseCategory(cat);
-    if (response != null && response!.status == true) {
-      Common.toastMessaage(response!.message, Colors.green);
-      getList();
-    } else {
-      Common.toastMessaage(response!.message, Colors.red);
-    }
-    if (mounted) {
-      Navigator.pop(context);
-    }
-  }
-
-  updateCategory(String catId, String cat) async {
-    response = await HttpService.updateExpenseCategory(cat, catId);
-    if (response != null && response!.status == true) {
-      Common.toastMessaage(response!.message, Colors.green);
-      getList();
-    } else {
-      Common.toastMessaage(response!.message, Colors.red);
-    }
-    if (mounted) {
-      Navigator.pop(context);
-    }
-  }
-
-  deleteCategory(String catId) async {
-    response = await HttpService.deleteExpenseCategory(catId);
-    if (response != null && response!.status == true) {
-      Common.toastMessaage(response!.message, Colors.green);
-      getList();
-    } else {
-      Common.toastMessaage(response!.message, Colors.red);
-    }
-    if (mounted) {
-      Navigator.pop(context);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return result == true
         ? Scaffold(
-            appBar: PreferredSize(
-              preferredSize:
-                  Size.fromHeight(MediaQuery.of(context).size.height * 0.28),
-              child: Container(
-                padding:
-                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 10.0, top: 10.0, bottom: 10.0, right: 0),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () async {
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                height: 25,
-                                width: 25,
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white),
-                                    shape: BoxShape.circle),
-                                child: const Icon(
-                                  Icons.arrow_back_ios_outlined,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 25,
-                            ),
-                            const Text(
-                              "Expense Categories",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 18),
-                            ),
-                          ],
+            body: Center(
+            child: Form(
+              key: formKey,
+              child: Column(
+                children: [
+                  Container(
+                      margin: const EdgeInsets.only(top: 200),
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: Center(
+                        child: Image.asset(
+                          'assets/main/logo.png',
+                          width: 200,
                         ),
-                        IconButton(
-                            color: Colors.white,
-                            onPressed: () {
-                              categoryBottomsheet("Add Category", "", "");
-                            },
-                            icon: const Icon(Icons.add))
-                      ]),
-                ),
+                      )),
+                  const Text("Enter your phone number",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      )),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: TextFormField(
+                      controller: phoneNumber,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Enter Phone Number";
+                        }
+                        final phoneRegExp = RegExp(r'^\+?[1-9]\d{1,14}$');
+                        if (!phoneRegExp.hasMatch(value)) {
+                          return 'Please enter a valid phone number';
+                        }
+                        return null;
+                      },
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        hintText: 'Enter Phone number',
+                        contentPadding: EdgeInsets.all(10),
+                        border: OutlineInputBorder(),
+                        prefixIcon: GestureDetector(
+                          onTap: () {
+                            showCountryPicker(
+                              context: context,
+                              showPhoneCode: true,
+                              onSelect: (Country country) {
+                                setState(() {
+                                  selectedCode = '+${country.phoneCode}';
+                                });
+                              },
+                            );
+                          },
+                          child: Container(
+                            width: MediaQuery.of(context).size.width * 0.18,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            alignment: Alignment.center,
+                            // decoration: BoxDecoration(
+                            //     border: Border.all(),
+                            //     borderRadius: BorderRadius.circular(5)),
+                            child: Text(
+                              selectedCode,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  InkWell(
+                    onTap: () async {
+                      if (formKey.currentState!.validate()) {
+                        FocusScope.of(context).unfocus();
+                        sendOtp();
+                      }
+                    },
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.7,
+                      height: 45,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.black),
+                      child: Center(
+                        child: isLoading == true
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text("Send Otp",
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            body: isLoading == true
-                ? LinearProgressIndicator(
-                    color: Colors.blue.shade900,
-                  )
-                : expenseCategories == null
-                    ? const Center(
-                        child: Text(
-                          "Something went wrong !",
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: expenseCategories!.data.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            shape: const Border(
-                              bottom: BorderSide(color: Colors.grey),
-                            ),
-                            leading: CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.grey,
-                              child: Text(
-                                (index + 1).toString(),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            title: Text(
-                              expenseCategories!.data[index].typeName,
-                              style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            // subtitle:  Text(
-                            //   "Createdby: ${expenseList!.data[index].typeName}",
-                            //   style: TextStyle(
-                            //       color: Colors.teal,
-                            //       fontWeight: FontWeight.normal),
-                            // ),
-                            trailing: SizedBox(
-                              width: MediaQuery.of(context).size.width * .17,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      categoryBottomsheet(
-                                          "Edit Category",
-                                          expenseCategories!
-                                              .data[index].typeName,
-                                          expenseCategories!.data[index].typeId
-                                              .toString());
-                                    },
-                                    child: const Icon(
-                                      Icons.edit,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      deleteDialog(
-                                          context,
-                                          expenseCategories!.data[index].typeId
-                                              .toString());
-                                    },
-                                    child: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-          )
+          ))
         : Scaffold(
             backgroundColor: Colors.white,
             body: SizedBox(
@@ -264,7 +197,10 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   ),
                   InkWell(
                     onTap: () {
-                      getData();
+                      if (formKey.currentState!.validate()) {
+                        FocusScope.of(context).unfocus();
+                        sendOtp();
+                      }
                     },
                     child: SizedBox(
                       width: 120,
@@ -292,110 +228,5 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 ],
               ),
             ));
-  }
-
-  categoryBottomsheet(String title, String cat, String catId) {
-    category.text = cat;
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: SingleChildScrollView(
-            child: Form(
-                key: formKey,
-                child: Container(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: Colors.blue.shade900,
-                          fontSize: 20,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      TextFormField(
-                        validator: (value) {
-                          if (value == "") {
-                            return "Enter category name";
-                          }
-                          return null;
-                        },
-                        controller: category,
-                        decoration: const InputDecoration(
-                            labelText: 'Category *',
-                            prefixIcon:
-                                Icon(Icons.category, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                      const SizedBox(height: 20.0),
-                      Container(
-                        height: 40,
-                        width: double.maxFinite,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF3375e0),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                        child: RawMaterialButton(
-                          onPressed: () async {
-                            if (formKey.currentState!.validate()) {
-                              if (title == "Add Category") {
-                                addCategory(category.text);
-                              } else {
-                                updateCategory(catId, category.text);
-                              }
-                            }
-                          },
-                          child: const Text("Submit",
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      )
-                    ],
-                  ),
-                )),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<dynamic> deleteDialog(BuildContext context, String catId) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            scrollable: true,
-            title: const Text('Please Confirm'),
-            content: const Text('Are you sure to Delete?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('No')),
-              TextButton(
-                  onPressed: () async {
-                    deleteCategory(catId);
-                  },
-                  child: const Text(
-                    'Yes',
-                    style: TextStyle(color: Colors.red),
-                  )),
-            ],
-          );
-        });
   }
 }

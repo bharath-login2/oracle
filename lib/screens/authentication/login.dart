@@ -38,8 +38,10 @@ class _LoginState extends State<Login> {
   bool? result = true;
   UpdateModel? updatedata;
   bool serverChoose = false;
+  String selectedUrl = "";
   final MethodChannel _channel =
       const MethodChannel('onreBootInitFunctionChannel');
+  final GlobalKey popupMenuKey = GlobalKey();
 
   handleAsync() async {
     try {
@@ -101,7 +103,7 @@ class _LoginState extends State<Login> {
           Common.toastMessaage('Password cannot be empty', Colors.red);
         } else if (serverChoose == false) {
           Common.toastMessaage('Choose a Server', Colors.red);
-          staffDialog(context);
+          openPopupMenu();
         } else {
           setState(() {
             _loading = true;
@@ -129,7 +131,7 @@ class _LoginState extends State<Login> {
               Common.saveSharedPref(
                   "updateLeadPermission", object1.data!.updateLead.toString());
               Common.saveSharedPref(
-                  "deleteLeadPermission", object1.data!.deleteLead.toString()); 
+                  "deleteLeadPermission", object1.data!.deleteLead.toString());
               Common.saveSharedPref("phoneCallLogPermission",
                   object1.data!.phoneCallLog.toString());
               Common.saveSharedPref("accessCallHistoryPermission",
@@ -237,6 +239,11 @@ class _LoginState extends State<Login> {
     });
   }
 
+  void openPopupMenu() {
+    final dynamic popupMenuState = popupMenuKey.currentState;
+    popupMenuState?.showButtonMenu();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -271,6 +278,7 @@ class _LoginState extends State<Login> {
                               alignment: Alignment.topRight,
                               child: updatedata!.data!.server!.length > 1
                                   ? PopupMenuButton(
+                                      key: popupMenuKey,
                                       child: const Icon(
                                           Icons.miscellaneous_services),
                                       itemBuilder: (context) {
@@ -278,12 +286,26 @@ class _LoginState extends State<Login> {
                                             .map((data) {
                                           return PopupMenuItem<String>(
                                             value: data.url,
-                                            child: Text(data.name.toString()),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(data.name.toString()),
+                                                if (selectedUrl == data.url)
+                                                  const Icon(
+                                                    Icons.check_circle,
+                                                    color: Colors.green,
+                                                    size: 20,
+                                                  )
+                                              ],
+                                            ),
                                           );
                                         }).toList();
                                       },
                                       onSelected: (value) {
                                         Common.saveSharedPref("url", value);
+                                        selectedUrl = value;
                                         serverChoose = true;
                                         setState(() {});
                                       })
@@ -488,12 +510,12 @@ class _LoginState extends State<Login> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                   ForgotPassword()),
+                                                  const ForgotPassword()),
                                         );
                                       } else {
                                         Common.toastMessaage(
-                                            'Choose a server',
-                                            Colors.red);
+                                            'Choose a server', Colors.red);
+                                        openPopupMenu();
                                       }
                                     },
                                     child: Container(
@@ -750,40 +772,39 @@ class _LoginState extends State<Login> {
               ),
             ));
   }
-
-  Future<dynamic> staffDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-              title: const Center(child: Text("Choose Server")),
-              content: SizedBox(
-                height: updatedata!.data!.server!.length * 50,
-                width: MediaQuery.of(context).size.width * .2,
-                child: ListView.builder(
-                  itemCount: updatedata!.data!.server!.length,
-                  physics: const ScrollPhysics(),
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                        onTap: () {
-                          Common.saveSharedPref(
-                              "url", updatedata!.data!.server![index].url!);
-                          serverChoose = true;
-                          setState(() {});
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                          }
-                        },
-                        title: Text(updatedata!.data!.server![index].name!));
-                  },
-                ),
-              ));
-        });
-      },
-    );
-  }
+  // Future<dynamic> staffDialog(BuildContext context) {
+  //   return showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return StatefulBuilder(builder: (context, setState) {
+  //         return AlertDialog(
+  //             title: const Center(child: Text("Choose Server")),
+  //             content: SizedBox(
+  //               height: updatedata!.data!.server!.length * 50,
+  //               width: MediaQuery.of(context).size.width * .2,
+  //               child: ListView.builder(
+  //                 itemCount: updatedata!.data!.server!.length,
+  //                 physics: const ScrollPhysics(),
+  //                 shrinkWrap: true,
+  //                 itemBuilder: (context, index) {
+  //                   return ListTile(
+  //                       onTap: () {
+  //                         Common.saveSharedPref(
+  //                             "url", updatedata!.data!.server![index].url!);
+  //                         serverChoose = true;
+  //                         setState(() {});
+  //                         if (context.mounted) {
+  //                           Navigator.pop(context);
+  //                         }
+  //                       },
+  //                       title: Text(updatedata!.data!.server![index].name!));
+  //                 },
+  //               ),
+  //             ));
+  //       });
+  //     },
+  //   );
+  // }
 }
 
 extension StringExtension on String {

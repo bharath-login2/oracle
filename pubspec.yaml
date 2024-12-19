@@ -62,7 +62,7 @@ dependencies:
   webview_flutter: ^2.0.13
   dotted_border: ^2.0.0+3
   connectivity_plus: ^5.0.0
-  country_picker: ^2.0.21
+  country_picker: ^2.0.27
   app_settings: ^5.1.1
   shimmer: ^3.0.0
   get: ^4.6.6

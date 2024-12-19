@@ -299,10 +299,11 @@ class HttpService {
     }
   }
 
-  static Future sendOtp(phoneNumber, otp) async {
+  static Future sendOtp(phoneNumber, otp,String type) async {
     var params = {
       "phoneNumber": phoneNumber,
       "otp": otp,
+      "type": type
     };
     try {
       var result = await _dio.get("${await Config.getUrl()}send_otp",
