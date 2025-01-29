@@ -299,12 +299,8 @@ class HttpService {
     }
   }
 
-  static Future sendOtp(phoneNumber, otp,String type) async {
-    var params = {
-      "phoneNumber": phoneNumber,
-      "otp": otp,
-      "type": type
-    };
+  static Future sendOtp(phoneNumber, otp, String type) async {
+    var params = {"phoneNumber": phoneNumber, "otp": otp, "type": type};
     try {
       var result = await _dio.get("${await Config.getUrl()}send_otp",
           queryParameters: params);
@@ -1565,7 +1561,7 @@ class HttpService {
   static Future deleteContactGroup(token, groupId) async {
     var formData = FormData.fromMap({
       "token": token,
-      "contact_group_id": groupId, 
+      "contact_group_id": groupId,
     });
     try {
       var result = await _dio
@@ -3345,8 +3341,8 @@ class HttpService {
   static Future getRenewalDetailsById(String id, String type) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
-      "renewal_type": type, 
-      "renewal_id": id 
+      "renewal_type": type,
+      "renewal_id": id
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}getRenewalById",

@@ -9,11 +9,9 @@ import 'package:call_log/call_log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/service/service.dart';
 import 'package:phone_state/phone_state.dart';
-// import 'package:system_alert_window/system_alert_window.dart';
 import '../core/common.dart';
 import '../models/backgroundModel.dart';
 import '../models/callLogUploadPermissionModel.dart';
@@ -216,7 +214,7 @@ void showWindow() async {
             var logsForNumber =
                 callLogs.where((log) => log.number == status1.number);
             var sortedLogs = logsForNumber.toList()
-              ..sort((a, b) => b.timestamp!.compareTo(a.timestamp as num));
+              ..sort((a, b) => b.timestamp!.compareTo(a.timestamp as num)); 
             if (sortedLogs.isNotEmpty) {
               var lastCall = sortedLogs.first;
               var callType = lastCall.callType
