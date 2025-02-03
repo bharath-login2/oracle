@@ -8,7 +8,7 @@ import '../widgets/inputTextFeildWidget.dart';
 
 class UserChangePassword extends StatefulWidget {
   String? token;
-  UserChangePassword(this.token);
+  UserChangePassword(this.token, {super.key});
 
   @override
   _UserChangePasswordState createState() => _UserChangePasswordState();

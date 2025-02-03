@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
     if (userDashboard != null) {
       setState(() {
         _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
-          if (_currentPage < userDashboard!.data!.slides!.length) {
+          if (_currentPage < userDashboard!.data.slides.length) {
             _currentPage++;
           } else {
             _currentPage = 0;
@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
                                           color: const Color(0xFF2191ce)),
                                       child: CircleAvatar(
                                         backgroundImage: NetworkImage(
-                                          userDashboard!.data!.profilePic!,
+                                          userDashboard!.data.profilePic,
                                         ),
                                       ),
                                     )),
@@ -238,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                                       controller: _pageController,
                                       // physics: const NeverScrollableScrollPhysics(),
                                       itemCount:
-                                          userDashboard!.data!.slides!.length,
+                                          userDashboard!.data.slides.length,
                                       itemBuilder:
                                           (BuildContext context, int index) {
                                         return GestureDetector(
@@ -260,8 +260,8 @@ class _HomePageState extends State<HomePage> {
                                               image: DecorationImage(
                                                   image: NetworkImage(
                                                       userDashboard!
-                                                          .data!
-                                                          .slides![index]
+                                                          .data
+                                                          .slides[index]
                                                           .imageUrl
                                                           .toString()),
                                                   fit: BoxFit.fill),
@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> {
                                 Center(
                                   child: SmoothPageIndicator(
                                     controller: _pageController,
-                                    count: userDashboard!.data!.slides!.length,
+                                    count: userDashboard!.data.slides.length,
                                     effect: const WormEffect(
                                       dotHeight: 8,
                                       dotWidth: 8,
@@ -289,7 +289,7 @@ class _HomePageState extends State<HomePage> {
                                   height: 15,
                                 ),
                                 TextScroll(
-                                  userDashboard!.data!.scrollingText.toString(),
+                                  userDashboard!.data.scrollingText.toString(),
                                   velocity: const Velocity(
                                       pixelsPerSecond: Offset(40, 0)),
                                   intervalSpaces: 10,
@@ -313,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                                       children: <Widget>[
                                         // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
                                         Image.network(
-                                          userDashboard!.data!.image1
+                                          userDashboard!.data.image1
                                               .toString(),
                                           height: 160,
                                           width: double.infinity,
@@ -335,14 +335,14 @@ class _HomePageState extends State<HomePage> {
                                                 children: [
                                                   Text(
                                                     userDashboard!
-                                                        .data!.packageName
+                                                        .data.packageName
                                                         .toString(),
                                                     style: TextStyle(
                                                       fontSize: 18,
                                                       color: Colors.grey[800],
                                                     ),
                                                   ),
-                                                  userDashboard!.data!
+                                                  userDashboard!.data
                                                               .expireSoon ==
                                                           true
                                                       ? Container(
@@ -363,7 +363,7 @@ class _HomePageState extends State<HomePage> {
                                                                     bottom: 4),
                                                             child: Text(
                                                               userDashboard!
-                                                                  .data!
+                                                                  .data
                                                                   .expireSoonContent
                                                                   .toString(),
                                                               style:
@@ -414,7 +414,7 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                       Text(
                                                         userDashboard!
-                                                            .data!.startDate
+                                                            .data.startDate
                                                             .toString(),
                                                         style: const TextStyle(
                                                             fontSize: 15,
@@ -445,7 +445,7 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                       Text(
                                                         userDashboard!
-                                                            .data!.endDate
+                                                            .data.endDate
                                                             .toString(),
                                                         style: const TextStyle(
                                                             fontSize: 15,
@@ -462,7 +462,7 @@ class _HomePageState extends State<HomePage> {
                                                 height: 10,
                                               ),
                                               Text(
-                                                'Staff Count ( ${userDashboard!.data!.currentStaff}/${userDashboard!.data!.staffCount} )',
+                                                'Staff Count ( ${userDashboard!.data.currentStaff}/${userDashboard!.data.staffCount} )',
                                                 style: TextStyle(
                                                   fontSize: 13,
                                                   color: Colors.grey[700],
@@ -474,9 +474,9 @@ class _HomePageState extends State<HomePage> {
                                               StepProgressIndicator(
                                                 selectedColor: Colors.green,
                                                 totalSteps: userDashboard!
-                                                    .data!.staffCount!,
+                                                    .data.staffCount,
                                                 currentStep: userDashboard!
-                                                    .data!.currentStaff!,
+                                                    .data.currentStaff,
                                               ),
                                               // Add a row with two buttons spaced apart and aligned to the right side of the card
                                               Row(
@@ -518,7 +518,7 @@ class _HomePageState extends State<HomePage> {
                                           childAspectRatio: 1.3),
                                   padding: EdgeInsets.zero,
                                   itemCount:
-                                      userDashboard!.data!.modules!.length,
+                                      userDashboard!.data.modules.length,
                                   itemBuilder: (BuildContext context, i) {
                                     return Card(
                                       elevation: 5,
@@ -535,7 +535,7 @@ class _HomePageState extends State<HomePage> {
                                               true) {
                                             _upgrade(context);
                                           } else {
-                                            if (userDashboard!.data!.modules![i]
+                                            if (userDashboard!.data.modules[i]
                                                     .menuName ==
                                                 'call_management') {
                                               Navigator.push(
@@ -545,8 +545,8 @@ class _HomePageState extends State<HomePage> {
                                                         Dashboard(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'Staff_management') {
                                               Navigator.push(
                                                 context,
@@ -706,8 +706,8 @@ class _HomePageState extends State<HomePage> {
                                             //       );
                                             //     });
                                             // }
-                                            else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'Settings') {
                                               Navigator.push(
                                                 context,
@@ -716,8 +716,8 @@ class _HomePageState extends State<HomePage> {
                                                         WhatsappSettings(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'file_manager') {
                                               Navigator.push(
                                                 context,
@@ -726,8 +726,8 @@ class _HomePageState extends State<HomePage> {
                                                         FileMangerList(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'customers') {
                                               Navigator.push(
                                                 context,
@@ -736,8 +736,8 @@ class _HomePageState extends State<HomePage> {
                                                         ClientList(
                                                             widget.token!)),
                                               );
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'invoices') {
                                               Navigator.push(
                                                   context,
@@ -748,8 +748,8 @@ class _HomePageState extends State<HomePage> {
                                                           .toString(),
                                                     ),
                                                   ));
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'reports') {
                                               showDialog(
                                                   barrierColor: Colors.white
@@ -940,24 +940,24 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                     );
                                                   });
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'complaints') {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const ComplaintListScreen()));
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'renewal') {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
                                                           const RenewalDashboard()));
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'products') {
                                               Navigator.push(
                                                   context,
@@ -970,8 +970,8 @@ class _HomePageState extends State<HomePage> {
                                                       subCat: " widget.title",
                                                     ),
                                                   ));
-                                            } else if (userDashboard!.data!
-                                                    .modules![i].menuName ==
+                                            } else if (userDashboard!.data
+                                                    .modules[i].menuName ==
                                                 'whatsapp') {
                                               Navigator.push(
                                                 context,
@@ -981,7 +981,7 @@ class _HomePageState extends State<HomePage> {
                                               );
                                             } else {
                                               _dialogue(context,
-                                                  'Access ${userDashboard!.data!.modules![i].categoryName}');
+                                                  'Access ${userDashboard!.data.modules[i].categoryName}');
                                             }
                                           }
                                         },
@@ -991,7 +991,7 @@ class _HomePageState extends State<HomePage> {
                                             child: CachedNetworkImage(
                                               fit: BoxFit.fill,
                                               imageUrl: userDashboard!
-                                                  .data!.modules![i].image
+                                                  .data.modules[i].image
                                                   .toString(),
                                               errorWidget:
                                                   (context, url, error) =>

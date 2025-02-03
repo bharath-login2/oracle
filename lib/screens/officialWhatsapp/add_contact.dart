@@ -1,12 +1,12 @@
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+// import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:login2/core/common.dart';
 
 import '../../models/officialWhatsapp/addContactModel.dart';
 import '../../service/service.dart';
-import 'chat_home_screen.dart';
 import 'colorConst.dart';
 
 addContactPopUp(context, nameController, numberController) {
@@ -112,14 +112,33 @@ addContactPopUp(context, nameController, numberController) {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      final PhoneContact contact =
-                          await FlutterContactPicker.pickPhoneContact();
-                      String number = Common.trimPlus91(
-                          contact.phoneNumber!.number.toString());
-                      String name = contact.fullName!;
-                      numberController.text = number.replaceAll(' ', '');
-                      nameController.text = name;
-                      setState(() {});
+                      // final PhoneContact contact =
+                      //     await FlutterContactPicker.pickPhoneContact();
+                      // String number = Common.trimPlus91(
+                      //     contact.phoneNumber!.number.toString());
+                      // String name = contact.fullName!;
+                      // numberController.text = number.replaceAll(' ', '');
+                      // nameController.text = name;
+                      // setState(() {});
+                      if (await FlutterContacts.requestPermission()) {
+                        // Pick a contact
+                        final Contact? contact =
+                            await FlutterContacts.openExternalPick();
+                        if (contact != null && contact.phones.isNotEmpty) {
+                          String number = contact.phones.first.number;
+                          String name = contact.displayName;
+
+                          numberController.text =
+                              number.replaceAll(RegExp(r'[ ()-]'), '');
+                          nameController.text = name;
+
+                          setState(() {});
+                        }
+                      } else {
+                        Common.toastMessaage(
+                            "Permission denied! Please enable contacts access.",
+                            Colors.red);
+                      }
                     },
                     child: Container(
                       height: 45,

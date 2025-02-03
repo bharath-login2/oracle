@@ -2781,7 +2781,7 @@ class HttpService {
     } finally {}
   }
 
-  static socketChat(String groupId) async {
+  static socketChat(String groupId) async {  
     try {
       var formData = FormData.fromMap({
         "group_id": groupId,
@@ -2847,9 +2847,9 @@ class HttpService {
             TemplateContentModel.fromJson(response.data);
         return templateContentMoel;
       } else if (response.statusCode == 500) {
-      } else {}
+      } else {} 
     } finally {}
-  }
+  } 
 
   static sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type, List argList) async {

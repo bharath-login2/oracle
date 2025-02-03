@@ -707,7 +707,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                               TableRow(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(1),
-                                  color: Color(0xFFece9fd),
+                                  color: const Color(0xFFece9fd),
                                 ),
                                 children: const [
                                   Padding(
@@ -762,7 +762,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                                     ),
                                   ),
                                   Padding(
-                                    padding: EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.all(8.0),
                                     child: Text(
                                       receiptDetails!.data.totalAmount
                                           .toString(),
@@ -792,7 +792,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                               TableRow(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(1),
-                                  color: Color(0xFFece9fd),
+                                  color: const Color(0xFFece9fd),
                                 ),
                                 children: [
                                   const Padding(
@@ -835,7 +835,7 @@ class _ReceiptAddState extends State<ReceiptAdd> {
                               TableRow(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(1),
-                                  color: Color(0xFFece9fd),
+                                  color: const Color(0xFFece9fd),
                                 ),
                                 children: [
                                   const Padding(

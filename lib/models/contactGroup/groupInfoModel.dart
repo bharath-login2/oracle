@@ -79,9 +79,9 @@ class ContactNumbers {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['phone'] = this.phone;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['phone'] = phone;
     return data;
   }
 }

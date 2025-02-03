@@ -6,18 +6,18 @@ class TransferLeadModel {
   TransferLeadModel({this.data, this.status, this.message});
 
   TransferLeadModel.fromJson(Map<String, dynamic> json) {
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
     status = json['status'];
     message = json['message'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
-    data['status'] = this.status;
-    data['message'] = this.message;
+    data['status'] = status;
+    data['message'] = message;
     return data;
   }
 }
@@ -44,7 +44,7 @@ class Data {
     if (json['details'] != null) {
       details = <Details>[];
       json['details'].forEach((v) {
-        details!.add(new Details.fromJson(v));
+        details!.add(Details.fromJson(v));
       });
     }
     totalLeads = json['totalLeads'];
@@ -56,16 +56,16 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.details != null) {
-      data['details'] = this.details!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (details != null) {
+      data['details'] = details!.map((v) => v.toJson()).toList();
     }
-    data['totalLeads'] = this.totalLeads;
-    data['fromdate'] = this.fromdate;
-    data['todate'] = this.todate;
-    data['callPermission'] = this.callPermission;
-    data['warningMessage'] = this.warningMessage;
-    data['callLeadId'] = this.callLeadId;
+    data['totalLeads'] = totalLeads;
+    data['fromdate'] = fromdate;
+    data['todate'] = todate;
+    data['callPermission'] = callPermission;
+    data['warningMessage'] = warningMessage;
+    data['callLeadId'] = callLeadId;
     return data;
   }
 }
@@ -114,19 +114,19 @@ class Details {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['transfer_date'] = this.transferDate;
-    data['call_master_id'] = this.callMasterId;
-    data['client_name'] = this.clientName;
-    data['contact_number1'] = this.contactNumber1;
-    data['last_called_date'] = this.lastCalledDate;
-    data['from_staff'] = this.fromStaff;
-    data['to_staff'] = this.toStaff;
-    data['call_result'] = this.callResult;
-    data['lead_category'] = this.leadCategory;
-    data['lead_sub_category'] = this.leadSubCategory;
-    data['call_result_id'] = this.callResultId;
-    data['lead_method'] = this.leadMethod;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['transfer_date'] = transferDate;
+    data['call_master_id'] = callMasterId;
+    data['client_name'] = clientName;
+    data['contact_number1'] = contactNumber1;
+    data['last_called_date'] = lastCalledDate;
+    data['from_staff'] = fromStaff;
+    data['to_staff'] = toStaff;
+    data['call_result'] = callResult;
+    data['lead_category'] = leadCategory;
+    data['lead_sub_category'] = leadSubCategory;
+    data['call_result_id'] = callResultId;
+    data['lead_method'] = leadMethod;
     return data;
   }
 }

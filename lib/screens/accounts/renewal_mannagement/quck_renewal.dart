@@ -654,9 +654,9 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   children: [
                                     Checkbox(
                                         fillColor: createInvoiceExisting == true
-                                            ? const MaterialStatePropertyAll(
+                                            ? const WidgetStatePropertyAll(
                                                 Colors.blue)
-                                            : const MaterialStatePropertyAll(
+                                            : const WidgetStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
                                         value: createInvoiceExisting,
@@ -677,9 +677,9 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   children: [
                                     Checkbox(
                                         fillColor: isPaidExisting == true
-                                            ? const MaterialStatePropertyAll(
+                                            ? const WidgetStatePropertyAll(
                                                 Colors.blue)
-                                            : const MaterialStatePropertyAll(
+                                            : const WidgetStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
                                         value: isPaidExisting,
@@ -1327,9 +1327,9 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   children: [
                                     Checkbox(
                                         fillColor: createInvoiceNew == true
-                                            ? const MaterialStatePropertyAll(
+                                            ? const WidgetStatePropertyAll(
                                                 Colors.blue)
-                                            : const MaterialStatePropertyAll(
+                                            : const WidgetStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
                                         value: createInvoiceNew,
@@ -1349,9 +1349,9 @@ class _QuickRenewalState extends State<QuickRenewal> {
                                   children: [
                                     Checkbox(
                                         fillColor: isPaidNew == true
-                                            ? const MaterialStatePropertyAll(
+                                            ? const WidgetStatePropertyAll(
                                                 Colors.blue)
-                                            : const MaterialStatePropertyAll(
+                                            : const WidgetStatePropertyAll(
                                                 Colors.white),
                                         checkColor: Colors.white,
                                         value: isPaidNew,

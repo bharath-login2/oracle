@@ -4,7 +4,6 @@ import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/userManagement/menuModel.dart';
 import '../../models/userManagement/postSubmenuModel.dart';
-import '../../screens/userManagement/designationList.dart';
 import '../../service/service.dart';
 
 import 'package:flutter/material.dart';

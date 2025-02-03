@@ -13,7 +13,6 @@ import '../../models/lead_management/TransferLeadModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
 import '../../models/lead_management/deleteLeadModel.dart';
-import '../../models/lead_management/viewLeadsModel.dart';
 import '../../service/service.dart';
 import 'dashboard.dart';
 import 'leadDetails.dart';

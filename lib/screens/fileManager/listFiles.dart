@@ -41,7 +41,7 @@ class _ListFilesState extends State<ListFiles> {
   @override
   void dispose() {
     super.dispose();
-    audioCreateController.audioRecord.dispose();
+    // audioCreateController.audioRecord.dispose();
     audioCreateController.audioPlayer.dispose();
   }
 

@@ -22,7 +22,7 @@ class PushNotificationModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['title'] = title;
     data['message'] = message;
     data['type'] = type;

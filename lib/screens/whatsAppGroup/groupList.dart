@@ -18,7 +18,7 @@ import '../leadManagement/dashboard.dart';
 
 class GroupList extends StatefulWidget {
   String? token;
-  GroupList(this.token);
+  GroupList(this.token, {super.key});
 
   @override
   _GroupListState createState() => _GroupListState();
@@ -29,6 +29,7 @@ class _GroupListState extends State<GroupList> {
   CommonConfigureModel? configure;
   bool? result = true;
   bool? result1 = true;
+  @override
   void initState() {
     // TODO: implement initState
     super.initState();

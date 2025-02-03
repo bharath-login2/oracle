@@ -9,7 +9,7 @@ class CampaignsListModel {
     if (json['data'] != null) {
       data = <Data>[];
       json['data'].forEach((v) {
-        data!.add(new Data.fromJson(v));
+        data!.add(Data.fromJson(v));
       });
     }
     message = json['message'];
@@ -17,12 +17,12 @@ class CampaignsListModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
-    data['message'] = this.message;
-    data['status'] = this.status;
+    data['message'] = message;
+    data['status'] = status;
     return data;
   }
 }
@@ -50,12 +50,12 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['group_id'] = this.groupId;
-    data['profile_pic'] = this.profilePic;
-    data['campaign_name'] = this.campaignName;
-    data['campaign_id'] = this.campaignId;
-    data['fromMe'] = this.fromMe;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['group_id'] = groupId;
+    data['profile_pic'] = profilePic;
+    data['campaign_name'] = campaignName;
+    data['campaign_id'] = campaignId;
+    data['fromMe'] = fromMe;
     return data;
   }
 }

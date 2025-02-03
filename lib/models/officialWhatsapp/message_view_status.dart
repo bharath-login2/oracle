@@ -28,7 +28,7 @@ class MessageViewStatusModel {
 
 class Data {
   List<TotalCount> totalCounts;
-  List<Contact> contacts;
+  List<ContactList> contacts;
 
   Data({
     required this.totalCounts,
@@ -38,25 +38,25 @@ class Data {
   factory Data.fromJson(Map<String, dynamic> json) => Data(
         totalCounts: List<TotalCount>.from(
             json["total_counts"].map((x) => TotalCount.fromJson(x))),
-        contacts: List<Contact>.from(
-            json["contacts"].map((x) => Contact.fromJson(x))),
+        contacts: List<ContactList>.from(
+            json["contacts"].map((x) => ContactList.fromJson(x))),
       );
 }
 
-class Contact {
+class ContactList {
   String clientName;
   String phone;
   String status;
   String msgStatus;
 
-  Contact({
+  ContactList({
     required this.clientName,
     required this.phone,
     required this.status,
     required this.msgStatus,
   });
 
-  factory Contact.fromJson(Map<String, dynamic> json) => Contact(
+  factory ContactList.fromJson(Map<String, dynamic> json) => ContactList(
         clientName: json["client_name"],
         phone: json["phone"],
         status: json["status"],

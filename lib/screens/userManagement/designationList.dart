@@ -5,7 +5,6 @@ import '../../models/userManagement/deleteDesignationModel.dart';
 import '../../models/userManagement/designationListModel.dart';
 import '../../screens/userManagement/addDesignationPage.dart';
 import '../../screens/userManagement/editDesignation.dart';
-import '../../screens/userManagement/viewUsers.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 

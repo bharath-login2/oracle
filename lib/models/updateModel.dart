@@ -8,13 +8,13 @@ class UpdateModel {
   UpdateModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['status'] = this.status;
-    data['message'] = this.message;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['status'] = status;
+    data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
@@ -35,17 +35,17 @@ class Data {
     if (json['server'] != null) {
       server = <Server>[];
       json['server'].forEach((v) {
-        server!.add(new Server.fromJson(v));
+        server!.add(Server.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['currentVersion'] = this.currentVersion;
-    data['minVersion'] = this.minVersion;
-    if (this.server != null) {
-      data['server'] = this.server!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['currentVersion'] = currentVersion;
+    data['minVersion'] = minVersion;
+    if (server != null) {
+      data['server'] = server!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -63,9 +63,9 @@ class Server {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['name'] = this.name;
-    data['url'] = this.url;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['name'] = name;
+    data['url'] = url;
     return data;
   }
 }

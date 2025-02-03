@@ -2,7 +2,6 @@
 //
 //     final viewStaffModel = viewStaffModelFromJson(jsonString);
 
-import 'package:meta/meta.dart';
 import 'dart:convert';
 
 ViewStaffModel viewStaffModelFromJson(String str) => ViewStaffModel.fromJson(json.decode(str));

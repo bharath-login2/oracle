@@ -2400,7 +2400,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                     timeOut == true
                         ? "There seems to be a temporary issue, \n Please retry to continue"
                         : 'No Network Found !',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,

@@ -104,8 +104,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         hintText: 'Enter Phone number',
-                        contentPadding: EdgeInsets.all(10),
-                        border: OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.all(10),
+                        border: const OutlineInputBorder(),
                         prefixIcon: GestureDetector(
                           onTap: () {
                             showCountryPicker(

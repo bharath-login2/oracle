@@ -2,6 +2,8 @@ import '../../widgets/messageBox.dart';
 import 'package:flutter/material.dart';
 
 class BottomSendNavigation extends StatefulWidget {
+  const BottomSendNavigation({super.key});
+
   @override
   _BottomSendNavigationState createState() => _BottomSendNavigationState();
 }

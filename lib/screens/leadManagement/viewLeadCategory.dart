@@ -395,7 +395,6 @@ class _ViewLeadCategoryState extends State<ViewLeadCategory> {
                                                         ).then((_) {
                                                           getData();
                                                         });
-                                                        ;
                                                       },
                                                       child: const Icon(
                                                         Icons.remove_red_eye,

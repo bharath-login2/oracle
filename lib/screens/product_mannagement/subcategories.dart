@@ -5,8 +5,6 @@ import 'package:login2/models/product_mannagement/delete_subcategory.dart';
 import 'package:login2/models/product_mannagement/post_subcategory.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
 import 'package:login2/models/product_mannagement/update_subcategory.dart';
-import 'package:login2/screens/product_mannagement/categories.dart';
-import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/grid_shimmer.dart';
 

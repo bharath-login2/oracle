@@ -1,13 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:login2/models/lead_management/viewLeadSubCategoryModel.dart';
-import 'package:login2/screens/leadManagement/viewLeadCategory.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
 import '../../models/lead_management/addLeadSubCategoryModel.dart';
 import '../../models/lead_management/editLeadSubCategoryModel.dart';
 import '../../models/lead_management/leadSubCategoryDeleteModel.dart';
-import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
 
 import 'package:flutter/material.dart';

@@ -102,12 +102,12 @@ class _StaffListScreenState extends State<StaffListScreen> {
             : SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 20.0),
-                  child: viewStaff!.data!.staffList!.isEmpty
+                  child: viewStaff!.data.staffList.isEmpty
                       ? const Center(
                           child: Text("No Staff"),
                         )
                       : ListView.builder(
-                          itemCount: viewStaff!.data!.staffList!.length,
+                          itemCount: viewStaff!.data.staffList.length,
                           itemBuilder: (context, index) {
                             return Dismissible(
                               key: const Key('0'),
@@ -185,8 +185,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                       await HttpService
                                                           .deleteStaff(
                                                               viewStaff!
-                                                                  .data!
-                                                                  .staffList![
+                                                                  .data
+                                                                  .staffList[
                                                                       index]
                                                                   .staffId);
                                                   if (delete.data == true) {
@@ -199,7 +199,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                         MaterialPageRoute(
                                                             builder: (context) =>
                                                                 ViewUsers(widget
-                                                                    .token!)),
+                                                                    .token)),
                                                       );
                                                     }
                                                   } else {
@@ -218,7 +218,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                       });
                                 } else {
                                   String url =
-                                      'tel:${viewStaff!.data!.staffList![index].phoneNo}';
+                                      'tel:${viewStaff!.data.staffList[index].phoneNo}';
                                   await launch(url);
                                 }
                                 return null;
@@ -231,8 +231,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                             builder: (context) =>
                                                 StaffReportDashboard(
                                                     id: viewStaff!
-                                                        .data!
-                                                        .staffList![index]
+                                                        .data
+                                                        .staffList[index]
                                                         .staffId
                                                         .toString())));
                                   },
@@ -306,8 +306,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                               fit: BoxFit.cover,
                                                               image: NetworkImage(
                                                                   viewStaff!
-                                                                      .data!
-                                                                      .staffList![
+                                                                      .data
+                                                                      .staffList[
                                                                           index]
                                                                       .imageUrl
                                                                       .toString())),
@@ -342,8 +342,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                                 width: 150,
                                                                 child: Text(
                                                                   viewStaff!
-                                                                      .data!
-                                                                      .staffList![
+                                                                      .data
+                                                                      .staffList[
                                                                           index]
                                                                       .name
                                                                       .toString(),
@@ -368,8 +368,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                                 width: 150,
                                                                 child: Text(
                                                                   viewStaff!
-                                                                      .data!
-                                                                      .staffList![
+                                                                      .data
+                                                                      .staffList[
                                                                           index]
                                                                       .phoneNo
                                                                       .toString(),
@@ -387,8 +387,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                                 height: 5,
                                                               ),
                                                               viewStaff!
-                                                                          .data!
-                                                                          .staffList![
+                                                                          .data
+                                                                          .staffList[
                                                                               index]
                                                                           .branchName !=
                                                                       ''
@@ -403,7 +403,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                                             150,
                                                                         child:
                                                                             Text(
-                                                                          'Branch:${viewStaff!.data!.staffList![index].branchName}',
+                                                                          'Branch:${viewStaff!.data.staffList[index].branchName}',
                                                                           style: const TextStyle(
                                                                               fontSize: 13,
                                                                               color: Colors.black54,
@@ -420,8 +420,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                                 width: 150,
                                                                 child: Text(
                                                                   viewStaff!
-                                                                      .data!
-                                                                      .staffList![
+                                                                      .data
+                                                                      .staffList[
                                                                           index]
                                                                       .email
                                                                       .toString(),
@@ -468,8 +468,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                                         child: Center(
                                                           child: Text(
                                                             viewStaff!
-                                                                .data!
-                                                                .staffList![
+                                                                .data
+                                                                .staffList[
                                                                     index]
                                                                 .designation
                                                                 .toString(),

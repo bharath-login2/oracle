@@ -667,8 +667,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                     true,
                                                                 itemCount:
                                                                     commonDetails!
-                                                                        .data!
-                                                                        .transferStaffs!
+                                                                        .data
+                                                                        .transferStaffs
                                                                         .length,
                                                                 itemBuilder:
                                                                     (context,
@@ -681,8 +681,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                       child:
                                                                           Text(
                                                                         commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffName
                                                                             .toString(),
                                                                         style: const TextStyle(
@@ -693,8 +693,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                       ),
                                                                     ),
                                                                     value: checkedNotificationStaffItems.contains(commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffId
                                                                             .toString())
                                                                         ? true
@@ -706,13 +706,13 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                       if (value ==
                                                                           true) {
                                                                         checkedNotificationStaffItems.add(commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffId
                                                                             .toString());
                                                                         checkedNotificationsStaffItemsName.add(commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffName
                                                                             .toString());
                                                                         setState(
@@ -721,13 +721,13 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                         setState(
                                                                             () {
                                                                           checkedNotificationStaffItems.remove(commonDetails!
-                                                                              .data!
-                                                                              .transferStaffs![indexStaff]
+                                                                              .data
+                                                                              .transferStaffs[indexStaff]
                                                                               .tranStaffId
                                                                               .toString());
                                                                           checkedNotificationsStaffItemsName.remove(commonDetails!
-                                                                              .data!
-                                                                              .transferStaffs![indexStaff]
+                                                                              .data
+                                                                              .transferStaffs[indexStaff]
                                                                               .tranStaffName
                                                                               .toString());
                                                                         });
@@ -890,8 +890,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                               shrinkWrap: true,
                                                               itemCount:
                                                                   commonDetails!
-                                                                      .data!
-                                                                      .transferStaffs!
+                                                                      .data
+                                                                      .transferStaffs
                                                                       .length,
                                                               itemBuilder:
                                                                   (context,
@@ -902,8 +902,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                     width: 200,
                                                                     child: Text(
                                                                       commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs![
+                                                                          .data
+                                                                          .transferStaffs[
                                                                               indexStaff]
                                                                           .tranStaffName
                                                                           .toString(),
@@ -917,8 +917,8 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                     ),
                                                                   ),
                                                                   value: checkedStaffItems.contains(commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs![
+                                                                          .data
+                                                                          .transferStaffs[
                                                                               indexStaff]
                                                                           .tranStaffId
                                                                           .toString())
@@ -931,14 +931,14 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                     if (value ==
                                                                         true) {
                                                                       checkedStaffItems.add(commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs![
+                                                                          .data
+                                                                          .transferStaffs[
                                                                               indexStaff]
                                                                           .tranStaffId
                                                                           .toString());
                                                                       checkedStaffItemsName.add(commonDetails!
-                                                                          .data!
-                                                                          .transferStaffs![
+                                                                          .data
+                                                                          .transferStaffs[
                                                                               indexStaff]
                                                                           .tranStaffName
                                                                           .toString());
@@ -948,13 +948,13 @@ class _FacebookSettingsState extends State<FacebookSettings> {
                                                                       setState(
                                                                           () {
                                                                         checkedStaffItems.remove(commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffId
                                                                             .toString());
                                                                         checkedStaffItemsName.remove(commonDetails!
-                                                                            .data!
-                                                                            .transferStaffs![indexStaff]
+                                                                            .data
+                                                                            .transferStaffs[indexStaff]
                                                                             .tranStaffName
                                                                             .toString());
                                                                       });

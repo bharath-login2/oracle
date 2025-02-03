@@ -41,14 +41,12 @@ class _TrueCallerOverlayState extends State<TrueCallerOverlay> {
 
   void setStream() {
     PhoneState.stream.listen((event) {
-      if (event != null) {
-        status1 = event;
-        if (status1.number != null) {
-          number1 = status1.number.toString();
-          getOverlayDetails(number1);
-        }
+      status1 = event;
+      if (status1.number != null) {
+        number1 = status1.number.toString();
+        getOverlayDetails(number1);
       }
-    });
+        });
   }
 
   getOverlayDetails(number) async {

@@ -2842,7 +2842,7 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             labelStyle: TextStyle(color: Colors.grey)),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 15,
                     ),
                     Expanded(

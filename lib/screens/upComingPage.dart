@@ -2,12 +2,8 @@ import 'package:login2/screens/drawerScreen.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
-import '../../screens/authentication/login.dart';
 import 'bottom_navigation_bar.dart';
-import '../../screens/homePage.dart';
-import 'leadManagement/add_leads.dart';
 import '../../screens/leadManagement/dashboard.dart';
-import '../../screens/settings/whatsappSettings.dart';
 import 'package:flutter/material.dart';
 
 class UpComingPage extends StatefulWidget {

@@ -29,14 +29,14 @@ class _RegisterButtonWidgetState extends State<RegisterButtonWidget> {
         ),
         child: ElevatedButton(
           style: ButtonStyle(
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+            shape: WidgetStateProperty.all<RoundedRectangleBorder>(
               RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
             ),
-            minimumSize: MaterialStateProperty.all(Size(SizeConfig.screenWidth!/1.37, SizeConfig.screenHeight!/13.66)),
-            backgroundColor: MaterialStateProperty.all(Colors.transparent),
-            shadowColor: MaterialStateProperty.all(Colors.transparent),
+            minimumSize: WidgetStateProperty.all(Size(SizeConfig.screenWidth!/1.37, SizeConfig.screenHeight!/13.66)),
+            backgroundColor: WidgetStateProperty.all(Colors.transparent),
+            shadowColor: WidgetStateProperty.all(Colors.transparent),
           ),
           onPressed: () {
             //Navigator.push(context, MaterialPageRoute(builder: (context) => Register()));

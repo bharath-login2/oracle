@@ -6,7 +6,6 @@ import '../../models/lead_management/callResultResonModel.dart';
 import '../../models/lead_management/editLeadFollowupModel.dart';
 import '../../models/lead_management/followupDetailsModel.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
-import '../../screens/leadManagement/leadDetails.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

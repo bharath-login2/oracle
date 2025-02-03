@@ -7,17 +7,17 @@ class CallLogUploadPermissionModel {
 
   CallLogUploadPermissionModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
     status = json['status'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
-    data['status'] = this.status;
+    data['status'] = status;
     return data;
   }
 }
@@ -34,9 +34,9 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['incoming'] = this.incoming;
-    data['outgoing'] = this.outgoing;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['incoming'] = incoming;
+    data['outgoing'] = outgoing;
     return data;
   }
 }

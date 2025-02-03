@@ -11,7 +11,6 @@ import '../../../models/clients/receiptDeleteModel.dart';
 import '../../../service/service.dart';
 import '../../leadManagement/webview.dart';
 import 'clientDetails.dart';
-import 'invoiceList.dart';
 
 class ReceiptByInvoice extends StatefulWidget {
   String token;

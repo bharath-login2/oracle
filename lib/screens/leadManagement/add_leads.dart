@@ -1,7 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+// import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
@@ -1836,13 +1837,23 @@ class _AddLeadsState extends State<AddLeads> {
     );
   }
 
-  selectContact() async {
-    final PhoneContact contact = await FlutterContactPicker.pickPhoneContact();
-    String number = contact.phoneNumber!.number.toString();
-    String name = contact.fullName!;
-    contactNo.text =
-        Common.trimPlus91(number.replaceAll(RegExp(r'[ ()-]'), ''));
-    clientName.text = name;
-    setState(() {});
+  Future<void> selectContact() async {
+    // Check and request permissions
+    if (await FlutterContacts.requestPermission()) {
+      // Pick a contact
+      final Contact? contact = await FlutterContacts.openExternalPick();
+      if (contact != null && contact.phones.isNotEmpty) {
+        String number = contact.phones.first.number;
+        String name = contact.displayName;
+
+        contactNo.text = number.replaceAll(RegExp(r'[ ()-]'), '');
+        clientName.text = name;
+
+        setState(() {});
+      }
+    } else {
+      Common.toastMessaage(
+          "Permission denied! Please enable contacts access.", Colors.red);
+    }
   }
 }

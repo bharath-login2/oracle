@@ -8,13 +8,13 @@ class MainFileManagerPermissionModel {
   MainFileManagerPermissionModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['status'] = this.status;
-    data['message'] = this.message;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['status'] = status;
+    data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
@@ -57,16 +57,16 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['create_file'] = this.createFile;
-    data['open_file'] = this.openFile;
-    data['rename_file'] = this.renameFile;
-    data['delete_file'] = this.deleteFile;
-    data['download_file'] = this.downloadFile;
-    data['max_file_size'] = this.maxFileSize;
-    data['remainingStorage'] = this.remainingStorage;
-    data['totalStorage'] = this.totalStorage;
-    data['percentageComplete'] = this.percentageComplete;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['create_file'] = createFile;
+    data['open_file'] = openFile;
+    data['rename_file'] = renameFile;
+    data['delete_file'] = deleteFile;
+    data['download_file'] = downloadFile;
+    data['max_file_size'] = maxFileSize;
+    data['remainingStorage'] = remainingStorage;
+    data['totalStorage'] = totalStorage;
+    data['percentageComplete'] = percentageComplete;
     return data;
   }
 }

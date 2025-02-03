@@ -6,18 +6,18 @@ class ReceiptByInvModel {
   ReceiptByInvModel({this.data, this.status, this.message});
 
   ReceiptByInvModel.fromJson(Map<String, dynamic> json) {
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
     status = json['status'];
     message = json['message'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
-    data['status'] = this.status;
-    data['message'] = this.message;
+    data['status'] = status;
+    data['message'] = message;
     return data;
   }
 }
@@ -32,18 +32,18 @@ class Data {
     if (json['lists'] != null) {
       lists = <Lists>[];
       json['lists'].forEach((v) {
-        lists!.add(new Lists.fromJson(v));
+        lists!.add(Lists.fromJson(v));
       });
     }
     receiptSum = json['receipt_sum'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.lists != null) {
-      data['lists'] = this.lists!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (lists != null) {
+      data['lists'] = lists!.map((v) => v.toJson()).toList();
     }
-    data['receipt_sum'] = this.receiptSum;
+    data['receipt_sum'] = receiptSum;
     return data;
   }
 }
@@ -83,7 +83,7 @@ class Lists {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
     data['receipt_number'] = receiptNumber;
     data['invoice_number'] = invoiceNumber;

@@ -1,17 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 class AudioRecordController extends GetxController {
-  late Record audioRecord;
+  final audioRecord = AudioRecorder();
   late AudioPlayer audioPlayer;
   RxBool isRecording = false.obs;
   RxString audioPath = "".obs;
   RxBool isBack = false.obs;
   @override
   void onInit() {
-    audioRecord = Record();
+    // audioRecord = Record();
     audioPlayer = AudioPlayer();
     super.onInit();
   }
@@ -27,8 +29,11 @@ class AudioRecordController extends GetxController {
   Future<void> startRecording() async {
     try {
       if (await audioRecord.hasPermission()) {
+        Directory? dir = await getApplicationDocumentsDirectory();
+        String path =
+            '${dir.path}/my_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
         startTimer();
-        await audioRecord.start();
+        await audioRecord.start(const RecordConfig(), path: path);
         isRecording.value = true;
       }
     } catch (e) {
@@ -47,7 +52,7 @@ class AudioRecordController extends GetxController {
       int minutesElapsed = minutes.value * 60;
       totalDuration.value = minutesElapsed + seconds.value;
     } catch (e) {
-      print("error $e");
+      // print("error $e");
     }
   }
 

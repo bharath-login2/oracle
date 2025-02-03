@@ -1,7 +1,6 @@
 // ignore_for_file: must_be_immutable
 
 import 'dart:developer';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../core/common.dart';
 import '../../models/officialWhatsapp/sendMesaageModel.dart';
 import '../../service/service.dart';
-import 'chatScreen.dart';
 import 'colorConst.dart';
 
 class ImageViewScreen extends StatefulWidget {

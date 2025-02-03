@@ -2,17 +2,18 @@
 
 import 'dart:developer';
 import 'dart:io';
-import 'package:call_log/call_log.dart';
+import 'package:call_e_log/call_log.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dialpad/flutter_dialpad.dart';
+// import 'package:flutter_dialpad/flutter_dialpad.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/config.dart';
 import 'package:login2/screens/leadManagement/add_leads.dart';
 import 'package:lottie/lottie.dart';
+import 'package:mobile_number/mobile_number.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sim_data/sim_data.dart';
+// import 'package:sim_data/sim_data.dart';
 import '../../core/common.dart';
 import '../../models/callLogUploadPermissionModel.dart';
 import '../../models/callLogs/callLogHistoryModel.dart';
@@ -58,9 +59,39 @@ class _CallLogsState extends State<CallLogs> {
   bool displayOverApps = false;
   CallLogUploadPermissionModel? callUploadPermission;
   String roleId = "";
-  String selectedSim = "";
-  String selectedSimId = "";
+  // String selectedSim = "";
+  // String selectedSimId = "";
   List<Map<String, dynamic>> simList = [];
+  String phoneNumber = "";
+
+  void dialNumber(String number) {
+    setState(() {
+      phoneNumber += number;
+    });
+  }
+
+  void deleteLastDigit() {
+    if (phoneNumber.isNotEmpty) {
+      setState(() {
+        phoneNumber = phoneNumber.substring(0, phoneNumber.length - 1);
+      });
+    }
+  }
+
+  List<String> dialPadNumbers = [
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '*',
+    '0',
+    '#'
+  ];
 
   @override
   void initState() {
@@ -76,34 +107,38 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   getSharedData() async {
-    refresh = true;
-    permissionAccess = await Common.getSharedPref("callLogPermission");
-    uploadPermission = await Common.getSharedPref("uploadCallLog");
-    roleId = await Common.getSharedPref("roleId");
-    var sim = await Common.getSharedPref("simName");
-    if (sim != null) {
-      selectedSim = await Common.getSharedPref("simName");
-      selectedSimId = await Common.getSharedPref("simId");
-    } else {
-      selectedSim = "Tap to select";
-      selectedSimId = "";
-    }
-    if (uploadPermission != "true" && Platform.isIOS) {
-      selectedIndex = -1;
-    }
-    setState(() {});
-    if (permissionAccess == 'true') {
-      if (await Permission.phone.request().isGranted) {
-        final Iterable<CallLogEntry> result = await CallLog.query(
-          dateFrom: from,
-          dateTo: to,
-        );
-        getSimDetails();
-        setState(() {
-          _callLogEntries = result;
-          refresh = false;
-        });
+    try {
+      refresh = true;
+      permissionAccess = await Common.getSharedPref("callLogPermission");
+      uploadPermission = await Common.getSharedPref("uploadCallLog");
+      roleId = await Common.getSharedPref("roleId");
+      // var sim = await Common.getSharedPref("simName");
+      // if (sim != null) {
+      //   selectedSim = await Common.getSharedPref("simName");
+      //   selectedSimId = await Common.getSharedPref("simId");
+      // } else {
+      //   selectedSim = "Tap to select";
+      //   selectedSimId = "";
+      // }
+      if (uploadPermission != "true" && Platform.isIOS) {
+        selectedIndex = -1;
       }
+      setState(() {});
+      if (permissionAccess == 'true') {
+        if (await Permission.phone.request().isGranted) {
+          final Iterable<CallLogEntry> result = await CallLog.query(
+            dateFrom: from,
+            dateTo: to,
+          );
+          // getSimDetails();
+          setState(() {
+            _callLogEntries = result;
+            refresh = false;
+          });
+        }
+      }
+    } catch (e) {
+      log(e.toString());
     }
   }
 
@@ -123,21 +158,25 @@ class _CallLogsState extends State<CallLogs> {
     }
   }
 
-  void getSimDetails() async {
-    try {
-      simList.clear();
-      SimData simData = await SimDataPlugin.getSimData();
-      for (var s in simData.cards) {
-        log('id: ${s.subscriptionId}');
-        simList.add({"id": s.subscriptionId, "name": s.displayName});
-      }
-      if (simList.length > 1) {
-        simList.add({"id": "", "name": "Both"});
-      }
-    } on PlatformException catch (e) {
-      debugPrint("error! code: ${e.code} - message: ${e.message}");
-    }
-  }
+  // void getSimDetails() async {
+  //   try {
+  //     simList.clear();
+  //     // SimData simData = await SimDataPlugin.getSimData();
+  //     final List<SimCard>? simData = await MobileNumber.getSimCards;
+  //     for (var s in simData!.reversed) {
+  //       log('id: ${s.slotIndex! + 1}');
+  //       simList.add({"id": s.slotIndex! + 1, "name": s.displayName});
+  //     }
+  //     if (simList.length > 1) {
+  //       simList.add({"id": "", "name": "Both"});
+  //     } else if (simList.length == 1) {
+  //       selectedSimId = simList[0]["id"].toString();
+  //       selectedSim = simList[0]["name"].toString();
+  //     }
+  //   } on PlatformException catch (e) {
+  //     log("error! code: ${e.code} - message: ${e.message}");
+  //   }
+  // }
 
   getPermission() async {
     Map<String, dynamic> body2 = {
@@ -473,13 +512,13 @@ class _CallLogsState extends State<CallLogs> {
                                                 itemBuilder:
                                                     (context, indexStaff) {
                                                   return Visibility(
-                                                    visible: selectedSimId ==
-                                                            "" ||
-                                                        selectedSimId ==
-                                                            _callLogEntries
-                                                                .elementAt(
-                                                                    indexStaff)
-                                                                .phoneAccountId,
+                                                    // visible: selectedSimId ==
+                                                    //         "" ||
+                                                    //     selectedSimId ==
+                                                    //         _callLogEntries
+                                                    //             .elementAt(
+                                                    //                 indexStaff)
+                                                    //             .phoneAccountId,
                                                     child: Dismissible(
                                                       key: const Key('0'),
                                                       background: Container(
@@ -624,7 +663,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                               .duration,
                                                                           "simName": _callLogEntries
                                                                               .elementAt(indexStaff)
-                                                                              .simDisplayName,
+                                                                              .simDisplayName??"NIL",
                                                                           "timeStamp": _callLogEntries
                                                                               .elementAt(indexStaff)
                                                                               .timestamp,
@@ -665,7 +704,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                   "simName": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
-                                                                      .simDisplayName,
+                                                                      .simDisplayName??"NIL",
                                                                   "timeStamp": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
@@ -738,7 +777,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                   "simName": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
-                                                                      .simDisplayName,
+                                                                      .simDisplayName??"NIL",
                                                                   "timeStamp": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
@@ -875,7 +914,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                             "callTypes": _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
                                                                                             "time": '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
                                                                                             "duration": _callLogEntries.elementAt(indexStaff).duration,
-                                                                                            "simName": _callLogEntries.elementAt(indexStaff).simDisplayName,
+                                                                                            "simName": _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
                                                                                             "timeStamp": _callLogEntries.elementAt(indexStaff).timestamp,
                                                                                           });
                                                                                           historyIndex.add(indexStaff);
@@ -1721,54 +1760,7 @@ class _CallLogsState extends State<CallLogs> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.green,
           onPressed: () {
-            showGeneralDialog(
-              barrierLabel: "showGeneralDialog",
-              barrierDismissible: true,
-              barrierColor: Colors.black.withOpacity(0.6),
-              transitionDuration: const Duration(milliseconds: 400),
-              context: context,
-              pageBuilder: (context, _, __) {
-                return StatefulBuilder(
-                  builder: (context, setState) {
-                    return Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: double.maxFinite,
-                        height: 700,
-                        clipBehavior: Clip.antiAlias,
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        child: Material(
-                          child: DialPad(
-                            hideSubtitle: true,
-                            makeCall: _makeCall,
-                            keyPressed: _keyPressed,
-                            enableDtmf: false,
-                            outputMask: "0000000000",
-                            backspaceButtonIconColor: Colors.black,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-              transitionBuilder: (_, animation1, __, child) {
-                return SlideTransition(
-                  position: Tween(
-                    begin: const Offset(0, 1),
-                    end: const Offset(0, 0),
-                  ).animate(animation1),
-                  child: child,
-                );
-              },
-            );
+            dialPad(context);
           },
           child: const Icon(
             Icons.call,
@@ -1776,6 +1768,150 @@ class _CallLogsState extends State<CallLogs> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<Object?> dialPad(BuildContext context) {
+    return showGeneralDialog(
+      barrierLabel: "showGeneralDialog",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.82,
+                clipBehavior: Clip.antiAlias,
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Container(
+                          width: MediaQuery.of(context).size.width * .8,
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              phoneNumber.isEmpty
+                                  ? "Enter Number"
+                                  : phoneNumber,
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 1.5,
+                            mainAxisSpacing: 20,
+                          ),
+                          itemCount: dialPadNumbers.length,
+                          itemBuilder: (context, index) {
+                            return ElevatedButton(
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                setState(
+                                    () => dialNumber(dialPadNumbers[index]));
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.all(20),
+                                  elevation: 2,
+                                  shape: const CircleBorder(),
+                                  backgroundColor: Colors.white),
+                              child: Text(
+                                dialPadNumbers[index],
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          /// Delete Button
+                          InkWell(
+                            child: const Icon(Icons.backspace,
+                                size: 30, color: Colors.grey),
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              if (phoneNumber.isNotEmpty) {
+                                setState(() => deleteLastDigit());
+                              }
+                            },
+                            onLongPress: () {
+                              HapticFeedback.lightImpact();
+                              setState(() {
+                                phoneNumber = "";
+                              });
+                            },
+                          ),
+
+                          /// Call Button
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.all(20),
+                                elevation: 5,
+                                shape: const CircleBorder(),
+                                backgroundColor: Colors.green),
+                            onPressed: phoneNumber.isEmpty
+                                ? null
+                                : () async {
+                                    Common.dialPad(phoneNumber);
+                                  },
+                            child: const Icon(
+                              Icons.call,
+                              color: Colors.white,
+                              size: 35,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 30,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+      transitionBuilder: (_, animation1, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: const Offset(0, 0),
+          ).animate(animation1),
+          child: child,
+        );
+      },
     );
   }
 
@@ -1862,31 +1998,31 @@ class _CallLogsState extends State<CallLogs> {
           ),
         ),
         // if (simList.length > 1)
-        PopupMenuItem<String>(
-          value: '4',
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.sim_card),
-                  const SizedBox(
-                    width: 5,
-                  ),
-                  Row(
-                    children: [
-                      const Text('Sim: '),
-                      Text(
-                        selectedSim,
-                        style: const TextStyle(color: Colors.green),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        // PopupMenuItem<String>(
+        //   value: '4',
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //     children: [
+        //       Row(
+        //         children: [
+        //           const Icon(Icons.sim_card),
+        //           const SizedBox(
+        //             width: 5,
+        //           ),
+        //           Row(
+        //             children: [
+        //               const Text('Sim: '),
+        //               Text(
+        //                 selectedSim,
+        //                 style: const TextStyle(color: Colors.green),
+        //               ),
+        //             ],
+        //           ),
+        //         ],
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }
@@ -1907,15 +2043,15 @@ class _CallLogsState extends State<CallLogs> {
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
                     return ListTile(
-                        onTap: () {
-                          selectedSimId = simList[index]["id"].toString();
-                          selectedSim = simList[index]["name"].toString();
-                          Common.saveSharedPref(
-                              "simName", simList[index]["name"]);
-                          Common.saveSharedPref(
-                              "simId", simList[index]["id"].toString());
-                          Navigator.pop(context);
-                        },
+                        // onTap: () {
+                        //   selectedSimId = simList[index]["id"].toString();
+                        //   selectedSim = simList[index]["name"].toString();
+                        //   Common.saveSharedPref(
+                        //       "simName", simList[index]["name"]);
+                        //   Common.saveSharedPref(
+                        //       "simId", simList[index]["id"].toString());
+                        //   Navigator.pop(context);
+                        // },
                         title:
                             Text("${index + 1} : ${simList[index]["name"]}"));
                   },
@@ -2030,12 +2166,4 @@ class _CallLogsState extends State<CallLogs> {
       historyIndex.clear();
     });
   }
-}
-
-Future<void> _makeCall(String number) async {
-  Common.dialPad('+91$number');
-}
-
-void _keyPressed(String number) {
-  print(number);
 }

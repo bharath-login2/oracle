@@ -6,7 +6,6 @@ import '../../core/common.dart';
 import '../../models/userManagement/addUserCommonDataModel.dart';
 import '../../models/userManagement/addUserImageModel.dart';
 import '../../models/userManagement/addUserModel.dart';
-import '../../screens/userManagement/viewUsers.dart';
 import '../../service/service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -279,7 +278,7 @@ class _AddUserState extends State<AddUser> {
                                                         .data!
                                                         .designations![ind]
                                                         .designation
-                                                        .toString(), 
+                                                        .toString(),
                                                     style: const TextStyle(
                                                         fontSize: 18),
                                                   ),
@@ -647,11 +646,11 @@ class _AddUserState extends State<AddUser> {
 
                                 AddUserImageModel upload =
                                     await HttpService.uploadImages(formData);
-                                Common.toastMessaage( 
+                                Common.toastMessaage(
                                     upload.message, Colors.red);
                                 if (context.mounted) {
                                   Navigator.pop(context);
-                                  Navigator.pop(context); 
+                                  Navigator.pop(context);
                                 }
                               } else {
                                 Common.toastMessaage(
@@ -680,11 +679,10 @@ class _AddUserState extends State<AddUser> {
                         ),
                         const SizedBox(
                           height: 20,
-                        ) 
+                        )
                       ],
                     ),
                   )
-
                 : Center(
                     child: Lottie.asset('assets/main/loading.json',
                         fit: BoxFit.fill),
@@ -776,11 +774,8 @@ class _AddUserState extends State<AddUser> {
 
   _cropImage(filePath) async {
     File? croppedFile = (await ImageCropper().cropImage(
-      sourcePath: filePath,
-      aspectRatioPresets: [
-        CropAspectRatioPreset.ratio5x3,
-      ],
-    )) as File?;
+        sourcePath: filePath,
+        aspectRatio: const CropAspectRatio(ratioX: 5, ratioY: 3))) as File?;
     if (croppedFile != null) {
       _imageFile = croppedFile.path;
       setState(() {});
@@ -792,7 +787,7 @@ class _AddUserState extends State<AddUser> {
       // Navigator.pop(context);
       return Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center, 
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20),

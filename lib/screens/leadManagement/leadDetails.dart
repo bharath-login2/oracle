@@ -5,11 +5,11 @@ import 'dart:io';
 import 'package:accordion/accordion.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:dio/dio.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -7260,34 +7260,40 @@ class _LeadDetailsState extends State<LeadDetails> {
 
                                     if (permission ==
                                         PermissionStatus.granted) {
-                                      Contact newContact = Contact();
-                                      newContact.givenName = contactFName.text;
-                                      newContact.familyName = contactLName.text;
-                                      newContact.phones = [
-                                        Item(
-                                            label: "mobile",
-                                            value: contactMobile.text)
-                                      ];
-                                      await ContactsService.addContact(
-                                          newContact);
+                                      if (context.mounted) {
+                                        Navigator.of(context,
+                                                rootNavigator: true)
+                                            .pop();
+                                        Common.showProgressDialog(
+                                            context, "Saving...");
+                                      }
+                                      final newContact = Contact(
+                                        displayName:
+                                            "${contactFName.text} ${contactLName.text}",
+                                        phones: [Phone(contactMobile.text)],
+                                      );
+                                      await newContact.insert();
+
                                       Common.toastMessaage(
                                           'Saved', Colors.green);
                                     } else {
                                       //_handleInvalidPermissions(context);
                                     }
                                   } else {
-                                    Contact newContact = Contact();
-                                    newContact.givenName = contactFName.text;
-                                    newContact.familyName = contactLName.text;
-                                    newContact.phones = [
-                                      Item(
-                                          label: "mobile",
-                                          value: contactMobile.text)
-                                    ];
-                                    await ContactsService.addContact(
-                                        newContact);
-                                    Common.toastMessaage(
-                                        'Contact Saved', Colors.green);
+                                    if (context.mounted) {
+                                      Navigator.of(context, rootNavigator: true)
+                                          .pop();
+                                      Common.showProgressDialog(
+                                          context, "Saving...");
+                                    }
+                                    final newContact = Contact(
+                                      displayName:
+                                          "${contactFName.text} ${contactLName.text}",
+                                      phones: [Phone(contactMobile.text)],
+                                    );
+                                    await newContact.insert();
+
+                                    Common.toastMessaage('Saved', Colors.green);
                                   }
                                   if (context.mounted) {
                                     Navigator.of(context, rootNavigator: true)

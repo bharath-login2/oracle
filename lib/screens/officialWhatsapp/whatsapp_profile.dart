@@ -3,10 +3,10 @@
 import 'dart:developer';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttercontactpicker/fluttercontactpicker.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+// import 'package:fluttercontactpicker/fluttercontactpicker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
-import 'package:login2/models/officialWhatsapp/addContactModel.dart';
 import 'package:login2/models/officialWhatsapp/campaigns_official_message_model.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -423,14 +423,34 @@ class _WhatsappProfileState extends State<WhatsappProfile> {
                     ),
                     GestureDetector(
                       onTap: () async {
-                        final PhoneContact contact =
-                            await FlutterContactPicker.pickPhoneContact();
-                        String number = Common.trimPlus91(
-                            contact.phoneNumber!.number.toString());
-                        String name = contact.fullName!;
-                        numberTextController.text = number.replaceAll(' ', '');
-                        nameTextController.text = name;
-                        setState(() {});
+                        // final PhoneContact contact =
+                        //     await FlutterContactPicker.pickPhoneContact();
+                        // String number = Common.trimPlus91(
+                        //     contact.phoneNumber!.number.toString());
+                        // String name = contact.fullName!;
+                        // numberTextController.text = number.replaceAll(' ', '');
+                        // nameTextController.text = name;
+                        // setState(() {});
+
+                        if (await FlutterContacts.requestPermission()) {
+                          // Pick a contact
+                          final Contact? contact =
+                              await FlutterContacts.openExternalPick();
+                          if (contact != null && contact.phones.isNotEmpty) {
+                            String number = contact.phones.first.number;
+                            String name = contact.displayName;
+
+                            numberTextController.text =
+                                number.replaceAll(RegExp(r'[ ()-]'), '');
+                            nameTextController.text = name;
+
+                            setState(() {});
+                          }
+                        } else {
+                          Common.toastMessaage(
+                              "Permission denied! Please enable contacts access.",
+                              Colors.red);
+                        }
                       },
                       child: Container(
                         height: 45,

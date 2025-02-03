@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+// import '../models/pushNotificationModel.dart';
 import '../models/pushNotificationModel.dart';
 import 'leadManagement/leadDetails.dart';
 import 'officialWhatsapp/chatScreen.dart';
@@ -60,7 +61,7 @@ class FirebaseServices {
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
-        sound: message.notification?.apple?.sound?.name ?? 'default', 
+        sound: message.notification?.apple?.sound?.name ?? 'default',
       );
 
       var platformChannelSpecifics = NotificationDetails(
@@ -116,10 +117,5 @@ class FirebaseServices {
     } else {
       Get.to(() => Dashboard(token!));
     }
-  }
-
-  Future<void> _firebaseMessagingBackgroundHandler(
-      RemoteMessage message) async {
-    log("onMessageOpenedApp: $message");
   }
 }

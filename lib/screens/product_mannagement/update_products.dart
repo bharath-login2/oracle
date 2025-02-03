@@ -9,7 +9,6 @@ import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/products_by_id_model.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
-import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/service/service.dart';
 
 class UpdateProducts extends StatefulWidget {

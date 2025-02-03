@@ -403,7 +403,7 @@ class _AllReportState extends State<AllReport> {
                                         builder: (BuildContext ctx) {
                                           return AlertDialog(
                                             title: const Text('Alert !!!'),
-                                            content: Text(""),
+                                            content: const Text(""),
                                             actions: [
                                               TextButton(
                                                   onPressed: () {
@@ -1020,7 +1020,7 @@ class _AllReportState extends State<AllReport> {
                                                                       title: const Text(
                                                                           'Alert !!!'),
                                                                       content:
-                                                                          Text(
+                                                                          const Text(
                                                                               ""),
                                                                       actions: [
                                                                         TextButton(

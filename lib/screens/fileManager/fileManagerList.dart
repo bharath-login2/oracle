@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:login2/screens/fileManager/listFiles.dart';
-import 'package:login2/screens/homePage.dart';
-import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:lottie/lottie.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../models/fileManager/fileMagerMOdel.dart';

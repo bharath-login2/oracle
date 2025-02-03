@@ -13,8 +13,8 @@ Widget chatBubble(msg, context
   // var creation =
   // doc['created_on'] == null ? DateTime.now() : doc['created_on'].toDate();
   // var time = intl.DateFormat("h:mma").format(creation);
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
+  late VideoPlayerController controller;
+  late Future<void> initializeVideoPlayerFuture;
 
   return Directionality(
     textDirection:

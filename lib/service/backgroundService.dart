@@ -5,12 +5,13 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:ui';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:call_log/call_log.dart';
+import 'package:call_e_log/call_log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/service/service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:phone_state/phone_state.dart';
 import '../core/common.dart';
 import '../models/backgroundModel.dart';
@@ -20,8 +21,6 @@ import '../models/callLogs/callLogUploadModel.dart';
 PhoneState status1 = PhoneState.nothing();
 
 Future<void> initService() async {
-  // OverlayController controller =
-  //     Get.put(OverlayController());
   final service = FlutterBackgroundService();
   await service.configure(
     iosConfiguration: IosConfiguration(),
@@ -35,14 +34,20 @@ Future<void> initService() async {
 }
 
 void setStream() {
-  PhoneState.stream.listen((event) {
-    if (event != null) {
+  try {
+    PhoneState.stream.listen((event) {
+      log('Phone state changed: ${event.status}');
       status1 = event;
-    }
-  });
+      handleCallState(event); 
+    });
+  } catch (e) {
+    log('Error listening to phone state: ${e.toString()}');
+  }
 }
 
-// platform channel
+
+
+// Platform channel
 const MethodChannel _channel = MethodChannel('onreBootInitFunctionChannel');
 
 Future<void> setAsBackgroundService() async {
@@ -55,10 +60,11 @@ Future<void> setAsBackgroundService() async {
 
 @pragma("vm:entry-point")
 void onStart(ServiceInstance service) async {
-  if (Platform.isAndroid) {}
-  DartPluginRegistrant.ensureInitialized();
-  setStream();
-  // SystemAlertWindow.registerOnClickListener(callBack);
+  if (Platform.isAndroid) {
+    DartPluginRegistrant.ensureInitialized();
+    requestPermissions();
+  }
+
   if (service is AndroidServiceInstance) {
     service.on('reboot').listen((event) {
       onDeviceReboot();
@@ -66,13 +72,11 @@ void onStart(ServiceInstance service) async {
     });
 
     service.on('setAsForeground').listen((event) {
-      // service.setAsForegroundService();
       service.setAsBackgroundService();
     });
 
     service.on('setAsBackground').listen((event) {
       service.setAsBackgroundService();
-      //service.setAsForegroundService();
     });
 
     service.on('stopService').listen((event) {
@@ -81,36 +85,42 @@ void onStart(ServiceInstance service) async {
   }
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
-    if (service is AndroidServiceInstance) {}
-    showWindow();
-    isWindowActive();
-
+    if (service is AndroidServiceInstance) {
+      showWindow();
+      isWindowActive();
+    }
     service.invoke('update');
   });
+}
+
+Future<void> requestPermissions() async {
+  if (await Permission.phone.status.isDenied) {
+    await Permission.phone.request();
+  }
+  if (await Permission.phone.isGranted) {
+    log('Phone permission granted');
+    setStream();
+  } else {
+    log('Phone permission denied');
+  }
 }
 
 @pragma('vm:entry-point')
 Future<void> callBack(String tag) async {
   WidgetsFlutterBinding.ensureInitialized();
-  const MethodChannel _appChannel = MethodChannel('app_channel');
+  const MethodChannel appChannel = MethodChannel('app_channel'); 
 
   switch (tag) {
     case "open_button":
-      // navigate to to a specific app screen
-      // openAppAndNavigate();
       final intent = AndroidIntent(
-          action: 'action_view',
-          data: Uri.encodeFull('example1://gizmos1/'),
-          package: 'com.android.chrome');
+        action: 'action_view',
+        data: Uri.encodeFull('example1://gizmos1/'),
+        package: 'com.android.chrome',
+      );
       intent.launch();
-      // SystemAlertWindow.closeSystemWindow(
-      //     prefMode: SystemWindowPrefMode.OVERLAY);
       break;
     case "close_button":
       await Common.saveSharedPref("openAppLeadId", '0');
-      // SystemAlertWindow.closeSystemWindow(
-      //     prefMode: SystemWindowPrefMode.OVERLAY);
-
       break;
     default:
       log("OnClick event of $tag");
@@ -124,15 +134,12 @@ int fromTime = 0;
 int toTime = 0;
 List<Map<String, dynamic>> history = [];
 
-void isWindowActive() async {
+void isWindowActive() {
   switch (status1.status) {
     case PhoneStateStatus.NOTHING:
       isActive = false;
       doUpload = true;
-
-      // showTextFieldWindow = false;
       break;
-
     case PhoneStateStatus.CALL_INCOMING:
     case PhoneStateStatus.CALL_STARTED:
       isActive = true;
@@ -140,30 +147,18 @@ void isWindowActive() async {
       doUpload = true;
       fromTime = DateTime.now().millisecondsSinceEpoch;
       toTime = DateTime.now().millisecondsSinceEpoch;
-
-      // showTextFieldWindow = true;
-
       break;
-
     case PhoneStateStatus.CALL_ENDED:
       isActive = false;
-
       break;
-
-    default:
-      isActive = false;
-      doUpload = true;
-    // showTextFieldWindow = false;
   }
 }
 
 void showWindow() async {
-  String selectedSimId = "";
   if (!isActive) {
     switch (status1.status) {
       case PhoneStateStatus.NOTHING:
         break;
-
       case PhoneStateStatus.CALL_INCOMING:
         Map<String, dynamic> body1 = {
           "token": await Common.getSharedPref("token"),
@@ -171,7 +166,6 @@ void showWindow() async {
         };
 
         BackgroundModel object = await HttpService.backgroundData(body1);
-
         log('openAppLeadId${object.data.callMasterId}');
         await Common.saveSharedPref(
             "openAppLeadId", object.data.callMasterId.toString());
@@ -188,18 +182,10 @@ void showWindow() async {
           width: WindowSize.matchParent,
           startPosition: const OverlayPosition(0, 0),
         );
-
         break;
-
       case PhoneStateStatus.CALL_ENDED:
         log('~~ CALL_ENDED ~~~');
         if (uploadCall == false && doUpload == true) {
-          var sim = await Common.getSharedPref("simName");
-          if (sim != null) {
-            selectedSimId = await Common.getSharedPref("simId");
-          } else {
-            selectedSimId = "";
-          }
           log('~~~~~~~~~~ UPLOADING ~~~~~~~~~~~');
           doUpload = false;
 
@@ -210,30 +196,49 @@ void showWindow() async {
               await HttpService.callLogUploadPermission(body2);
           if (perm.status == true) {
             log('permission :${perm.data!.outgoing}');
-            var callLogs = await CallLog.get();
+           var callLogs = await CallLog.get();
             var logsForNumber =
                 callLogs.where((log) => log.number == status1.number);
             var sortedLogs = logsForNumber.toList()
-              ..sort((a, b) => b.timestamp!.compareTo(a.timestamp as num)); 
+              ..sort((a, b) => b.timestamp!.compareTo(a.timestamp as num));
             if (sortedLogs.isNotEmpty) {
               var lastCall = sortedLogs.first;
               var callType = lastCall.callType
                   .toString()
                   .substring(lastCall.callType.toString().indexOf('.') + 1);
-              //  log(callType);
-              if (selectedSimId == "" ||
-                  selectedSimId == lastCall.phoneAccountId) {
-                if (perm.data!.outgoing == true && callType == 'outgoing') {
-                  log(await Common.getSharedPref("token"));
+
+              if (perm.data!.outgoing == true && callType == 'outgoing') {
+                history.add({
+                  "name": lastCall.name,
+                  "phone_number": lastCall.number,
+                  "callTypes": callType,
+                  "time":
+                      '${DateTime.fromMillisecondsSinceEpoch(lastCall.timestamp!)}',
+                  "duration": lastCall.duration,
+                  "simName": lastCall.simDisplayName ?? "NIL",
+                  "timeStamp": lastCall.timestamp,
+                });
+                Map<String, dynamic> body = {
+                  "token": await Common.getSharedPref("token"),
+                  'log': history,
+                };
+                CallLogUploadModel object1 =
+                    await HttpService.callLogUpload(body);
+                if (object1.data == true) {
+                  log('success');
+                } else {
+                  log('failure');
+                }
+              } else if (perm.data!.incoming == true) {
+                if (callType == 'incoming' || callType == 'missed') {
                   history.add({
                     "name": lastCall.name,
                     "phone_number": lastCall.number,
-                    "callTypes": lastCall.callType.toString().substring(
-                        lastCall.callType.toString().indexOf('.') + 1),
+                    "callTypes": callType,
                     "time":
                         '${DateTime.fromMillisecondsSinceEpoch(lastCall.timestamp!)}',
                     "duration": lastCall.duration,
-                    "simName": lastCall.simDisplayName,
+                    "simName": lastCall.simDisplayName ?? "NIL",
                     "timeStamp": lastCall.timestamp,
                   });
                   Map<String, dynamic> body = {
@@ -244,34 +249,8 @@ void showWindow() async {
                       await HttpService.callLogUpload(body);
                   if (object1.data == true) {
                     log('success');
-                    PhoneStateStatus.NOTHING;
                   } else {
-                    log('failure');
-                  }
-                } else if (perm.data!.incoming == true) {
-                  if (callType == 'incoming' || callType == 'missed') {
-                    history.add({
-                      "name": lastCall.name,
-                      "phone_number": lastCall.number,
-                      "callTypes": lastCall.callType.toString().substring(
-                          lastCall.callType.toString().indexOf('.') + 1),
-                      "time":
-                          '${DateTime.fromMillisecondsSinceEpoch(lastCall.timestamp!)}',
-                      "duration": lastCall.duration,
-                      "simName": lastCall.simDisplayName,
-                      "timeStamp": lastCall.timestamp,
-                    });
-                    Map<String, dynamic> body = {
-                      "token": await Common.getSharedPref("token"),
-                      'log': history,
-                    };
-                    CallLogUploadModel object1 =
-                        await HttpService.callLogUpload(body);
-                    if (object1.data == true) {
-                      log('success');
-                    } else {
-                      log('failed');
-                    }
+                    log('failed');
                   }
                 }
               }
@@ -282,7 +261,6 @@ void showWindow() async {
         }
         uploadCall = true;
         break;
-
       default:
     }
   }
@@ -290,4 +268,21 @@ void showWindow() async {
 
 void onDeviceReboot() {
   log('Device has rebooted!');
+}
+
+Future<void> handleCallState(PhoneState event) async {
+  switch (event.status) {
+    case PhoneStateStatus.CALL_INCOMING:
+      log('Incoming call from ${event.number}');
+      break;
+    case PhoneStateStatus.CALL_STARTED:
+      log('Call started with ${event.number}');
+      break;
+    case PhoneStateStatus.CALL_ENDED:
+      log('Call ended with ${event.number}');
+      break;
+    case PhoneStateStatus.NOTHING:
+      log('No active call');
+      break;
+  }
 }

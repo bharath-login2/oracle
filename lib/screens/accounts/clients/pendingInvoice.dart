@@ -59,7 +59,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
 
     invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
     if (invoiceResponse != null) {
-      invoices = invoiceResponse!.data!.lists!;
+      invoices = invoiceResponse!.data.lists;
       filteredInvoices.addAll(invoices);
       customerList = await HttpService.customerList(widget.token);
       items = customerList!.data!;
@@ -1098,7 +1098,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                   fontWeight: FontWeight.bold),
                                             )),
                                         Text(
-                                          ': ${invoiceResponse!.data!.totalInvoiceAmount}',
+                                          ': ${invoiceResponse!.data.totalInvoiceAmount}',
                                           style: const TextStyle(
                                               color: Colors.black,
                                               fontSize: 15,
@@ -1125,7 +1125,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                   fontWeight: FontWeight.bold),
                                             )),
                                         Text(
-                                          ': ${invoiceResponse!.data!.totalInvoicePaid}',
+                                          ': ${invoiceResponse!.data.totalInvoicePaid}',
                                           style: const TextStyle(
                                               color: Colors.green,
                                               fontSize: 15,
@@ -1152,7 +1152,7 @@ class _PendingInvoiceState extends State<PendingInvoice> {
                                                   fontWeight: FontWeight.bold),
                                             )),
                                         Text(
-                                          ': ${invoiceResponse!.data!.balanceAmount}',
+                                          ': ${invoiceResponse!.data.balanceAmount}',
                                           style: const TextStyle(
                                               color: Colors.red,
                                               fontSize: 15,

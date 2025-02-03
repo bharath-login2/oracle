@@ -44,7 +44,7 @@ import '../../service/service.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:pie_chart/pie_chart.dart';
@@ -89,7 +89,7 @@ class _DashboardState extends State<Dashboard> {
   RenewalDashboardModel? renewalDashboard;
   bool isExpired = false;
   String accPermission = "";
-  String renewalPermission = "";
+  String renewalPermission = "true";
 
   var fromdate = DateTime.now();
   var todate = DateTime.now();
@@ -126,8 +126,8 @@ class _DashboardState extends State<Dashboard> {
   bool isVisible = true;
   bool loadmore = false;
   bool moreloading = false;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  // final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  //     FlutterLocalNotificationsPlugin();
   final StreamController<String?> selectNotificationStream =
       StreamController<String?>.broadcast();
   String sound = '';
@@ -2187,63 +2187,65 @@ class _DashboardState extends State<Dashboard> {
                                               ),
                                             ],
                                           )
-                                        : InkWell(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => SearchPage(
-                                                        widget.token,
-                                                        updateLeadPermission1,
-                                                        deleteLeadPermission1,
-                                                        cloudCallPermission1,
-                                                        '')),
-                                              ).then((r) {
-                                                getData(widget.token, fromdate,
-                                                    todate);
-                                                if (loadmore == true) {
-                                                  getStaffwise();
-                                                }
-                                              });
-                                            },
-                                            child: Container(
-                                                width: 110,
-                                                height: 32,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 15,
-                                                        vertical: 5),
-                                                decoration: BoxDecoration(
-                                                    border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 0),
-                                                    boxShadow: const [
-                                                      BoxShadow(
-                                                          color: Colors.grey,
-                                                          blurRadius: 5,
-                                                          offset: Offset(1, 1)),
-                                                    ],
-                                                    color: Colors.white,
-                                                    borderRadius:
-                                                        const BorderRadius.all(
-                                                            Radius.circular(
-                                                                5))),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    const Icon(Icons.search),
-                                                    Expanded(
-                                                      child: Container(
-                                                        margin: const EdgeInsets
-                                                            .only(left: 10),
-                                                        child: const Text(
-                                                            'Search'),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )),
-                                          ),
+                                        : const SizedBox(),
+
+                                    // InkWell(
+                                    //     onTap: () {
+                                    //       // Navigator.push(
+                                    //       //   context,
+                                    //       //   MaterialPageRoute(
+                                    //       //       builder: (context) => SearchPage(
+                                    //       //           widget.token,
+                                    //       //           updateLeadPermission1,
+                                    //       //           deleteLeadPermission1,
+                                    //       //           cloudCallPermission1,
+                                    //       //           '')),
+                                    //       // ).then((r) {
+                                    //       //   getData(widget.token, fromdate,
+                                    //       //       todate);
+                                    //       //   if (loadmore == true) {
+                                    //       //     getStaffwise();
+                                    //       //   }
+                                    //       // });
+                                    //     },
+                                    //     child: Container(
+                                    //         width: 110,
+                                    //         height: 32,
+                                    //         padding:
+                                    //             const EdgeInsets.symmetric(
+                                    //                 horizontal: 15,
+                                    //                 vertical: 5),
+                                    //         decoration: BoxDecoration(
+                                    //             border: Border.all(
+                                    //                 color: Colors.white,
+                                    //                 width: 0),
+                                    //             boxShadow: const [
+                                    //               BoxShadow(
+                                    //                   color: Colors.grey,
+                                    //                   blurRadius: 5,
+                                    //                   offset: Offset(1, 1)),
+                                    //             ],
+                                    //             color: Colors.white,
+                                    //             borderRadius:
+                                    //                 const BorderRadius.all(
+                                    //                     Radius.circular(
+                                    //                         5))),
+                                    //         child: Row(
+                                    //           mainAxisAlignment:
+                                    //               MainAxisAlignment.start,
+                                    //           children: [
+                                    //             const Icon(Icons.search),
+                                    //             Expanded(
+                                    //               child: Container(
+                                    //                 margin: const EdgeInsets
+                                    //                     .only(left: 10),
+                                    //                 child: const Text(
+                                    //                     'Search'),
+                                    //               ),
+                                    //             ),
+                                    //           ],
+                                    //         )),
+                                    //   ),
                                     const SizedBox(width: 10),
                                     InkWell(
                                       onTap: () {

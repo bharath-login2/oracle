@@ -2,7 +2,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../core/common.dart';
 import '../../models/userManagement/changePasswordModel.dart';
-import '../../screens/userManagement/viewUsers.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 

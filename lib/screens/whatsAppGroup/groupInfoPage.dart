@@ -93,7 +93,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(height: 30),
+                    const SizedBox(height: 30),
                   ],
                 ), Row(
                     mainAxisAlignment: MainAxisAlignment.center,

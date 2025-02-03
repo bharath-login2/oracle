@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/service/service.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/officialWhatsapp/message_view_status.dart';
 

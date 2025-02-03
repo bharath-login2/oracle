@@ -28,7 +28,7 @@ class ImageHelper {
       {required XFile file,
         CropStyle cropStyle = CropStyle.rectangle}) async =>
       _imagecropper.cropImage(
-          cropStyle: cropStyle,
+          // cropStyle: cropStyle,
           sourcePath: file.path,
           compressQuality: 100,
           uiSettings: [AndroidUiSettings()]

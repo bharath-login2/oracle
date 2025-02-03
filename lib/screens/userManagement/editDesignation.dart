@@ -3,7 +3,6 @@ import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/lead_management/editDesignationDetailsModel.dart';
 import '../../models/userManagement/postEditSubmenuModel.dart';
-import '../../screens/userManagement/designationList.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 

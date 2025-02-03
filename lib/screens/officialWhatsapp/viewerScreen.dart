@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 class ViewerScreen extends StatefulWidget {
   const ViewerScreen({
     super.key,
@@ -20,64 +21,73 @@ class ViewerScreen extends StatefulWidget {
 }
 
 class _ViewerScreenState extends State<ViewerScreen> {
+  late WebViewController _webViewController;
   bool isLoading = true;
 
-
+  @override
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (String url) {
+            setState(() {
+              isLoading = false;
+            });
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.type == 'DOCUMENT'
+          ? 'https://docs.google.com/viewer?url=${widget.myUrl}'
+          : widget.myUrl));
+  }
 
   @override
   Widget build(BuildContext context) {
     print(widget.myUrl);
-  return Scaffold(
-    appBar: PreferredSize(
-      preferredSize:
-      Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
-      child: Container(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-        decoration: const BoxDecoration(
-          gradient:
-          LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(
-              left: 10.0, top: 10.0, bottom: 10.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                   Text(
-                    widget.title,
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                ],
-              ),
-
-            ],
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10.0, top: 10.0, bottom: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-      body:
-      Stack(
+      body: Stack(
         children: [
-          WebView(
-              initialUrl: widget.type=='DOCUMENT'?'https://docs.google.com/viewer?url=${widget.myUrl}':widget.myUrl,
-              javascriptMode: JavascriptMode.unrestricted,
-              zoomEnabled: true,
-              onPageFinished: (finish) {
-                isLoading = false;
-                setState(() {});
-              }),
-          isLoading == true
-              ? Center(
-            child: Lottie.asset('assets/main/loading.json', fit: BoxFit.fill),
-          )
-              : const SizedBox()
+          WebViewWidget(controller: _webViewController),
+          if (isLoading)
+            Center(
+              child: Lottie.asset(
+                'assets/main/loading.json',
+                fit: BoxFit.fill,
+              ),
+            ),
         ],
       ),
     );
   }
 }
-

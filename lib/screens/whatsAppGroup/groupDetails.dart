@@ -9,7 +9,6 @@ import '../../core/common.dart';
 import '../../models/contactGroup/contactGroupDeatailsModel.dart';
 import '../../models/contactGroup/sendMessageModel.dart';
 import '../../screens/whatsAppGroup/groupInfoPage.dart';
-import '../../screens/whatsAppGroup/groupList.dart';
 import '../../service/service.dart';
 import '../../widgets/messageBox.dart';
 import 'package:flutter/material.dart';

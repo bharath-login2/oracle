@@ -9,7 +9,7 @@ class MediaModel {
     if (json['data'] != null) {
       data = <Data>[];
       json['data'].forEach((v) {
-        data!.add(new Data.fromJson(v));
+        data!.add(Data.fromJson(v));
       });
     }
     status = json['status'];
@@ -17,12 +17,12 @@ class MediaModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
-    data['status'] = this.status;
-    data['message'] = this.message;
+    data['status'] = status;
+    data['message'] = message;
     return data;
   }
 }
@@ -53,13 +53,13 @@ class Data {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['url'] = this.url;
-    data['file_name'] = this.fileName;
-    data['extension'] = this.extension;
-    data['file_type'] = this.fileType;
-    data['file_size'] = this.fileSize;
-    data['file_id'] = this.fileId;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['url'] = url;
+    data['file_name'] = fileName;
+    data['extension'] = extension;
+    data['file_type'] = fileType;
+    data['file_size'] = fileSize;
+    data['file_id'] = fileId;
     return data;
   }
 }
