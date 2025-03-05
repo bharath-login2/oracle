@@ -2400,7 +2400,8 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                     timeOut == true
                         ? "There seems to be a temporary issue, \n Please retry to continue"
                         : 'No Network Found !',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(
                     height: 15,
@@ -2549,23 +2550,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTaxAmount.text = (double.parse(value) *
-                                      double.parse(productTaxPercent.text) /
-                                      100)
-                                  .toString();
-                              productTotalAmount.text = ((double.parse(value) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(productQty.text))
-                                  .toString();
-
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productRate,
                             keyboardType: TextInputType.number,
@@ -2591,18 +2576,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTotalAmount
-                                  .text = ((double.parse(productRate.text) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(value))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productQty,
                             keyboardType: TextInputType.number,
@@ -2633,23 +2607,7 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTaxAmount.text =
-                                  (double.parse(productRate.text) *
-                                          double.parse(value) /
-                                          100)
-                                      .toString();
-                              productTotalAmount
-                                  .text = ((double.parse(productRate.text) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(productQty.text))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productTaxPercent,
                             keyboardType: TextInputType.number,
@@ -3337,5 +3295,24 @@ class _RenewalFollowupState extends State<RenewalFollowup> {
         });
       },
     );
+  }
+
+  productCalculation() {
+    productTaxAmount.text =
+        ((double.parse(productRate.text == "" ? "0" : productRate.text) *
+                    double.parse(productTaxPercent.text == ""
+                        ? "0"
+                        : productTaxPercent.text) /
+                    100) *
+                double.parse(productQty.text == "" ? "0" : productQty.text))
+            .toString();
+    productTotalAmount.text = ((double.parse(
+                    productRate.text == "" ? "0" : productRate.text) *
+                double.parse(productQty.text == "" ? "0" : productQty.text)) +
+            double.parse(productTaxAmount.text))
+        .toString();
+    productTotalAmount.text =
+        double.parse(productTotalAmount.text).toStringAsFixed(2);
+    setState(() {});
   }
 }

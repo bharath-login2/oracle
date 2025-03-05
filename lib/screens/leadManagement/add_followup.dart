@@ -3641,22 +3641,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTaxAmount.text = ((double.parse(value) *
-                                          double.parse(productTaxPercent.text) /
-                                          100) *
-                                      double.parse(productQty.text))
-                                  .toString();
-                              productTotalAmount.text = ((double.parse(value) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(productQty.text))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productRate,
                             keyboardType: TextInputType.number,
@@ -3682,24 +3667,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTaxAmount
-                                  .text = ((double.parse(productRate.text) *
-                                          double.parse(productTaxPercent.text) /
-                                          100) *
-                                      double.parse(value))
-                                  .toString();
-                              productTotalAmount
-                                  .text = ((double.parse(productRate.text) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(value))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productQty,
                             keyboardType: TextInputType.number,
@@ -3730,24 +3698,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              productTaxAmount.text =
-                                  ((double.parse(productRate.text) *
-                                              double.parse(value) /
-                                              100) *
-                                          double.parse(productQty.text))
-                                      .toString();
-                              productTotalAmount
-                                  .text = ((double.parse(productRate.text) +
-                                          double.parse(productTaxAmount.text)) *
-                                      double.parse(productQty.text))
-                                  .toString();
-                              productTotalAmount.text =
-                                  double.parse(productTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              productCalculation();
                             },
                             controller: productTaxPercent,
                             keyboardType: TextInputType.number,
@@ -4184,26 +4135,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              renProductTaxAmount.text = ((double.parse(value) *
-                                          double.parse(
-                                              renProductTaxPercent.text) /
-                                          100) *
-                                      double.parse(renProductQty.text))
-                                  .toString();
-                              renProductTotalAmount.text =
-                                  ((double.parse(value) +
-                                              double.parse(
-                                                  renProductTaxAmount.text)) *
-                                          double.parse(renProductQty.text))
-                                      .toString();
-
-                              renProductTotalAmount.text =
-                                  double.parse(renProductTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              renProductCalculation();
                             },
                             controller: renProductRate,
                             keyboardType: TextInputType.number,
@@ -4227,26 +4159,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              renProductTaxAmount.text =
-                                  ((double.parse(renProductRate.text) *
-                                              double.parse(
-                                                  renProductTaxPercent.text) /
-                                              100) *
-                                          double.parse(value))
-                                      .toString();
-                              renProductTotalAmount.text =
-                                  ((double.parse(renProductRate.text) +
-                                              double.parse(
-                                                  renProductTaxAmount.text)) *
-                                          double.parse(value))
-                                      .toString();
-                              renProductTotalAmount.text =
-                                  double.parse(renProductTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              renProductCalculation();
                             },
                             controller: renProductQty,
                             keyboardType: TextInputType.number,
@@ -4274,25 +4187,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              if (value == '') {
-                                value = '0';
-                              }
-                              renProductTaxAmount.text =
-                                  ((double.parse(renProductRate.text) *
-                                              double.parse(value) /
-                                              100) *
-                                          double.parse(renProductQty.text))
-                                      .toString();
-                              renProductTotalAmount.text =
-                                  ((double.parse(renProductRate.text) +
-                                              double.parse(
-                                                  renProductTaxAmount.text)) *
-                                          double.parse(renProductQty.text))
-                                      .toString();
-                              renProductTotalAmount.text =
-                                  double.parse(renProductTotalAmount.text)
-                                      .toStringAsFixed(2);
-                              setState(() {});
+                              renProductCalculation();
                             },
                             controller: renProductTaxPercent,
                             keyboardType: TextInputType.number,
@@ -4853,5 +4748,44 @@ class _AddFollowupState extends State<AddFollowup> {
         });
       },
     );
+  }
+
+  productCalculation() {
+    productTaxAmount.text =
+        ((double.parse(productRate.text == "" ? "0" : productRate.text) *
+                    double.parse(productTaxPercent.text == ""
+                        ? "0"
+                        : productTaxPercent.text) /
+                    100) *
+                double.parse(productQty.text == "" ? "0" : productQty.text))
+            .toString();
+    productTotalAmount.text = ((double.parse(
+                    productRate.text == "" ? "0" : productRate.text) *
+                double.parse(productQty.text == "" ? "0" : productQty.text)) +
+            double.parse(productTaxAmount.text))
+        .toString();
+    productTotalAmount.text =
+        double.parse(productTotalAmount.text).toStringAsFixed(2);
+    setState(() {});
+  }
+
+  renProductCalculation() {
+    renProductTaxAmount.text = ((double.parse(
+                    renProductRate.text == "" ? "0" : renProductRate.text) *
+                double.parse(renProductTaxPercent.text == ""
+                    ? "0"
+                    : renProductTaxPercent.text) /
+                100) *
+            double.parse(renProductQty.text == "" ? "0" : renProductQty.text))
+        .toString();
+    renProductTotalAmount.text =
+        ((double.parse(renProductRate.text == "" ? "0" : renProductRate.text) *
+                    double.parse(
+                        renProductQty.text == "" ? "0" : renProductQty.text)) +
+                double.parse(renProductTaxAmount.text))
+            .toString();
+    renProductTotalAmount.text =
+        double.parse(renProductTotalAmount.text).toStringAsFixed(2);
+    setState(() {});
   }
 }
