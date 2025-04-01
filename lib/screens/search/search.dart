@@ -606,7 +606,7 @@ class _SearchState extends State<Search> {
                                             .data.leadData[index].leadCategory
                                             .toString(),
                                         style: const TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 11,
                                           color: Colors.red,
                                           fontWeight: FontWeight.w500,
                                         ),

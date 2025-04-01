@@ -2028,8 +2028,9 @@ class _DashboardState extends State<Dashboard> {
                                 const SizedBox(width: 10),
                                 Row(
                                   children: [
-                                    accessCallHistoryPermission == 'true'
-                                        ? Row(
+                                    // accessCallHistoryPermission == 'true'
+                                    //     ? 
+                                        Row(
                                             children: [
                                               InkWell(
                                                 onTap: () {
@@ -2143,16 +2144,33 @@ class _DashboardState extends State<Dashboard> {
                                               const SizedBox(width: 10),
                                               InkWell(
                                                 onTap: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            CallHistoryPage(
-                                                                widget.token!,
-                                                                name,
-                                                                userId,
-                                                                accessCallRecordingPermission1)),
-                                                  );
+                                                  // Navigator.push(
+                                                  //   context,
+                                                  //   MaterialPageRoute(
+                                                  //       builder: (context) =>
+                                                  //           CallHistoryPage(
+                                                  //               widget.token!,
+                                                  //               name,
+                                                  //               userId,
+                                                  //               accessCallRecordingPermission1)),
+                                                  // );
+                                                 
+                                                  accessCallHistoryPermission ==
+                                                          'true'
+                                                      ? Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  CallHistoryPage(
+                                                                      widget
+                                                                          .token!,
+                                                                      name,
+                                                                      userId,
+                                                                      accessCallRecordingPermission1)),
+                                                        )
+                                                      : _dialogue(context,
+                                                          'Call History');
+                                               
                                                 },
                                                 child: Container(
                                                     width: 50,
@@ -2187,7 +2205,7 @@ class _DashboardState extends State<Dashboard> {
                                               ),
                                             ],
                                           )
-                                        : const SizedBox(),
+                                        // : const SizedBox(),
 
                                     // InkWell(
                                     //     onTap: () {
@@ -2246,7 +2264,7 @@ class _DashboardState extends State<Dashboard> {
                                     //           ],
                                     //         )),
                                     //   ),
-                                    const SizedBox(width: 10),
+                                   , const SizedBox(width: 10),
                                     InkWell(
                                       onTap: () {
                                         showGeneralDialog(
