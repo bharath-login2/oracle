@@ -85,13 +85,34 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     }
   }
 
+  // Future<void> _fileFromImageUrl() async {
+  //   final response = await http.get(Uri.parse(widget.documentUrl!));
+  //   final documentDirectory = await getApplicationDocumentsDirectory();
+  //   final file = File(join(documentDirectory.path, widget.title.toString()));
+  //   file.writeAsBytesSync(response.bodyBytes);
+  //   await Share.shareFiles([file.path]);
+  // }
+
   Future<void> _fileFromImageUrl() async {
+  try {
     final response = await http.get(Uri.parse(widget.documentUrl!));
-    final documentDirectory = await getApplicationDocumentsDirectory();
-    final file = File(join(documentDirectory.path, widget.title.toString()));
-    file.writeAsBytesSync(response.bodyBytes);
-    await Share.shareFiles([file.path]);
+
+    if (response.statusCode == 200) {
+      final documentDirectory = await getApplicationDocumentsDirectory();
+      final file = File(join(documentDirectory.path, widget.title.toString()));
+
+      await file.writeAsBytes(response.bodyBytes);
+
+      // ✅ Use shareXFiles instead of shareFiles
+      XFile xfile = XFile(file.path);
+      await Share.shareXFiles([xfile]);
+    } else {
+      print("Failed to load file: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("Error: $e");
   }
+}
 
   @override
   Widget build(BuildContext context) {

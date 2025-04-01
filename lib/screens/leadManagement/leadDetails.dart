@@ -47,6 +47,7 @@ import 'add_followup.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../screens/leadManagement/editFollowup.dart';
 import '../../screens/leadManagement/editLead.dart';
+import '../../screens/leadManagement/stageTimelineWidget.dart';
 import '../../service/service.dart';
 import 'add_leads.dart';
 import 'audio_controller.dart';
@@ -2466,6 +2467,39 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                                 const SizedBox(
                                                                   height: 8,
                                                                 ),
+                                                                // Row(
+                                                                //   mainAxisAlignment:
+                                                                //       MainAxisAlignment
+                                                                //           .spaceBetween,
+                                                                //   crossAxisAlignment:
+                                                                //       CrossAxisAlignment
+                                                                //           .start,
+                                                                //   children: [
+                                                                //     Row(
+                                                                //       children: [
+                                                                //         const Text(
+                                                                //           'Duration :',
+                                                                //           style: TextStyle(
+                                                                //               fontSize: 12,
+                                                                //               fontWeight: FontWeight.w400),
+                                                                //         ),
+                                                                //         const SizedBox(
+                                                                //           width:
+                                                                //               10,
+                                                                //         ),
+                                                                       
+                                                                //         const SizedBox(
+                                                                //           width:
+                                                                //               10,
+                                                                //         ),
+                                                                       
+                                                                //       ],
+                                                                //     ),
+                                                                //   ],
+                                                                // ),
+                                                                // const SizedBox(
+                                                                //   height: 8,
+                                                                // ),
                                                                 leadDetailsAdditional!
                                                                             .data
                                                                             .followUpData[index]
@@ -3222,45 +3256,106 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     category: widget.category,
                                                   );
                                                 })
-                                            : SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    0.55,
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    SizedBox(
-                                                      width: 110,
-                                                      height: 110,
-                                                      child: Image.asset(
-                                                        "assets/icons/nocall-history.png",
-                                                      ),
+                                            // : SizedBox(
+                                            //     height: MediaQuery.of(context)
+                                            //             .size
+                                            //             .height *
+                                            //         0.55,
+                                            //     child: Column(
+                                            //       mainAxisAlignment:
+                                            //           MainAxisAlignment.center,
+                                            //       crossAxisAlignment:
+                                            //           CrossAxisAlignment.center,
+                                            //       children: [
+                                            //         SizedBox(
+                                            //           width: 110,
+                                            //           height: 110,
+                                            //           child: Image.asset(
+                                            //             "assets/icons/nocall-history.png",
+                                            //           ),
+                                            //         ),
+                                            //         const SizedBox(
+                                            //           height: 20,
+                                            //         ),
+                                            //         const Text(
+                                            //           'Calls Not Found',
+                                            //           style: TextStyle(
+                                            //               fontSize: 17,
+                                            //               fontWeight:
+                                            //                   FontWeight.bold),
+                                            //         ),
+                                            //         const SizedBox(
+                                            //           height: 10,
+                                            //         ),
+                                            //         const Text(
+                                            //           'Whoops... this information is \n not available for a moment',
+                                            //           style: TextStyle(
+                                            //               fontSize: 12),
+                                            //         ),
+                                            //       ],
+                                            //     ),
+                                            //   ),
+
+                                            : leadDetails?.data?.calleddata
+                                                        ?.isNotEmpty ??
+                                                    false
+                                                ? SizedBox(
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.55,
+                                                    child: StageTimelineWidget(
+                                                        calleddata: leadDetails
+                                                                ?.data
+                                                                ?.calleddata ??
+                                                            []),
+                                                  )
+                                                : SizedBox(
+                                                    // This is the correct empty alternative
+
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.55,
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 110,
+                                                          height: 110,
+                                                          child: Image.asset(
+                                                            "assets/icons/nocall-history.png",
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 20,
+                                                        ),
+                                                        const Text(
+                                                          'Calls Not Found',
+                                                          style: TextStyle(
+                                                              fontSize: 17,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        const Text(
+                                                          'Whoops... this information is \n not available for a moment',
+                                                          style: TextStyle(
+                                                              fontSize: 12),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    const SizedBox(
-                                                      height: 20,
-                                                    ),
-                                                    const Text(
-                                                      'Calls Not Found',
-                                                      style: TextStyle(
-                                                          fontSize: 17,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    const Text(
-                                                      'Whoops... this information is \n not available for a moment',
-                                                      style: TextStyle(
-                                                          fontSize: 12),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                                  ),
                                       if (selectedIndex == 3)
                                         Column(
                                           children: [
@@ -5602,7 +5697,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.endDocked,
                 floatingActionButton: Visibility(
-                  visible: selectedIndex != 3,
+                  visible: selectedIndex != 3 && selectedIndex != 2,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: Column(

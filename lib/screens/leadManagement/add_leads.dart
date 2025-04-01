@@ -700,14 +700,23 @@ class _AddLeadsState extends State<AddLeads> {
                                           controller: leadSubTypeVal,
                                           onTap: () {
                                             showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    scrollable: true,
-                                                    title: const Text(
-                                                        'Lead Sub Category'),
-                                                    content: SizedBox(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  scrollable: true,
+                                                  title: const Text(
+                                                      'Lead Sub Category'),
+                                                  content:
+                                                      SingleChildScrollView(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: MediaQuery
+                                                                    .of(context)
+                                                                .size
+                                                                .height *
+                                                            0.5, // Adjust as needed
+                                                      ),
                                                       child: ListView.builder(
                                                         shrinkWrap: true,
                                                         itemCount:
@@ -751,8 +760,10 @@ class _AddLeadsState extends State<AddLeads> {
                                                         },
                                                       ),
                                                     ),
-                                                  );
-                                                });
+                                                  ),
+                                                );
+                                              },
+                                            );
                                           },
                                           maxLines: 1,
                                           readOnly: true,

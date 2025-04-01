@@ -476,21 +476,21 @@ class _EditLeadState extends State<EditLead> {
                                       controller: leadSubTypeVal,
                                       onTap: () {
                                         showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                scrollable: true,
-                                                title: const Text(
-                                                    'Lead Sub Category'),
-                                                content: SizedBox(
-                                                  height: MediaQuery.of(context)
-                                                          .size
-                                                          .height *
-                                                      .12,
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .height *
-                                                      .8,
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text(
+                                                  'Lead Sub Category'),
+                                              content: SingleChildScrollView(
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    maxHeight: MediaQuery.of(
+                                                                context)
+                                                            .size
+                                                            .height *
+                                                        0.5, // Adjust as needed
+                                                  ),
                                                   child: ListView.builder(
                                                     shrinkWrap: true,
                                                     itemCount: leadSubTypeList!
@@ -500,13 +500,6 @@ class _EditLeadState extends State<EditLead> {
                                                       return InkWell(
                                                         onTap: () {
                                                           setState(() {
-                                                            leadSubTypeVal
-                                                                    .text =
-                                                                leadSubTypeList!
-                                                                    .data![
-                                                                        subIndex]
-                                                                    .leadSubCategory
-                                                                    .toString();
                                                             leadSubType =
                                                                 leadSubTypeList!
                                                                     .data![
@@ -540,8 +533,10 @@ class _EditLeadState extends State<EditLead> {
                                                     },
                                                   ),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
+                                          },
+                                        );
                                       },
                                       maxLines: 1,
                                       readOnly: true,
@@ -900,7 +895,7 @@ class _EditLeadState extends State<EditLead> {
                         backgroundColor: Colors.white,
                         controller: address,
                         width: 1,
-                        height: 80, 
+                        height: 80,
                         maxLine: 2,
                       ),
                     ),

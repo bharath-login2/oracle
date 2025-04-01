@@ -404,7 +404,7 @@ class _EditFollowupState extends State<EditFollowup> {
                                     controller: nextFollowupDate1,
                                     readOnly: true,
                                     onTap: () async {
-                                 DateTime? selectedDate =
+                                      DateTime? selectedDate =
                                           await showDatePicker(
                                         context: context,
                                         initialDate: DateTime.now(),
@@ -562,7 +562,6 @@ class _EditFollowupState extends State<EditFollowup> {
                                             scrollable: true,
                                             title: const Text('Call Response'),
                                             content: SizedBox(
-                                     
                                               width: MediaQuery.of(context)
                                                       .size
                                                       .height *
@@ -776,18 +775,21 @@ class _EditFollowupState extends State<EditFollowup> {
                                     controller: leadSubTypeVal,
                                     onTap: () {
                                       showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text(
-                                                  'Lead Sub Category'),
-                                              content: SizedBox(
-                                             
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    .8,
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            scrollable: true,
+                                            title:
+                                                const Text('Lead Sub Category'),
+                                            content: SingleChildScrollView(
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                  maxHeight: MediaQuery.of(
+                                                              context)
+                                                          .size
+                                                          .height *
+                                                      0.8, // Adjust as needed
+                                                ),
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
                                                   itemCount: leadSubTypeList!
@@ -797,12 +799,6 @@ class _EditFollowupState extends State<EditFollowup> {
                                                     return InkWell(
                                                       onTap: () {
                                                         setState(() {
-                                                          leadSubTypeVal.text =
-                                                              leadSubTypeList!
-                                                                  .data![
-                                                                      subIndex]
-                                                                  .leadSubCategory
-                                                                  .toString();
                                                           leadSubType =
                                                               leadSubTypeList!
                                                                   .data![
@@ -835,8 +831,10 @@ class _EditFollowupState extends State<EditFollowup> {
                                                   },
                                                 ),
                                               ),
-                                            );
-                                          });
+                                            ),
+                                          );
+                                        },
+                                      );
                                     },
                                     maxLines: 1,
                                     readOnly: true,

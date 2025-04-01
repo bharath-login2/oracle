@@ -38,6 +38,7 @@ class Data {
   bool? callHistoryPermission;
   bool? fileManagerPermission;
   List<LeadCategories>? leadCategories;
+  List<Calleddata>? calleddata;
   bool? callPermission;
   String? warningMessage;
   String? callLeadId;
@@ -107,6 +108,13 @@ class Data {
         leadCategories!.add(LeadCategories.fromJson(v));
       });
     }
+      if (json['calleddata'] != null) {
+      calleddata = <Calleddata>[];
+      json['calleddata'].forEach((v) {
+        calleddata!.add(Calleddata.fromJson(v));
+      });
+    }
+
     callPermission = json['callPermission'];
     warningMessage = json['warningMessage'] ?? "";
     callLeadId = json['callLeadId'] ?? "";
@@ -135,5 +143,46 @@ class LeadCategories {
     leadCategory = json['lead_category'];
     leadSubCategory = json['lead_sub_category'];
     isSelected = json['is_selected'];
+  }
+}
+
+
+class Calleddata {
+  String? name;
+  String? phoneNum;
+  String? callType;
+  String? durationTime;
+ String? simName;
+  String? dateTime;
+   String? formatteddateTime;
+   String? companyName;
+   String? proPic;
+    String? formattedDuration;
+
+
+  Calleddata(
+      {this.name,
+      this.phoneNum,
+      this.callType,
+      this.durationTime,
+      this.simName,
+       this.dateTime,
+       this.formatteddateTime,
+       this.companyName,
+       this.proPic,
+       this.formattedDuration});
+       
+
+  Calleddata.fromJson(Map<String, dynamic> json) {
+    name = json['name']??"";
+    phoneNum = json['phone_number']??"";
+    callType = json['callType']??"";
+    durationTime = json['duration']??"";
+    simName = json['SimName']??"";
+     dateTime = json['date_time']??"";
+        formatteddateTime = json['formatted_date_time']??"";
+       companyName = json['company_name']??"";
+        proPic = json['pro_pic'] ??"";
+         formattedDuration = json['formatted_duration'] ??"";
   }
 }

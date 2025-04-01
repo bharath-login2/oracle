@@ -9,7 +9,7 @@ class Config {
     if (url != null) {
       baseUrl = url.toString() + api;
     } else {
-      baseUrl = 'https://myaccount.login2.in/index.php/v1_1_2/Api/';
+      baseUrl = '';
     }
     return baseUrl;
   }

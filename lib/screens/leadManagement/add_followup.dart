@@ -1082,7 +1082,7 @@ class _AddFollowupState extends State<AddFollowup> {
                                                           MediaQuery.of(context)
                                                                   .size
                                                                   .width *
-                                                              .8,
+                                                              1.2,
                                                       child: ListView.builder(
                                                         shrinkWrap: true,
                                                         itemCount:

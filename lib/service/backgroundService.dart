@@ -97,6 +97,9 @@ Future<void> requestPermissions() async {
   if (await Permission.phone.status.isDenied) {
     await Permission.phone.request();
   }
+   if (await Permission.nearbyWifiDevices.isDenied) {
+    await Permission.nearbyWifiDevices.request();
+  }
   if (await Permission.phone.isGranted) {
     log('Phone permission granted');
     setStream();

@@ -58,22 +58,54 @@ class _ViewReceiptState extends State<ViewReceipt> {
     }
   }
 
+  // takeScreenshot() async {
+  //   String? name = 'Receipt-${widget.receiptNumber}.pdf';
+  //   Uint8List? screenshot = await screenshotController.capture();
+  //   final pw.Document pdf = pw.Document();
+  //   pdf.addPage(
+  //     pw.Page(
+  //       build: (pw.Context context) {
+  //         return pw.Image(pw.MemoryImage(screenshot!));
+  //       },
+  //     ),
+  //   );
+  //   final directory = await getApplicationDocumentsDirectory();
+  //   final file = File('${directory.path}/$name');
+  //   await file.writeAsBytes(await pdf.save());
+  //   Share.shareFiles(['${directory.path}/$name'], text: 'Check out this PDF!');
+  // }
+
   takeScreenshot() async {
-    String? name = 'Receipt-${widget.receiptNumber}.pdf';
+  try {
+    String name = 'Receipt-${widget.receiptNumber}.pdf';
+
+    // Capture Screenshot
     Uint8List? screenshot = await screenshotController.capture();
-    final pw.Document pdf = pw.Document();
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Image(pw.MemoryImage(screenshot!));
-        },
-      ),
-    );
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$name');
-    await file.writeAsBytes(await pdf.save());
-    Share.shareFiles(['${directory.path}/$name'], text: 'Check out this PDF!');
+
+    if (screenshot != null) {
+      final pw.Document pdf = pw.Document();
+      pdf.addPage(
+        pw.Page(
+          build: (pw.Context context) {
+            return pw.Image(pw.MemoryImage(screenshot));
+          },
+        ),
+      );
+
+      // Save the PDF
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$name');
+      await file.writeAsBytes(await pdf.save());
+
+     XFile xfile = XFile(file.path);
+      await Share.shareXFiles([xfile], text: 'Check out this PDF!');
+    } else {
+      print("Screenshot capture failed!");
+    }
+  } catch (e) {
+    print("Error in takeScreenshot: $e");
   }
+}
 
   @override
   Widget build(BuildContext context) {

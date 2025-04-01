@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/playWidget.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
+import '../../models/callLogs/callLogHistoryModel.dart';
 import '../../models/lead_management/callHistoryModel.dart';
 import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
@@ -26,6 +27,7 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
   CallHistoryModel? callHistory;
   String fromdate = DateFormat('dd-MM-yyyy').format(DateTime.now());
   String todate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  CallLogHistoryModel? logHistory;
   String assignStaff = 'Assign Staff';
   String assignStaffId = '';
   bool? result = true;
@@ -108,6 +110,18 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
     }
     callHistoryCount = 0;
     getHistoryCount();
+
+    // logHistory = await HttpService.callLogHistory(
+    //     widget.token, fromdate, todate, assignStaffId);
+    // if (logHistory != null) {
+    //   setState(() {
+    //     if (isSearch == false) {
+    //       Navigator.of(context).pop();
+    //     }
+    //   });
+    // }
+
+
   }
 
   getHistoryCount() {
@@ -482,7 +496,9 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                     setState(() {
                                       search = true;
                                       isSearch = true;
-                                      getData();
+                                      Common.showProgressDialog(
+                                                        context, "Loading..");
+                                                    getData();
                                     });
                                   },
                                   child: Container(
