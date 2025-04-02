@@ -40,6 +40,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   TextEditingController phoneNumber = TextEditingController();
   TextEditingController password = TextEditingController();
   TextEditingController emailId = TextEditingController();
+  TextEditingController designationSingle = TextEditingController();
+  String designationId = "";
   bool sts = false;
   bool permissionSts = false;
   final ImagePicker _picker = ImagePicker();
@@ -96,9 +98,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           branch = staffDetails!.data!.branchId.toString();
         }
 
-        name.text = staffDetails!.data!.staffName.toString();
+        name.text = staffDetails!.data!.staffName!;
         phoneNumber.text = staffDetails!.data!.phoneNo.toString();
         emailId.text = staffDetails!.data!.email.toString();
+        
         if (staffDetails!.data!.staffIds!.isNotEmpty) {
           for (int a = 0; a < staffDetails!.data!.staffIds!.length; a++) {
             checkedItems.add(staffDetails!.data!.staffIds![a]);
@@ -515,6 +518,85 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                           staffDetails!.data!.email.toString(),
                                           emailId,
                                           Icons.email),
+                                      buildTextField(
+                                        "Designation",
+                                        staffDetails!.data!.designationsingle
+                                            .toString(),
+                                        designationSingle,
+                                        Icons.description,
+                                        onTap: () {
+                                          if (staffDetails
+                                                      ?.data?.designationList ==
+                                                  null ||
+                                              staffDetails!.data!
+                                                  .designationList!.isEmpty) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      "No designations available")),
+                                            );
+                                            return;
+                                          }
+
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title:
+                                                    Text("Change Designation"),
+                                                content: SizedBox(
+                                                  width: double.maxFinite,
+                                                  child: ListView.builder(
+                                                    shrinkWrap:
+                                                        true, // Makes the dialog only as tall as needed
+                                                    itemCount: staffDetails!
+                                                        .data!
+                                                        .designationList!
+                                                        .length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      DesignationList
+                                                          designation =
+                                                          staffDetails!.data!
+                                                                  .designationList![
+                                                              index];
+
+                                                      return ListTile( 
+                                                        leading:
+                                                            Icon(Icons.work),
+                                                        title: Text(designation
+                                                                .designation ??
+                                                            "Unknown"),
+                                                        onTap: () {
+                                                          setState(() {
+                                                            designationSingle
+                                                                .text = designation
+                                                                    .designation ??
+                                                                "";
+
+                                                                 designationId
+                                                                 = designation
+                                                                    .designationId ??
+                                                                "";
+                                                                
+                                                          });
+                                                          Navigator.pop(
+                                                              context); // Close the dialog
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
                                       Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.start,
@@ -807,6 +889,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                               'phoneNumber': phoneNumber.text,
                                               'name': name.text,
                                               'email': emailId.text,
+                                              'designation': designationId,
                                               "user_list": checkedItems,
                                               "staff_id": widget.staffId,
                                               "branchId": branch
@@ -814,6 +897,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                             EditUserBasicDetailsModel
                                                 editUserBasicDetails =
                                                 await HttpService
+
                                                     .editUserBasicData(body);
                                             if (editUserBasicDetails.data ==
                                                 true) {
@@ -1389,11 +1473,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget buildTextField(
-      String labelText, String placeholder, controller, IconData icon) {
+      String labelText, String placeholder, controller, IconData icon,
+      {VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: controller,
+        readOnly: onTap != null,
         decoration: InputDecoration(
             contentPadding: const EdgeInsets.only(left: 10, top: 2, bottom: 2),
             labelText: labelText,
@@ -1412,6 +1498,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               borderSide: BorderSide(color: Colors.grey),
             ),
             labelStyle: const TextStyle(color: Colors.grey)),
+        onTap: onTap,
       ),
     );
   }

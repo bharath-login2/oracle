@@ -1357,7 +1357,6 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}staff_details",
           queryParameters: params);
-
       StaffDetailsModel model = StaffDetailsModel.fromJson(result.data);
       return model;
     } catch (e) {
