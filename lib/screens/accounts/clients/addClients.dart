@@ -22,7 +22,7 @@ import '../../../service/service.dart';
 
 class AddClients extends StatefulWidget {
   String token;
-  AddClients(this.token, {Key? key}) : super(key: key);
+  AddClients(this.token, {super.key});
   @override
   State<AddClients> createState() => _AddClientsState();
 }

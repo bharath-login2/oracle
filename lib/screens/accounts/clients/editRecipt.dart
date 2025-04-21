@@ -17,7 +17,7 @@ import '../../../service/service.dart';
 class EditReceipt extends StatefulWidget {
   String token;
   String receiptId;
-  EditReceipt(this.token, this.receiptId, {Key? key}) : super(key: key);
+  EditReceipt(this.token, this.receiptId, {super.key});
 
   @override
   State<EditReceipt> createState() => _EditReceiptState();

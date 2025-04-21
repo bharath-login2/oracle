@@ -3572,9 +3572,9 @@ class _ViewLeadsState extends State<ViewLeads> {
 
 class MessageViewWidget extends StatelessWidget {
   const MessageViewWidget({
-    Key? key,
+    super.key,
     required this.label,
-  }) : super(key: key);
+  });
 
   final String label;
 

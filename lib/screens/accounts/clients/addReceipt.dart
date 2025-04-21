@@ -16,8 +16,7 @@ class ReceiptAdd extends StatefulWidget {
   String token;
   String clientId;
   String invoiceId;
-  ReceiptAdd(this.token, this.clientId, this.invoiceId, {Key? key})
-      : super(key: key);
+  ReceiptAdd(this.token, this.clientId, this.invoiceId, {super.key});
 
   @override
   State<ReceiptAdd> createState() => _ReceiptAddState();

@@ -10,7 +10,7 @@ import '../../models/backgroundModel.dart';
 
 class TrueCallerOverlay extends StatefulWidget {
   String number;
-  TrueCallerOverlay({Key? key, required this.number}) : super(key: key);
+  TrueCallerOverlay({super.key, required this.number});
 
   @override
   State<TrueCallerOverlay> createState() => _TrueCallerOverlayState();

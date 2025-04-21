@@ -23,8 +23,7 @@ class EditInvoice extends StatefulWidget {
   String invoiceId;
   String clientId;
 
-  EditInvoice(this.token, this.invoiceId, this.clientId, {Key? key})
-      : super(key: key);
+  EditInvoice(this.token, this.invoiceId, this.clientId, {super.key});
 
   @override
   State<EditInvoice> createState() => _EditInvoiceState();

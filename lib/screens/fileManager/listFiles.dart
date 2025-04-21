@@ -25,7 +25,7 @@ class ListFiles extends StatefulWidget {
   String? token;
   String? folderName;
 
-  ListFiles(this.token, this.folderName, {Key? key}) : super(key: key);
+  ListFiles(this.token, this.folderName, {super.key});
 
   @override
   State<ListFiles> createState() => _ListFilesState();

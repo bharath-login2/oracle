@@ -8,11 +8,9 @@ import '../../models/contactGroup/deleteContatGroupModel.dart';
 import '../../models/contactGroup/editContactGroupModel.dart';
 import '../../models/contactGroup/editContactNumberModel.dart';
 import '../../models/contactGroup/groupInfoModel.dart';
-import '../../screens/whatsAppGroup/groupDetails.dart';
 import '../../screens/whatsAppGroup/groupList.dart';
 import '../../service/service.dart';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class GroupInfoPage extends StatefulWidget {

@@ -10,7 +10,7 @@ class ListFileManager extends StatefulWidget {
   String? format;
   String groupId;
 
-  ListFileManager(this.format, this.groupId, {Key? key}) : super(key: key);
+  ListFileManager(this.format, this.groupId, {super.key});
 
   @override
   State<ListFileManager> createState() => _ListFileManagerState();

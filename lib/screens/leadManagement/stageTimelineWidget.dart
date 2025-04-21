@@ -6,8 +6,7 @@ import '../../models/lead_management/leadDetailsModel.dart';
 class StageTimelineWidget extends StatefulWidget {
   final List<Calleddata> calleddata; // Now it's a List of Calleddata objects
 
-  const StageTimelineWidget({Key? key, required this.calleddata})
-      : super(key: key);
+  const StageTimelineWidget({super.key, required this.calleddata});
 
   @override
   _StageTimelineWidgetState createState() => _StageTimelineWidgetState();

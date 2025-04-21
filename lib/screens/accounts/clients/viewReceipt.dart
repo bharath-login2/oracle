@@ -18,8 +18,7 @@ class ViewReceipt extends StatefulWidget {
   String receiptNumber;
 
   ViewReceipt(this.token, this.receiptId, this.clientId, this.receiptNumber,
-      {Key? key})
-      : super(key: key);
+      {super.key});
 
   @override
   State<ViewReceipt> createState() => _ViewReceiptState();

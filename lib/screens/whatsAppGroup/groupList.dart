@@ -9,12 +9,10 @@ import '../../screens/whatsAppGroup/addContactGroup.dart';
 import '../../screens/whatsAppGroup/groupDetails.dart';
 import '../../service/service.dart';
 
-import '../../widgets/singleGroupWidget.dart';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../leadManagement/dashboard.dart';
 
 class GroupList extends StatefulWidget {
   String? token;

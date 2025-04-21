@@ -35,7 +35,6 @@ import '../bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import 'add_leads.dart';
 import '../../screens/leadManagement/callHistoryPage.dart';
-import '../../screens/leadManagement/searchPage.dart';
 import '../../screens/leadManagement/viewLeadCategory.dart';
 import '../../screens/leadManagement/viewLeads.dart';
 import '../../screens/settings/notificationTemplateSettings.dart';

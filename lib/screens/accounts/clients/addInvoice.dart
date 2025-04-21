@@ -21,7 +21,7 @@ class AddInvoice extends StatefulWidget {
   String token;
   String clientId;
 
-  AddInvoice(this.token, this.clientId, {Key? key}) : super(key: key);
+  AddInvoice(this.token, this.clientId, {super.key});
 
   @override
   State<AddInvoice> createState() => _AddInvoiceState();

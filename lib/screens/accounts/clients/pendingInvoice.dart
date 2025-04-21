@@ -18,7 +18,7 @@ import 'editInvoice.dart';
 
 class PendingInvoice extends StatefulWidget {
   String token;
-  PendingInvoice(this.token, {Key? key}) : super(key: key);
+  PendingInvoice(this.token, {super.key});
   @override
   State<PendingInvoice> createState() => _PendingInvoiceState();
 }

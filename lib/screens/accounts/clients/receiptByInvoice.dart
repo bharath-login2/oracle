@@ -15,7 +15,7 @@ import 'clientDetails.dart';
 class ReceiptByInvoice extends StatefulWidget {
   String token;
   String invoiceId;
-  ReceiptByInvoice(this.token, this.invoiceId, {Key? key}) : super(key: key);
+  ReceiptByInvoice(this.token, this.invoiceId, {super.key});
 
   @override
   State<ReceiptByInvoice> createState() => _ReceiptByInvoiceState();

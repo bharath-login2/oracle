@@ -45,8 +45,7 @@ class TransferLeadReport extends StatefulWidget {
       this.checkedAssignedStaffItemsName,
       this.checkedCreatedStaffItems,
       this.checkedCreatedStaffItemsName,
-      Key? key})
-      : super(key: key);
+      super.key});
 
   @override
   State<TransferLeadReport> createState() => _TransferLeadReportState();

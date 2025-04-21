@@ -29,7 +29,7 @@ class CallLogs extends StatefulWidget {
   String? name;
   String? userId;
 
-  CallLogs(this.token, this.name, this.userId, {Key? key}) : super(key: key);
+  CallLogs(this.token, this.name, this.userId, {super.key});
 
   @override
   State<CallLogs> createState() => _CallLogsState();

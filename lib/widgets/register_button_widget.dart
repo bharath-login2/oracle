@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 
 class RegisterButtonWidget extends StatefulWidget {
-  const RegisterButtonWidget({Key? key}) : super(key: key);
+  const RegisterButtonWidget({super.key});
 
   @override
   _RegisterButtonWidgetState createState() => _RegisterButtonWidgetState();
