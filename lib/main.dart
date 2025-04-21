@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:call_e_log/call_log.dart';
@@ -5,6 +6,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:login2/firebase_options.dart';
+import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
+import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/screens/myApp.dart';
 import 'package:login2/screens/overlay/overlay.dart';
 import 'package:login2/service/backgroundService.dart';
@@ -41,11 +46,50 @@ void callbackDispatcher() {
     }
   });
 }
+//! n1
+ class PhoneStateNotifier extends StateNotifier<PhoneState> {
+  StreamSubscription<PhoneState>? _subscription;
 
+  PhoneStateNotifier() : super(PhoneState.nothing()) {
+    _listenToStream();
+  }
+
+
+
+  void _listenToStream() {
+    _subscription = PhoneState.stream.listen((event) {
+      state = event; 
+      log("Updated status: ${state.status}");
+    });
+
+  }
+
+
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+}
+
+
+
+final phoneStateProvider =
+
+    StateNotifierProvider<PhoneStateNotifier, PhoneState>(
+
+  (ref) => PhoneStateNotifier(),
+
+);
+
+
+//!
 PhoneState status1 = PhoneState.nothing();
 String number ="";
 
-void setStream() {
+void setStream1() {
   PhoneState.stream.listen((event) {
     status1 = event;
     if(status1.number != null){
@@ -57,12 +101,16 @@ void setStream() {
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
-  setStream();
+  // setStream1();
+   final container = ProviderContainer();
+  final phoneNumber= container.read(phoneStateProvider); 
   runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: TrueCallerOverlay(
-        number: status1.number.toString(),
+    ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: TrueCallerOverlay(
+          number: phoneNumber.number.toString(),
+        ),
       ),
     ),
   );
@@ -71,17 +119,49 @@ void overlayMain() {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isAndroid) {
-    await initService();
-    FlutterBackgroundService().invoke('setAsBackground');
+   final service = FlutterBackgroundService();
+  
+  bool isRunning = await service.isRunning();
+  
+  if (isRunning) {
+    service.invoke('stopService');
   }
 
-  await Firebase.initializeApp();
+  await initService();
+  service.invoke('setAsForeground');
+  }
+
+  // await Hive.initFlutter();
+  // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
+  // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
+  try {
+     await HiveUtil.init();
+  await HiveUtil.safeOpenBox<HiveCaallHistoryModel>(HiveUtil.CALL_HISTORY_BOX);
+
+  } catch (e) {
+    log('error on initializing hive: $e');
+  }
+   // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
+  // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
+  
+  // await Firebase.initializeApp();
+   await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
   if (Platform.isAndroid) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'setAsBackgroundService') {
-        initService();
-        FlutterBackgroundService().invoke('setAsBackground');
+             final service = FlutterBackgroundService();
+  
+              bool isRunning = await service.isRunning();
+              
+              if (isRunning) {
+                service.invoke('stopService');
+              }
+
+              await initService();
+              service.invoke('setAsBackground');
         log("============== called : setAsBackgroundService  ===========================");
       }
     });
