@@ -112,23 +112,24 @@ class _CallLogsState extends State<CallLogs> {
      WidgetsBinding.instance.addPostFrameCallback((_) {
       askUserNeeds(context,false);
     });
+// loadHiveData();
     
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-     getSharedData();
-  }
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //    getSharedData();
+  // }
 
   
 
   Future<void> loadHiveData() async {
     fullHiveData.clear();
   final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-  log('hiveData LENGTH: ${hiveData.length}');
+  log('hiveData LENGTH MAIN: ${hiveData.length}');
   for (var entry in hiveData) {
-    log('Entry: ${entry.name} || ${entry.phoneNumber} || ${entry.isUploaded}');
+    log('Entry 1 MAIN : ${entry.name} || ${entry.phoneNumber} || ${entry.isUploaded} || ${entry.timeStamp}');
   }
 
   setState(() {
@@ -339,6 +340,7 @@ class _CallLogsState extends State<CallLogs> {
 
 
   getSharedData() async {
+    log('getSharedData called');
     try {
       refresh = true;
       permissionAccess = await Common.getSharedPref("callLogPermission");
@@ -391,6 +393,7 @@ class _CallLogsState extends State<CallLogs> {
         final int callLogCount = await HiveUtil.getCallLogCount();
         SharedPreferences prefs = await SharedPreferences.getInstance();
          List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
+         callLogData.clear();
          final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
         if (callLogCount==0) {
               log( 'No call logs found in Hive.');
@@ -411,6 +414,7 @@ class _CallLogsState extends State<CallLogs> {
             }).toList();
              log('filteredLogs : ${filteredLogs.length}');
             if (filteredLogs.isNotEmpty) {
+              List<HiveCaallHistoryModel> listOfCallLogNeedToAddHive= [];
                for (var callLog in filteredLogs) {
                 HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
                   id: callLog.timestamp.toString(),
@@ -418,25 +422,29 @@ class _CallLogsState extends State<CallLogs> {
                   phoneNumber: callLog.number.toString(),
                   callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
                   duration: callLog.duration.toString(),
-                  timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                  timeStamp: callLog.timestamp!.toString(),
+                  // timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
                   simSlot: callLog.simDisplayName??"NIL",
                   callRecordFilePath: "",
                   isUploaded: false,
                   isDeleted:false,
                 );
-                await HiveUtil.addCallLog(hiveCallLog);
-                callLogData.add(hiveCallLog);
-                if (callLogData.isNotEmpty) {
-                   await uploadMissingLogsToServer(callLogData);            
+                listOfCallLogNeedToAddHive.add(hiveCallLog);
+              }
+             
+                // callLogData.add(hiveCallLog);
+                if (listOfCallLogNeedToAddHive.isNotEmpty) {
+                   await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);   
+                   await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);         
                 }
                 setState(() {
-            refresh = false;
-          });
-          getSharedData();
-          return;
-              }
+                    refresh = false;
+                  });
+                  getSharedData();
+                  return;
             } else { 
               log('No call logs found');
+              return;
             }
 
         } else {
@@ -490,6 +498,7 @@ class _CallLogsState extends State<CallLogs> {
                         dateFrom: from,
                         dateTo: to,
                       );
+                      log('result : ${result.length}');
                     final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
                       final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
                       
@@ -511,7 +520,7 @@ class _CallLogsState extends State<CallLogs> {
                                 phoneNumber: callLog.number.toString(),
                                 callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
                                 duration: callLog.duration.toString(),
-                                timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                                timeStamp:  callLog.timestamp!.toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
                                 simSlot: callLog.simDisplayName??"NIL",
                                 callRecordFilePath: "",
                                 isUploaded: false,
@@ -562,19 +571,25 @@ class _CallLogsState extends State<CallLogs> {
 
                                    log('nonDuplicates: $nonDuplicates');
                                    log('nonDuplicates length: ${nonDuplicates.length}');
+                                   for(var item in callLogData){
+                                    log('item main : ${item.name} || ${item.isDeleted} || ${item.isUploaded}');
+                                   }
 
-                                   callLogData = callLogData.where((log) => log.isDeleted != true).toList();
-                                  callLogData = callLogData.reversed.toList();
+                                   nonDuplicates = nonDuplicates.where((log) => log.isDeleted != true).toList();
+                                  //  callLogData = callLogData.where((log) => log.isDeleted != true).toList();
+                                  nonDuplicates = nonDuplicates.where((log) => log.isUploaded != true).toList();
+                                  nonDuplicates = nonDuplicates.reversed.toList();
 
                                    log('callLogData        : $callLogData');
                                    log('callLogData length : ${callLogData.length}');
 
                                     List<HiveCaallHistoryModel> notUploadedCallLogs = callLogData.where((log) => log.isUploaded != true).toList();
+                                    log('notUploadedCallLogs : ${    notUploadedCallLogs.length}');
 
-                                    if (notUploadedCallLogs.isNotEmpty) {
-                                          uploadMissingLogsToServer(notUploadedCallLogs);    
+                                    if (nonDuplicates.isNotEmpty) {
+                                          await uploadMissingLogsToServer(nonDuplicates);
                                           //  todo : update in HIve
-                                          HiveUtil.addCallLogs(notUploadedCallLogs);
+                                         await HiveUtil.addCallLogs(nonDuplicates);
                                       }
 
                                     setState(() {
@@ -600,6 +615,7 @@ class _CallLogsState extends State<CallLogs> {
   }
 
   Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
+ log("uploadMissingLogsToServer function called");
 
      List<Map<String, dynamic>> missingLogs = callLogData.map((log) => {
           "name": log.name,
@@ -607,8 +623,9 @@ class _CallLogsState extends State<CallLogs> {
           "callTypes": log.callType 
                   .toString()
                   .substring(log.callType.toString().indexOf('.') + 1),
-          // "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
-          "time": log.timeStamp.toString(), // log.timestamp,
+          // "time": DateTime.parse(log.timeStamp).toString(),
+          "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
+          // "time": log.timeStamp.toString(), // log.timestamp,
           "duration": log.duration,
           "simName": log.simSlot ?? "NIL",
           "timeStamp": log.timeStamp,
@@ -1418,6 +1435,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                     ? InkWell(
                                                                                         onTap: () async {
                                                                                           Common.showProgressDialog(context, "Loading..");
+                                                                                          history.clear();
                                                                                           history.add({
                                                                                             "name": _callLogEntries.elementAt(indexStaff).name ?? "",
                                                                                             "phone_number": _callLogEntries.elementAt(indexStaff).number,
@@ -1435,9 +1453,49 @@ class _CallLogsState extends State<CallLogs> {
                                                                                           CallLogUploadModel object1 = await HttpService.callLogUpload(body);
                                                                                           if (object1.data == true) {
                                                                                             Common.toastMessaage(object1.message, Colors.green);
+                                                                                             bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(
+                                                                                                      _callLogEntries.elementAt(indexStaff).timestamp.toString(), 
+                                                                                                      _callLogEntries.elementAt(indexStaff).number.toString()
+                                                                                                    );
+                                                                                                         log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
+                                                                                                     if(isThisAlreadyInHiveCallLogDb) {
+                                                                                                          log('already in hive');
+                                                                                                          // update
+                                                                                                              await   HiveUtil.markCallLogAsUploaded(_callLogEntries.elementAt(indexStaff).timestamp.toString());
+                                                                                                                  log('updated in hive');
+                                                                                                                  // todo : reload data
+                                                                                                        
+                                                                                                        } else {
+                                                                                                                log('not in hive');
+                                                                                                              // add
+                                                                                                              try {
+                                                                                                                 HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                                                                                                                  id: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
+                                                                                                                  name: _callLogEntries.elementAt(indexStaff).name.toString(),
+                                                                                                                  phoneNumber: _callLogEntries.elementAt(indexStaff).number.toString(),
+                                                                                                                  callType: _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
+                                                                                                                  duration: _callLogEntries.elementAt(indexStaff).duration.toString(),
+                                                                                                                  // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(_callLogEntries.elementAt(indexStaff).timestamp))}',
+                                                                                                                  // timeStamp: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
+                                                                                                                  timeStamp: _callLogEntries.elementAt(indexStaff).timestamp!.toString() ,
+                                                                                                                //   DateTime.fromMillisecondsSinceEpoch(
+                                                                                                                // _callLogEntries.elementAt(indexStaff).timestamp!  ).toIso8601String(),
+                                                                                                                  simSlot: _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
+                                                                                                                  callRecordFilePath: "",
+                                                                                                                  isUploaded: true,
+                                                                                                                  isDeleted:false,
+                                                                                                                );
+                                                                                                              await HiveUtil.addCallLog(hiveCallLog);
+                                                                                                              } catch (e) {
+                                                                                                                log('error : ${e.toString()}');
+                                                                                                              }
+                                                                                                             
+                                                                                                            }
                                                                                             if (context.mounted) {
                                                                                               Navigator.pop(context);
+                                                                                              getSharedData();
                                                                                               getData();
+
                                                                                             }
                                                                                           } else {
                                                                                             Common.toastMessaage(object1.message, Colors.red);
@@ -1446,38 +1504,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                             }
                                                                                           }
                                                                                           //!
-                                                                                            bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(
-                                                                                                      _callLogEntries.elementAt(indexStaff).timestamp.toString(), 
-                                                                                                      _callLogEntries.elementAt(indexStaff).number.toString()
-                                                                                                    );
-                                                                                                         log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
-                                                                                                     if(isThisAlreadyInHiveCallLogDb) {
-                                                                                      log('already in hive');
-                                                                                      // update
-                                                                                     HiveUtil.markCallLogAsUploaded(_callLogEntries.elementAt(indexStaff).timestamp.toString());
-                                                                                      log('updated in hive');
-                                                                                      // todo : reload data
-                                                                                     
-                                                                                    } else {
-                                                                                            log('not in hive');
-                                                                                            // add
-                                                                                            HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                                                                                                id: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
-                                                                                                name: _callLogEntries.elementAt(indexStaff).name.toString(),
-                                                                                                phoneNumber: _callLogEntries.elementAt(indexStaff).number.toString(),
-                                                                                                callType: _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
-                                                                                                duration: _callLogEntries.elementAt(indexStaff).duration.toString(),
-                                                                                                // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(_callLogEntries.elementAt(indexStaff).timestamp))}',
-                                                                                                // timeStamp: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
-                                                                                                timeStamp: DateTime.fromMillisecondsSinceEpoch(
-                                                                                              _callLogEntries.elementAt(indexStaff).timestamp!  ).toIso8601String(),
-                                                                                                simSlot: _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
-                                                                                                callRecordFilePath: "",
-                                                                                                isUploaded: true,
-                                                                                                isDeleted:false,
-                                                                                              );
-                                                                                              HiveUtil.addCallLog(hiveCallLog);
-                                                                                          }
+                                                                                           
                                                                                           //!
 
                                                                                           setState(() {
