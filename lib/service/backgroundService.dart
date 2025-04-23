@@ -327,8 +327,8 @@ void showWindow() async {
                               log( '~ hive NAME       : ${latestHiveCallLog.name}');
                               log( '~ previous number : ${previous.number}');
                               log( '~ Hive number     : ${latestHiveCallLog.phoneNumber}');
-                              log( '~ Previous time   : ${previousTime}');
-                              log( '~ Hive time       : ${callLogTime}');
+                              log( '~ Previous time   : $previousTime');
+                              log( '~ Hive time       : $callLogTime');
 
                               if (previous.number == latestHiveCallLog.phoneNumber && previousTime.isAtSameMomentAs(callLogTime) && latest!= null) {
                                   log( '~ Call log matches with previous call log.');
@@ -367,7 +367,7 @@ void showWindow() async {
                                         "name": log.name,
                                         "phone_number": log.number,
                                         "callTypes": log.callType.toString().substring(log.callType.toString().indexOf('.') + 1),
-                                        "time": '${DateTime.fromMillisecondsSinceEpoch(log.timestamp!).toString()}',
+                                        "time": DateTime.fromMillisecondsSinceEpoch(log.timestamp!).toString(),
                                         "duration": log.duration,
                                         "simName": log.simDisplayName ?? "NIL",
                                         "timeStamp": log.timestamp,

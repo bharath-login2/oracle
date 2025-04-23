@@ -59,7 +59,7 @@ class Data {
         totalLeads: json["totalLeads"] ?? 0,
         fromdate: json["fromdate"] ?? "",
         todate: json["todate"] ?? "",
-        callPermission: json["callPermission"],
+        callPermission: json["callPermission"]??"",
         warningMessage: json["warningMessage"] ?? "",
         callLeadId: json["callLeadId"] ?? "",
       );
@@ -164,10 +164,10 @@ class Detail {
         address: json["address"] ?? "",
         leadSubCategory: json["lead_sub_category"] ?? "",
         profilePic: json["profile_pic"] ?? "",
-        isCalled: json["is_called"],
-        isSelected: json["is_selected"],
-        custId: json["cust_id"],
-        isCustomer: json["is_customer"],
+        isCalled: json["is_called"]??"",
+        isSelected: json["is_selected"]??"",
+        custId: json["cust_id"]??"",
+        isCustomer: json["is_customer"]??"",
       );
 
   Map<String, dynamic> toJson() => {

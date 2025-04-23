@@ -605,11 +605,19 @@ class _ViewLeadsState extends State<ViewLeads> {
                             ? Expanded(
                                 child: ScrollablePositionedList.builder(
                                   //reverse: true,
-                                  initialScrollIndex:
-                                      widget.scrollToIndex == null
-                                          ? 0
-                                          : widget.scrollToIndex!,
+
+                                  // initialScrollIndex:
+                                  //     widget.scrollToIndex == null
+                                  //         ? 0
+                                  //         : widget.scrollToIndex!,
+                                  initialScrollIndex: (widget.scrollToIndex !=
+                                              null &&
+                                          widget.scrollToIndex! < items.length)
+                                      ? widget.scrollToIndex!
+                                      : 0,
+
                                   //you can pass the desired index here//
+                                  // itemCount: items.length,
                                   itemCount: items.length + (isLoading ? 1 : 0),
                                   itemBuilder: (context, index) {
                                     if (index == items.length) {
@@ -823,7 +831,26 @@ class _ViewLeadsState extends State<ViewLeads> {
                                         return null;
                                       },
                                       child: InkWell(
-                                          onLongPress: () {
+                                        onLongPress: () {
+                                          setState(() {
+                                            items[index].isSelected =
+                                                !items[index].isSelected;
+                                            if (items[index].isSelected ==
+                                                true) {
+                                              selectedIUsers.add(
+                                                  items[index].callMasterId);
+                                              selectedUserNumbers.add(
+                                                  items[index].contactNumber1);
+                                            } else {
+                                              selectedIUsers.remove(
+                                                  items[index].callMasterId);
+                                              selectedUserNumbers.remove(
+                                                  items[index].contactNumber1);
+                                            }
+                                          });
+                                        },
+                                        onTap: () {
+                                          if (selectedIUsers.isNotEmpty) {
                                             setState(() {
                                               items[index].isSelected =
                                                   !items[index].isSelected;
@@ -842,72 +869,59 @@ class _ViewLeadsState extends State<ViewLeads> {
                                                         .contactNumber1);
                                               }
                                             });
-                                          },
-                                          onTap: () {
-                                            if (selectedIUsers.isNotEmpty) {
-                                              setState(() {
-                                                items[index].isSelected =
-                                                    !items[index].isSelected;
-                                                if (items[index].isSelected ==
-                                                    true) {
-                                                  selectedIUsers.add(
-                                                      items[index]
-                                                          .callMasterId);
-                                                  selectedUserNumbers.add(
-                                                      items[index]
-                                                          .contactNumber1);
-                                                } else {
-                                                  selectedIUsers.remove(
-                                                      items[index]
-                                                          .callMasterId);
-                                                  selectedUserNumbers.remove(
-                                                      items[index]
-                                                          .contactNumber1);
-                                                }
-                                              });
-                                            } else {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        LeadDetails(
-                                                            widget.token!,
-                                                            widget.editLead,
-                                                            widget.deleteLead,
-                                                            widget.cloudCall,
-                                                            items[index]
-                                                                .callMasterId
-                                                                .toString(),
-                                                            pageName: widget
-                                                                .pageName
-                                                                .toString(),
-                                                            status:
-                                                                widget.status,
-                                                            staff: widget.staff,
-                                                            isCalled:
-                                                                widget.isCalled,
-                                                            fromDate:
-                                                                widget.fromDate,
-                                                            toDate:
-                                                                widget.toDate,
-                                                            category:
-                                                                widget.category,
-                                                            scrollToIndex:
-                                                                index,
-                                                            page: page,
-                                                            pageSize:
-                                                                page * pageSize,
-                                                            leadType: widget
-                                                                .leadType)),
-                                              ).then((r) {
-                                                items.clear();
-                                                page = 1;
-                                                getData('desc', true, status);
-                                              });
-                                            }
-                                          },
-                                          child:
-                                              leadListWidget(context, index)),
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      LeadDetails(
+                                                          widget.token!,
+                                                          widget.editLead,
+                                                          widget.deleteLead,
+                                                          widget.cloudCall,
+                                                          items[index]
+                                                              .callMasterId
+                                                              .toString(),
+                                                          pageName: widget
+                                                              .pageName
+                                                              .toString(),
+                                                          status: widget.status,
+                                                          staff: widget.staff,
+                                                          isCalled:
+                                                              widget.isCalled,
+                                                          fromDate:
+                                                              widget.fromDate,
+                                                          toDate: widget.toDate,
+                                                          category:
+                                                              widget.category,
+                                                          scrollToIndex: index,
+                                                          page: page,
+                                                          pageSize:
+                                                              page * pageSize,
+                                                          leadType:
+                                                              widget.leadType)),
+                                            ).then((r) {
+                                              items.clear();
+                                              page = 1;
+                                              getData('desc', true, status);
+                                            });
+                                          }
+                                        },
+                                        child: index < items.length
+                                            ? Builder(
+                                                builder: (context) {
+                                                  try {
+                                                    return leadListWidget(
+                                                        context, index);
+                                                  } catch (e) {
+                                                    print(
+                                                        "Error at index $index: $e");
+                                                    return const SizedBox(); 
+                                                  }
+                                                },
+                                              )
+                                            : const SizedBox(),
+                                      ),
                                     );
                                   },
                                   itemScrollController: itemScrollController,

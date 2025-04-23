@@ -12,7 +12,6 @@ import '../../models/settings/updateFbLeadAssignStaff.dart';
 import '../../service/service.dart';
 import '../homePage.dart';
 import '../upComingPage.dart';
-import 'fbNotificationMessageSend.dart';
 
 class FacebookSettings extends StatefulWidget {
   String token;

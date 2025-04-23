@@ -12,7 +12,6 @@
 
 
 
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:call_e_log/call_log.dart';
@@ -45,7 +44,7 @@ class CallLogs extends StatefulWidget {
   String? name;
   String? userId;
 
-  CallLogs(this.token, this.name, this.userId, {Key? key}) : super(key: key);
+  CallLogs(this.token, this.name, this.userId, {super.key});
 
   @override
   State<CallLogs> createState() => _CallLogsState();
@@ -325,7 +324,7 @@ class _CallLogsState extends State<CallLogs> {
                   "token": await Common.getSharedPref("token"),
                   'log': missingLogs,
                 };
-                log('~~ OUTGOING CALL BODY : ${body} ~~~');
+                log('~~ OUTGOING CALL BODY : $body ~~~');
 
 
 
@@ -376,7 +375,7 @@ List<HiveCaallHistoryModel> fullHiveData =[];
           //!
           // List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
           final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-          log('hiveData 1: ${hiveData}');
+          log('hiveData 1: $hiveData');
           log('hiveData 0: ${hiveData.length}');
           
           //!
@@ -506,7 +505,7 @@ isCurrentUserSearchResult=false;
       List<CallLogEntry> callLogsFromDevice = await getFilteredCallLogs(startingTime);  // filterd based on Incoming /out going
       log('Call logs from device : $callLogsFromDevice');
       log('Call logs from length : ${callLogsFromDevice.length}');
-      if(callLogsFromDevice.length ==0){
+      if(callLogsFromDevice.isEmpty){
         log('no call logs in device');
         final List<HiveCaallHistoryModel> hiveDataMain = await HiveUtil.getAllCallLogs();
         //! 
@@ -535,8 +534,8 @@ isCurrentUserSearchResult=false;
        log('Latest Hive Call Log name         2 : ${latestHiveCallLog2.name}');
        log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.phoneNumber}');
        log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.isUploaded}');
-       log('Latest Hive Call Log phoneNumber  2 : ${hiveLatestDateTime}');
-       log('Latest Hive Call Log phoneNumber  2 : ${deviceLatestCallLogTime}');
+       log('Latest Hive Call Log phoneNumber  2 : $hiveLatestDateTime');
+       log('Latest Hive Call Log phoneNumber  2 : $deviceLatestCallLogTime');
        log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.name}');
        log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.number}');
 
@@ -1080,7 +1079,7 @@ setState(() {
 
                                                           if (indexStaff==1 || selectedIndex==0) {
                                                             //  log('test  6 :  ${hiveEntry.name} || ${entry.name}');
-                                                             log('test  6 :  ${hiveEntry.name} || ${entry.name} ~~ ${entryDateTime} || ${hiveDateTime} ~~ ${hiveEntry.phoneNumber} || ${entry.number}');
+                                                             log('test  6 :  ${hiveEntry.name} || ${entry.name} ~~ $entryDateTime || $hiveDateTime ~~ ${hiveEntry.phoneNumber} || ${entry.number}');
                                                           //  log('test  7 :  ${hiveEntry.phoneNumber} || ${entry.number}');
                                                           //  log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
                                                           }
@@ -2688,7 +2687,7 @@ setState(() {
                                                                                   bottom: 5),
                                                                               child:
                                                                                   Text(
-                                                                                "${allCallLogData[index].simSlot}",
+                                                                                allCallLogData[index].simSlot,
                                                                               ),
                                                                             ),
                                                                           ),
