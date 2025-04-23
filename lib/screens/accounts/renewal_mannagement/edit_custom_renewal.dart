@@ -887,20 +887,33 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         controller: startDate,
                         readOnly: true,
                         onTap: () async {
+                          DateTime initial = DateTime.now();
+                          if (startDate.text.isNotEmpty) {
+                            try {
+                              initial = DateFormat('dd-MM-yyyy')
+                                  .parse(startDate.text);
+                            } catch (e) {
+                              initial = DateTime.now();
+                            }
+                          }
+
                           selectedValue = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          setState(() {
-                            startDate.text =
-                                DateFormat('dd-MM-yyyy').format(selectedValue!);
-                            final endValue = selectedValue!
-                                .add(Duration(days: int.parse(typeDuration)));
-                            endDate.text =
-                                DateFormat('dd-MM-yyyy').format(endValue);
-                          });
+
+                          if (selectedValue != null) {
+                            setState(() {
+                              startDate.text = DateFormat('dd-MM-yyyy')
+                                  .format(selectedValue!);
+                              final endValue = selectedValue!
+                                  .add(Duration(days: int.parse(typeDuration)));
+                              endDate.text =
+                                  DateFormat('dd-MM-yyyy').format(endValue);
+                            });
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -909,31 +922,80 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                           return null;
                         },
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Start Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'Start Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(
                       width: 15,
                     ),
+                    // Expanded(
+                    //   child: TextFormField(
+                    //     // onTap: () async {
+                    //     //   DateTime? selectedEndDate = await showDatePicker(
+                    //     //     context: context,
+                    //     //     initialDate: DateTime.now(),
+                    //     //     firstDate: DateTime(2000),
+                    //     //     lastDate: DateTime(2100),
+                    //     //   );
+                    //     //   endDate.text =
+                    //     //       DateFormat('dd-MM-yyyy').format(selectedEndDate!);
+                    //     // },
+
+                    //     validator: (value) {
+                    //       if (value!.isEmpty) {
+                    //         return "Select End Date";
+                    //       }
+                    //       return null;
+                    //     },
+                    //     readOnly: true,
+                    //     controller: endDate,
+                    //     decoration: const InputDecoration(
+                    //         contentPadding: EdgeInsets.all(8),
+                    //         labelText: 'End Date *',
+                    //         prefixIcon:
+                    //             Icon(Icons.calendar_month, color: Colors.grey),
+                    //         border: OutlineInputBorder(),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderSide: BorderSide(color: Colors.grey),
+                    //         ),
+                    //         labelStyle: TextStyle(color: Colors.grey)),
+                    //   ),
+                    // ),
                     Expanded(
                       child: TextFormField(
                         onTap: () async {
+                          DateTime initial = DateTime.now();
+                          if (endDate.text.isNotEmpty) {
+                            try {
+                              initial =
+                                  DateFormat('dd-MM-yyyy').parse(endDate.text);
+                            } catch (e) {
+                              initial = DateTime.now(); // fallback
+                            }
+                          }
+
                           DateTime? selectedEndDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          endDate.text =
-                              DateFormat('dd-MM-yyyy').format(selectedEndDate!);
+
+                          if (selectedEndDate != null) {
+                            setState(() {
+                              endDate.text = DateFormat('dd-MM-yyyy')
+                                  .format(selectedEndDate);
+                            });
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -944,15 +1006,16 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                         readOnly: true,
                         controller: endDate,
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'End Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'End Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                   ],

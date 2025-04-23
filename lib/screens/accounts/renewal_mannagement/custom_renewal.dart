@@ -1434,20 +1434,33 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         controller: startDateExisting,
                         readOnly: true,
                         onTap: () async {
-                          selectedValue = (await showDatePicker(
+                          DateTime initial = DateTime.now();
+                          if (startDateExisting.text.isNotEmpty) {
+                            try {
+                              initial = DateFormat('dd-MM-yyyy')
+                                  .parse(startDateExisting.text);
+                            } catch (e) {
+                              initial = DateTime.now(); // fallback
+                            }
+                          }
+
+                          DateTime? selected = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
-                          ))!;
-                          setState(() {
-                            startDateExisting.text =
-                                DateFormat('dd-MM-yyyy').format(selectedValue);
-                            final endValue = selectedValue
-                                .add(Duration(days: int.parse(typeDuration)));
-                            endDateExisting.text =
-                                DateFormat('dd-MM-yyyy').format(endValue);
-                          });
+                          );
+
+                          if (selected != null) {
+                            setState(() {
+                              startDateExisting.text =
+                                  DateFormat('dd-MM-yyyy').format(selected);
+                              final endValue = selected
+                                  .add(Duration(days: int.parse(typeDuration)));
+                              endDateExisting.text =
+                                  DateFormat('dd-MM-yyyy').format(endValue);
+                            });
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -1456,15 +1469,16 @@ class _CustomRenewalState extends State<CustomRenewal> {
                           return null;
                         },
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Start Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'Start Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(
@@ -1473,14 +1487,27 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     Expanded(
                       child: TextFormField(
                         onTap: () async {
+                          DateTime initial = DateTime.now();
+                          if (endDateExisting.text.isNotEmpty) {
+                            try {
+                              initial = DateFormat('dd-MM-yyyy')
+                                  .parse(endDateExisting.text);
+                            } catch (e) {
+                              initial = DateTime.now(); // fallback
+                            }
+                          }
+
                           DateTime? selectedEndDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          endDateExisting.text =
-                              DateFormat('dd-MM-yyyy').format(selectedEndDate!);
+
+                          if (selectedEndDate != null) {
+                            endDateExisting.text = DateFormat('dd-MM-yyyy')
+                                .format(selectedEndDate);
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -1491,15 +1518,16 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: true,
                         controller: endDateExisting,
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'End Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'End Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                   ],
@@ -2847,14 +2875,27 @@ class _CustomRenewalState extends State<CustomRenewal> {
                     Expanded(
                       child: TextFormField(
                         onTap: () async {
+                          DateTime initial = DateTime.now();
+                          if (endDateNew.text.isNotEmpty) {
+                            try {
+                              initial = DateFormat('dd-MM-yyyy')
+                                  .parse(endDateNew.text);
+                            } catch (e) {
+                              initial = DateTime.now(); // fallback
+                            }
+                          }
+
                           DateTime? selectedEndDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          endDateNew.text =
-                              DateFormat('dd-MM-yyyy').format(selectedEndDate!);
+
+                          if (selectedEndDate != null) {
+                            endDateNew.text = DateFormat('dd-MM-yyyy')
+                                .format(selectedEndDate);
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -2865,15 +2906,16 @@ class _CustomRenewalState extends State<CustomRenewal> {
                         readOnly: true,
                         controller: endDateNew,
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'End Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'End Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                   ],
