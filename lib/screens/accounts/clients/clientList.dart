@@ -19,7 +19,7 @@ import 'log_screen.dart';
 class ClientList extends StatefulWidget {
   String token;
 
-  ClientList(this.token, {Key? key}) : super(key: key);
+  ClientList(this.token, {super.key});
 
   @override
   State<ClientList> createState() => _ClientListState();

@@ -21,7 +21,7 @@ import 'editInvoice.dart';
 class InvoiceList extends StatefulWidget {
   String token;
 
-  InvoiceList(this.token, {Key? key}) : super(key: key);
+  InvoiceList(this.token, {super.key});
 
   @override
   State<InvoiceList> createState() => _InvoiceListState();

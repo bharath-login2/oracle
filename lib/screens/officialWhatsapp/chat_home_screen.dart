@@ -21,7 +21,7 @@ import 'components/tab_bar.dart';
 
 // ignore: must_be_immutable
 class ChatHomeScreen extends StatefulWidget {
-  const ChatHomeScreen({Key? key}) : super(key: key);
+  const ChatHomeScreen({super.key});
 
   @override
   State<ChatHomeScreen> createState() => _ChatHomeScreenState();

@@ -13,12 +13,12 @@ class FileSendingScreen extends StatefulWidget {
   final String? groupId;
 
   const FileSendingScreen({
-    Key? key,
+    super.key,
     this.documentUrl,
     this.title,
     this.extension,
     this.groupId,
-  }) : super(key: key);
+  });
 
   @override
   State<FileSendingScreen> createState() => _FileSendingScreenState();

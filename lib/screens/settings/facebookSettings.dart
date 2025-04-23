@@ -12,12 +12,11 @@ import '../../models/settings/updateFbLeadAssignStaff.dart';
 import '../../service/service.dart';
 import '../homePage.dart';
 import '../upComingPage.dart';
-import 'fbNotificationMessageSend.dart';
 
 class FacebookSettings extends StatefulWidget {
   String token;
 
-  FacebookSettings(this.token, {Key? key}) : super(key: key);
+  FacebookSettings(this.token, {super.key});
 
   @override
   State<FacebookSettings> createState() => _FacebookSettingsState();

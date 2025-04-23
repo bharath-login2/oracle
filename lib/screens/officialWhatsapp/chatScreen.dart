@@ -39,10 +39,10 @@ import 'listFileManager.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
-    Key? key,
+    super.key,
     required this.groupId,
     required this.nav,
-  }) : super(key: key);
+  });
 
   final String groupId;
   final String nav;

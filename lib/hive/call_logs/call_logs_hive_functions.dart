@@ -481,7 +481,7 @@ Future<List<CallLogEntry>> getFilteredCallLogs(DateTime  startingTime) async {
   // List<String> simOptions = prefs.getStringList('simOptions') ?? [];
  
 
-  log('+ callTypes  : ${callTypes}');
+  log('+ callTypes  : $callTypes');
   // log('+ dateTimeFrom : ${dateTimeFrom}');
 
   Iterable<CallLogEntry> allLogs = await CallLog.query(
@@ -506,7 +506,7 @@ Future<List<CallLogEntry>> getFilteredCallLogs(DateTime  startingTime) async {
     if (callTypes.contains('Outgoing') && log.callType == CallType.outgoing) {
       isValidType = true;
     }
-  print('+ isValidType : ${isValidType}');
+  print('+ isValidType : $isValidType');
 
     // --- Filter SIM Selection ---
     // bool isValidSim = false;

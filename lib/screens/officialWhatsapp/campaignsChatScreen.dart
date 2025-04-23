@@ -25,10 +25,10 @@ import 'components/imageHelper.dart';
 
 class CampaignsChatScreen extends StatefulWidget {
   const CampaignsChatScreen({
-    Key? key,
+    super.key,
     required this.groupId,
     required this.nav,
-  }) : super(key: key);
+  });
 
   final String nav;
   final String groupId;

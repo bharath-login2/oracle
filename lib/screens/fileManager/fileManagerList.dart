@@ -12,7 +12,7 @@ import '../leadManagement/imageUploadController.dart';
 class FileMangerList extends StatefulWidget {
   String? token;
 
-  FileMangerList(this.token, {Key? key}) : super(key: key);
+  FileMangerList(this.token, {super.key});
 
   @override
   State<FileMangerList> createState() => _FileMangerListState();

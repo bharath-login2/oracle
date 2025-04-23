@@ -2,7 +2,6 @@
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:login2/screens/accounts/clients/viewInvoice.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:lottie/lottie.dart';
@@ -18,7 +17,7 @@ import 'editInvoice.dart';
 
 class PendingInvoice extends StatefulWidget {
   String token;
-  PendingInvoice(this.token, {Key? key}) : super(key: key);
+  PendingInvoice(this.token, {super.key});
   @override
   State<PendingInvoice> createState() => _PendingInvoiceState();
 }

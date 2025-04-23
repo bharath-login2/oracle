@@ -1054,9 +1054,9 @@ class _ViewUsersState extends State<ViewUsers> {
 
 class MessageViewWidget extends StatelessWidget {
   const MessageViewWidget({
-    Key? key,
+    super.key,
     required this.label,
-  }) : super(key: key);
+  });
 
   final String label;
 

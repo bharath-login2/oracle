@@ -8,13 +8,13 @@ class SingleGroupWidget extends StatelessWidget {
   final String? timePost;
 
   const SingleGroupWidget({
-    Key? key,
+    super.key,
     this.chatMessage,
     this.chatTitle,
     this.seenStatusColor,
     this.imageUrl,
     this.timePost
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

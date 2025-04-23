@@ -7,7 +7,7 @@ import 'colors.dart';
 
 
 class LoginButton extends StatefulWidget {
-  const LoginButton({Key? key}) : super(key: key);
+  const LoginButton({super.key});
 
   @override
   _LoginButtonState createState() => _LoginButtonState();

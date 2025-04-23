@@ -20,8 +20,7 @@ class ReceiptList extends StatefulWidget {
   String? fdate;
   String? tdate;
   String? type;
-  ReceiptList(this.token, {Key? key, this.fdate, this.tdate, this.type})
-      : super(key: key);
+  ReceiptList(this.token, {super.key, this.fdate, this.tdate, this.type});
 
   @override
   State<ReceiptList> createState() => _ReceiptListState();

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 
 class StartPageView extends StatefulWidget {
-  const StartPageView({Key? key}) : super(key: key);
+  const StartPageView({super.key});
 
   @override
   _StartPageViewState createState() => _StartPageViewState();

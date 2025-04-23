@@ -15,8 +15,7 @@ class NotificationPage extends StatefulWidget {
   bool deleteLead;
   bool cloudCall;
   NotificationPage(this.token, this.editLead, this.deleteLead, this.cloudCall,
-      {Key? key})
-      : super(key: key);
+      {super.key});
   @override
   State<NotificationPage> createState() => _NotificationPageState();
 }

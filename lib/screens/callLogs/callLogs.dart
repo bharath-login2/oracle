@@ -1,7 +1,6 @@
 // ignore_for_file: must_be_immutable
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:call_e_log/call_log.dart';
@@ -34,7 +33,7 @@ class CallLogs extends StatefulWidget {
   String? name;
   String? userId;
 
-  CallLogs(this.token, this.name, this.userId, {Key? key}) : super(key: key);
+  CallLogs(this.token, this.name, this.userId, {super.key});
 
   @override
   State<CallLogs> createState() => _CallLogsState();
@@ -374,7 +373,7 @@ class _CallLogsState extends State<CallLogs> {
 
           // getSimDetails();
            final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-          log('hiveData 1: ${hiveData}');
+          log('hiveData 1: $hiveData');
           log('hiveData 0: ${hiveData.length}');
           log('================================== HIVE DATA IN GET SHARED DATA ========================================');
           log('hiveData LENGTH 1 : ${hiveData.length}');
@@ -532,13 +531,13 @@ class _CallLogsState extends State<CallLogs> {
                         }
 
 
-                        log('callLogData : ${callLogData}');
+                        log('callLogData : $callLogData');
                         log('callLogData : ${callLogData.length}');
                         // got all call logs
                         // get hive call logs
                         // get missing call logs from callLogData list
                           final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-                          log('hiveData 1: ${hiveData}');
+                          log('hiveData 1: $hiveData');
                           log('hiveData 0: ${hiveData.length}');
 
 
@@ -642,7 +641,7 @@ class _CallLogsState extends State<CallLogs> {
                   "token": await Common.getSharedPref("token"),
                   'log': missingLogs,
                 };
-                log('~~ OUTGOING CALL BODY : ${body} ~~~');
+                log('~~ OUTGOING CALL BODY : $body ~~~');
 
 
 

@@ -37,7 +37,7 @@ class ClientDetails extends StatefulWidget {
   String token;
   String clientId;
 
-  ClientDetails(this.token, this.clientId, {Key? key}) : super(key: key);
+  ClientDetails(this.token, this.clientId, {super.key});
 
   @override
   State<ClientDetails> createState() => _ClientDetailsState();

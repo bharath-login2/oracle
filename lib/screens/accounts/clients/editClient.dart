@@ -19,7 +19,7 @@ import '../../../service/service.dart';
 class EditClients extends StatefulWidget {
   String token;
   String clientId;
-  EditClients(this.token, this.clientId, {Key? key}) : super(key: key);
+  EditClients(this.token, this.clientId, {super.key});
 
   @override
   State<EditClients> createState() => _EditClientsState();

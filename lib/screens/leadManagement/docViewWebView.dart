@@ -19,14 +19,14 @@ class DocumentViewerScreen extends StatefulWidget {
   final String? createdBy;
 
   const DocumentViewerScreen({
-    Key? key,
+    super.key,
     this.documentUrl,
     this.title,
     this.extension,
     this.fileSize,
     this.createdDate,
     this.createdBy,
-  }) : super(key: key);
+  });
 
   @override
   State<DocumentViewerScreen> createState() => _DocumentViewerScreenState();
