@@ -81,27 +81,23 @@ class _ViewReceiptState extends State<ViewReceipt> {
     // Capture Screenshot
     Uint8List? screenshot = await screenshotController.capture();
 
-    if (screenshot != null) {
-      final pw.Document pdf = pw.Document();
-      pdf.addPage(
-        pw.Page(
-          build: (pw.Context context) {
-            return pw.Image(pw.MemoryImage(screenshot));
-          },
-        ),
-      );
+    final pw.Document pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Image(pw.MemoryImage(screenshot!));
+        },
+      ),
+    );
 
-      // Save the PDF
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/$name');
-      await file.writeAsBytes(await pdf.save());
+    // Save the PDF
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$name');
+    await file.writeAsBytes(await pdf.save());
 
-     XFile xfile = XFile(file.path);
-      await Share.shareXFiles([xfile], text: 'Check out this PDF!');
-    } else {
-      print("Screenshot capture failed!");
-    }
-  } catch (e) {
+   XFile xfile = XFile(file.path);
+    await Share.shareXFiles([xfile], text: 'Check out this PDF!');
+    } catch (e) {
     print("Error in takeScreenshot: $e");
   }
 }

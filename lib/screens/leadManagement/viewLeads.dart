@@ -910,14 +910,15 @@ class _ViewLeadsState extends State<ViewLeads> {
                                         child: index < items.length
                                             ? Builder(
                                                 builder: (context) {
-                                                  try {
-                                                    return leadListWidget(
-                                                        context, index);
-                                                  } catch (e) {
-                                                    print(
-                                                        "Error at index $index: $e");
-                                                    return const SizedBox(); 
-                                                  }
+                                                  //try {
+
+                                                  return leadListWidget(
+                                                      context, index);
+                                                  // } catch (e) {
+                                                  //   print(
+                                                  //       "Error at index $index: $e");
+                                                  //   return const SizedBox();
+                                                  // }
                                                 },
                                               )
                                             : const SizedBox(),
@@ -1370,8 +1371,15 @@ class _ViewLeadsState extends State<ViewLeads> {
                                       ),
                                       Container(
                                         decoration: BoxDecoration(
-                                            color: _colors[
-                                                items[index].callResultId],
+                                            // color: _colors[
+                                            //     items[index].callResultId],
+                                            color: items[index].callResultId >=
+                                                        0 &&
+                                                    items[index].callResultId <
+                                                        _colors.length
+                                                ? _colors[
+                                                    items[index].callResultId]
+                                                : const Color.fromARGB(255, 245, 160, 34), 
                                             borderRadius:
                                                 BorderRadius.circular(5)),
                                         child: Padding(

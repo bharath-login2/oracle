@@ -466,11 +466,9 @@ class _RenewQuickRenewalState extends State<RenewQuickRenewal> {
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2100),
                             );
-                            if (selectedEndDate != null) {
-                              endDate.text = DateFormat('dd-MM-yyyy')
-                                  .format(selectedEndDate);
-                            }
-                          },
+                            endDate.text = DateFormat('dd-MM-yyyy')
+                                .format(selectedEndDate!);
+                                                    },
                           validator: (value) {
                             if (value!.isEmpty) {
                               return "Please Select End Date";

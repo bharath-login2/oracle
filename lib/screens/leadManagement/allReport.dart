@@ -274,14 +274,14 @@ class _AllReportState extends State<AllReport> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Date from ',
-                            style: TextStyle(fontSize: 16)),
+                            style: TextStyle(fontSize: 14)),
                         Text(outputFormat.format(DateTime.parse(fromdate)),
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        const Text(' to ', style: TextStyle(fontSize: 16)),
+                                fontSize: 14, fontWeight: FontWeight.bold)),
+                        const Text(' to ', style: TextStyle(fontSize: 14)),
                         Text(outputFormat.format(DateTime.parse(todate)),
                             style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
+                                fontSize: 14, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -795,10 +795,10 @@ class _AllReportState extends State<AllReport> {
                                                                     ),
                                                                     Container(
                                                                       decoration: BoxDecoration(
-                                                                          color: _colors[items[index]
-                                                                              .callResultId!],
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(5)),
+                                                                          // color: _colors[items[index]
+                                                                          //     .callResultId!],
+                                                                          color: items[index].callResultId >= 0 && items[index].callResultId < _colors.length ? _colors[items[index].callResultId] : const Color.fromARGB(255, 245, 160, 34),
+                                                                          borderRadius: BorderRadius.circular(5)),
                                                                       child:
                                                                           Padding(
                                                                         padding: const EdgeInsets

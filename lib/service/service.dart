@@ -287,17 +287,51 @@ class HttpService {
     }
   }
 
-  static Future loginCheck(token, firebaseToken) async {
-    var params = {"token": token, "firebaseId": firebaseToken};
-    try {
-      var result = await _dio.get("${await Config.getUrl()}if_token_expired",
-          queryParameters: params);
-      LoginCheckModel model = LoginCheckModel.fromJson(result.data);
-      return model;
-    } catch (e) {
-      log("error: $e");
+  // static Future loginCheck(token, firebaseToken) async {
+  //    var params = {"token": token, "firebaseId": firebaseToken};
+  //   try {
+  //     var result = await _dio.get("${await Config.getUrl()}if_token_expired",
+  //         queryParameters: params);
+  //     LoginCheckModel model = LoginCheckModel.fromJson(result.data);
+  //     return model;
+  //   } catch (e) {
+  //     log("error: $e");
+    
+  //   }
+  // }
+
+  static Future<LoginCheckModel?> loginCheck(String? token, String firebaseToken) async {
+  var params = {
+    if (token != null && token.isNotEmpty) "token": token,
+    "firebaseId": firebaseToken,
+  };
+
+  try {
+    final baseUrl = await Config.getUrl();
+    if (baseUrl.isEmpty) {
+      log("❌ Base URL is empty. Check SharedPreferences or configuration.");
+      return null;
     }
+
+    log("🔗 Calling: ${baseUrl}if_token_expired");
+    log("📦 Params: $params");
+
+    var result = await _dio.get("${baseUrl}if_token_expired", queryParameters: params);
+    
+    if (result.data != null) {
+      log("✅ API Response: ${result.data}");
+      return LoginCheckModel.fromJson(result.data);
+    } else {
+      log("❌ No data received from API");
+      return null;
+    }
+  } catch (e, stackTrace) {
+    log("❌ Dio error: $e");
+    log("🧵 Stack trace: $stackTrace");
+    return null;
   }
+}
+
 
   static Future sendOtp(phoneNumber, otp, String type) async {
     var params = {"phoneNumber": phoneNumber, "otp": otp, "type": type};
@@ -2780,7 +2814,7 @@ class HttpService {
     } finally {}
   }
 
-  static socketChat(String groupId) async {  
+  static socketChat(String groupId) async {
     try {
       var formData = FormData.fromMap({
         "group_id": groupId,
@@ -2846,9 +2880,9 @@ class HttpService {
             TemplateContentModel.fromJson(response.data);
         return templateContentMoel;
       } else if (response.statusCode == 500) {
-      } else {} 
+      } else {}
     } finally {}
-  } 
+  }
 
   static sendTemplateMessage(groupId, format, templateName, language, template,
       fileName, isFile, type, List argList) async {

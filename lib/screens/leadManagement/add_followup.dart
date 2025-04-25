@@ -613,39 +613,37 @@ class _AddFollowupState extends State<AddFollowup> {
                                         lastDate: DateTime(2100),
                                       );
 
-                                      if (selectedDate != null) {
-                                        TimeOfDay? selectedTime =
-                                            await showTimePicker(
-                                          context: context,
-                                          initialTime: TimeOfDay.now(),
+                                      TimeOfDay? selectedTime =
+                                          await showTimePicker(
+                                        context: context,
+                                        initialTime: TimeOfDay.now(),
+                                      );
+
+                                      if (selectedTime != null) {
+                                        final now = DateTime.now();
+                                        final selectedDateTime = DateTime(
+                                          selectedDate!.year,
+                                          selectedDate.month,
+                                          selectedDate.day,
+                                          selectedTime.hour,
+                                          selectedTime.minute,
                                         );
 
-                                        if (selectedTime != null) {
-                                          final now = DateTime.now();
-                                          final selectedDateTime = DateTime(
-                                            selectedDate.year,
-                                            selectedDate.month,
-                                            selectedDate.day,
-                                            selectedTime.hour,
-                                            selectedTime.minute,
+                                        if (selectedDateTime.isAfter(now)) {
+                                          String convertedNewDate =
+                                              getYmdFromDmy(selectedDate
+                                                  .toString()
+                                                  .split(' ')[0]);
+                                          nextFollowupDate1.text =
+                                              "$convertedNewDate ${selectedTime.format(context)}";
+                                        } else {
+                                          Common.toastMessaage(
+                                            "You cannot choose a past time for the follow-up date",
+                                            Colors.red,
                                           );
-
-                                          if (selectedDateTime.isAfter(now)) {
-                                            String convertedNewDate =
-                                                getYmdFromDmy(selectedDate
-                                                    .toString()
-                                                    .split(' ')[0]);
-                                            nextFollowupDate1.text =
-                                                "$convertedNewDate ${selectedTime.format(context)}";
-                                          } else {
-                                            Common.toastMessaage(
-                                              "You cannot choose a past time for the follow-up date",
-                                              Colors.red,
-                                            );
-                                          }
                                         }
                                       }
-                                    },
+                                                                        },
                                     decoration: const InputDecoration(
                                         contentPadding: EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),

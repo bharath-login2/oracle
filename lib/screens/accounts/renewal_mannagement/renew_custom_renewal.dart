@@ -1329,10 +1329,8 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                             lastDate: DateTime(2100),
                           );
 
-                          if (selectedEndDate != null) {
-                            endDate.text = formatDate(selectedEndDate);
-                          }
-                        },
+                          endDate.text = formatDate(selectedEndDate!);
+                                                },
                         validator: (value) {
                           if (value!.isEmpty) {
                             return "Select End Date";
