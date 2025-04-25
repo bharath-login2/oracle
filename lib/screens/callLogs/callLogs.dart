@@ -259,48 +259,48 @@ class _CallLogsState extends State<CallLogs> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (callTypes.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Please select at least one Call Type'),
-                            ),
-                          );
-                          return;
-                        }
+                        // if (callTypes.isEmpty) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     const SnackBar(
+                        //       content: Text(
+                        //           'Please select at least one Call Type'),
+                        //     ),
+                        //   );
+                        //   return;
+                        // }
 
                         await prefs.setStringList('callTypes', callTypes);
                         // await prefs.setStringList('simOptions', simOptions);
                         await prefs.setString('callLogsStartingTime',  DateTime.now().toString());
                         //!
                          // 🔄 Save toggle history for incoming/outgoing
-                          if (callTypes.contains("Incoming")) {
-                            await ToggleStorage.addToggleEvent(CallLogToggleEvent(
-                              type: "Incoming",
-                              isEnabled: true,
-                              timestamp: DateTime.now().millisecondsSinceEpoch,
-                            ));
-                          } else {
-                            await ToggleStorage.addToggleEvent(CallLogToggleEvent(
-                              type: "Incoming",
-                              isEnabled: false,
-                              timestamp: DateTime.now().millisecondsSinceEpoch,
-                            ));
-                          }
+                          // if (callTypes.contains("Incoming")) {
+                          //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+                          //     type: "Incoming",
+                          //     isEnabled: true,
+                          //     timestamp: DateTime.now().millisecondsSinceEpoch,
+                          //   ));
+                          // } else {
+                          //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+                          //     type: "Incoming",
+                          //     isEnabled: false,
+                          //     timestamp: DateTime.now().millisecondsSinceEpoch,
+                          //   ));
+                          // }
 
-                          if (callTypes.contains("Outgoing")) {
-                            await ToggleStorage.addToggleEvent(CallLogToggleEvent(
-                              type: "Outgoing",
-                              isEnabled: true,
-                              timestamp: DateTime.now().millisecondsSinceEpoch,
-                            ));
-                          } else {
-                            await ToggleStorage.addToggleEvent(CallLogToggleEvent(
-                              type: "Outgoing",
-                              isEnabled: false,
-                              timestamp: DateTime.now().millisecondsSinceEpoch,
-                            ));
-                          }
+                          // if (callTypes.contains("Outgoing")) {
+                          //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+                          //     type: "Outgoing",
+                          //     isEnabled: true,
+                          //     timestamp: DateTime.now().millisecondsSinceEpoch,
+                          //   ));
+                          // } else {
+                          //   await ToggleStorage.addToggleEvent(CallLogToggleEvent(
+                          //     type: "Outgoing",
+                          //     isEnabled: false,
+                          //     timestamp: DateTime.now().millisecondsSinceEpoch,
+                          //   ));
+                          // }
                             //!
                             List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
                             log('callTypes : $callTypesQ');
@@ -394,6 +394,8 @@ class _CallLogsState extends State<CallLogs> {
          List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
          callLogData.clear();
          final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
+        //  List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+        //       log('callTypes : $callTypesQ');
         if (callLogCount==0) {
               log( 'No call logs found in Hive.');
               
@@ -408,13 +410,27 @@ class _CallLogsState extends State<CallLogs> {
               final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
               
               // Only logs AFTER startingTime + pass your custom toggle filter
-              return callTime.isAfter(startingTime) &&
-                    isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+              return callTime.isAfter(startingTime);
             }).toList();
              log('filteredLogs : ${filteredLogs.length}');
             if (filteredLogs.isNotEmpty) {
+              List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+              log('callTypes : $callTypesQ');
               List<HiveCaallHistoryModel> listOfCallLogNeedToAddHive= [];
                for (var callLog in filteredLogs) {
+
+                bool isAllowed = false ;
+
+                  if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
+                    isAllowed = true;
+                  } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
+                    isAllowed = true;
+                  }
+
+                  log('isAllowed : $isAllowed');
+
+
+
                 HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
                   id: callLog.timestamp.toString(),
                   name: callLog.name.toString(),
@@ -427,13 +443,29 @@ class _CallLogsState extends State<CallLogs> {
                   callRecordFilePath: "",
                   isUploaded: false,
                   isDeleted:false,
+                  isEnabled: isAllowed
                 );
                 listOfCallLogNeedToAddHive.add(hiveCallLog);
               }
+
+                log('listOfCallLogNeedToAddHive : $listOfCallLogNeedToAddHive');
+                log('listOfCallLogNeedToAddHive : ${listOfCallLogNeedToAddHive.length}');
+                // Filter list to include only allowed call logs
+                  List<HiveCaallHistoryModel> allowedCallLogs = listOfCallLogNeedToAddHive
+                      .where((log) => log.isEnabled == true)
+                      .toList();
+
+                  // Debug
+                  log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+                  // Proceed with upload only for allowed items
+                  if (allowedCallLogs.isNotEmpty) {
+                    await uploadMissingLogsToServer(allowedCallLogs);   
+                  }
              
                 // callLogData.add(hiveCallLog);
                 if (listOfCallLogNeedToAddHive.isNotEmpty) {
-                   await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);   
+                  //  await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);   
                    await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);         
                 }
                 setState(() {
@@ -453,23 +485,33 @@ class _CallLogsState extends State<CallLogs> {
              final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
              final DateTime startingTime = DateTime.parse(dateTimeFrom);
 
-              final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+              // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
 
               final Iterable<CallLogEntry> result = await CallLog.query(
                 dateFrom: from,
                 dateTo: to,
               );
+              //!
             final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
               final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
               
               // Only logs AFTER startingTime + pass your custom toggle filter
-              return callTime.isAfter(startingTime) &&
-                    isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+              return callTime.isAfter(startingTime);
             }).toList();
+            // final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
+            //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+              
+            //   // Only logs AFTER startingTime + pass your custom toggle filter
+            //   return callTime.isAfter(startingTime) &&
+            //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+            // }).toList();
             //!
+            // todo :  callLogsFromDevice from this
+            // todo : get current status of call permission (incoming and out going)
+            // todo :based on filter from callLogsFromDevice
               log('Call logs from device : $callLogsFromDevice');
               log('Call logs from length : ${callLogsFromDevice.length}');
-              if(callLogsFromDevice.isEmpty){
+              if(callLogsFromDevice.isEmpty) {
                 log('no call logs in device');
                 return ;
               }
@@ -479,7 +521,7 @@ class _CallLogsState extends State<CallLogs> {
               final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
 
               final HiveCaallHistoryModel latestHiveCallLog2 = await HiveUtil.getLatestCallLogByTime() ?? hiveData.first ;
-                log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded}');
+                log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
               
               final hiveLatestDateTime = parseCallLogTime(latestHiveCallLog2.timeStamp); 
 
@@ -491,7 +533,7 @@ class _CallLogsState extends State<CallLogs> {
                    log('Latest Hive Call Log and Device Call Log are not same.');
                     // List<CallLogEntry> allCallLogsAfterHiveLatestData = await getFilteredCallLogs(hiveLatestDateTime);
                      final DateTime startingTime = DateTime.parse(dateTimeFrom);
-                      final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+                      // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
 
                       final Iterable<CallLogEntry> result = await CallLog.query(
                         dateFrom: from,
@@ -502,17 +544,37 @@ class _CallLogsState extends State<CallLogs> {
                       final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
                       
                       // Only logs AFTER startingTime + pass your custom toggle filter
-                      return callTime.isAfter(startingTime) &&
-                            isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+                      return callTime.isAfter(startingTime);
                     }).toList();
+                    // final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
+                    //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+                      
+                    //   // Only logs AFTER startingTime + pass your custom toggle filter
+                    //   return callTime.isAfter(startingTime) &&
+                    //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+                    // }).toList();
                     log('Call logs from device after latest hive data : $allCallLogsAfterHiveLatestData');
                     log('Call logs from length after latest hive data : ${allCallLogsAfterHiveLatestData.length}');
                         // callLogData.addAll(hiveData);
                         history.clear();
                         callLogData.clear();
+                        // todo : get prefs data of incoming and out going
 
                          if (allCallLogsAfterHiveLatestData.isNotEmpty) {
+                           List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+                            log('callTypes : $callTypesQ');
+                              
+
                             for (var callLog in allCallLogsAfterHiveLatestData) {
+                                 bool isAllowed = false ;
+
+                                if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
+                                  isAllowed = true;
+                                } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
+                                  isAllowed = true;
+                                }
+
+                                log('isAllowed : $isAllowed');
                               HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
                                 id: callLog.timestamp.toString(),
                                 name: callLog.name.toString(),
@@ -524,6 +586,7 @@ class _CallLogsState extends State<CallLogs> {
                                 callRecordFilePath: "",
                                 isUploaded: false,
                                 isDeleted:false,
+                                isEnabled: isAllowed,
                               );
                               // await HiveUtil.addCallLog(hiveCallLog); // add to hive
                               callLogData.add(hiveCallLog);
@@ -585,8 +648,19 @@ class _CallLogsState extends State<CallLogs> {
                                     List<HiveCaallHistoryModel> notUploadedCallLogs = callLogData.where((log) => log.isUploaded != true).toList();
                                     log('notUploadedCallLogs : ${    notUploadedCallLogs.length}');
 
+                                    List<HiveCaallHistoryModel> allowedCallLogs = nonDuplicates
+                                                                .where((log) => log.isEnabled == true)
+                                                                .toList();
+
+                                                            // Debug
+                                                            log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+                                                            // Proceed with upload only for allowed items
+                                                            if (allowedCallLogs.isNotEmpty) {
+                                                              await uploadMissingLogsToServer(allowedCallLogs);   
+                                                            }
+
                                     if (nonDuplicates.isNotEmpty) {
-                                          await uploadMissingLogsToServer(nonDuplicates);
                                           //  todo : update in HIve
                                          await HiveUtil.addCallLogs(nonDuplicates);
                                       }
@@ -1035,7 +1109,14 @@ class _CallLogsState extends State<CallLogs> {
 
                                                        final entry = _callLogEntries.elementAt(indexStaff);
                                        
-                                                       bool isUploaded = fullHiveData.any((item) => item.id == entry.timestamp.toString());
+                                                      //  bool isUploaded = fullHiveData.any((item) => item.id == entry.timestamp.toString());
+                                                       bool isUploaded = fullHiveData.any((item) => item.id == entry.timestamp.toString() && item.isUploaded == true);
+
+                                                      //  log('isUploaded :  ${entry.name} || $isUploaded');
+                                                      //  for (var item in fullHiveData) {
+                                                      //    log('item : ${item.name} || ${item.phoneNumber} || ${item.isUploaded} || ${item.isEnabled}');
+                                                      //  }
+                                                      //   log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
 
                                                   return Visibility(
                                                     // visible: selectedSimId ==
@@ -1483,6 +1564,7 @@ class _CallLogsState extends State<CallLogs> {
                                                                                                                   callRecordFilePath: "",
                                                                                                                   isUploaded: true,
                                                                                                                   isDeleted:false,
+                                                                                                                  isEnabled: false
                                                                                                                 );
                                                                                                               await HiveUtil.addCallLog(hiveCallLog);
                                                                                                               } catch (e) {

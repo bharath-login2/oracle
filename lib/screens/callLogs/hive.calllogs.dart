@@ -471,6 +471,7 @@ isCurrentUserSearchResult=false;
             callRecordFilePath: "",
             isUploaded: false,
             isDeleted:false,
+            isEnabled: true,
           );
           await HiveUtil.addCallLog(hiveCallLog);
           callLogData.add(hiveCallLog);
@@ -568,6 +569,7 @@ isCurrentUserSearchResult=false;
                   callRecordFilePath: "",
                   isUploaded: false,
                   isDeleted:false,
+                  isEnabled: true,
                 );
                  await HiveUtil.addCallLog(hiveCallLog); // add to hive
                 callLogData.add(hiveCallLog);
@@ -612,6 +614,7 @@ isCurrentUserSearchResult=false;
             callRecordFilePath: "",
             isUploaded: false,
             isDeleted:false,
+            isEnabled: true,
           );
           deviceCallLogDataAll.add(hiveCallLog);
         }
@@ -1106,6 +1109,7 @@ setState(() {
                                                       simSlot: '',
                                                       callRecordFilePath: '',
                                                       isUploaded: false,
+                                                      isEnabled: true,
                                                       isDeleted: false,
                                                     ),
                                                   );
@@ -1565,7 +1569,7 @@ setState(() {
                                                                                           simSlot: _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
                                                                                           callRecordFilePath: "",
                                                                                           isUploaded: true,
-                                                                                          isDeleted:false,
+                                                                                          isDeleted:false, isEnabled: true,
                                                                                         );
                                                                                         HiveUtil.addCallLog(hiveCallLog);
                                                                                          
@@ -2615,6 +2619,7 @@ setState(() {
                                                                                           callRecordFilePath: "",
                                                                                           isUploaded: true,
                                                                                           isDeleted:false,
+                                                                                          isEnabled: true,
                                                                                         );
                                                                                         HiveUtil.addCallLog(hiveCallLog);
                                                                                          

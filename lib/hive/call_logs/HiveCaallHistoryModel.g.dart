@@ -27,13 +27,14 @@ class HiveCaallHistoryModelAdapter extends TypeAdapter<HiveCaallHistoryModel> {
       callRecordFilePath: fields[7] as String,
       isUploaded: fields[8] as bool,
       isDeleted: fields[9] as bool,
+      isEnabled: fields[10] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveCaallHistoryModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +54,9 @@ class HiveCaallHistoryModelAdapter extends TypeAdapter<HiveCaallHistoryModel> {
       ..writeByte(8)
       ..write(obj.isUploaded)
       ..writeByte(9)
-      ..write(obj.isDeleted);
+      ..write(obj.isDeleted)
+      ..writeByte(10)
+      ..write(obj.isEnabled);
   }
 
   @override

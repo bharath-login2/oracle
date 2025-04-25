@@ -383,24 +383,36 @@ void showWindow() async {
 
 
                 }
-                        log('~~ OUTGOING CALL history : $history ~~~');
-                          log('~~ OUTGOING CALL body : ${history.length} ~~~');
-                          Map<String, dynamic> body = {
-                            "token": await Common.getSharedPref("token"),
-                            'log': history,
-                          };
-                          log('~~ OUTGOING CALL body : $body ~~~');
-                          log('~~ OUTGOING CALL body length : ${body.length} ~~~');
-                          // ! upload all call logs
+                        // log('~~ OUTGOING CALL history : $history ~~~');
+                        //   log('~~ OUTGOING CALL body : ${history.length} ~~~');
+                        //   Map<String, dynamic> body = {
+                        //     "token": await Common.getSharedPref("token"),
+                        //     'log': history,
+                        //   };
+                        //   log('~~ OUTGOING CALL body : $body ~~~');
+                        //   log('~~ OUTGOING CALL body length : ${body.length} ~~~');
+                        //   // ! upload all call logs
 
-                          CallLogUploadModel object1 =
-                              await HttpService.callLogUpload(body);
-                          log('~~ OUTGOING CALL object1 : ${object1.data} ~~~');
+                        //   CallLogUploadModel object1 =
+                        //       await HttpService.callLogUpload(body);
+                        //   log('~~ OUTGOING CALL object1 : ${object1.data} ~~~');
 
 
                           //! save all call logs to hive
                           List<HiveCaallHistoryModel> hiveCallAddList =[];
+                          List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+                          log('callTypes : $callTypesQ');
                           for (var log in history) {
+                             bool isAllowed = false ;
+
+                            if (callTypesQ.contains('Incoming') && log['callTypes'].toString().contains('incoming')) {
+                              isAllowed = true;
+                            } else if (callTypesQ.contains('Outgoing') && log['callTypes'].toString().contains('outgoing')) {
+                              isAllowed = true;
+                            }
+
+                            print('isAllowed : $isAllowed');
+
                             final callLog = HiveCaallHistoryModel(
                               id: log['timeStamp'].toString(),
                               name: log['name'].toString(),
@@ -412,20 +424,34 @@ void showWindow() async {
                               callRecordFilePath: 'N/A',
                               isUploaded: true,
                               isDeleted:false,
+                              isEnabled    : isAllowed
                             );
                             print('callLog 999: ${callLog.name} || ${callLog.isUploaded}');
                             // await HiveUtil.addCallLog(callLog);
                             hiveCallAddList.add(callLog);
                           }
-                           await HiveUtil.addCallLogs(hiveCallAddList);
+                           List<HiveCaallHistoryModel> allowedCallLogs = hiveCallAddList
+                                  .where((log) => log.isEnabled == true)
+                                  .toList();
 
-                            if (object1.data == true) {
-                  log('~~ OUTGOING CALL success ~~~');
-                  log('success');
-                } else {
-                  log('~~ OUTGOING CALL failure ~~~');
-                  log('failure');
-                }
+                              // Debug
+                              log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+                              // Proceed with upload only for allowed items
+                              if (allowedCallLogs.isNotEmpty) {
+                                await uploadMissingLogsToServer(allowedCallLogs);   
+                              }
+                              if(hiveCallAddList.isNotEmpty){
+                           await HiveUtil.addCallLogs(hiveCallAddList);
+                              }
+
+                //             if (object1.data == true) {
+                //   log('~~ OUTGOING CALL success ~~~');
+                //   log('success');
+                // } else {
+                //   log('~~ OUTGOING CALL failure ~~~');
+                //   log('failure');
+                // }
 
 
 
@@ -438,6 +464,53 @@ void showWindow() async {
     }
   }
 }
+
+
+ Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
+ log("uploadMissingLogsToServer function called");
+
+     List<Map<String, dynamic>> missingLogs = callLogData.map((log) => {
+          "name": log.name,
+          "phone_number": log.phoneNumber,
+          "callTypes": log.callType 
+                  .toString()
+                  .substring(log.callType.toString().indexOf('.') + 1),
+          // "time": DateTime.parse(log.timeStamp).toString(),
+          "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
+          // "time": log.timeStamp.toString(), // log.timestamp,
+          "duration": log.duration,
+          "simName": log.simSlot ?? "NIL",
+          "timeStamp": log.timeStamp,
+        }).toList();
+
+        log("⚠️ Found ${missingLogs.length} missing logs.");
+
+         if (missingLogs.isNotEmpty) {
+
+       log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
+                log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
+
+       Map<String, dynamic> body = {
+                  "token": await Common.getSharedPref("token"),
+                  'log': missingLogs,
+                };
+                log('~~ OUTGOING CALL BODY : $body ~~~');
+
+
+
+      CallLogUploadModel object1 =
+                    await HttpService.callLogUpload(body);
+                log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
+      // await HiveUtil.saveCallLog(missingLogs.last);
+      if (object1.data == true) {
+                  log('~~ OUTGOING CALL success ~~~');
+                  log('success');
+                } else {
+                  log('~~ OUTGOING CALL failure ~~~');
+                  log('failure');
+                }
+    }
+ }
 
 void onDeviceReboot() {
   log('Device has rebooted!');

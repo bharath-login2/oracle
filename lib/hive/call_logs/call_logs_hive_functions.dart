@@ -151,9 +151,16 @@ static Future<void> addCallLogs(List<HiveCaallHistoryModel> callLogs) async {
       // Check if this log already exists by ID
       if (!existingIds.contains(log.id)) {
         await box.add(log);
-       await markCallLogAsUploaded(log.id);
+        if (log.isEnabled) {
+          await markCallLogAsUploaded(log.id);
+        } else {
+          await updateCallLogField(log.id, isUploaded: false);
+        }
+       
         existingIds.add(log.id); // Add to our tracking set
         newCount++;
+        HiveCaallHistoryModel? logmain = await getCallLogById(log.id);
+        print('>> Added new call log: ${logmain?.name} | ${logmain?.id} | ${logmain?.isUploaded} | ${logmain?.isEnabled}');
       }
     }
     
@@ -275,7 +282,8 @@ static Future<void> addCallLogs(List<HiveCaallHistoryModel> callLogs) async {
     String? simSlot,
     String? callRecordFilePath,
     bool? isUploaded,
-    bool? isDeleted
+    bool? isDeleted,
+    bool? isEnabled
   }) async {
     return await withBox(CALL_HISTORY_BOX, (box) async {
       if (box.isEmpty) {
@@ -297,7 +305,8 @@ static Future<void> addCallLogs(List<HiveCaallHistoryModel> callLogs) async {
             simSlot: simSlot ?? log.simSlot,
             callRecordFilePath: callRecordFilePath ?? log.callRecordFilePath,
             isUploaded: isUploaded ?? log.isUploaded,
-            isDeleted: isDeleted ?? log.isDeleted,
+            isDeleted: isDeleted ?? log.isDeleted, 
+            isEnabled: isEnabled ?? log.isEnabled,
           );
           
           await box.putAt(i, updatedLog);

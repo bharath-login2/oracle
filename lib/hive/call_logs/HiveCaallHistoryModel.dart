@@ -33,6 +33,9 @@ class HiveCaallHistoryModel {
 
   @HiveField(9)
   final bool isDeleted;
+  
+  @HiveField(10)
+  final bool isEnabled;
 
   HiveCaallHistoryModel({
     required this.id,
@@ -45,5 +48,6 @@ class HiveCaallHistoryModel {
     required this.callRecordFilePath,
     required this.isUploaded,
     required this.isDeleted,
+    required this.isEnabled,
   });
 }
