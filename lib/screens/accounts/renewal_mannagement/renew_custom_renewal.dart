@@ -1260,18 +1260,31 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                         controller: startDate,
                         readOnly: true,
                         onTap: () async {
+                          DateTime initialDate = DateTime.now();
+                          if (startDate.text.isNotEmpty) {
+                            try {
+                              initialDate = DateFormat('dd-MM-yyyy')
+                                  .parse(startDate.text);
+                            } catch (e) {
+                              initialDate = DateTime.now(); // fallback
+                            }
+                          }
+
                           selectedValue = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initialDate,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          setState(() {
-                            startDate.text = formatDate(selectedValue!);
-                            final endValue = selectedValue!
-                                .add(Duration(days: int.parse(typeDuration)));
-                            endDate.text = formatDate(endValue);
-                          });
+
+                          if (selectedValue != null) {
+                            setState(() {
+                              startDate.text = formatDate(selectedValue!);
+                              final endValue = selectedValue!
+                                  .add(Duration(days: int.parse(typeDuration)));
+                              endDate.text = formatDate(endValue);
+                            });
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -1280,15 +1293,16 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                           return null;
                         },
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'Start Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'Start Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(
@@ -1297,13 +1311,27 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                     Expanded(
                       child: TextFormField(
                         onTap: () async {
+                          DateTime initial = DateTime.now();
+                          if (endDate.text.isNotEmpty) {
+                            try {
+                              initial =
+                                  DateFormat('dd-MM-yyyy').parse(endDate.text);
+                            } catch (e) {
+                              initial = DateTime
+                                  .now(); // fallback in case of parse error
+                            }
+                          }
+
                           DateTime? selectedEndDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: initial,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          endDate.text = formatDate(selectedEndDate!);
+
+                          if (selectedEndDate != null) {
+                            endDate.text = formatDate(selectedEndDate);
+                          }
                         },
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -1314,15 +1342,16 @@ class _RenewCustomRenewalState extends State<RenewCustomRenewal> {
                         readOnly: true,
                         controller: endDate,
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(8),
-                            labelText: 'End Date *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          contentPadding: EdgeInsets.all(8),
+                          labelText: 'End Date *',
+                          prefixIcon:
+                              Icon(Icons.calendar_month, color: Colors.grey),
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          labelStyle: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                   ],

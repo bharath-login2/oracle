@@ -272,46 +272,46 @@ class _LoginState extends State<Login> {
                           ])),
                       child: Column(
                         children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 50, right: 20),
-                            child: Align(
-                              alignment: Alignment.topRight,
-                              child: updatedata!.data!.server!.length > 1
-                                  ? PopupMenuButton(
-                                      key: popupMenuKey,
-                                      child: const Icon(
-                                          Icons.miscellaneous_services),
-                                      itemBuilder: (context) {
-                                        return updatedata!.data!.server!
-                                            .map((data) {
-                                          return PopupMenuItem<String>(
-                                            value: data.url,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(data.name.toString()),
-                                                if (selectedUrl == data.url)
-                                                  const Icon(
-                                                    Icons.check_circle,
-                                                    color: Colors.green,
-                                                    size: 20,
-                                                  )
-                                              ],
-                                            ),
-                                          );
-                                        }).toList();
-                                      },
-                                      onSelected: (value) {
-                                        Common.saveSharedPref("url", value);
-                                        selectedUrl = value;
-                                        serverChoose = true;
-                                        setState(() {});
-                                      })
-                                  : const SizedBox(),
-                            ),
-                          ),
+                          // Container(
+                          //   margin: const EdgeInsets.only(top: 50, right: 20),
+                          //   child: Align(
+                          //     alignment: Alignment.topRight,
+                          //     child: updatedata!.data!.server!.length > 1
+                          //         ? PopupMenuButton(
+                          //             key: popupMenuKey,
+                          //             child: const Icon(
+                          //                 Icons.miscellaneous_services),
+                          //             itemBuilder: (context) {
+                          //               return updatedata!.data!.server!
+                          //                   .map((data) {
+                          //                 return PopupMenuItem<String>(
+                          //                   value: data.url,
+                          //                   child: Row(
+                          //                     mainAxisAlignment:
+                          //                         MainAxisAlignment
+                          //                             .spaceBetween,
+                          //                     children: [
+                          //                       Text(data.name.toString()),
+                          //                       if (selectedUrl == data.url)
+                          //                         const Icon(
+                          //                           Icons.check_circle,
+                          //                           color: Colors.green,
+                          //                           size: 20,
+                          //                         )
+                          //                     ],
+                          //                   ),
+                          //                 );
+                          //               }).toList();
+                          //             },
+                          //             onSelected: (value) {
+                          //               Common.saveSharedPref("url", value);
+                          //               selectedUrl = value;
+                          //               serverChoose = true;
+                          //               setState(() {});
+                          //             })
+                          //         : const SizedBox(),
+                          //   ),
+                          // ),
                           const SizedBox(
                             height: 50,
                           ),
@@ -470,7 +470,63 @@ class _LoginState extends State<Login> {
                                   //         ),
                                   //       ],
                                   //     )),
-
+                                     Container(
+                                            child: Align(
+                                              child: updatedata!.data!.server!
+                                                          .length >
+                                                      1
+                                                  ? PopupMenuButton(
+                                                      key: popupMenuKey,
+                                                      child: Text(
+                                                        "Select Server",
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.blue,
+                                                        ),
+                                                      ),
+                                                      itemBuilder: (context) {
+                                                        return updatedata!
+                                                            .data!.server!
+                                                            .map((data) {
+                                                          return PopupMenuItem<
+                                                              String>(
+                                                            value: data.url,
+                                                            child: Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              children: [
+                                                                Text(data.name
+                                                                    .toString()),
+                                                                if (selectedUrl ==
+                                                                    data.url)
+                                                                  const Icon(
+                                                                    Icons
+                                                                        .check_circle,
+                                                                    color: Colors
+                                                                        .green,
+                                                                    size: 20,
+                                                                  )
+                                                              ],
+                                                            ),
+                                                          );
+                                                        }).toList();
+                                                      },
+                                                      onSelected: (value) {
+                                                        Common.saveSharedPref(
+                                                            "url", value);
+                                                        selectedUrl = value;
+                                                        serverChoose = true;
+                                                        setState(() {});
+                                                      },
+                                                    )
+                                                  : const SizedBox(),
+                                            ),
+                                          ),
+                                       const SizedBox(
+                                    height: 10,
+                                  ),
                                   InkWell(
                                     onTap: () async {
                                       FocusScope.of(context).unfocus();
@@ -526,6 +582,76 @@ class _LoginState extends State<Login> {
                                             color: textColor,
                                             fontWeight: FontWeight.bold),
                                       ),
+                                      // child: Column(
+                                      //   crossAxisAlignment:
+                                      //       CrossAxisAlignment.start,
+                                      //   children: [
+                                      //     Container(
+                                      //       alignment: Alignment.center,
+                                      //       child: Text(
+                                      //         "Forgot Password?",
+                                      //         style: TextStyle(
+                                      //           color: textColor,
+                                      //           fontWeight: FontWeight.bold,
+                                      //         ),
+                                      //       ),
+                                      //     ),
+                                      //     Container(
+                                      //       child: Align(
+                                      //         child: updatedata!.data!.server!
+                                      //                     .length >
+                                      //                 1
+                                      //             ? PopupMenuButton(
+                                      //                 key: popupMenuKey,
+                                      //                 child: Text(
+                                      //                   "Select Server",
+                                      //                   style: TextStyle(
+                                      //                     fontWeight:
+                                      //                         FontWeight.bold,
+                                      //                     color: Colors.blue,
+                                      //                   ),
+                                      //                 ),
+                                      //                 itemBuilder: (context) {
+                                      //                   return updatedata!
+                                      //                       .data!.server!
+                                      //                       .map((data) {
+                                      //                     return PopupMenuItem<
+                                      //                         String>(
+                                      //                       value: data.url,
+                                      //                       child: Row(
+                                      //                         mainAxisAlignment:
+                                      //                             MainAxisAlignment
+                                      //                                 .spaceBetween,
+                                      //                         children: [
+                                      //                           Text(data.name
+                                      //                               .toString()),
+                                      //                           if (selectedUrl ==
+                                      //                               data.url)
+                                      //                             const Icon(
+                                      //                               Icons
+                                      //                                   .check_circle,
+                                      //                               color: Colors
+                                      //                                   .green,
+                                      //                               size: 20,
+                                      //                             )
+                                      //                         ],
+                                      //                       ),
+                                      //                     );
+                                      //                   }).toList();
+                                      //                 },
+                                      //                 onSelected: (value) {
+                                      //                   Common.saveSharedPref(
+                                      //                       "url", value);
+                                      //                   selectedUrl = value;
+                                      //                   serverChoose = true;
+                                      //                   setState(() {});
+                                      //                 },
+                                      //               )
+                                      //             : const SizedBox(),
+                                      //       ),
+                                      //     ),
+                                      //   ],
+                                      // ),
                                     ),
                                   ),
                                   const SizedBox(
