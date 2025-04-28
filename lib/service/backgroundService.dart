@@ -216,7 +216,7 @@ void showWindow() async {
         );
         break;
       case PhoneStateStatus.CALL_ENDED:
-      // return;
+      return;
         // log('~~ CALL_ENDED ~~~');
         // log('~~ uploadCall : $uploadCall ~~~');
         // log('~~ uploadCall : $doUpload ~~~');

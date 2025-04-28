@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:call_e_log/call_log.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
+import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
+import 'package:login2/models/callLogs/callLogUploadModel.dart';
 import 'package:login2/models/expense/account_dashboard.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
 import 'package:login2/models/renewal/renewal_dashboard_model.dart';
@@ -18,10 +23,12 @@ import 'package:login2/screens/complaints/complaint_list_screen.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
@@ -517,6 +524,436 @@ class _DashboardState extends State<Dashboard> {
       loadmore = true;
     });
   }
+
+
+  //!
+  
+  getSharedData() async {
+    log('getSharedData called');
+    try {
+      // refresh = true;
+      String permissionAccess = await Common.getSharedPref("callLogPermission");
+      // uploadPermission = await Common.getSharedPref("uploadCallLog");
+      // roleId = await Common.getSharedPref("roleId");
+      // var sim = await Common.getSharedPref("simName");
+      // if (sim != null) {
+      //   selectedSim = await Common.getSharedPref("simName");
+      //   selectedSimId = await Common.getSharedPref("simId");
+      // } else {
+      //   selectedSim = "Tap to select";
+      //   selectedSimId = "";
+      // }
+      // if (uploadPermission != "true" && Platform.isIOS) {
+      //   selectedIndex = -1;
+      // }
+      int from =
+      DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
+  int to = DateTime.now().millisecondsSinceEpoch;
+
+      setState(() {});
+      if (permissionAccess == 'true') {
+        if (await Permission.phone.request().isGranted) {
+          final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+            
+
+
+          final Iterable<CallLogEntry> result = await CallLog.query(
+            dateFrom: from,
+            dateTo: to,
+          );
+          final filteredLogs = result.where((entry) {
+          return isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+        }).toList();
+
+          // getSimDetails();
+           final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+          log('hiveData 1: $hiveData');
+          log('hiveData 0: ${hiveData.length}');
+          log('================================== HIVE DATA IN GET SHARED DATA ========================================');
+          log('hiveData LENGTH 1 : ${hiveData.length}');
+          for(var datassss in hiveData){
+             log('hiveData LENGTH 2 : ${datassss.name} || ${datassss.phoneNumber} || ${datassss.isUploaded}');
+          }
+
+           
+         
+          // setState(() {
+          //     fullHiveData=hiveData;
+          //   _callLogEntries = filteredLogs;
+          //   refresh = false;
+          // });
+        }
+      }
+      // !   UPDATE MISSING CALL LOG
+        final int callLogCount = await HiveUtil.getCallLogCount();
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+         List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
+         callLogData.clear();
+         final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
+        //  List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+        //       log('callTypes : $callTypesQ');
+        if (callLogCount==0) {
+              log( 'No call logs found in Hive.');
+              
+              final DateTime startingTime = DateTime.parse(dateTimeFrom);
+              final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+
+              final Iterable<CallLogEntry> result = await CallLog.query(
+                dateFrom: from,
+                dateTo: to,
+              );
+            final List<CallLogEntry> filteredLogs = result.where((entry) {
+              final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+              
+              // Only logs AFTER startingTime + pass your custom toggle filter
+              return callTime.isAfter(startingTime);
+            }).toList();
+             log('filteredLogs : ${filteredLogs.length}');
+            if (filteredLogs.isNotEmpty) {
+              List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+              log('callTypes : $callTypesQ');
+              List<HiveCaallHistoryModel> listOfCallLogNeedToAddHive= [];
+               for (var callLog in filteredLogs) {
+
+                bool isAllowed = false ;
+
+                  if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
+                    isAllowed = true;
+                  } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
+                    isAllowed = true;
+                  }
+
+                  log('isAllowed : $isAllowed');
+
+
+
+                HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                  id: callLog.timestamp.toString(),
+                  name: callLog.name.toString(),
+                  phoneNumber: callLog.number.toString(),
+                  callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
+                  duration: callLog.duration.toString(),
+                  timeStamp: callLog.timestamp!.toString(),
+                  // timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                  simSlot: callLog.simDisplayName??"NIL",
+                  callRecordFilePath: "",
+                  isUploaded: false,
+                  isDeleted:false,
+                  isEnabled: isAllowed
+                );
+                listOfCallLogNeedToAddHive.add(hiveCallLog);
+              }
+
+                log('listOfCallLogNeedToAddHive : $listOfCallLogNeedToAddHive');
+                log('listOfCallLogNeedToAddHive : ${listOfCallLogNeedToAddHive.length}');
+                // Filter list to include only allowed call logs
+                  List<HiveCaallHistoryModel> allowedCallLogs = listOfCallLogNeedToAddHive
+                      .where((log) => log.isEnabled == true)
+                      .toList();
+
+                  // Debug
+                  log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+                  // Proceed with upload only for allowed items
+                  if (allowedCallLogs.isNotEmpty) {
+                    await uploadMissingLogsToServer(allowedCallLogs);   
+                  }
+             
+                // callLogData.add(hiveCallLog);
+                if (listOfCallLogNeedToAddHive.isNotEmpty) {
+                  //  await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);   
+                   await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);    
+                   Fluttertoast.showToast(
+                      msg: 'Synced Call Logs',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: ColorConstant.black,
+                      textColor: ColorConstant.white,
+                    );     
+                }
+                
+                  return;
+            } else { 
+              log('No call logs found');
+              return;
+            }
+
+        } else {
+           log( 'call logs found in Hive.');
+           
+             callLogData.clear();
+             final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
+             final DateTime startingTime = DateTime.parse(dateTimeFrom);
+
+              // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+
+              final Iterable<CallLogEntry> result = await CallLog.query(
+                dateFrom: from,
+                dateTo: to,
+              );
+              //!
+            final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
+              final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+              
+              // Only logs AFTER startingTime + pass your custom toggle filter
+              return callTime.isAfter(startingTime);
+            }).toList();
+            // final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
+            //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+              
+            //   // Only logs AFTER startingTime + pass your custom toggle filter
+            //   return callTime.isAfter(startingTime) &&
+            //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+            // }).toList();
+            //!
+            // todo :  callLogsFromDevice from this
+            // todo : get current status of call permission (incoming and out going)
+            // todo :based on filter from callLogsFromDevice
+              log('Call logs from device : $callLogsFromDevice');
+              log('Call logs from length : ${callLogsFromDevice.length}');
+              if(callLogsFromDevice.isEmpty) {
+                log('no call logs in device');
+                return ;
+              }
+
+              final deviceLatestCallLogTime = parseCallLogTime(callLogsFromDevice.first.timestamp.toString()); 
+
+              final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+
+              final HiveCaallHistoryModel latestHiveCallLog2 = await HiveUtil.getLatestCallLogByTime() ?? hiveData.first ;
+                log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
+              
+              final hiveLatestDateTime = parseCallLogTime(latestHiveCallLog2.timeStamp); 
+
+                      if (hiveLatestDateTime==deviceLatestCallLogTime) {
+                          log('Latest Hive Call Log and Device Call Log are same.');
+                          log('first call log : ${latestHiveCallLog2.isUploaded}');
+                            Fluttertoast.showToast(
+                                          msg: 'Call Logs alredy Sync',
+                                          toastLength: Toast.LENGTH_SHORT,
+                                          gravity: ToastGravity.BOTTOM,
+                                          backgroundColor: ColorConstant.black,
+                                          textColor: ColorConstant.white,
+                                        );
+                          return;
+                        } else {
+                   log('Latest Hive Call Log and Device Call Log are not same.');
+                    // List<CallLogEntry> allCallLogsAfterHiveLatestData = await getFilteredCallLogs(hiveLatestDateTime);
+                     final DateTime startingTime = DateTime.parse(dateTimeFrom);
+                      // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+
+                      final Iterable<CallLogEntry> result = await CallLog.query(
+                        dateFrom: from,
+                        dateTo: to,
+                      );
+                      log('result : ${result.length}');
+                    final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
+                      final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+                      
+                      // Only logs AFTER startingTime + pass your custom toggle filter
+                      return callTime.isAfter(startingTime);
+                    }).toList();
+                    // final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
+                    //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+                      
+                    //   // Only logs AFTER startingTime + pass your custom toggle filter
+                    //   return callTime.isAfter(startingTime) &&
+                    //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+                    // }).toList();
+                    log('Call logs from device after latest hive data : $allCallLogsAfterHiveLatestData');
+                    log('Call logs from length after latest hive data : ${allCallLogsAfterHiveLatestData.length}');
+                        // callLogData.addAll(hiveData);
+                        // history.clear();
+                        callLogData.clear();
+                        // todo : get prefs data of incoming and out going
+
+                         if (allCallLogsAfterHiveLatestData.isNotEmpty) {
+                           List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+                            log('callTypes : $callTypesQ');
+                              
+
+                            for (var callLog in allCallLogsAfterHiveLatestData) {
+                                 bool isAllowed = false ;
+
+                                if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
+                                  isAllowed = true;
+                                } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
+                                  isAllowed = true;
+                                }
+
+                                log('isAllowed : $isAllowed');
+                              HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                                id: callLog.timestamp.toString(),
+                                name: callLog.name.toString(),
+                                phoneNumber: callLog.number.toString(),
+                                callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
+                                duration: callLog.duration.toString(),
+                                timeStamp:  callLog.timestamp!.toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                                simSlot: callLog.simDisplayName??"NIL",
+                                callRecordFilePath: "",
+                                isUploaded: false,
+                                isDeleted:false,
+                                isEnabled: isAllowed,
+                              );
+                              // await HiveUtil.addCallLog(hiveCallLog); // add to hive
+                              callLogData.add(hiveCallLog);
+                              // todo : add to DB also this case
+                        }
+
+
+                        log('callLogData : $callLogData');
+                        log('callLogData : ${callLogData.length}');
+                        // got all call logs
+                        // get hive call logs
+                        // get missing call logs from callLogData list
+                          final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+                          log('hiveData 1: $hiveData');
+                          log('hiveData 0: ${hiveData.length}');
+
+
+
+                               Map<String, bool> existingItems = {};
+  
+                                for (var item in hiveData) {
+                                  // Create a unique key using phone number and timestamp
+                                  String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+                                  existingItems[uniqueKey] = true;
+                                }
+
+                                log('existingItems: $existingItems');
+                                log('existingItems length: ${existingItems.length}');
+
+
+                                List<HiveCaallHistoryModel> nonDuplicates = [];
+
+                                  for (var item in callLogData) {
+                                     String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+                                     if (!existingItems.containsKey(uniqueKey)) {
+
+                                        log('Unique item found: ${item.phoneNumber} - ${item.timeStamp}');
+                                        nonDuplicates.add(item);
+                                      }else{
+                                        log('Duplicate item found: ${item.phoneNumber} - ${item.timeStamp}');
+                                      
+                                      }
+                                  }
+
+                                   log('nonDuplicates: $nonDuplicates');
+                                   log('nonDuplicates length: ${nonDuplicates.length}');
+                                   for(var item in callLogData){
+                                    log('item main : ${item.name} || ${item.isDeleted} || ${item.isUploaded}');
+                                   }
+
+                                   nonDuplicates = nonDuplicates.where((log) => log.isDeleted != true).toList();
+                                  //  callLogData = callLogData.where((log) => log.isDeleted != true).toList();
+                                  nonDuplicates = nonDuplicates.where((log) => log.isUploaded != true).toList();
+                                  nonDuplicates = nonDuplicates.reversed.toList();
+
+                                   log('callLogData        : $callLogData');
+                                   log('callLogData length : ${callLogData.length}');
+
+                                    List<HiveCaallHistoryModel> notUploadedCallLogs = callLogData.where((log) => log.isUploaded != true).toList();
+                                    log('notUploadedCallLogs : ${    notUploadedCallLogs.length}');
+
+                                    List<HiveCaallHistoryModel> allowedCallLogs = nonDuplicates
+                                                                .where((log) => log.isEnabled == true)
+                                                                .toList();
+
+                                                            // Debug
+                                                            log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+                                                            // Proceed with upload only for allowed items
+                                                            if (allowedCallLogs.isNotEmpty) {
+                                                              await uploadMissingLogsToServer(allowedCallLogs);   
+                                                            }
+
+                                    if (nonDuplicates.isNotEmpty) {
+                                          //  todo : update in HIve
+                                         await HiveUtil.addCallLogs(nonDuplicates);
+                                         Fluttertoast.showToast(
+                                          msg: 'Synced Call Logs',
+                                          toastLength: Toast.LENGTH_SHORT,
+                                          gravity: ToastGravity.BOTTOM,
+                                          backgroundColor: ColorConstant.black,
+                                          textColor: ColorConstant.white,
+                                        );
+                                      }
+
+                                    
+
+                                  return;
+
+                      } else {
+                        log('No NEW Call Logs found in device.');
+                        Fluttertoast.showToast(
+                      msg: 'No New Call Logs found in device to Sync.',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      backgroundColor: ColorConstant.black,
+                      textColor: ColorConstant.white,
+                    );
+                     return;
+                      }
+                }
+
+
+        }
+
+    } catch (e) {
+      log(e.toString());
+    }
+    setState(() {});
+   
+  }
+
+  Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
+ log("uploadMissingLogsToServer function called");
+
+     List<Map<String, dynamic>> missingLogs = callLogData.map((log) => {
+          "name": log.name,
+          "phone_number": log.phoneNumber,
+          "callTypes": log.callType 
+                  .toString()
+                  .substring(log.callType.toString().indexOf('.') + 1),
+          // "time": DateTime.parse(log.timeStamp).toString(),
+          "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
+          // "time": log.timeStamp.toString(), // log.timestamp,
+          "duration": log.duration,
+          "simName": log.simSlot ?? "NIL",
+          "timeStamp": log.timeStamp,
+        }).toList();
+
+        log("⚠️ Found ${missingLogs.length} missing logs.");
+
+         if (missingLogs.isNotEmpty) {
+
+       log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
+                log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
+
+       Map<String, dynamic> body = {
+                  "token": await Common.getSharedPref("token"),
+                  'log': missingLogs,
+                };
+                log('~~ OUTGOING CALL BODY : $body ~~~');
+
+
+
+      CallLogUploadModel object1 =
+                    await HttpService.callLogUpload(body);
+                log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
+      // await HiveUtil.saveCallLog(missingLogs.last);
+      if (object1.data == true) {
+                  log('~~ OUTGOING CALL success ~~~');
+                  log('success');
+                } else {
+                  log('~~ OUTGOING CALL failure ~~~');
+                  log('failure');
+                }
+    }
+ }
+
+
+  //!
 
   @override
   Widget build(BuildContext context) {
@@ -2612,6 +3049,24 @@ class _DashboardState extends State<Dashboard> {
                                               itemBuilder: (context) {
                                                 return [
                                                   PopupMenuItem<int>(
+                                                      value: 11,
+                                                      child: Row(
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: Icon(
+                                                              Icons.upload_outlined,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          const Text(
+                                                              'Upload Logs'),
+                                                        ],
+                                                      )),
+                                                  PopupMenuItem<int>(
                                                       value: 9,
                                                       child: Row(
                                                         children: [
@@ -2667,7 +3122,20 @@ class _DashboardState extends State<Dashboard> {
                                                       )),
                                                 ];
                                               },
-                                              onSelected: (value) {
+                                              onSelected: (value) async {
+                                                if (value == 11)  {
+                                                  // todo : show loader
+                                                  // todo : upload call logs
+                                                  // todo : hide loader
+                                                  
+                                                  setState(() {
+                                                    isLoading = true;
+                                                  });
+                                                  await getSharedData();
+                                                  setState(() {
+                                                    isLoading = false;
+                                                  });
+                                                }
                                                 if (value == 1) {}
                                                 if (value == 2) {
                                                   Navigator.push(
