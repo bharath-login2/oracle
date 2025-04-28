@@ -120,8 +120,6 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
     //     }
     //   });
     // }
-
-
   }
 
   getHistoryCount() {
@@ -497,8 +495,8 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                       search = true;
                                       isSearch = true;
                                       Common.showProgressDialog(
-                                                        context, "Loading..");
-                                                    getData();
+                                          context, "Loading..");
+                                      getData();
                                     });
                                   },
                                   child: Container(
@@ -1067,7 +1065,19 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                                                           ),
                                                                           Container(
                                                                             decoration:
-                                                                                BoxDecoration(color: _colors[int.parse(callHistory!.data!.followupHistory![ind].callResultId.toString())], borderRadius: BorderRadius.circular(5)),
+                                                                                BoxDecoration(
+                                                                              // color: _colors[int.parse(callHistory!.data!.followupHistory![ind].callResultId.toString())], borderRadius: BorderRadius.circular(5)
+                                                                              color: (() {
+                                                                                final callResultId = callHistory?.data?.followupHistory?[ind]?.callResultId;
+                                                                                final id = int.tryParse(callResultId?.toString() ?? '');
+                                                                                if (id != null && id >= 0 && id < _colors.length) {
+                                                                                  return _colors[id];
+                                                                                } else {
+                                                                                  return Colors.grey;
+                                                                                }
+                                                                              })(),
+                                                                              borderRadius: BorderRadius.circular(5),
+                                                                            ),
                                                                             child:
                                                                                 Padding(
                                                                               padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
@@ -1650,5 +1660,3 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
 }
 
 // ignore: must_be_immutable
-
-

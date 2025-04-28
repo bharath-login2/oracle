@@ -2436,15 +2436,38 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
                                                         ),
                                                       ),
                                                       Container(
-                                                        decoration: BoxDecoration(
-                                                            color: _colors[
-                                                                int.parse(items[
-                                                                        index]
-                                                                    .callResultId!)],
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                                // color: _colors[
+                                                                //     int.parse(items[
+                                                                //             index]
+                                                                //         .callResultId!)],
+                                                                color: (() {
+                                                                  final id = int
+                                                                      .tryParse(
+                                                                          items[index].callResultId ??
+                                                                              '');
+                                                                  if (id !=
+                                                                          null &&
+                                                                      id >= 0 &&
+                                                                      id <
+                                                                          _colors
+                                                                              .length) {
+                                                                    return _colors[
+                                                                        id];
+                                                                  } else {
+                                                                    return const Color
+                                                                        .fromARGB(
+                                                                        255,
+                                                                        245,
+                                                                        160,
+                                                                        34); 
+                                                                  }
+                                                                })(),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            5)),
                                                         child: Padding(
                                                           padding:
                                                               const EdgeInsets

@@ -918,11 +918,13 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                     ),
                                                   ),
                                                 ),
+                                               // print("leadCategories length: ${leadDetails!.data!.leadCategories!.length}");
                                                 leadDetails!
                                                             .data!
                                                             .leadCategories!
                                                             .length >
                                                         1
+                                                        
                                                     ? PopupMenuButton(
                                                         // add icon, by default "3 dot" icon
                                                         child: Container(
@@ -1038,6 +1040,7 @@ class _LeadDetailsState extends State<LeadDetails> {
                                                           leadDetails!.data!
                                                               .callResultId
                                                               .toString())],
+                                                    
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               5)),

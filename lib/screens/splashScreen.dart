@@ -296,28 +296,25 @@ class _SplashScreenState extends State<SplashScreen> {
   routeTOHomePage() async {
     if (navigation == null) {
       String? token = await Common.getSharedPref("token");
-      if (token != null) {
-        log(firebaseToken.toString());
-        LoginCheckModel loginCheck =
-            await HttpService.loginCheck(token, firebaseToken);
-        if (loginCheck.data == true) {
-          initDeepLinks();
-        } else {
-          Common.toastMessaage('Token Expired', Colors.red);
-          if (mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const Login()),
-                (Route<dynamic> route) => false);
-          }
+      log(firebaseToken.toString());
+      LoginCheckModel? loginCheck =
+          await HttpService.loginCheck(token, firebaseToken!);
+          if (loginCheck == null) {
+         Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Login()),
+              (Route<dynamic> route) => false);
         }
+      if (loginCheck!.data == true) {
+        initDeepLinks();
       } else {
+        Common.toastMessaage('Token Expired', Colors.red);
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const Login()),
               (Route<dynamic> route) => false);
         }
       }
-    } else {}
+        } else {}
   }
 }
 

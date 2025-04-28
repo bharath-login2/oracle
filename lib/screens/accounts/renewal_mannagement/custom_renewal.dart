@@ -1451,17 +1451,15 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             lastDate: DateTime(2100),
                           );
 
-                          if (selected != null) {
-                            setState(() {
-                              startDateExisting.text =
-                                  DateFormat('dd-MM-yyyy').format(selected);
-                              final endValue = selected
-                                  .add(Duration(days: int.parse(typeDuration)));
-                              endDateExisting.text =
-                                  DateFormat('dd-MM-yyyy').format(endValue);
-                            });
-                          }
-                        },
+                          setState(() {
+                            startDateExisting.text =
+                                DateFormat('dd-MM-yyyy').format(selected!);
+                            final endValue = selected
+                                .add(Duration(days: int.parse(typeDuration)));
+                            endDateExisting.text =
+                                DateFormat('dd-MM-yyyy').format(endValue);
+                          });
+                                                },
                         validator: (value) {
                           if (value!.isEmpty) {
                             return "Select Start Date";
@@ -1504,11 +1502,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             lastDate: DateTime(2100),
                           );
 
-                          if (selectedEndDate != null) {
-                            endDateExisting.text = DateFormat('dd-MM-yyyy')
-                                .format(selectedEndDate);
-                          }
-                        },
+                          endDateExisting.text = DateFormat('dd-MM-yyyy')
+                              .format(selectedEndDate!);
+                                                },
                         validator: (value) {
                           if (value!.isEmpty) {
                             return "Select End Date";
@@ -2892,11 +2888,9 @@ class _CustomRenewalState extends State<CustomRenewal> {
                             lastDate: DateTime(2100),
                           );
 
-                          if (selectedEndDate != null) {
-                            endDateNew.text = DateFormat('dd-MM-yyyy')
-                                .format(selectedEndDate);
-                          }
-                        },
+                          endDateNew.text = DateFormat('dd-MM-yyyy')
+                              .format(selectedEndDate!);
+                                                },
                         validator: (value) {
                           if (value!.isEmpty) {
                             return "Select End Date";

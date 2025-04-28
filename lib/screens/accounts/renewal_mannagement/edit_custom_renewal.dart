@@ -990,13 +990,11 @@ class _EditCustomRenewalState extends State<EditCustomRenewal> {
                             lastDate: DateTime(2100),
                           );
 
-                          if (selectedEndDate != null) {
-                            setState(() {
-                              endDate.text = DateFormat('dd-MM-yyyy')
-                                  .format(selectedEndDate);
-                            });
-                          }
-                        },
+                          setState(() {
+                            endDate.text = DateFormat('dd-MM-yyyy')
+                                .format(selectedEndDate!);
+                          });
+                                                },
                         validator: (value) {
                           if (value!.isEmpty) {
                             return "Select End Date";

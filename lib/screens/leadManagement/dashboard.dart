@@ -404,10 +404,10 @@ class _DashboardState extends State<Dashboard> {
         accessCallRecordingPermission1 = true;
       }
       firebaseToken = await FirebaseMessaging.instance.getToken();
-      LoginCheckModel loginCheck =
-          await HttpService.loginCheck(token, firebaseToken);
+      LoginCheckModel? loginCheck =
+          await HttpService.loginCheck(token, firebaseToken!);
       log(firebaseToken.toString());
-      if (loginCheck.data == false) {
+      if (loginCheck!.data == false) {
         Common.toastMessaage('Token Expired', Colors.red);
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -2269,26 +2269,56 @@ class _DashboardState extends State<Dashboard> {
                                                 // image: AssetImage(
                                                 //     'assets/images/img.jpeg')),
                                               ),
+                                              // child: userDashboard != null
+                                              //     ? CachedNetworkImage(
+                                              //         fit: BoxFit.fill,
+                                              //         imageUrl: userDashboard!
+                                              //             .data.modules[i].image
+                                              //             .toString(),
+                                              //         placeholder:
+                                              //             (context, url) =>
+                                              //                 const Padding(
+                                              //           padding: EdgeInsets.all(
+                                              //               25.0),
+                                              //           child:
+                                              //               CircularProgressIndicator(
+                                              //             color: Colors.grey,
+                                              //           ),
+                                              //         ),
+                                              //         errorWidget: (context,
+                                              //                 url, error) =>
+                                              //             const Icon(
+                                              //                 Icons.error),
+                                              //       )
+                                              //     : const SizedBox()),
                                               child: userDashboard != null
-                                                  ? CachedNetworkImage(
-                                                      fit: BoxFit.fill,
-                                                      imageUrl: userDashboard!
-                                                          .data.modules[i].image
-                                                          .toString(),
-                                                      placeholder:
-                                                          (context, url) =>
-                                                              const Padding(
-                                                        padding: EdgeInsets.all(
-                                                            25.0),
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                          color: Colors.grey,
+                                                  ? ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      child: CachedNetworkImage(
+                                                        fit: BoxFit.cover,
+                                                        imageUrl: userDashboard!
+                                                            .data
+                                                            .modules[i]
+                                                            .image
+                                                            .toString(),
+                                                        placeholder:
+                                                            (context, url) =>
+                                                                const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                  25.0),
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                            color: Colors.grey,
+                                                          ),
                                                         ),
+                                                        errorWidget: (context,
+                                                                url, error) =>
+                                                            const Icon(
+                                                                Icons.error),
                                                       ),
-                                                      errorWidget: (context,
-                                                              url, error) =>
-                                                          const Icon(
-                                                              Icons.error),
                                                     )
                                                   : const SizedBox()),
                                           const SizedBox(
@@ -2465,183 +2495,169 @@ class _DashboardState extends State<Dashboard> {
                                 Row(
                                   children: [
                                     // accessCallHistoryPermission == 'true'
-                                    //     ? 
-                                        Row(
-                                            children: [
-                                              InkWell(
-                                                onTap: () {
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(builder: (context) => SearchPage(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, '')),
-                                                  // ).then((r) {
-                                                  //   getData(widget.token, fromdate, todate);
-                                                  //   if (loadmore == true) {
-                                                  //     getStaffwise();
-                                                  //   }
-                                                  // });
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   PageRouteBuilder(
-                                                  //     pageBuilder: (context,
-                                                  //             animation,
-                                                  //             secondaryAnimation) =>
-                                                  //         Search(
-                                                  //       token: widget.token!,
-                                                  //       editLead:
-                                                  //           updateLeadPermission1,
-                                                  //       deleteLead:
-                                                  //           deleteLeadPermission1,
-                                                  //       cloudCall:
-                                                  //           cloudCallPermission1,
-                                                  //     ),
-                                                  //     transitionsBuilder:
-                                                  //         (context,
-                                                  //             animation,
-                                                  //             secondaryAnimation,
-                                                  //             child) {
-                                                  //       const begin = Offset(0.0, 1.0); // Slide from the right
-                                                  //       const end = Offset.zero;
-                                                  //       const curve =
-                                                  //           Curves.easeInOut;
+                                    //     ?
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            // Navigator.push(
+                                            //   context,
+                                            //   MaterialPageRoute(builder: (context) => SearchPage(widget.token, updateLeadPermission1, deleteLeadPermission1, cloudCallPermission1, '')),
+                                            // ).then((r) {
+                                            //   getData(widget.token, fromdate, todate);
+                                            //   if (loadmore == true) {
+                                            //     getStaffwise();
+                                            //   }
+                                            // });
+                                            // Navigator.push(
+                                            //   context,
+                                            //   PageRouteBuilder(
+                                            //     pageBuilder: (context,
+                                            //             animation,
+                                            //             secondaryAnimation) =>
+                                            //         Search(
+                                            //       token: widget.token!,
+                                            //       editLead:
+                                            //           updateLeadPermission1,
+                                            //       deleteLead:
+                                            //           deleteLeadPermission1,
+                                            //       cloudCall:
+                                            //           cloudCallPermission1,
+                                            //     ),
+                                            //     transitionsBuilder:
+                                            //         (context,
+                                            //             animation,
+                                            //             secondaryAnimation,
+                                            //             child) {
+                                            //       const begin = Offset(0.0, 1.0); // Slide from the right
+                                            //       const end = Offset.zero;
+                                            //       const curve =
+                                            //           Curves.easeInOut;
 
-                                                  //       var tween = Tween(
-                                                  //               begin: begin,
-                                                  //               end: end)
-                                                  //           .chain(CurveTween(
-                                                  //               curve: curve));
-                                                  //       var offsetAnimation =
-                                                  //           animation
-                                                  //               .drive(tween);
+                                            //       var tween = Tween(
+                                            //               begin: begin,
+                                            //               end: end)
+                                            //           .chain(CurveTween(
+                                            //               curve: curve));
+                                            //       var offsetAnimation =
+                                            //           animation
+                                            //               .drive(tween);
 
-                                                  //       return SlideTransition(
-                                                  //         position:
-                                                  //             offsetAnimation,
-                                                  //         child: child,
-                                                  //       );
-                                                  //     },
-                                                  //   ),
-                                                  // ).then((r) {
-                                                  //   getData(widget.token,
-                                                  //       fromdate, todate);
-                                                  //   if (loadmore == true) {
-                                                  //     getStaffwise();
-                                                  //   }
-                                                  // });
-                                                  Navigator.push(
+                                            //       return SlideTransition(
+                                            //         position:
+                                            //             offsetAnimation,
+                                            //         child: child,
+                                            //       );
+                                            //     },
+                                            //   ),
+                                            // ).then((r) {
+                                            //   getData(widget.token,
+                                            //       fromdate, todate);
+                                            //   if (loadmore == true) {
+                                            //     getStaffwise();
+                                            //   }
+                                            // });
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) => Search(
+                                                        token: widget.token!,
+                                                        editLead:
+                                                            updateLeadPermission1,
+                                                        deleteLead:
+                                                            deleteLeadPermission1,
+                                                        cloudCall:
+                                                            cloudCallPermission1,
+                                                      )),
+                                            ).then((r) {
+                                              getData(widget.token, fromdate,
+                                                  todate);
+                                              if (loadmore == true) {
+                                                getStaffwise();
+                                              }
+                                            });
+                                          },
+                                          child: Container(
+                                              width: 50,
+                                              height: 32,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 5),
+                                              decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 0),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                        color: Colors.grey,
+                                                        blurRadius: 5,
+                                                        offset: Offset(1, 1)),
+                                                  ],
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      const BorderRadius.all(
+                                                          Radius.circular(5))),
+                                              child: const Icon(Icons.search)),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        InkWell(
+                                          onTap: () {
+                                            // Navigator.push(
+                                            //   context,
+                                            //   MaterialPageRoute(
+                                            //       builder: (context) =>
+                                            //           CallHistoryPage(
+                                            //               widget.token!,
+                                            //               name,
+                                            //               userId,
+                                            //               accessCallRecordingPermission1)),
+                                            // );
+
+                                            accessCallHistoryPermission ==
+                                                    'true'
+                                                ? Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                         builder: (context) =>
-                                                            Search(
-                                                              token:
-                                                                  widget.token!,
-                                                              editLead:
-                                                                  updateLeadPermission1,
-                                                              deleteLead:
-                                                                  deleteLeadPermission1,
-                                                              cloudCall:
-                                                                  cloudCallPermission1,
-                                                            )),
-                                                  ).then((r) {
-                                                    getData(widget.token,
-                                                        fromdate, todate);
-                                                    if (loadmore == true) {
-                                                      getStaffwise();
-                                                    }
-                                                  });
-                                                },
-                                                child: Container(
-                                                    width: 50,
-                                                    height: 32,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 15,
-                                                        vertical: 5),
-                                                    decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                            color: Colors.white,
-                                                            width: 0),
-                                                        boxShadow: const [
-                                                          BoxShadow(
-                                                              color:
-                                                                  Colors.grey,
-                                                              blurRadius: 5,
-                                                              offset:
-                                                                  Offset(1, 1)),
-                                                        ],
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            const BorderRadius
-                                                                .all(
-                                                                Radius.circular(
-                                                                    5))),
-                                                    child: const Icon(
-                                                        Icons.search)),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              InkWell(
-                                                onTap: () {
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(
-                                                  //       builder: (context) =>
-                                                  //           CallHistoryPage(
-                                                  //               widget.token!,
-                                                  //               name,
-                                                  //               userId,
-                                                  //               accessCallRecordingPermission1)),
-                                                  // );
-                                                 
-                                                  accessCallHistoryPermission ==
-                                                          'true'
-                                                      ? Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  CallHistoryPage(
-                                                                      widget
-                                                                          .token!,
-                                                                      name,
-                                                                      userId,
-                                                                      accessCallRecordingPermission1)),
-                                                        )
-                                                      : _dialogue(context,
-                                                          'Call History');
-                                               
-                                                },
-                                                child: Container(
-                                                    width: 50,
-                                                    height: 32,
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 15,
-                                                        vertical: 5),
-                                                    decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                            color: Colors.white,
-                                                            width: 0),
-                                                        boxShadow: const [
-                                                          BoxShadow(
-                                                              color:
-                                                                  Colors.grey,
-                                                              blurRadius: 5,
-                                                              offset:
-                                                                  Offset(1, 1)),
-                                                        ],
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            const BorderRadius
-                                                                .all(
-                                                                Radius.circular(
-                                                                    5))),
-                                                    child: const Icon(
-                                                      Icons
-                                                          .phone_in_talk_rounded,
-                                                      size: 20,
-                                                    )),
-                                              ),
-                                            ],
-                                          )
-                                        // : const SizedBox(),
+                                                            CallHistoryPage(
+                                                                widget.token!,
+                                                                name,
+                                                                userId,
+                                                                accessCallRecordingPermission1)),
+                                                  )
+                                                : _dialogue(
+                                                    context, 'Call History');
+                                          },
+                                          child: Container(
+                                              width: 50,
+                                              height: 32,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 15,
+                                                      vertical: 5),
+                                              decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 0),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                        color: Colors.grey,
+                                                        blurRadius: 5,
+                                                        offset: Offset(1, 1)),
+                                                  ],
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      const BorderRadius.all(
+                                                          Radius.circular(5))),
+                                              child: const Icon(
+                                                Icons.phone_in_talk_rounded,
+                                                size: 20,
+                                              )),
+                                        ),
+                                      ],
+                                    )
+                                    // : const SizedBox(),
 
                                     // InkWell(
                                     //     onTap: () {
@@ -2700,7 +2716,8 @@ class _DashboardState extends State<Dashboard> {
                                     //           ],
                                     //         )),
                                     //   ),
-                                   , const SizedBox(width: 10),
+                                    ,
+                                    const SizedBox(width: 10),
                                     InkWell(
                                       onTap: () {
                                         showGeneralDialog(
