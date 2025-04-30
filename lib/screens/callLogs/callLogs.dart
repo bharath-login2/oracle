@@ -110,10 +110,49 @@ class _CallLogsState extends State<CallLogs> {
     }
      WidgetsBinding.instance.addPostFrameCallback((_) {
       askUserNeeds(context,false);
+      deleteHiveData();
     });
 // loadHiveData();
     
   }
+
+
+Future<void> deleteHiveData() async {
+  log('delete hive data function called');
+
+   final List<HiveCaallHistoryModel> hiveDataLength = await HiveUtil.getAllCallLogs();
+  log('hiveDataLength : ${hiveDataLength.length}');
+
+  if (hiveDataLength.length > 250) {
+    List<HiveCaallHistoryModel> allLogs = await HiveUtil.getAllCallLogs();
+
+    allLogs.sort((a, b) => b.timeStamp.compareTo(a.timeStamp));
+
+    List<HiveCaallHistoryModel> logsToKeep = allLogs.take(250).toList();
+    List<String> idsToKeep = logsToKeep.map((e) => e.id).toList();
+
+    List<String> idsToDelete = allLogs
+        .where((log) => !idsToKeep.contains(log.id))
+        .map((log) => log.id)
+        .toList();
+
+    log('IDs to delete: $idsToDelete');
+    for(var id in idsToDelete){
+      await HiveUtil.deleteCallLog(id);
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String fifthTimeStamp = logsToKeep.last.timeStamp;
+    log('5th item timestamp to use later: $fifthTimeStamp');
+    prefs.setString('callLogsStartingTime', fifthTimeStamp);
+
+    log('Old call logs deleted, only 5 kept');
+  } else {
+    log('No need to delete old call logs, less than 5 entries found');
+  }
+}
+
+
 
   // @override
   // void didChangeDependencies() {
@@ -400,7 +439,7 @@ class _CallLogsState extends State<CallLogs> {
               
               final DateTime startingTime = DateTime.parse(dateTimeFrom);
               // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-int to = DateTime.now().millisecondsSinceEpoch;
+              int to = DateTime.now().millisecondsSinceEpoch;
               final Iterable<CallLogEntry> result = await CallLog.query(
                 dateFrom: from,
                 dateTo: to,
@@ -793,8 +832,10 @@ int to = DateTime.now().millisecondsSinceEpoch;
     int to = DateTime.now().millisecondsSinceEpoch;
     return RefreshIndicator(
       onRefresh: () async {
+         await deleteHiveData();
          getSharedData();
          getPermission();
+        
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade200,

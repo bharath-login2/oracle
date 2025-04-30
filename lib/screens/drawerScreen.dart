@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
 import 'package:login2/screens/leadManagement/webview.dart';
 import 'package:login2/service/backgroundService.dart';
@@ -421,6 +422,7 @@ void logout(BuildContext context) {
             TextButton(
                 onPressed: () {
                   Common.clearSharedPref();
+                   HiveUtil.clearAllCallLogs();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const Login()),
                       (Route<dynamic> route) => false);
