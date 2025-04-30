@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/main.dart';
 import 'package:login2/models/userPermissionModel.dart';
 import 'package:login2/screens/authentication/forgot_password.dart';
@@ -249,6 +250,7 @@ class _LoginState extends State<Login> {
     super.initState();
     handleAsync();
     getData();
+    HiveUtil.clearAllCallLogs();
   }
 
   @override

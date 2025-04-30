@@ -59,7 +59,7 @@ class _CallLogsState extends State<CallLogs> {
   String assignStaffId = '';
   int from =
       DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
-  int to = DateTime.now().millisecondsSinceEpoch;
+  // int to = DateTime.now().millisecondsSinceEpoch;
   bool displayOverApps = false;
   CallLogUploadPermissionModel? callUploadPermission;
   String roleId = "";
@@ -301,7 +301,6 @@ class _CallLogsState extends State<CallLogs> {
                           //     timestamp: DateTime.now().millisecondsSinceEpoch,
                           //   ));
                           // }
-                            //!
                             List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
                             log('callTypes : $callTypesQ');
 
@@ -360,7 +359,7 @@ class _CallLogsState extends State<CallLogs> {
       if (permissionAccess == 'true') {
         if (await Permission.phone.request().isGranted) {
           final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-            
+            int to = DateTime.now().millisecondsSinceEpoch;
 
 
           final Iterable<CallLogEntry> result = await CallLog.query(
@@ -370,7 +369,7 @@ class _CallLogsState extends State<CallLogs> {
           final filteredLogs = result.where((entry) {
           return isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
         }).toList();
-
+ 
           // getSimDetails();
            final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
           log('hiveData 1: $hiveData');
@@ -400,8 +399,8 @@ class _CallLogsState extends State<CallLogs> {
               log( 'No call logs found in Hive.');
               
               final DateTime startingTime = DateTime.parse(dateTimeFrom);
-              final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-
+              // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+int to = DateTime.now().millisecondsSinceEpoch;
               final Iterable<CallLogEntry> result = await CallLog.query(
                 dateFrom: from,
                 dateTo: to,
@@ -425,6 +424,8 @@ class _CallLogsState extends State<CallLogs> {
                     isAllowed = true;
                   } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
                     isAllowed = true;
+                  } else if(callTypesQ.contains('Incoming') && callLog.callType.toString().contains('missed')){
+                     isAllowed = true;
                   }
 
                   log('isAllowed : $isAllowed');
@@ -486,7 +487,7 @@ class _CallLogsState extends State<CallLogs> {
              final DateTime startingTime = DateTime.parse(dateTimeFrom);
 
               // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-
+int to = DateTime.now().millisecondsSinceEpoch;
               final Iterable<CallLogEntry> result = await CallLog.query(
                 dateFrom: from,
                 dateTo: to,
@@ -571,6 +572,8 @@ class _CallLogsState extends State<CallLogs> {
                                 if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
                                   isAllowed = true;
                                 } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
+                                  isAllowed = true;
+                                }else if(callTypesQ.contains('Incoming') && callLog.callType.toString().contains('missed')){
                                   isAllowed = true;
                                 }
 
@@ -683,9 +686,12 @@ class _CallLogsState extends State<CallLogs> {
     } catch (e) {
       log(e.toString());
     }
-    setState(() {});
+    // setState(() {});
    
   }
+
+
+
 
   Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
  log("uploadMissingLogsToServer function called");
@@ -784,10 +790,11 @@ class _CallLogsState extends State<CallLogs> {
   Iterable<CallLogEntry> _callLogEntries = <CallLogEntry>[];
   @override
   Widget build(BuildContext context) {
+    int to = DateTime.now().millisecondsSinceEpoch;
     return RefreshIndicator(
       onRefresh: () async {
-        getSharedData();
-        getPermission();
+         getSharedData();
+         getPermission();
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade200,

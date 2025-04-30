@@ -216,7 +216,7 @@ void showWindow() async {
         );
         break;
       case PhoneStateStatus.CALL_ENDED:
-      return;
+      // return;
         // log('~~ CALL_ENDED ~~~');
         // log('~~ uploadCall : $uploadCall ~~~');
         // log('~~ uploadCall : $doUpload ~~~');
@@ -409,7 +409,9 @@ void showWindow() async {
                               isAllowed = true;
                             } else if (callTypesQ.contains('Outgoing') && log['callTypes'].toString().contains('outgoing')) {
                               isAllowed = true;
-                            }
+                            }else if(callTypesQ.contains('Incoming') && log['callTypes'].toString().contains('missed')){
+                                  isAllowed = true;
+                                }
 
                             print('isAllowed : $isAllowed');
 
