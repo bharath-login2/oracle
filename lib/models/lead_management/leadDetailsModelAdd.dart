@@ -67,10 +67,23 @@ class Data {
         createInstallment: json["createInstallment"],
         isCreateOrder: json["isCreateOrder"],
         customerId: json["customer_id"],
-        followUpData: List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
-        callHistory: List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x))),
-        activities: List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x))),
-        additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
+        // followUpData: List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
+        // callHistory: List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x))),
+        // activities: List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x))),
+        // additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
+         followUpData: (json["followUpData"] != null)
+      ? List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x)))
+      : [],
+  callHistory: (json["callHistory"] != null)
+      ? List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x)))
+      : [],
+  activities: (json["activities"] != null)
+      ? List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x)))
+      : [],
+  additionalFields: (json["additionalFields"] != null)
+      ? List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x)))
+      : [],
+
     );
 
     Map<String, dynamic> toJson() => {
@@ -288,31 +301,31 @@ class FollowUpDatum {
     });
 
     factory FollowUpDatum.fromJson(Map<String, dynamic> json) => FollowUpDatum(
-        callDetailsId: json["call_details_id"],
-        scheduledDate: json["scheduled_date"],
-        date: json["date"],
-        calledDate: json["called_date"],
-        remarks: json["remarks"],
-        callMasterId: json["call_master_id"],
-        callResult: json["call_result"],
-        staffName: json["staff_name"],
-        proPicThumb: json["pro_pic_thumb"],
-        callStatusId: json["call_status_id"],
-        callResultId: json["call_result_id"],
-        callResponseId: json["call_response_id"],
-        callResponse: json["call_response"],
-        reasonId: json["reason_id"],
-        reason: json["reason"],
-        isCalled: json["is_called"],
-        isEdit: json["is_edit"],
-        isDelete: json["is_delete"],
-        dispalyDate: json["dispaly_date"],
-        isSetReminder: json["isSetReminder"],
-        isReminder: json["isReminder"],
-        time: json["time"],
-        voiceFile: json["voice_file"],
-        voiceUploadPermission: json["voiceUploadPermission"],
-        playVoicePermission: json["playVoicePermission"],
+        callDetailsId: json["call_details_id"]??"",
+        scheduledDate: json["scheduled_date"]??"",
+        date: json["date"]??"",
+        calledDate: json["called_date"]??"",
+        remarks: json["remarks"]??"",
+        callMasterId: json["call_master_id"]??"",
+        callResult: json["call_result"]??"",
+        staffName: json["staff_name"]??"",
+        proPicThumb: json["pro_pic_thumb"]??"",
+        callStatusId: json["call_status_id"]??"",
+        callResultId: json["call_result_id"]??"",
+        callResponseId: json["call_response_id"]??"",
+        callResponse: json["call_response"]??"",
+        reasonId: json["reason_id"]??"",
+        reason: json["reason"]??"",
+        isCalled: json["is_called"]??"",
+        isEdit: json["is_edit"]??"",
+        isDelete: json["is_delete"]??"",
+        dispalyDate: json["dispaly_date"]??"",
+        isSetReminder: json["isSetReminder"]??"",
+        isReminder: json["isReminder"]??"",
+        time: json["time"]??"",
+        voiceFile: json["voice_file"]??"",
+        voiceUploadPermission: json["voiceUploadPermission"]??"",
+        playVoicePermission: json["playVoicePermission"]??"",
     );
 
     Map<String, dynamic> toJson() => {

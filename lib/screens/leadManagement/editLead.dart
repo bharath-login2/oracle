@@ -512,6 +512,13 @@ class _EditLeadState extends State<EditLead> {
                                                                         subIndex]
                                                                     .leadSubCategoryId
                                                                     .toString();
+                                                            leadSubTypeVal
+                                                                    .text =
+                                                                leadSubTypeList!
+                                                                    .data![
+                                                                        subIndex]
+                                                                    .leadSubCategory
+                                                                    .toString();
                                                             Navigator.pop(
                                                                 context, true);
                                                           });

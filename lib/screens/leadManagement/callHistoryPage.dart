@@ -1068,7 +1068,7 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                                                                 BoxDecoration(
                                                                               // color: _colors[int.parse(callHistory!.data!.followupHistory![ind].callResultId.toString())], borderRadius: BorderRadius.circular(5)
                                                                               color: (() {
-                                                                                final callResultId = callHistory?.data?.followupHistory?[ind]?.callResultId;
+                                                                                final callResultId = callHistory?.data?.followupHistory?[ind].callResultId;
                                                                                 final id = int.tryParse(callResultId?.toString() ?? '');
                                                                                 if (id != null && id >= 0 && id < _colors.length) {
                                                                                   return _colors[id];

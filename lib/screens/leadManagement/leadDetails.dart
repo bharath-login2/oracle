@@ -1471,8 +1471,8 @@ class _LeadDetailsState extends State<LeadDetails> {
                                 ),
                               ),
                             ),
-                            leadDetailsAdditional != null &&
-                                    listFolder != null &&
+                            leadDetailsAdditional != null
+                             && listFolder != null &&
                                     mileStone != null
                                 ? Column(
                                     children: [

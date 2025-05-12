@@ -14,6 +14,8 @@ import 'package:login2/service/service.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'timeline_page.dart';
+
 class StaffReportDashboard extends StatefulWidget {
   String id;
   StaffReportDashboard({super.key, required this.id});
@@ -804,6 +806,27 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                                 style: const TextStyle(
                                                     color: Colors.black,
                                                     fontSize: 20)),
+                                            IconButton(
+                                              icon: const Icon(
+                                                  Icons.remove_red_eye,
+                                                  color: Colors.black),
+                                              onPressed: () {
+                                                final staffId = staffDetails!
+                                                    .data.userData.userId;
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const TimelinePage(),
+                                                    settings: RouteSettings(
+                                                      arguments: {
+                                                        "staffId": staffId
+                                                      },
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
                                             const Text("Phone Call Duration :",
                                                 style: TextStyle(
                                                     color: Colors.black,

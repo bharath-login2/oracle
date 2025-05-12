@@ -20,9 +20,12 @@ import 'package:login2/screens/accounts/renewal_mannagement/custom_renewal.dart'
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_followup_list.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_list.dart';
 import 'package:login2/screens/complaints/complaint_list_screen.dart';
+import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
+import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
+import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/officialWhatsapp/colorConst.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/search/search.dart';
@@ -35,6 +38,8 @@ import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
 import '../../models/lead_management/leadDashboardModel.dart';
 import '../../models/lead_management/leadProgressbarModel.dart';
+import '../../models/lead_management/projectList_model.dart';
+import '../../models/lead_management/workstatus_model.dart';
 import '../../models/loginCheckModel.dart';
 import '../../screens/authentication/login.dart';
 import '../../widgets/renewal_grid_widget.dart';
@@ -93,6 +98,9 @@ class _DashboardState extends State<Dashboard> {
   LeadCategoryStaffWiseModel? staffWise;
   DashboardModel? userDashboard;
   RenewalDashboardModel? renewalDashboard;
+  ProjectList? projectList;
+  WorkStatusModel? workStatus;
+  DateTime? createdAt;
   bool isExpired = false;
   String accPermission = "";
   String renewalPermission = "true";
@@ -106,6 +114,7 @@ class _DashboardState extends State<Dashboard> {
   String name = '';
   String role = '';
   String userId = '';
+  String staffId = '';
   String callLogPermission = '';
   int id = 0;
   String navigationActionId = 'id_3';
@@ -378,10 +387,14 @@ class _DashboardState extends State<Dashboard> {
           await Common.getSharedPref("accessCallRecordingPermission");
       visibleP = await Common.getSharedPref("isVisible");
       if (visibleP == 'true') {
-        isVisible = true;
+        // isVisible = true;
+        isVisible = false;
       } else {
         isVisible = false;
       }
+      // if(userDashboard!.data.modules.length <2){
+      //   isVisible =false;
+      // }
       if (updateLeadPermission == 'true') {
         updateLeadPermission1 = true;
       }
@@ -422,6 +435,13 @@ class _DashboardState extends State<Dashboard> {
         }
         leadDashboard = await HttpService.leadDashboard(
             token, fromdate, todate, fromdate1, todate1);
+        projectList = await HttpService.getProjectList();
+        workStatus = await HttpService.getWorkStatus();
+        if (workStatus!.data.isNotEmpty) {
+          createdAt = DateTime.parse(workStatus!.data.first.createdAt);
+        } else {
+          print("No work status data available.");
+        }
         userDashboard = await HttpService.mainDashboard(widget.token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
         setState(() {
@@ -455,6 +475,19 @@ class _DashboardState extends State<Dashboard> {
   getRenewalDashboard() async {
     renewalDashboard = await HttpService.renewalDashboard();
     if (renewalDashboard != null && renewalDashboard!.status == true) {
+      setState(() {
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  getProjectList() async {
+    projectList = await HttpService.getProjectList();
+    if (projectList != null && projectList!.status == true) {
       setState(() {
         isLoading = false;
       });
@@ -525,9 +558,8 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-
   //!
-  
+
   getSharedData() async {
     log('getSharedData called');
     try {
@@ -546,37 +578,37 @@ class _DashboardState extends State<Dashboard> {
       // if (uploadPermission != "true" && Platform.isIOS) {
       //   selectedIndex = -1;
       // }
-      int from =
-      DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
-  int to = DateTime.now().millisecondsSinceEpoch;
+      int from = DateTime.now()
+          .subtract(const Duration(days: 3))
+          .millisecondsSinceEpoch;
+      int to = DateTime.now().millisecondsSinceEpoch;
 
       setState(() {});
       if (permissionAccess == 'true') {
         if (await Permission.phone.request().isGranted) {
-          final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-            
-
+          final List<CallLogToggleEvent> toggleHistory =
+              await ToggleStorage.getToggleHistory();
 
           final Iterable<CallLogEntry> result = await CallLog.query(
             dateFrom: from,
             dateTo: to,
           );
           final filteredLogs = result.where((entry) {
-          return isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
-        }).toList();
+            return isLogAllowed(
+                entry.timestamp ?? 0, entry.callType!, toggleHistory);
+          }).toList();
 
           // getSimDetails();
-           final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+          final List<HiveCaallHistoryModel> hiveData =
+              await HiveUtil.getAllCallLogs();
           log('hiveData 1: $hiveData');
           log('hiveData 0: ${hiveData.length}');
           log('================================== HIVE DATA IN GET SHARED DATA ========================================');
           log('hiveData LENGTH 1 : ${hiveData.length}');
-          for(var datassss in hiveData){
-             log('hiveData LENGTH 2 : ${datassss.name} || ${datassss.phoneNumber} || ${datassss.isUploaded}');
+          for (var datassss in hiveData) {
+            log('hiveData LENGTH 2 : ${datassss.name} || ${datassss.phoneNumber} || ${datassss.isUploaded}');
           }
 
-           
-         
           // setState(() {
           //     fullHiveData=hiveData;
           //   _callLogEntries = filteredLogs;
@@ -585,373 +617,378 @@ class _DashboardState extends State<Dashboard> {
         }
       }
       // !   UPDATE MISSING CALL LOG
-        final int callLogCount = await HiveUtil.getCallLogCount();
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-         List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
-         callLogData.clear();
-         final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
-        //  List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
-        //       log('callTypes : $callTypesQ');
-        if (callLogCount==0) {
-              log( 'No call logs found in Hive.');
-              
-              final DateTime startingTime = DateTime.parse(dateTimeFrom);
-              final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+      final int callLogCount = await HiveUtil.getCallLogCount();
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
+      callLogData.clear();
+      final String dateTimeFrom =
+          prefs.getString('callLogsStartingTime').toString();
+      //  List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+      //       log('callTypes : $callTypesQ');
+      if (callLogCount == 0) {
+        log('No call logs found in Hive.');
 
-              final Iterable<CallLogEntry> result = await CallLog.query(
-                dateFrom: from,
-                dateTo: to,
-              );
-            final List<CallLogEntry> filteredLogs = result.where((entry) {
-              final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
-              
-              // Only logs AFTER startingTime + pass your custom toggle filter
-              return callTime.isAfter(startingTime);
-            }).toList();
-             log('filteredLogs : ${filteredLogs.length}');
-            if (filteredLogs.isNotEmpty) {
-              List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
-              log('callTypes : $callTypesQ');
-              List<HiveCaallHistoryModel> listOfCallLogNeedToAddHive= [];
-               for (var callLog in filteredLogs) {
+        final DateTime startingTime = DateTime.parse(dateTimeFrom);
+        final List<CallLogToggleEvent> toggleHistory =
+            await ToggleStorage.getToggleHistory();
 
-                bool isAllowed = false ;
+        final Iterable<CallLogEntry> result = await CallLog.query(
+          dateFrom: from,
+          dateTo: to,
+        );
+        final List<CallLogEntry> filteredLogs = result.where((entry) {
+          final DateTime callTime =
+              DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
 
-                  if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
-                    isAllowed = true;
-                  } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
-                    isAllowed = true;
-                  }
+          // Only logs AFTER startingTime + pass your custom toggle filter
+          return callTime.isAfter(startingTime);
+        }).toList();
+        log('filteredLogs : ${filteredLogs.length}');
+        if (filteredLogs.isNotEmpty) {
+          List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+          log('callTypes : $callTypesQ');
+          List<HiveCaallHistoryModel> listOfCallLogNeedToAddHive = [];
+          for (var callLog in filteredLogs) {
+            bool isAllowed = false;
 
-                  log('isAllowed : $isAllowed');
-
-
-
-                HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                  id: callLog.timestamp.toString(),
-                  name: callLog.name.toString(),
-                  phoneNumber: callLog.number.toString(),
-                  callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
-                  duration: callLog.duration.toString(),
-                  timeStamp: callLog.timestamp!.toString(),
-                  // timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
-                  simSlot: callLog.simDisplayName??"NIL",
-                  callRecordFilePath: "",
-                  isUploaded: false,
-                  isDeleted:false,
-                  isEnabled: isAllowed
-                );
-                listOfCallLogNeedToAddHive.add(hiveCallLog);
-              }
-
-                log('listOfCallLogNeedToAddHive : $listOfCallLogNeedToAddHive');
-                log('listOfCallLogNeedToAddHive : ${listOfCallLogNeedToAddHive.length}');
-                // Filter list to include only allowed call logs
-                  List<HiveCaallHistoryModel> allowedCallLogs = listOfCallLogNeedToAddHive
-                      .where((log) => log.isEnabled == true)
-                      .toList();
-
-                  // Debug
-                  log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
-
-                  // Proceed with upload only for allowed items
-                  if (allowedCallLogs.isNotEmpty) {
-                    await uploadMissingLogsToServer(allowedCallLogs);   
-                  }
-             
-                // callLogData.add(hiveCallLog);
-                if (listOfCallLogNeedToAddHive.isNotEmpty) {
-                  //  await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);   
-                   await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);    
-                   Fluttertoast.showToast(
-                      msg: 'Synced Call Logs',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: ColorConstant.black,
-                      textColor: ColorConstant.white,
-                    );     
-                }
-                
-                  return;
-            } else { 
-              log('No call logs found');
-              return;
+            if (callTypesQ.contains('Incoming') &&
+                callLog.callType.toString().contains('incoming')) {
+              isAllowed = true;
+            } else if (callTypesQ.contains('Outgoing') &&
+                callLog.callType.toString().contains('outgoing')) {
+              isAllowed = true;
             }
 
+            log('isAllowed : $isAllowed');
+
+            HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                id: callLog.timestamp.toString(),
+                name: callLog.name.toString(),
+                phoneNumber: callLog.number.toString(),
+                callType: callLog.callType
+                    .toString()
+                    .substring(callLog.callType.toString().indexOf('.') + 1),
+                duration: callLog.duration.toString(),
+                timeStamp: callLog.timestamp!.toString(),
+                // timeStamp: '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                simSlot: callLog.simDisplayName ?? "NIL",
+                callRecordFilePath: "",
+                isUploaded: false,
+                isDeleted: false,
+                isEnabled: isAllowed);
+            listOfCallLogNeedToAddHive.add(hiveCallLog);
+          }
+
+          log('listOfCallLogNeedToAddHive : $listOfCallLogNeedToAddHive');
+          log('listOfCallLogNeedToAddHive : ${listOfCallLogNeedToAddHive.length}');
+          // Filter list to include only allowed call logs
+          List<HiveCaallHistoryModel> allowedCallLogs =
+              listOfCallLogNeedToAddHive
+                  .where((log) => log.isEnabled == true)
+                  .toList();
+
+          // Debug
+          log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+          // Proceed with upload only for allowed items
+          if (allowedCallLogs.isNotEmpty) {
+            await uploadMissingLogsToServer(allowedCallLogs);
+          }
+
+          // callLogData.add(hiveCallLog);
+          if (listOfCallLogNeedToAddHive.isNotEmpty) {
+            //  await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);
+            await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);
+            Fluttertoast.showToast(
+              msg: 'Synced Call Logs',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: ColorConstant.black,
+              textColor: ColorConstant.white,
+            );
+          }
+
+          return;
         } else {
-           log( 'call logs found in Hive.');
-           
-             callLogData.clear();
-             final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
-             final DateTime startingTime = DateTime.parse(dateTimeFrom);
+          log('No call logs found');
+          return;
+        }
+      } else {
+        log('call logs found in Hive.');
 
-              // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+        callLogData.clear();
+        final String dateTimeFrom =
+            prefs.getString('callLogsStartingTime').toString();
+        final DateTime startingTime = DateTime.parse(dateTimeFrom);
 
-              final Iterable<CallLogEntry> result = await CallLog.query(
-                dateFrom: from,
-                dateTo: to,
-              );
-              //!
-            final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
-              final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
-              
-              // Only logs AFTER startingTime + pass your custom toggle filter
-              return callTime.isAfter(startingTime);
-            }).toList();
-            // final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
-            //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
-              
-            //   // Only logs AFTER startingTime + pass your custom toggle filter
-            //   return callTime.isAfter(startingTime) &&
-            //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
-            // }).toList();
-            //!
-            // todo :  callLogsFromDevice from this
-            // todo : get current status of call permission (incoming and out going)
-            // todo :based on filter from callLogsFromDevice
-              log('Call logs from device : $callLogsFromDevice');
-              log('Call logs from length : ${callLogsFromDevice.length}');
-              if(callLogsFromDevice.isEmpty) {
-                log('no call logs in device');
-                return ;
-              }
+        // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
 
-              final deviceLatestCallLogTime = parseCallLogTime(callLogsFromDevice.first.timestamp.toString()); 
+        final Iterable<CallLogEntry> result = await CallLog.query(
+          dateFrom: from,
+          dateTo: to,
+        );
+        //!
+        final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
+          final DateTime callTime =
+              DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
 
-              final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+          // Only logs AFTER startingTime + pass your custom toggle filter
+          return callTime.isAfter(startingTime);
+        }).toList();
+        // final List<CallLogEntry> callLogsFromDevice = result.where((entry) {
+        //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
 
-              final HiveCaallHistoryModel latestHiveCallLog2 = await HiveUtil.getLatestCallLogByTime() ?? hiveData.first ;
-                log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
-              
-              final hiveLatestDateTime = parseCallLogTime(latestHiveCallLog2.timeStamp); 
-
-                      if (hiveLatestDateTime==deviceLatestCallLogTime) {
-                          log('Latest Hive Call Log and Device Call Log are same.');
-                          log('first call log : ${latestHiveCallLog2.isUploaded}');
-                            Fluttertoast.showToast(
-                                          msg: 'Call Logs alredy Sync',
-                                          toastLength: Toast.LENGTH_SHORT,
-                                          gravity: ToastGravity.BOTTOM,
-                                          backgroundColor: ColorConstant.black,
-                                          textColor: ColorConstant.white,
-                                        );
-                          return;
-                        } else {
-                   log('Latest Hive Call Log and Device Call Log are not same.');
-                    // List<CallLogEntry> allCallLogsAfterHiveLatestData = await getFilteredCallLogs(hiveLatestDateTime);
-                     final DateTime startingTime = DateTime.parse(dateTimeFrom);
-                      // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
-
-                      final Iterable<CallLogEntry> result = await CallLog.query(
-                        dateFrom: from,
-                        dateTo: to,
-                      );
-                      log('result : ${result.length}');
-                    final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
-                      final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
-                      
-                      // Only logs AFTER startingTime + pass your custom toggle filter
-                      return callTime.isAfter(startingTime);
-                    }).toList();
-                    // final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
-                    //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
-                      
-                    //   // Only logs AFTER startingTime + pass your custom toggle filter
-                    //   return callTime.isAfter(startingTime) &&
-                    //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
-                    // }).toList();
-                    log('Call logs from device after latest hive data : $allCallLogsAfterHiveLatestData');
-                    log('Call logs from length after latest hive data : ${allCallLogsAfterHiveLatestData.length}');
-                        // callLogData.addAll(hiveData);
-                        // history.clear();
-                        callLogData.clear();
-                        // todo : get prefs data of incoming and out going
-
-                         if (allCallLogsAfterHiveLatestData.isNotEmpty) {
-                           List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
-                            log('callTypes : $callTypesQ');
-                              
-
-                            for (var callLog in allCallLogsAfterHiveLatestData) {
-                                 bool isAllowed = false ;
-
-                                if (callTypesQ.contains('Incoming') && callLog.callType.toString().contains('incoming')) {
-                                  isAllowed = true;
-                                } else if (callTypesQ.contains('Outgoing') && callLog.callType.toString().contains('outgoing')) {
-                                  isAllowed = true;
-                                }
-
-                                log('isAllowed : $isAllowed');
-                              HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                                id: callLog.timestamp.toString(),
-                                name: callLog.name.toString(),
-                                phoneNumber: callLog.number.toString(),
-                                callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
-                                duration: callLog.duration.toString(),
-                                timeStamp:  callLog.timestamp!.toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
-                                simSlot: callLog.simDisplayName??"NIL",
-                                callRecordFilePath: "",
-                                isUploaded: false,
-                                isDeleted:false,
-                                isEnabled: isAllowed,
-                              );
-                              // await HiveUtil.addCallLog(hiveCallLog); // add to hive
-                              callLogData.add(hiveCallLog);
-                              // todo : add to DB also this case
-                        }
-
-
-                        log('callLogData : $callLogData');
-                        log('callLogData : ${callLogData.length}');
-                        // got all call logs
-                        // get hive call logs
-                        // get missing call logs from callLogData list
-                          final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-                          log('hiveData 1: $hiveData');
-                          log('hiveData 0: ${hiveData.length}');
-
-
-
-                               Map<String, bool> existingItems = {};
-  
-                                for (var item in hiveData) {
-                                  // Create a unique key using phone number and timestamp
-                                  String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
-                                  existingItems[uniqueKey] = true;
-                                }
-
-                                log('existingItems: $existingItems');
-                                log('existingItems length: ${existingItems.length}');
-
-
-                                List<HiveCaallHistoryModel> nonDuplicates = [];
-
-                                  for (var item in callLogData) {
-                                     String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
-                                     if (!existingItems.containsKey(uniqueKey)) {
-
-                                        log('Unique item found: ${item.phoneNumber} - ${item.timeStamp}');
-                                        nonDuplicates.add(item);
-                                      }else{
-                                        log('Duplicate item found: ${item.phoneNumber} - ${item.timeStamp}');
-                                      
-                                      }
-                                  }
-
-                                   log('nonDuplicates: $nonDuplicates');
-                                   log('nonDuplicates length: ${nonDuplicates.length}');
-                                   for(var item in callLogData){
-                                    log('item main : ${item.name} || ${item.isDeleted} || ${item.isUploaded}');
-                                   }
-
-                                   nonDuplicates = nonDuplicates.where((log) => log.isDeleted != true).toList();
-                                  //  callLogData = callLogData.where((log) => log.isDeleted != true).toList();
-                                  nonDuplicates = nonDuplicates.where((log) => log.isUploaded != true).toList();
-                                  nonDuplicates = nonDuplicates.reversed.toList();
-
-                                   log('callLogData        : $callLogData');
-                                   log('callLogData length : ${callLogData.length}');
-
-                                    List<HiveCaallHistoryModel> notUploadedCallLogs = callLogData.where((log) => log.isUploaded != true).toList();
-                                    log('notUploadedCallLogs : ${    notUploadedCallLogs.length}');
-
-                                    List<HiveCaallHistoryModel> allowedCallLogs = nonDuplicates
-                                                                .where((log) => log.isEnabled == true)
-                                                                .toList();
-
-                                                            // Debug
-                                                            log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
-
-                                                            // Proceed with upload only for allowed items
-                                                            if (allowedCallLogs.isNotEmpty) {
-                                                              await uploadMissingLogsToServer(allowedCallLogs);   
-                                                            }
-
-                                    if (nonDuplicates.isNotEmpty) {
-                                          //  todo : update in HIve
-                                         await HiveUtil.addCallLogs(nonDuplicates);
-                                         Fluttertoast.showToast(
-                                          msg: 'Synced Call Logs',
-                                          toastLength: Toast.LENGTH_SHORT,
-                                          gravity: ToastGravity.BOTTOM,
-                                          backgroundColor: ColorConstant.black,
-                                          textColor: ColorConstant.white,
-                                        );
-                                      }
-
-                                    
-
-                                  return;
-
-                      } else {
-                        log('No NEW Call Logs found in device.');
-                        Fluttertoast.showToast(
-                      msg: 'No New Call Logs found in device to Sync.',
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                      backgroundColor: ColorConstant.black,
-                      textColor: ColorConstant.white,
-                    );
-                     return;
-                      }
-                }
-
-
+        //   // Only logs AFTER startingTime + pass your custom toggle filter
+        //   return callTime.isAfter(startingTime) &&
+        //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+        // }).toList();
+        //!
+        // todo :  callLogsFromDevice from this
+        // todo : get current status of call permission (incoming and out going)
+        // todo :based on filter from callLogsFromDevice
+        log('Call logs from device : $callLogsFromDevice');
+        log('Call logs from length : ${callLogsFromDevice.length}');
+        if (callLogsFromDevice.isEmpty) {
+          log('no call logs in device');
+          return;
         }
 
+        final deviceLatestCallLogTime =
+            parseCallLogTime(callLogsFromDevice.first.timestamp.toString());
+
+        final List<HiveCaallHistoryModel> hiveData =
+            await HiveUtil.getAllCallLogs();
+
+        final HiveCaallHistoryModel latestHiveCallLog2 =
+            await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
+        log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded} || ${latestHiveCallLog2.isEnabled}');
+
+        final hiveLatestDateTime =
+            parseCallLogTime(latestHiveCallLog2.timeStamp);
+
+        if (hiveLatestDateTime == deviceLatestCallLogTime) {
+          log('Latest Hive Call Log and Device Call Log are same.');
+          log('first call log : ${latestHiveCallLog2.isUploaded}');
+          Fluttertoast.showToast(
+            msg: 'Call Logs alredy Sync',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: ColorConstant.black,
+            textColor: ColorConstant.white,
+          );
+          return;
+        } else {
+          log('Latest Hive Call Log and Device Call Log are not same.');
+          // List<CallLogEntry> allCallLogsAfterHiveLatestData = await getFilteredCallLogs(hiveLatestDateTime);
+          final DateTime startingTime = DateTime.parse(dateTimeFrom);
+          // final List<CallLogToggleEvent> toggleHistory = await ToggleStorage.getToggleHistory();
+
+          final Iterable<CallLogEntry> result = await CallLog.query(
+            dateFrom: from,
+            dateTo: to,
+          );
+          log('result : ${result.length}');
+          final List<CallLogEntry> allCallLogsAfterHiveLatestData =
+              result.where((entry) {
+            final DateTime callTime =
+                DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+
+            // Only logs AFTER startingTime + pass your custom toggle filter
+            return callTime.isAfter(startingTime);
+          }).toList();
+          // final List<CallLogEntry> allCallLogsAfterHiveLatestData = result.where((entry) {
+          //   final DateTime callTime = DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0);
+
+          //   // Only logs AFTER startingTime + pass your custom toggle filter
+          //   return callTime.isAfter(startingTime) &&
+          //         isLogAllowed(entry.timestamp ?? 0, entry.callType!, toggleHistory);
+          // }).toList();
+          log('Call logs from device after latest hive data : $allCallLogsAfterHiveLatestData');
+          log('Call logs from length after latest hive data : ${allCallLogsAfterHiveLatestData.length}');
+          // callLogData.addAll(hiveData);
+          // history.clear();
+          callLogData.clear();
+          // todo : get prefs data of incoming and out going
+
+          if (allCallLogsAfterHiveLatestData.isNotEmpty) {
+            List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
+            log('callTypes : $callTypesQ');
+
+            for (var callLog in allCallLogsAfterHiveLatestData) {
+              bool isAllowed = false;
+
+              if (callTypesQ.contains('Incoming') &&
+                  callLog.callType.toString().contains('incoming')) {
+                isAllowed = true;
+              } else if (callTypesQ.contains('Outgoing') &&
+                  callLog.callType.toString().contains('outgoing')) {
+                isAllowed = true;
+              }
+
+              log('isAllowed : $isAllowed');
+              HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                id: callLog.timestamp.toString(),
+                name: callLog.name.toString(),
+                phoneNumber: callLog.number.toString(),
+                callType: callLog.callType
+                    .toString()
+                    .substring(callLog.callType.toString().indexOf('.') + 1),
+                duration: callLog.duration.toString(),
+                timeStamp: callLog.timestamp!
+                    .toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                simSlot: callLog.simDisplayName ?? "NIL",
+                callRecordFilePath: "",
+                isUploaded: false,
+                isDeleted: false,
+                isEnabled: isAllowed,
+              );
+              // await HiveUtil.addCallLog(hiveCallLog); // add to hive
+              callLogData.add(hiveCallLog);
+              // todo : add to DB also this case
+            }
+
+            log('callLogData : $callLogData');
+            log('callLogData : ${callLogData.length}');
+            // got all call logs
+            // get hive call logs
+            // get missing call logs from callLogData list
+            final List<HiveCaallHistoryModel> hiveData =
+                await HiveUtil.getAllCallLogs();
+            log('hiveData 1: $hiveData');
+            log('hiveData 0: ${hiveData.length}');
+
+            Map<String, bool> existingItems = {};
+
+            for (var item in hiveData) {
+              // Create a unique key using phone number and timestamp
+              String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+              existingItems[uniqueKey] = true;
+            }
+
+            log('existingItems: $existingItems');
+            log('existingItems length: ${existingItems.length}');
+
+            List<HiveCaallHistoryModel> nonDuplicates = [];
+
+            for (var item in callLogData) {
+              String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+              if (!existingItems.containsKey(uniqueKey)) {
+                log('Unique item found: ${item.phoneNumber} - ${item.timeStamp}');
+                nonDuplicates.add(item);
+              } else {
+                log('Duplicate item found: ${item.phoneNumber} - ${item.timeStamp}');
+              }
+            }
+
+            log('nonDuplicates: $nonDuplicates');
+            log('nonDuplicates length: ${nonDuplicates.length}');
+            for (var item in callLogData) {
+              log('item main : ${item.name} || ${item.isDeleted} || ${item.isUploaded}');
+            }
+
+            nonDuplicates =
+                nonDuplicates.where((log) => log.isDeleted != true).toList();
+            //  callLogData = callLogData.where((log) => log.isDeleted != true).toList();
+            nonDuplicates =
+                nonDuplicates.where((log) => log.isUploaded != true).toList();
+            nonDuplicates = nonDuplicates.reversed.toList();
+
+            log('callLogData        : $callLogData');
+            log('callLogData length : ${callLogData.length}');
+
+            List<HiveCaallHistoryModel> notUploadedCallLogs =
+                callLogData.where((log) => log.isUploaded != true).toList();
+            log('notUploadedCallLogs : ${notUploadedCallLogs.length}');
+
+            List<HiveCaallHistoryModel> allowedCallLogs =
+                nonDuplicates.where((log) => log.isEnabled == true).toList();
+
+            // Debug
+            log('allowedCallLogs (for upload): ${allowedCallLogs.length}');
+
+            // Proceed with upload only for allowed items
+            if (allowedCallLogs.isNotEmpty) {
+              await uploadMissingLogsToServer(allowedCallLogs);
+            }
+
+            if (nonDuplicates.isNotEmpty) {
+              //  todo : update in HIve
+              await HiveUtil.addCallLogs(nonDuplicates);
+              Fluttertoast.showToast(
+                msg: 'Synced Call Logs',
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: ColorConstant.black,
+                textColor: ColorConstant.white,
+              );
+            }
+
+            return;
+          } else {
+            log('No NEW Call Logs found in device.');
+            Fluttertoast.showToast(
+              msg: 'No New Call Logs found in device to Sync.',
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: ColorConstant.black,
+              textColor: ColorConstant.white,
+            );
+            return;
+          }
+        }
+      }
     } catch (e) {
       log(e.toString());
     }
     setState(() {});
-   
   }
 
-  Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
- log("uploadMissingLogsToServer function called");
+  Future<void> uploadMissingLogsToServer(
+      List<HiveCaallHistoryModel> callLogData) async {
+    log("uploadMissingLogsToServer function called");
 
-     List<Map<String, dynamic>> missingLogs = callLogData.map((log) => {
-          "name": log.name,
-          "phone_number": log.phoneNumber,
-          "callTypes": log.callType 
+    List<Map<String, dynamic>> missingLogs = callLogData
+        .map((log) => {
+              "name": log.name,
+              "phone_number": log.phoneNumber,
+              "callTypes": log.callType
                   .toString()
                   .substring(log.callType.toString().indexOf('.') + 1),
-          // "time": DateTime.parse(log.timeStamp).toString(),
-          "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
-          // "time": log.timeStamp.toString(), // log.timestamp,
-          "duration": log.duration,
-          "simName": log.simSlot ?? "NIL",
-          "timeStamp": log.timeStamp,
-        }).toList();
+              // "time": DateTime.parse(log.timeStamp).toString(),
+              "time":
+                  DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
+                      .toString(), // log.timestamp,
+              // "time": log.timeStamp.toString(), // log.timestamp,
+              "duration": log.duration,
+              "simName": log.simSlot ?? "NIL",
+              "timeStamp": log.timeStamp,
+            })
+        .toList();
 
-        log("⚠️ Found ${missingLogs.length} missing logs.");
+    log("⚠️ Found ${missingLogs.length} missing logs.");
 
-         if (missingLogs.isNotEmpty) {
+    if (missingLogs.isNotEmpty) {
+      log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
+      log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
 
-       log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
-                log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
+      Map<String, dynamic> body = {
+        "token": await Common.getSharedPref("token"),
+        'log': missingLogs,
+      };
+      log('~~ OUTGOING CALL BODY : $body ~~~');
 
-       Map<String, dynamic> body = {
-                  "token": await Common.getSharedPref("token"),
-                  'log': missingLogs,
-                };
-                log('~~ OUTGOING CALL BODY : $body ~~~');
-
-
-
-      CallLogUploadModel object1 =
-                    await HttpService.callLogUpload(body);
-                log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
+      CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+      log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
       // await HiveUtil.saveCallLog(missingLogs.last);
       if (object1.data == true) {
-                  log('~~ OUTGOING CALL success ~~~');
-                  log('success');
-                } else {
-                  log('~~ OUTGOING CALL failure ~~~');
-                  log('failure');
-                }
+        log('~~ OUTGOING CALL success ~~~');
+        log('success');
+      } else {
+        log('~~ OUTGOING CALL failure ~~~');
+        log('failure');
+      }
     }
- }
-
+  }
 
   //!
 
@@ -2064,36 +2101,160 @@ class _DashboardState extends State<Dashboard> {
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: InkWell(
-                    onTap: () {
-                      if (isVisible == true) {
-                        Common.saveSharedPref("isVisible", 'false');
-                        isVisible = false;
-                      } else {
-                        Common.saveSharedPref("isVisible", 'true');
-                        isVisible = true;
-                      }
-                      setState(() {});
-                    },
-                    child: Container(
-                        width: 50,
-                        height: 32,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 15, vertical: 5),
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 0),
-                            boxShadow: const [
-                              BoxShadow(
-                                  color: Colors.grey,
-                                  blurRadius: 5,
-                                  offset: Offset(1, 1)),
-                            ],
-                            color: Colors.white,
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(5))),
-                        child: Icon(isVisible == true
-                            ? Icons.keyboard_arrow_down
-                            : Icons.keyboard_arrow_up)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      workStatus != null && workStatus!.data.isNotEmpty
+                          ? Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.3),
+                                    blurRadius: 3,
+                                    offset: Offset(1, 1),
+                                  )
+                                ],
+                              ),
+                              // child: StreamBuilder<DateTime>(
+                              //   stream: Stream.periodic(Duration(seconds: 1),
+                              //       (_) => DateTime.now()),
+                              //   builder: (context, snapshot) {
+                              //     if (!snapshot.hasData) return SizedBox();
+
+                              //     final now = snapshot.data!;
+                              //     final createdAt = DateTime.parse(
+                              //         workStatus!.data.first.createdAt);
+                              //     final diff = now.difference(createdAt);
+
+                              //     String timeSince =
+                              //         "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
+
+                              //     return Text(
+                              //       timeSince,
+                              //       style: TextStyle(
+                              //         fontSize: 14,
+                              //         fontWeight: FontWeight.w500,
+                              //         color:
+                              //             const Color.fromARGB(255, 255, 5, 5),
+                              //       ),
+                              //     );
+                              //   },
+                              // )
+                              child:
+                                  //  StreamBuilder<DateTime>(
+
+                                  //     stream: Stream.periodic(Duration(seconds: 1), (_) => DateTime.now()),
+                                  //     builder: (context, snapshot) {
+                                  //       if (!snapshot.hasData || createdAt == null) return SizedBox();
+
+                                  //       final now = snapshot.data!;
+                                  //       final diff = now.difference(createdAt!);
+
+                                  //       String timeSince =
+                                  //           "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
+
+                                  //       return Text(
+                                  //         timeSince,
+                                  //         style: TextStyle(
+                                  //           fontSize: 14,
+                                  //           fontWeight: FontWeight.w500,
+                                  //           color: const Color.fromARGB(255, 255, 5, 5),
+                                  //         ),
+                                  //       );
+                                  //     },
+                                  //   )
+                                  StreamBuilder<DateTime>(
+                                stream: Stream.periodic(Duration(seconds: 1),
+                                    (_) => DateTime.now()),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData || createdAt == null) {
+                                    return SizedBox();
+                                  }
+
+                                  final now = snapshot.data!;
+                                  final diff = now.difference(createdAt!);
+
+                                  String timeSince =
+                                      "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
+
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      final workStatusModel =
+                                          await HttpService.getWorkStatus();
+
+                                      WorkStatus? existingWork;
+                                      if (workStatusModel != null &&
+                                          workStatusModel.data.isNotEmpty) {
+                                        existingWork =
+                                            workStatusModel.data.first;
+                                      }
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AddWorkPage(
+                                            existingWork:
+                                                existingWork, 
+                                            onSuccess: () {
+                                              setState(() {
+                                                getData(widget.token, fromdate,
+                                                    todate);
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      timeSince,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color.fromARGB(
+                                            255, 255, 5, 5),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ))
+                          : SizedBox(),
+                      SizedBox(width: 10),
+                      InkWell(
+                        onTap: () {
+                          if (isVisible == true) {
+                            Common.saveSharedPref("isVisible", 'false');
+                            isVisible = false;
+                          } else {
+                            Common.saveSharedPref("isVisible", 'true');
+                            isVisible = true;
+                          }
+                          setState(() {});
+                        },
+                        child: Container(
+                          width: 50,
+                          height: 32,
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white, width: 0),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.grey,
+                                    blurRadius: 5,
+                                    offset: Offset(1, 1)),
+                              ],
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(5))),
+                          child: Icon(isVisible == true
+                              ? Icons.keyboard_arrow_down
+                              : Icons.keyboard_arrow_up),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -3073,7 +3234,8 @@ class _DashboardState extends State<Dashboard> {
                                                             width: 20,
                                                             height: 20,
                                                             child: Icon(
-                                                              Icons.upload_outlined,
+                                                              Icons
+                                                                  .upload_outlined,
                                                             ),
                                                           ),
                                                           const SizedBox(
@@ -3137,14 +3299,170 @@ class _DashboardState extends State<Dashboard> {
                                                               'Call History'),
                                                         ],
                                                       )),
+
+                                                  // PopupMenuItem<int>(
+                                                  //   // value: 6,
+                                                  //   // onTap: () {
+                                                  //   //   Future.delayed(
+                                                  //   //       Duration.zero, () {
+                                                  //   //     showAddWorkDialog(
+                                                  //   //         context);
+                                                  //   //   });
+                                                  //   // },
+                                                  //   onTap: () async {
+                                                  //     final workStatusModel =
+                                                  //         await HttpService
+                                                  //             .getWorkStatus();
+
+                                                  //     WorkStatus? existingWork;
+                                                  //     if (workStatusModel !=
+                                                  //             null &&
+                                                  //         workStatusModel.data
+                                                  //             .isNotEmpty) {
+                                                  //       existingWork =
+                                                  //           workStatusModel
+                                                  //               .data.first;
+                                                  //     }
+
+                                                  //     Navigator.push(
+                                                  //       context,
+                                                  //       MaterialPageRoute(
+                                                  //         builder: (context) =>
+                                                  //             AddWorkPage(
+                                                  //           existingWork:
+                                                  //               existingWork, // null if no work in progress
+                                                  //           onSuccess: () {
+                                                  //             setState(() {
+                                                  //               getData(
+                                                  //                   widget
+                                                  //                       .token,
+                                                  //                   fromdate,
+                                                  //                   todate);
+                                                  //             });
+                                                  //           },
+                                                  //         ),
+                                                  //       ),
+                                                  //     );
+                                                  //   },
+
+                                                  //   child: Row(
+                                                  //     children: const [
+                                                  //       Icon(
+                                                  //           Icons
+                                                  //               .call_made_outlined,
+                                                  //           size: 20),
+                                                  //       SizedBox(width: 10),
+                                                  //       Text('Add Work'),
+                                                  //     ],
+                                                  //   ),
+                                                  // ),
+
+                                                  PopupMenuItem<int>(
+                                                    // value: 6,
+                                                    // onTap: () {
+                                                    //   Future.delayed(
+                                                    //       Duration.zero, () {
+                                                    //     showAddWorkDialog(
+                                                    //         context);
+                                                    //   });
+                                                    // },
+                                                    onTap: () async {
+                                                      final workStatusModel =
+                                                          await HttpService
+                                                              .getWorkStatus();
+
+                                                      WorkStatus? existingWork;
+                                                      if (workStatusModel !=
+                                                              null &&
+                                                          workStatusModel.data
+                                                              .isNotEmpty) {
+                                                        existingWork =
+                                                            workStatusModel
+                                                                .data.first;
+                                                      }
+
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const ViewWorkPage(
+                                                            staffId: '',
+                                                          ),
+                                                          settings:
+                                                              RouteSettings(
+                                                            arguments: {
+                                                              "staffId": staffId
+                                                            },
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+
+                                                    child: Row(
+                                                      children: const [
+                                                        Icon(Icons.view_agenda,
+                                                            size: 20),
+                                                        SizedBox(width: 10),
+                                                        Text('View Work'),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  PopupMenuItem<int>(
+                                                    // value: 6,
+                                                    // onTap: () {
+                                                    //   Future.delayed(
+                                                    //       Duration.zero, () {
+                                                    //     showAddWorkDialog(
+                                                    //         context);
+                                                    //   });
+                                                    // },
+                                                    onTap: () async {
+                                                      final workStatusModel =
+                                                          await HttpService
+                                                              .getWorkStatus();
+
+                                                      WorkStatus? existingWork;
+                                                      if (workStatusModel !=
+                                                              null &&
+                                                          workStatusModel.data
+                                                              .isNotEmpty) {
+                                                        existingWork =
+                                                            workStatusModel
+                                                                .data.first;
+                                                      }
+
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              const ViewCompanyWorkPage(),
+                                                          settings:
+                                                              RouteSettings(
+                                                            arguments: {
+                                                              //  "staffId": staffId
+                                                            },
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+
+                                                    child: Row(
+                                                      children: const [
+                                                        Icon(Icons.view_agenda,
+                                                            size: 20),
+                                                        SizedBox(width: 10),
+                                                        Text('View All Works'),
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ];
                                               },
                                               onSelected: (value) async {
-                                                if (value == 11)  {
+                                                if (value == 11) {
                                                   // todo : show loader
                                                   // todo : upload call logs
                                                   // todo : hide loader
-                                                  
+
                                                   setState(() {
                                                     isLoading = true;
                                                   });
@@ -4585,6 +4903,7 @@ class _DashboardState extends State<Dashboard> {
                           ],
                         )),
                     Visibility(
+                      //  visible: loadmore == false,
                       visible: loadmore == false,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -4592,28 +4911,32 @@ class _DashboardState extends State<Dashboard> {
                           onTap: () async {
                             getStaffwise();
                           },
-                          child: Container(
-                              height: 32,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 5),
-                              decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.white, width: 0),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color: Colors.grey,
-                                        blurRadius: 5,
-                                        offset: Offset(1, 1)),
-                                  ],
-                                  color: Colors.blue,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(5))),
-                              child: Text(
-                                moreloading == true
-                                    ? " Loading... "
-                                    : "Show more",
-                                style: const TextStyle(color: Colors.white),
-                              )),
+                          child: Visibility(
+                            visible: false,
+                            child: Container(
+                                height: 32,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 5),
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: Colors.white, width: 0),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Colors.grey,
+                                          blurRadius: 5,
+                                          offset: Offset(1, 1)),
+                                    ],
+                                    color: Colors.blue,
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(5))),
+                                child: Text(
+                                  moreloading == true
+                                      ? " Loading... "
+                                      : "Show more",
+                                  //  : "Show more",
+                                  style: const TextStyle(color: Colors.white),
+                                )),
+                          ),
                         ),
                       ),
                     ),
@@ -8241,4 +8564,328 @@ class _DashboardState extends State<Dashboard> {
           ),
         ));
   }
+
+//not using right now ///////////// working code below////////////////////////
+  void showAddWorkDialog(BuildContext context,
+      {WorkStatus? existingWork}) async {
+    WorkStatusModel? workStatus;
+    if (existingWork == null) {
+      workStatus = await HttpService.getWorkStatus();
+    }
+
+    final initialWork = existingWork ??
+        (workStatus?.data.isNotEmpty == true ? workStatus!.data.first : null);
+
+    final titleController =
+        TextEditingController(text: initialWork?.title ?? '');
+    final List<Map<String, dynamic>> tasks = initialWork != null
+        ? initialWork.tasks
+            .map((task) => {
+                  'controller': TextEditingController(text: task.taskName),
+                  'status': task.status,
+                  'task_id': task.taskId,
+                })
+            .toList()
+        : [
+            {'controller': TextEditingController(), 'status': null}
+          ];
+
+    final workData = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        String? selectedProjectId;
+        String? selectedProjectName;
+        List<Projects> projectList = [];
+        bool isLoading = true;
+        if (initialWork != null) {
+          selectedProjectId = initialWork.projectId;
+        }
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (isLoading) {
+              Future.microtask(() async {
+                try {
+                  final response = await HttpService.getProjectList();
+                  setState(() {
+                    projectList = response!.data;
+                    final uniqueProjects = <String, Projects>{};
+                    for (var project in projectList) {
+                      uniqueProjects[project.id] = project;
+                    }
+                    projectList = uniqueProjects.values.toList();
+                    if (selectedProjectId != null) {
+                      final projectExists =
+                          projectList.any((p) => p.id == selectedProjectId);
+                      if (!projectExists) {
+                        selectedProjectId = null;
+                      }
+                    }
+
+                    if (initialWork != null && selectedProjectId != null) {
+                      selectedProjectName = projectList
+                          .firstWhere((p) => p.id == selectedProjectId)
+                          .name;
+                    }
+                    isLoading = false;
+                  });
+                } catch (e) {
+                  setState(() {
+                    isLoading = false;
+                    selectedProjectId = null;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to load projects: $e')),
+                  );
+                }
+              });
+            }
+
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            initialWork != null ? 'Stop Work' : 'Start Work',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: isLoading ? null : selectedProjectId,
+                              items: [
+                                if (isLoading)
+                                  const DropdownMenuItem(
+                                    value: null,
+                                    child: Text('Loading projects...'),
+                                  )
+                                else
+                                  const DropdownMenuItem(
+                                    value: null,
+                                    child: Text('Select Project'),
+                                  ),
+                                ...projectList
+                                    .map((project) => DropdownMenuItem(
+                                          value: project.id,
+                                          child: Text(project.name),
+                                        ))
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedProjectId = value;
+                                  if (value != null) {
+                                    selectedProjectName = projectList
+                                        .firstWhere((p) => p.id == value)
+                                        .name;
+                                  }
+                                });
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Project',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: titleController,
+                              decoration: InputDecoration(
+                                labelText: 'Title',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Column(
+                        children: [
+                          for (int i = 0; i < tasks.length; i++)
+                            Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextField(
+                                          controller: tasks[i]['controller'],
+                                          decoration: InputDecoration(
+                                            labelText: 'Task',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        flex: 4,
+                                        child: DropdownButtonFormField<String>(
+                                          value: tasks[i]['status'],
+                                          items: ['New', 'Pending', 'Complete']
+                                              .map((status) => DropdownMenuItem(
+                                                    value: status,
+                                                    child: Text(status),
+                                                  ))
+                                              .toList(),
+                                          onChanged: (value) => setState(() {
+                                            tasks[i]['status'] = value;
+                                          }),
+                                          decoration: InputDecoration(
+                                            labelText: 'Status',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      if (i == 0)
+                                        IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () => setState(() {
+                                            tasks.add({
+                                              'controller':
+                                                  TextEditingController(),
+                                              'status': null,
+                                            });
+                                          }),
+                                        ),
+                                      if (i > 0)
+                                        IconButton(
+                                          icon: Icon(Icons.close,
+                                              color: Colors.red),
+                                          onPressed: () => setState(() {
+                                            tasks.removeAt(i);
+                                          }),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      DateFormat('hh:mm a')
+                                          .format(DateTime.now()),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              initialWork != null ? Colors.red : Colors.green,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(double.infinity, 50),
+                        ),
+                        onPressed: () {
+                          if (selectedProjectId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Please select a project'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          final workData = {
+                            'work_id': initialWork?.id,
+                            'project_id': selectedProjectId,
+                            'project_name': selectedProjectName,
+                            'title': titleController.text,
+                            'tasks': tasks
+                                .map((task) => {
+                                      'task_id': task['task_id'],
+                                      'description': task['controller'].text,
+                                      'status': task['status'],
+                                    })
+                                .toList(),
+                          };
+
+                          Navigator.pop(context, workData);
+                        },
+                        child: Text(initialWork != null ? 'Stop' : 'Start'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (workData != null) {
+      try {
+        final response = initialWork != null
+            ? await HttpService.updateWorkData(workData)
+            : await HttpService.submitWorkData(workData);
+
+        if (response.status) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(initialWork != null
+                  ? 'Work stopped successfully!'
+                  : 'Work started successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Future.delayed(Duration(seconds: 1), () {
+            setState(() {
+              getData(widget.token, fromdate, todate);
+            });
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message ?? 'Operation failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  //not using right now ///////////// working code below////////////////////////
 }

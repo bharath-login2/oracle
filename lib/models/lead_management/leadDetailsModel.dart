@@ -119,7 +119,7 @@ class Data {
     warningMessage = json['warningMessage'] ?? "";
     callLeadId = json['callLeadId'] ?? "";
     leadSource = json['lead_source'] ?? "";
-    leadSourceId = json['lead_source-id'] ?? "";
+    leadSourceId = json['lead_source_id'] ?? "";
   }
 }
 

@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
 
 class StageTimelineWidget extends StatefulWidget {
-  final List<Calleddata> calleddata; // Now it's a List of Calleddata objects
-
+  final List<Calleddata> calleddata;
   const StageTimelineWidget({super.key, required this.calleddata});
 
   @override
@@ -18,8 +17,7 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
     return ListView.builder(
       itemCount: widget.calleddata.length,
       itemBuilder: (context, index) {
-        var call = widget.calleddata[index]; // Access as an object
-
+        var call = widget.calleddata[index];
         return Stack(
           children: [
             Padding(
@@ -100,15 +98,13 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                               child: Row(
                                 children: [
                                   const Icon(
-                                    Icons.timer, // Choose an appropriate icon
-                                    size: 16, // Adjust the size if needed
-                                    color: Colors
-                                        .grey, // Change color as per your UI
+                                    Icons.timer,
+                                    size: 16,
+                                    color: Colors.grey,
                                   ),
-                                  const SizedBox(
-                                      width: 5), // Space between icon and text
+                                  const SizedBox(width: 5),
                                   Text(
-                                    call.formattedDuration??"",
+                                    call.formattedDuration ?? "",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green.shade900,
@@ -147,22 +143,22 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                           ],
                         ),
                         const SizedBox(height: 5),
-                     Padding(
+                        Padding(
                           padding: const EdgeInsets.only(left: 10),
                           child: Align(
                             alignment: Alignment.bottomLeft,
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.call, // You can change this to any relevant icon
+                                  Icons.call,
                                   size: 16,
-                                  color: Colors.grey, // Adjust color as needed
+                                  color: Colors.grey,
                                 ),
-                                const SizedBox(width: 5), // Space between icon and text
+                                const SizedBox(width: 5),
                                 Text(
                                   'Called By ${call.companyName ?? "Unknown"}',
                                   style: const TextStyle(
-                                    fontSize: 14, // Adjust size as needed
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -170,7 +166,6 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 25),
                       ],
                     ),
@@ -178,8 +173,6 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                 ),
               ),
             ),
-
-            // Timeline Line
             Positioned(
               top: 0.0,
               bottom: 0.0,
@@ -189,20 +182,19 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                 color: Colors.blue,
               ),
             ),
-
-            // Profile Image
             Positioned(
               top: 20.0,
               left: 5.0,
               child: Column(
                 children: [
-                 CircleAvatar(
-                radius: 30,
-                backgroundImage: call.proPic != null && call.proPic!.isNotEmpty
-                    ? NetworkImage(call.proPic!) as ImageProvider
-                    : const AssetImage('assets/icons/profile_placeholder.png'),
-              ),
-
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage:
+                        call.proPic != null && call.proPic!.isNotEmpty
+                            ? NetworkImage(call.proPic!) as ImageProvider
+                            : const AssetImage(
+                                'assets/icons/profile_placeholder.png'),
+                  ),
                   const SizedBox(height: 5),
                   Container(
                     padding: const EdgeInsets.all(5),
@@ -227,7 +219,6 @@ class _StageTimelineWidgetState extends State<StageTimelineWidget> {
                   ),
                 ],
               ),
-              
             ),
           ],
         );

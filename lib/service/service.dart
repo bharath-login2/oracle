@@ -177,13 +177,18 @@ import '../models/lead_management/leadNotificationListModel.dart';
 import '../models/lead_management/leadSubCategoryDeleteModel.dart';
 import '../models/lead_management/leadSubTypeModel.dart';
 import '../models/lead_management/listFolderName.dart';
+import '../models/lead_management/projectList_model.dart';
 import '../models/lead_management/readLeadNotificationModel.dart';
 import '../models/lead_management/renameFolderModel.dart';
+import '../models/lead_management/submitresponse_model.dart';
 import '../models/lead_management/testListApiModel.dart';
 import '../models/lead_management/unsetReminderModel.dart';
 import '../models/lead_management/updateReminderSetings.dart';
 import '../models/lead_management/uploadAudioRecoed.dart';
 import '../models/lead_management/viewLeadSubCategoryModel.dart';
+import '../models/lead_management/workDetailsCompanyModel.dart';
+import '../models/lead_management/workDetailsModel.dart';
+import '../models/lead_management/workstatus_model.dart';
 import '../models/officialWhatsapp/chat_list_model.dart';
 import '../models/officialWhatsapp/addContactModel.dart';
 import '../models/officialWhatsapp/campaignsListModel.dart';
@@ -200,6 +205,7 @@ import '../models/settings/deleteFbLeadsModel.dart';
 import '../models/settings/facebookSettingsModel.dart';
 import '../models/settings/sendNotificationModel.dart';
 import '../models/settings/updateFbLeadAssignStaff.dart';
+import '../models/staff_report/staff_calls_model.dart';
 import '../models/userManagement/deleteDesignationModel.dart';
 import '../models/userManagement/postEditStaffPermissionModel.dart';
 import '../models/userManagement/postEditStaffSubmenuModel.dart';
@@ -275,6 +281,7 @@ class HttpService {
       "password": pass,
       "firebaseId": firebaseToken
     };
+   log("Firebase Token: $firebaseToken");
     try {
       var result = await _dio.get("${await Config.getUrl()}login",
           queryParameters: params);
@@ -296,42 +303,43 @@ class HttpService {
   //     return model;
   //   } catch (e) {
   //     log("error: $e");
-    
+
   //   }
   // }
 
-  static Future<LoginCheckModel?> loginCheck(String? token, String firebaseToken) async {
-  var params = {
-    if (token != null && token.isNotEmpty) "token": token,
-    "firebaseId": firebaseToken,
-  };
+  static Future<LoginCheckModel?> loginCheck(
+      String? token, String firebaseToken) async {
+    var params = {
+      if (token != null && token.isNotEmpty) "token": token,
+      "firebaseId": firebaseToken,
+    };
 
-  try {
-    final baseUrl = await Config.getUrl();
-    if (baseUrl.isEmpty) {
-      log("❌ Base URL is empty. Check SharedPreferences or configuration.");
+    try {
+      final baseUrl = await Config.getUrl();
+      if (baseUrl.isEmpty) {
+        log("❌ Base URL is empty. Check SharedPreferences or configuration.");
+        return null;
+      }
+
+      log("🔗 Calling: ${baseUrl}if_token_expired");
+      log("📦 Params: $params");
+
+      var result =
+          await _dio.get("${baseUrl}if_token_expired", queryParameters: params);
+
+      if (result.data != null) {
+        log("✅ API Response: ${result.data}");
+        return LoginCheckModel.fromJson(result.data);
+      } else {
+        log("❌ No data received from API");
+        return null;
+      }
+    } catch (e, stackTrace) {
+      log("❌ Dio error: $e");
+      log("🧵 Stack trace: $stackTrace");
       return null;
     }
-
-    log("🔗 Calling: ${baseUrl}if_token_expired");
-    log("📦 Params: $params");
-
-    var result = await _dio.get("${baseUrl}if_token_expired", queryParameters: params);
-    
-    if (result.data != null) {
-      log("✅ API Response: ${result.data}");
-      return LoginCheckModel.fromJson(result.data);
-    } else {
-      log("❌ No data received from API");
-      return null;
-    }
-  } catch (e, stackTrace) {
-    log("❌ Dio error: $e");
-    log("🧵 Stack trace: $stackTrace");
-    return null;
   }
-}
-
 
   static Future sendOtp(phoneNumber, otp, String type) async {
     var params = {"phoneNumber": phoneNumber, "otp": otp, "type": type};
@@ -3290,6 +3298,28 @@ class HttpService {
     }
   }
 
+  static Future<StaffCallDuration?> getStaffCallDuration(
+      String staffId, String date) async {
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_call_details",
+        data: {
+          "token": await Common.getSharedPref('token'),
+          "staff_id": staffId,
+          "date": date,
+        },
+      );
+      if (response.statusCode == 200) {
+        return StaffCallDuration.fromJson(response.data);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      log(e.toString());
+      return null;
+    }
+  }
+
   static Future<StaffCalldetailsModel?> getStaffCallDetails(
       String userId, String fDate, String tDate) async {
     var params = {
@@ -3334,6 +3364,170 @@ class HttpService {
       log("error: $e");
     }
   }
+
+  static Future<ProjectList?> getProjectList() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+    });
+
+    try {
+      var result = await _dio.post("${await Config.getUrl()}get_projects",
+          data: formData);
+
+      if (result.statusCode == 200) {
+        return ProjectList.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+
+    return null;
+  }
+
+
+   static Future<WorkStatusModel?> getWorkStatus() async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+    });
+
+    try {
+      var result = await _dio.post("${await Config.getUrl()}get_works",
+          data: formData);
+
+      if (result.statusCode == 200) {
+        return  WorkStatusModel.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+
+    return null;
+  }
+
+
+    static Future<WorkDetailsModel?> getWorkStatusDetails(String date, {String? staffId}) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+        "date": date,
+          "staff_id": staffId,
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}get_workstatus_details",
+          data: formData);
+      if (result.statusCode == 200) {
+        return  WorkDetailsModel.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+
+    return null;
+  }
+
+static Future<SubmitResponse> updateWorkData(Map<String, dynamic> workData) async {
+  var formData = FormData.fromMap({
+    "token": await Common.getSharedPref('token'),
+    "work_id": workData['work_id'],
+    "project_id": workData['project_id'],
+    "title": workData['title'],
+    "tasks": jsonEncode(workData['tasks']),
+  });
+  try {
+    var result = await _dio.post(
+      "${await Config.getUrl()}end_work",
+      data: formData,
+    );
+    if (result.statusCode == 200) {
+      return SubmitResponse.fromJson(json.decode(result.data));
+    }
+    throw Exception("Failed to update work");
+  } catch (e) {
+    log("Update work error: $e");
+    rethrow;
+  }
+}
+
+
+// static Future<SubmitResponse> saveWorkData(Map<String, dynamic> workData) async {
+//   var formData = FormData.fromMap({
+//     "token": await Common.getSharedPref('token'),
+//     "work_id": workData['work_id'],
+//     "project_id": workData['project_id'],
+//     "title": workData['title'],
+//     "tasks": jsonEncode(workData['tasks']),
+//   });
+
+//   try {
+//     var result = await _dio.post(
+//       "${await Config.getUrl()}save_work",
+//       data: formData,
+//     );
+
+//     if (result.statusCode == 200) {
+//       return SubmitResponse.fromJson(json.decode(result.data));
+//     }
+//     throw Exception("Failed to update work");
+//   } catch (e) {
+//     log("Update work error: $e");
+//     rethrow;
+//   }
+// }
+
+static Future<SubmitResponse> saveWorkData(Map<String, dynamic> workData) async {
+  final data = {
+    "token": await Common.getSharedPref('token'),
+    "work_id": workData['work_id'],
+    "project_id": workData['project_id'],
+    "project_name": workData['project_name'] ?? '', 
+    "title": workData['title'],
+    "tasks": workData['tasks'],
+  };
+
+  try {
+    var result = await _dio.post(
+      "${await Config.getUrl()}save_work",
+      data: jsonEncode(data), 
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+      ),
+    );
+    if (result.statusCode == 200) {
+      return SubmitResponse.fromJson(json.decode(result.data));
+    }
+    throw Exception("Failed to save work");
+  } catch (e) {
+    log("Save work error: $e");
+    rethrow;
+  }
+}
+
+  static Future<SubmitResponse> submitWorkData(Map<String, dynamic> workData) async {
+  var formData = FormData.fromMap({
+    "token": await Common.getSharedPref('token'),
+    "project_id": workData['project_id'],
+    "project_name": workData['project_name'],
+    "title": workData['title'],
+    "tasks": jsonEncode(workData['tasks']),
+  });
+  // try {
+    var result = await _dio.post(
+      "${await Config.getUrl()}submit_work",
+      data: formData,
+    );
+    if (result.statusCode == 200) {
+     return SubmitResponse.fromJson(json.decode(result.data));
+    } else {
+      throw Exception("Failed to submit work");
+    }
+  // } 
+  // catch (e) {
+  //   throw Exception("HTTP error: $e");
+  // }
+}
+
+
 
   static Future getRenewalDetails() async {
     var formData = FormData.fromMap({
@@ -5000,5 +5194,23 @@ class HttpService {
     } catch (e) {
       log("error: $e");
     }
+  }
+
+   static Future<WorkCompanyDetailsModel?> getWorkCompanyStatusDetails(String date) async {
+    var formData = FormData.fromMap({
+      "token": await Common.getSharedPref('token'),
+        "date": date,
+    });
+    try {
+      var result = await _dio.post("${await Config.getUrl()}get_companyworkstatus_details",
+          data: formData);
+      if (result.statusCode == 200) {
+        return  WorkCompanyDetailsModel.fromJson(result.data);
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+
+    return null;
   }
 }

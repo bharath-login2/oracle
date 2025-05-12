@@ -293,10 +293,22 @@ class _SplashScreenState extends State<SplashScreen> {
             ));
   }
 
-  routeTOHomePage() async {
-    if (navigation == null) {
-      String? token = await Common.getSharedPref("token");
-      log(firebaseToken.toString());
+            routeTOHomePage() async {
+              if (navigation == null) {
+                String? token = await Common.getSharedPref("token");
+                log(firebaseToken.toString());
+                if (firebaseToken == null) {
+            log("Firebase token is still null. Retrying...");
+            firebaseToken = await FirebaseMessaging.instance.getToken();
+          }
+
+          if (firebaseToken == null) {
+            Common.toastMessaage('Unable to get Firebase token. Try restarting app.', Colors.red);
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const Login()),
+                (Route<dynamic> route) => false);
+            return;
+          }
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
           if (loginCheck == null) {

@@ -1848,23 +1848,44 @@ class _AddLeadsState extends State<AddLeads> {
     );
   }
 
-  Future<void> selectContact() async {
-    // Check and request permissions
-    if (await FlutterContacts.requestPermission()) {
-      // Pick a contact
-      final Contact? contact = await FlutterContacts.openExternalPick();
-      if (contact != null && contact.phones.isNotEmpty) {
-        String number = contact.phones.first.number;
-        String name = contact.displayName;
+  // Future<void> selectContact() async {
+  //   // Check and request permissions
+  //   if (await FlutterContacts.requestPermission()) {
+  //     // Pick a contact
+  //     final Contact? contact = await FlutterContacts.openExternalPick();
+  //     if (contact != null && contact.phones.isNotEmpty) {
+  //       String number = contact.phones.first.number;
+  //       String name = contact.displayName;
 
-        contactNo.text = number.replaceAll(RegExp(r'[ ()-]'), '');
-        clientName.text = name;
+  //       contactNo.text = number.replaceAll(RegExp(r'[ ()-]'), '');
+  //       clientName.text = name;
 
-        setState(() {});
+  //       setState(() {});
+  //     }
+  //   } else {
+  //     Common.toastMessaage(
+  //         "Permission denied! Please enable contacts access.", Colors.red);
+  //   }
+  // }
+      Future<void> selectContact() async {
+        if (await FlutterContacts.requestPermission()) {
+          final Contact? contact = await FlutterContacts.openExternalPick();
+          if (contact != null && contact.phones.isNotEmpty) {
+            String number = contact.phones.first.number;
+            String name = contact.displayName;
+            number = number.replaceAll(RegExp(r'[^\d+]'), '');
+            if (number.startsWith('+') && number.length > 10) {
+              number = number.substring(number.length - 10);
+            } else if (number.length > 10) {
+              number = number.substring(number.length - 10);
+            }
+            contactNo.text = number;
+            clientName.text = name;
+            setState(() {});
+          }
+        } else {
+          Common.toastMessaage(
+              "Permission denied! Please enable contacts access.", Colors.red);
+        }
       }
-    } else {
-      Common.toastMessaage(
-          "Permission denied! Please enable contacts access.", Colors.red);
-    }
-  }
 }
